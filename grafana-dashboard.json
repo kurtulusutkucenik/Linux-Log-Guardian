@@ -1,0 +1,373 @@
+{
+  "title": "Linux Log Guardian — Operations",
+  "uid": "log-guardian-01",
+  "tags": ["log-guardian", "linux"],
+  "description": "Linux Log Guardian SOC paneli — Prometheus loganalyzer_* metrikleri",
+  "refresh": "5s",
+  "templating": {
+    "list": [
+      {
+        "current": { "selected": true, "text": "default", "value": "default" },
+        "hide": 0,
+        "includeAll": false,
+        "label": "Tenant",
+        "multi": false,
+        "name": "tenant",
+        "options": [],
+        "query": { "query": "label_values(loganalyzer_eps, tenant_id)", "refId": "StandardVariableQuery" },
+        "refresh": 1,
+        "type": "query",
+        "datasource": { "type": "prometheus" }
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Log Lines Processed",
+      "description": "Kumulatif sayac — servis yeniden baslatilinca sifirlanir",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_lines_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban Success",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_bans_success{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban Fail",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_bans_fail{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Parse Errors",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_parse_errors_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Events Per Second",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_eps{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "XDP Active",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 0 },
+      "targets": [{ "expr": "loganalyzer_xdp_active{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "EPS (gauge)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [{ "expr": "loganalyzer_eps{tenant_id=\"$tenant\"}", "legendFormat": "EPS" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP 4xx / 5xx",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "loganalyzer_http_status_total{tenant_id=\"$tenant\",code=\"4xx\"}", "legendFormat": "4xx" },
+        { "expr": "loganalyzer_http_status_total{tenant_id=\"$tenant\",code=\"5xx\"}", "legendFormat": "5xx" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Alert rate",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 12 },
+      "targets": [{ "expr": "rate(loganalyzer_alerts_total{tenant_id=\"$tenant\"}[1m])", "legendFormat": "alerts/s" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ban success vs fail (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 12 },
+      "targets": [
+        { "expr": "rate(loganalyzer_bans_success{tenant_id=\"$tenant\"}[5m])", "legendFormat": "success" },
+        { "expr": "rate(loganalyzer_bans_fail{tenant_id=\"$tenant\"}[5m])", "legendFormat": "fail" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Unique IPs",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 20 },
+      "targets": [{ "expr": "loganalyzer_unique_ips{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ringbuf Drops",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 20 },
+      "targets": [{ "expr": "loganalyzer_ringbuf_drops_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Parse errors (rate)",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 20 },
+      "targets": [{ "expr": "rate(loganalyzer_parse_errors_total{tenant_id=\"$tenant\"}[5m])", "legendFormat": "parse errors/s" }]
+    },
+    {
+      "type": "table",
+      "title": "Anlik metrikler (tablo)",
+      "description": "Prometheus anlik degerler — tenant filtresi",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 28 },
+      "options": { "showHeader": true, "sortBy": [{ "displayName": "Metric", "desc": false }] },
+      "fieldConfig": { "defaults": { "custom": { "align": "auto" } } },
+      "targets": [
+        { "expr": "loganalyzer_lines_total{tenant_id=\"$tenant\"}", "legendFormat": "lines_total", "instant": true, "refId": "lines", "format": "table" },
+        { "expr": "loganalyzer_alerts_total{tenant_id=\"$tenant\"}", "legendFormat": "alerts_total", "instant": true, "refId": "alerts", "format": "table" },
+        { "expr": "loganalyzer_eps{tenant_id=\"$tenant\"}", "legendFormat": "eps", "instant": true, "refId": "eps", "format": "table" },
+        { "expr": "loganalyzer_bans_success{tenant_id=\"$tenant\"}", "legendFormat": "bans_success", "instant": true, "refId": "ban_ok", "format": "table" },
+        { "expr": "loganalyzer_bans_fail{tenant_id=\"$tenant\"}", "legendFormat": "bans_fail", "instant": true, "refId": "ban_fail", "format": "table" },
+        { "expr": "loganalyzer_unique_ips{tenant_id=\"$tenant\"}", "legendFormat": "unique_ips", "instant": true, "refId": "ips", "format": "table" },
+        { "expr": "loganalyzer_xdp_active{tenant_id=\"$tenant\"}", "legendFormat": "xdp_active", "instant": true, "refId": "xdp", "format": "table" },
+        { "expr": "loganalyzer_threat_last_sync_ts{tenant_id=\"$tenant\"}", "legendFormat": "threat_sync_ts", "instant": true, "refId": "threat_ts", "format": "table" },
+        { "expr": "loganalyzer_threat_total_iocs{tenant_id=\"$tenant\"}", "legendFormat": "threat_iocs", "instant": true, "refId": "threat_ioc", "format": "table" },
+        { "expr": "loganalyzer_fp_trusted_ips{tenant_id=\"$tenant\"}", "legendFormat": "fp_trusted", "instant": true, "refId": "fp_tr", "format": "table" },
+        { "expr": "loganalyzer_fp_learn_enabled{tenant_id=\"$tenant\"}", "legendFormat": "fp_learn", "instant": true, "refId": "fp_on", "format": "table" },
+        { "expr": "loganalyzer_ban_pipeline_ipc{tenant_id=\"$tenant\"}", "legendFormat": "bp_ipc", "instant": true, "refId": "bp_ipc", "format": "table" },
+        { "expr": "loganalyzer_ban_pipeline_ipset{tenant_id=\"$tenant\"}", "legendFormat": "bp_ipset", "instant": true, "refId": "bp_ipset", "format": "table" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Threat intel + FP learn + ban pipeline",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 36 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Threat sync age (saat)",
+      "description": "Son threat intel sync'ten bu yana geçen süre — 0=henüz sync yok",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 37 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "h",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "yellow", "value": 24 },
+              { "color": "red", "value": 168 }
+            ]
+          }
+        }
+      },
+      "targets": [{
+        "expr": "(time() - loganalyzer_threat_last_sync_ts{tenant_id=\"$tenant\"}) / 3600",
+        "legendFormat": "sync_age_h"
+      }]
+    },
+    {
+      "type": "stat",
+      "title": "Threat IOCs",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 37 },
+      "targets": [{ "expr": "loganalyzer_threat_total_iocs{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "FP trusted IPs",
+      "description": "FP_LEARN — ilk hafta 0 normal",
+      "gridPos": { "h": 4, "w": 4, "x": 12, "y": 37 },
+      "targets": [{ "expr": "loganalyzer_fp_trusted_ips{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "FP learn",
+      "gridPos": { "h": 4, "w": 4, "x": 16, "y": 37 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "OFF" }, "1": { "text": "ON" } } }
+          ]
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_fp_learn_enabled{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "FP suppressed",
+      "gridPos": { "h": 4, "w": 4, "x": 20, "y": 37 },
+      "targets": [{ "expr": "loganalyzer_fp_suppressed_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban path IPC",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 41 },
+      "targets": [{ "expr": "loganalyzer_ban_pipeline_ipc{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban path XDP",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 41 },
+      "targets": [{ "expr": "loganalyzer_ban_pipeline_xdp{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban path ipset",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 41 },
+      "targets": [{ "expr": "loganalyzer_ban_pipeline_ipset{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Ban pipeline fail",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 41 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_ban_pipeline_failed{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Ban pipeline yollari (rate)",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 45 },
+      "targets": [
+        { "expr": "rate(loganalyzer_ban_pipeline_ipc{tenant_id=\"$tenant\"}[5m])", "legendFormat": "ipc" },
+        { "expr": "rate(loganalyzer_ban_pipeline_xdp{tenant_id=\"$tenant\"}[5m])", "legendFormat": "xdp" },
+        { "expr": "rate(loganalyzer_ban_pipeline_ipset{tenant_id=\"$tenant\"}[5m])", "legendFormat": "ipset" },
+        { "expr": "rate(loganalyzer_ban_pipeline_failed{tenant_id=\"$tenant\"}[5m])", "legendFormat": "failed" },
+        { "expr": "rate(loganalyzer_ja3_cluster_bans_total{tenant_id=\"$tenant\"}[5m])", "legendFormat": "ja3_cluster" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "JA3 cluster buckets",
+      "gridPos": { "h": 4, "w": 12, "x": 0, "y": 53 },
+      "targets": [{ "expr": "loganalyzer_ja3_clusters_active{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "JA3 cluster bans",
+      "gridPos": { "h": 4, "w": 12, "x": 12, "y": 53 },
+      "targets": [{ "expr": "loganalyzer_ja3_cluster_bans_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "row",
+      "title": "Telegram / Webhook",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 57 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Webhook sent",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 58 },
+      "targets": [{ "expr": "loganalyzer_webhook_sent_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Webhook fail",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 58 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_webhook_fail_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Webhook queue depth",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 58 },
+      "targets": [{ "expr": "loganalyzer_webhook_queue_depth{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Webhook queue drops",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 58 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "orange", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_webhook_queue_drops_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Webhook send rate",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 67 },
+      "targets": [
+        { "expr": "rate(loganalyzer_webhook_sent_total{tenant_id=\"$tenant\"}[5m])", "legendFormat": "sent/s" },
+        { "expr": "rate(loganalyzer_webhook_fail_total{tenant_id=\"$tenant\"}[5m])", "legendFormat": "fail/s" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "Telegram route (P2)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 62 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Telegram route",
+      "description": "1 = CRIT→kanal, WARN→DM. 0 = tek CHAT_ID listesi.",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 63 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "OFF" }, "1": { "text": "ON" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "orange", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_webhook_telegram_route{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Batch window (sec)",
+      "description": "WARN/INFO ozet penceresi. 0 = her alarm ayri mesaj.",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 63 },
+      "targets": [{ "expr": "loganalyzer_webhook_telegram_batch_sec{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Webhook sent (route modu)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 63 },
+      "targets": [{ "expr": "loganalyzer_webhook_sent_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "Webhook fail",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 63 },
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "green", "value": null },
+              { "color": "red", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_webhook_fail_total{tenant_id=\"$tenant\"}" }]
+    }
+  ],
+  "time": { "from": "now-1h", "to": "now" }
+}

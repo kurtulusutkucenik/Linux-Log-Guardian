@@ -1,0 +1,411 @@
+# type|comm|detail|name|inc_sig
+execve|bash||Terminal shell spawned|bash|INC_SIG_EBPF_EXECVE
+execve|sh||Terminal shell spawned|sh|INC_SIG_EBPF_EXECVE
+execve|dash||Terminal shell spawned|dash|INC_SIG_EBPF_EXECVE
+execve|zsh||Terminal shell spawned|zsh|INC_SIG_EBPF_EXECVE
+execve|nc||Netcat execution|nc|INC_SIG_EBPF_EXECVE
+execve|ncat||Netcat execution|ncat|INC_SIG_EBPF_EXECVE
+execve|python|-c|Python one-liner|python|-c|INC_SIG_EBPF_EXECVE
+execve|perl|-e|Perl one-liner|perl|-e|INC_SIG_EBPF_EXECVE
+execve|curl||Curl from web context|curl|INC_SIG_EBPF_EXECVE
+execve|wget||Wget from web context|wget|INC_SIG_EBPF_EXECVE
+openat||/etc/passwd|Read etc passwd|/etc/passwd|INC_SIG_EBPF_LINEAGE
+openat||/etc/shadow|Read etc shadow|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat||id_rsa|SSH key access|id_rsa|INC_SIG_EBPF_LINEAGE
+openat||.ssh/|SSH directory access|.ssh/|INC_SIG_EBPF_LINEAGE
+openat||/proc/self|Proc self enumeration|/proc/self|INC_SIG_EBPF_LINEAGE
+write||/etc/|Write below etc|/etc/|INC_SIG_EBPF_LINEAGE
+write||crontab|Cron persistence|crontab|INC_SIG_EBPF_LINEAGE
+write||.bashrc|Shell profile write|.bashrc|INC_SIG_EBPF_LINEAGE
+write||webshell|Webshell drop|webshell|INC_SIG_EBPF_LINEAGE
+write||.php|PHP file write|.php|INC_SIG_EBPF_LINEAGE
+connect||:4444|Suspicious outbound 4444|:4444|INC_SIG_EBPF_OUTBOUND
+connect||:1337|Suspicious outbound 1337|:1337|INC_SIG_EBPF_OUTBOUND
+connect||tor|Tor-like connect|tor|INC_SIG_EBPF_OUTBOUND
+connect||pastebin|Pastebin egress|pastebin|INC_SIG_EBPF_OUTBOUND
+connect||ngrok|Ngrok tunnel|ngrok|INC_SIG_EBPF_OUTBOUND
+execve||memfd|Memfd execution|memfd|INC_SIG_EBPF_EXECVE
+openat||kubeconfig|Read kubeconfig|kubeconfig|INC_SIG_EBPF_LINEAGE
+openat||docker.sock|Read docker socket|docker.sock|INC_SIG_EBPF_LINEAGE
+openat||.env|Sensitive env file|.env|INC_SIG_EBPF_LINEAGE
+execve|bash|/dev/tcp|Reverse shell bash|bash|/dev/tcp|INC_SIG_EBPF_EXECVE
+execve||base64|Base64 decode exec|base64|INC_SIG_EBPF_EXECVE
+execve||+x|Chmod suspicious|+x|INC_SIG_EBPF_EXECVE
+execve|sudo||Sudo elevation|sudo|INC_SIG_EBPF_EXECVE
+write||/var/log/|Sensitive write var log|/var/log/|INC_SIG_EBPF_LINEAGE
+openat||shadow-|Read shadow backup|shadow-|INC_SIG_EBPF_LINEAGE
+openat||passwd-|Read passwd backup|passwd-|INC_SIG_EBPF_LINEAGE
+openat||.aws/credentials|Access aws credentials|.aws/credentials|INC_SIG_EBPF_LINEAGE
+openat||gcloud|Access gcloud config|gcloud|INC_SIG_EBPF_LINEAGE
+openat||secrets|Read kubernetes secrets|secrets|INC_SIG_EBPF_LINEAGE
+write||.service|Write systemd unit|.service|INC_SIG_EBPF_LINEAGE
+write||rc.local|Write rc local|rc.local|INC_SIG_EBPF_LINEAGE
+write||sudoers|Modify sudoers|sudoers|INC_SIG_EBPF_LINEAGE
+write||/etc/hosts|Modify hosts file|/etc/hosts|INC_SIG_EBPF_LINEAGE
+execve|nmap||Nmap execution|nmap|INC_SIG_EBPF_EXECVE
+execve|masscan||Masscan execution|masscan|INC_SIG_EBPF_EXECVE
+execve|tcpdump||Tcpdump sniff|tcpdump|INC_SIG_EBPF_EXECVE
+execve|tshark||Tshark sniff|tshark|INC_SIG_EBPF_EXECVE
+execve|socat||Socat relay|socat|INC_SIG_EBPF_EXECVE
+execve|openssl||Openssl s client|openssl|INC_SIG_EBPF_EXECVE
+execve|ruby|-e|Ruby one liner|ruby|-e|INC_SIG_EBPF_EXECVE
+execve|node|-e|Node eval|node|-e|INC_SIG_EBPF_EXECVE
+execve|php|-r|Php cli exec|php|-r|INC_SIG_EBPF_EXECVE
+execve||powershell|PowerShell style|powershell|INC_SIG_EBPF_EXECVE
+execve||curl|Curl pipe bash|curl|INC_SIG_EBPF_EXECVE
+execve||bash|Curl pipe bash|bash|INC_SIG_EBPF_EXECVE
+execve||wget|Wget pipe sh|wget|INC_SIG_EBPF_EXECVE
+execve||sh|Wget pipe sh|sh|INC_SIG_EBPF_EXECVE
+execve||/dev/tcp/|Reverse shell dev tcp|/dev/tcp/|INC_SIG_EBPF_EXECVE
+connect||:5555|Bind shell listener|:5555|INC_SIG_EBPF_OUTBOUND
+connect||:4444|Metasploit default|:4444|INC_SIG_EBPF_OUTBOUND
+connect||:8443|Cobalt strike beacon|:8443|INC_SIG_EBPF_OUTBOUND
+execve|dig||DNS tunnel dig|dig|INC_SIG_EBPF_EXECVE
+execve|nslookup||Nslookup recon|nslookup|INC_SIG_EBPF_EXECVE
+execve|whois||Whois lookup|whois|INC_SIG_EBPF_EXECVE
+execve|git|clone|Git clone suspicious|git|clone|INC_SIG_EBPF_EXECVE
+execve|docker|run|Docker run shell|docker|run|INC_SIG_EBPF_EXECVE
+execve|kubectl|exec|Kubectl exec|kubectl|exec|INC_SIG_EBPF_EXECVE
+execve|helm||Helm install|helm|INC_SIG_EBPF_EXECVE
+execve|terraform||Terraform apply|terraform|INC_SIG_EBPF_EXECVE
+openat||/proc/self/maps|Sensitive proc maps|/proc/self/maps|INC_SIG_EBPF_LINEAGE
+openat||LD_PRELOAD|LD preload hijack|LD_PRELOAD|INC_SIG_EBPF_LINEAGE
+openat||/etc/shadow|Read sensitive file untrusted|/etc/shadow|INC_SIG_EBPF_LINEAGE
+execve|bash||Terminal shell in container|bash|INC_SIG_EBPF_EXECVE
+execve|sh||Terminal shell in container|sh|INC_SIG_EBPF_EXECVE
+connect||:4444|Suspicious outbound|:4444|INC_SIG_EBPF_OUTBOUND
+write|ash|/etc/zsh|Modify Shell Configuration File|ash|/etc/zsh|INC_SIG_EBPF_LINEAGE
+write|ash|bash_config_files|Modify Shell Configuration File|ash|bash_config_files|INC_SIG_EBPF_LINEAGE
+write|ash|csh_config_files|Modify Shell Configuration File|ash|csh_config_files|INC_SIG_EBPF_LINEAGE
+write|bash|/etc/zsh|Modify Shell Configuration File|bash|/etc/zsh|INC_SIG_EBPF_LINEAGE
+write|bash|bash_config_files|Modify Shell Configuration File|bash|bash_config_files|INC_SIG_EBPF_LINEAGE
+write|bash|csh_config_files|Modify Shell Configuration File|bash|csh_config_files|INC_SIG_EBPF_LINEAGE
+write|csh|/etc/zsh|Modify Shell Configuration File|csh|/etc/zsh|INC_SIG_EBPF_LINEAGE
+write|csh|bash_config_files|Modify Shell Configuration File|csh|bash_config_files|INC_SIG_EBPF_LINEAGE
+write|csh|csh_config_files|Modify Shell Configuration File|csh|csh_config_files|INC_SIG_EBPF_LINEAGE
+write|ksh|/etc/zsh|Modify Shell Configuration File|ksh|/etc/zsh|INC_SIG_EBPF_LINEAGE
+write|ksh|bash_config_files|Modify Shell Configuration File|ksh|bash_config_files|INC_SIG_EBPF_LINEAGE
+write|ksh|csh_config_files|Modify Shell Configuration File|ksh|csh_config_files|INC_SIG_EBPF_LINEAGE
+execve||/etc/cron|Schedule Cron Jobs|/etc/cron|INC_SIG_EBPF_EXECVE
+openat|sshd|/root/.ssh|Read ssh information|sshd|/root/.ssh|INC_SIG_EBPF_LINEAGE
+openat|sftp-server|/root/.ssh|Read ssh information|sftp-server|/root/.ssh|INC_SIG_EBPF_LINEAGE
+openat|ssh-agent|/root/.ssh|Read ssh information|ssh-agent|/root/.ssh|INC_SIG_EBPF_LINEAGE
+openat|ssh|/root/.ssh|Read ssh information|ssh|/root/.ssh|INC_SIG_EBPF_LINEAGE
+execve|mysqld||DB program spawned process|mysqld|INC_SIG_EBPF_EXECVE
+execve|postgres||DB program spawned process|postgres|INC_SIG_EBPF_EXECVE
+execve|sqlplus||DB program spawned process|sqlplus|INC_SIG_EBPF_EXECVE
+execve|docker_binaries|sdjagent.jar|Change thread namespace|docker_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|k8s_binaries|sdjagent.jar|Change thread namespace|k8s_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|lxd_binaries|sdjagent.jar|Change thread namespace|lxd_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|nsenter|sdjagent.jar|Change thread namespace|nsenter|sdjagent.jar|INC_SIG_EBPF_EXECVE
+connect|coreutils_binaries|:53|System procs network activity|coreutils_binaries|:53|INC_SIG_EBPF_OUTBOUND
+connect|user_mgmt_binaries|:53|System procs network activity|user_mgmt_binaries|:53|INC_SIG_EBPF_OUTBOUND
+connect|ash|:53|System procs network activity|ash|:53|INC_SIG_EBPF_OUTBOUND
+connect|bash|:53|System procs network activity|bash|:53|INC_SIG_EBPF_OUTBOUND
+execve|curl||Program run with disallowed http proxy env|curl|INC_SIG_EBPF_EXECVE
+execve|wget||Program run with disallowed http proxy env|wget|INC_SIG_EBPF_EXECVE
+execve|known_setuid_binaries|sdjagent.jar|Non sudo setuid|known_setuid_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|userexec_binaries|sdjagent.jar|Non sudo setuid|userexec_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|mail_binaries|sdjagent.jar|Non sudo setuid|mail_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|docker_binaries|sdjagent.jar|Non sudo setuid|docker_binaries|sdjagent.jar|INC_SIG_EBPF_EXECVE
+execve|login_binaries||User mgmt binaries|login_binaries|INC_SIG_EBPF_EXECVE
+execve|passwd_binaries||User mgmt binaries|passwd_binaries|INC_SIG_EBPF_EXECVE
+execve|shadowutils_binaries||User mgmt binaries|shadowutils_binaries|INC_SIG_EBPF_EXECVE
+execve|su||User mgmt binaries|su|INC_SIG_EBPF_EXECVE
+execve|sudo||User mgmt binaries|sudo|INC_SIG_EBPF_EXECVE
+execve|lastlog||User mgmt binaries|lastlog|INC_SIG_EBPF_EXECVE
+execve|nologin||User mgmt binaries|nologin|INC_SIG_EBPF_EXECVE
+execve|unix_chkpwd||User mgmt binaries|unix_chkpwd|INC_SIG_EBPF_EXECVE
+openat|blkid|/dev/tty|Create files below dev|blkid|/dev/tty|INC_SIG_EBPF_LINEAGE
+openat|blkid|/dev/null|Create files below dev|blkid|/dev/null|INC_SIG_EBPF_LINEAGE
+openat|blkid|/dev/stdin|Create files below dev|blkid|/dev/stdin|INC_SIG_EBPF_LINEAGE
+openat|rename_device|/dev/tty|Create files below dev|rename_device|/dev/tty|INC_SIG_EBPF_LINEAGE
+openat|rename_device|/dev/null|Create files below dev|rename_device|/dev/null|INC_SIG_EBPF_LINEAGE
+openat|rename_device|/dev/stdin|Create files below dev|rename_device|/dev/stdin|INC_SIG_EBPF_LINEAGE
+openat|update_engine|/dev/tty|Create files below dev|update_engine|/dev/tty|INC_SIG_EBPF_LINEAGE
+openat|update_engine|/dev/null|Create files below dev|update_engine|/dev/null|INC_SIG_EBPF_LINEAGE
+openat|update_engine|/dev/stdin|Create files below dev|update_engine|/dev/stdin|INC_SIG_EBPF_LINEAGE
+openat|sgdisk|/dev/tty|Create files below dev|sgdisk|/dev/tty|INC_SIG_EBPF_LINEAGE
+openat|sgdisk|/dev/null|Create files below dev|sgdisk|/dev/null|INC_SIG_EBPF_LINEAGE
+openat|sgdisk|/dev/stdin|Create files below dev|sgdisk|/dev/stdin|INC_SIG_EBPF_LINEAGE
+execve|rpm_binaries||Launch Package Management Process in Container|rpm_binaries|INC_SIG_EBPF_EXECVE
+execve|deb_binaries||Launch Package Management Process in Container|deb_binaries|INC_SIG_EBPF_EXECVE
+execve|update-alternat||Launch Package Management Process in Container|update-alternat|INC_SIG_EBPF_EXECVE
+execve|gem||Launch Package Management Process in Container|gem|INC_SIG_EBPF_EXECVE
+execve|npm||Launch Package Management Process in Container|npm|INC_SIG_EBPF_EXECVE
+execve|python_package_managers||Launch Package Management Process in Container|python_package_managers|INC_SIG_EBPF_EXECVE
+execve|sane-utils.post||Launch Package Management Process in Container|sane-utils.post|INC_SIG_EBPF_EXECVE
+execve|alternatives||Launch Package Management Process in Container|alternatives|INC_SIG_EBPF_EXECVE
+execve|nc||Launch Suspicious Network Tool in Container|nc|INC_SIG_EBPF_EXECVE
+execve|ncat||Launch Suspicious Network Tool in Container|ncat|INC_SIG_EBPF_EXECVE
+execve|netcat||Launch Suspicious Network Tool in Container|netcat|INC_SIG_EBPF_EXECVE
+execve|nmap||Launch Suspicious Network Tool in Container|nmap|INC_SIG_EBPF_EXECVE
+execve|dig||Launch Suspicious Network Tool in Container|dig|INC_SIG_EBPF_EXECVE
+execve|tcpdump||Launch Suspicious Network Tool in Container|tcpdump|INC_SIG_EBPF_EXECVE
+execve|tshark||Launch Suspicious Network Tool in Container|tshark|INC_SIG_EBPF_EXECVE
+execve|ngrep||Launch Suspicious Network Tool in Container|ngrep|INC_SIG_EBPF_EXECVE
+execve|nc||Launch Suspicious Network Tool on Host|nc|INC_SIG_EBPF_EXECVE
+execve|ncat||Launch Suspicious Network Tool on Host|ncat|INC_SIG_EBPF_EXECVE
+execve|netcat||Launch Suspicious Network Tool on Host|netcat|INC_SIG_EBPF_EXECVE
+execve|nmap||Launch Suspicious Network Tool on Host|nmap|INC_SIG_EBPF_EXECVE
+execve|dig||Launch Suspicious Network Tool on Host|dig|INC_SIG_EBPF_EXECVE
+execve|tcpdump||Launch Suspicious Network Tool on Host|tcpdump|INC_SIG_EBPF_EXECVE
+execve|tshark||Launch Suspicious Network Tool on Host|tshark|INC_SIG_EBPF_EXECVE
+execve|ngrep||Launch Suspicious Network Tool on Host|ngrep|INC_SIG_EBPF_EXECVE
+write|docker|/var/lib/docker|Delete or rename shell history|docker|/var/lib/docker|INC_SIG_EBPF_LINEAGE
+write|dockerd|/var/lib/docker|Delete or rename shell history|dockerd|/var/lib/docker|INC_SIG_EBPF_LINEAGE
+write|containerd-shim|/var/lib/docker|Delete or rename shell history|containerd-shim|/var/lib/docker|INC_SIG_EBPF_LINEAGE
+write|pause|/var/lib/docker|Delete or rename shell history|pause|/var/lib/docker|INC_SIG_EBPF_LINEAGE
+execve|hyperkube||Set Setuid or Setgid bit|hyperkube|INC_SIG_EBPF_EXECVE
+execve|kubelet||Set Setuid or Setgid bit|kubelet|INC_SIG_EBPF_EXECVE
+execve|k3s-agent||Set Setuid or Setgid bit|k3s-agent|INC_SIG_EBPF_EXECVE
+execve|rsync||Launch Remote File Copy Tools in Container|rsync|INC_SIG_EBPF_EXECVE
+execve|scp||Launch Remote File Copy Tools in Container|scp|INC_SIG_EBPF_EXECVE
+execve|sftp||Launch Remote File Copy Tools in Container|sftp|INC_SIG_EBPF_EXECVE
+execve|dcp||Launch Remote File Copy Tools in Container|dcp|INC_SIG_EBPF_EXECVE
+execve|mount||Mount Launched in Privileged Container|mount|INC_SIG_EBPF_EXECVE
+execve|wget||Launch Ingress Remote File Copy Tools in Container|wget|INC_SIG_EBPF_EXECVE
+execve|curl||Launch Ingress Remote File Copy Tools in Container|curl|INC_SIG_EBPF_EXECVE
+openat|scsi_id||Read environment variable from /proc files|scsi_id|INC_SIG_EBPF_LINEAGE
+openat|argoexec||Read environment variable from /proc files|argoexec|INC_SIG_EBPF_LINEAGE
+openat|tar|/etc|Exfiltrating Artifacts via Kubernetes Control Plane|tar|/etc|INC_SIG_EBPF_LINEAGE
+openat|tar|/proc|Exfiltrating Artifacts via Kubernetes Control Plane|tar|/proc|INC_SIG_EBPF_LINEAGE
+openat|tar|/lib|Exfiltrating Artifacts via Kubernetes Control Plane|tar|/lib|INC_SIG_EBPF_LINEAGE
+write|sshd|/root/.ssh|Adding ssh keys to authorized_keys|sshd|/root/.ssh|INC_SIG_EBPF_LINEAGE
+write|sftp-server|/root/.ssh|Adding ssh keys to authorized_keys|sftp-server|/root/.ssh|INC_SIG_EBPF_LINEAGE
+write|ssh-agent|/root/.ssh|Adding ssh keys to authorized_keys|ssh-agent|/root/.ssh|INC_SIG_EBPF_LINEAGE
+write|ssh|/root/.ssh|Adding ssh keys to authorized_keys|ssh|/root/.ssh|INC_SIG_EBPF_LINEAGE
+openat|sshd||Backdoored library loaded into SSHD (CVE-2024-3094)|sshd|INC_SIG_EBPF_LINEAGE
+execve|falco||BPF Program Not Profiled|falco|INC_SIG_EBPF_EXECVE
+execve|bpftool||BPF Program Not Profiled|bpftool|INC_SIG_EBPF_EXECVE
+execve|systemd||BPF Program Not Profiled|systemd|INC_SIG_EBPF_EXECVE
+openat|ash|/etc/zsh|Read Shell Configuration File|ash|/etc/zsh|INC_SIG_EBPF_LINEAGE
+openat|ash|bash_config_files|Read Shell Configuration File|ash|bash_config_files|INC_SIG_EBPF_LINEAGE
+openat|ash|csh_config_files|Read Shell Configuration File|ash|csh_config_files|INC_SIG_EBPF_LINEAGE
+openat|bash|/etc/zsh|Read Shell Configuration File|bash|/etc/zsh|INC_SIG_EBPF_LINEAGE
+openat|bash|bash_config_files|Read Shell Configuration File|bash|bash_config_files|INC_SIG_EBPF_LINEAGE
+openat|bash|csh_config_files|Read Shell Configuration File|bash|csh_config_files|INC_SIG_EBPF_LINEAGE
+openat|csh|/etc/zsh|Read Shell Configuration File|csh|/etc/zsh|INC_SIG_EBPF_LINEAGE
+openat|csh|bash_config_files|Read Shell Configuration File|csh|bash_config_files|INC_SIG_EBPF_LINEAGE
+openat|csh|csh_config_files|Read Shell Configuration File|csh|csh_config_files|INC_SIG_EBPF_LINEAGE
+openat|ksh|/etc/zsh|Read Shell Configuration File|ksh|/etc/zsh|INC_SIG_EBPF_LINEAGE
+openat|ksh|bash_config_files|Read Shell Configuration File|ksh|bash_config_files|INC_SIG_EBPF_LINEAGE
+openat|ksh|csh_config_files|Read Shell Configuration File|ksh|csh_config_files|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt|Update Package Repository|rpm_binaries|/etc/apt/sources.lis|INC_SIG_EBPF_LINEAGE
+write|deb_binaries|/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt|Update Package Repository|deb_binaries|/etc/apt/sources.lis|INC_SIG_EBPF_LINEAGE
+write|update-alternat|/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt|Update Package Repository|update-alternat|/etc/apt/sources.lis|INC_SIG_EBPF_LINEAGE
+write|gem|/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt|Update Package Repository|gem|/etc/apt/sources.lis|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|/bin, /sbin, /usr/bin, /usr/sbin|Write below binary dir|rpm_binaries|/bin, /sbin, /usr/bi|INC_SIG_EBPF_LINEAGE
+write|deb_binaries|/bin, /sbin, /usr/bin, /usr/sbin|Write below binary dir|deb_binaries|/bin, /sbin, /usr/bi|INC_SIG_EBPF_LINEAGE
+write|update-alternat|/bin, /sbin, /usr/bin, /usr/sbin|Write below binary dir|update-alternat|/bin, /sbin, /usr/bi|INC_SIG_EBPF_LINEAGE
+write|gem|/bin, /sbin, /usr/bin, /usr/sbin|Write below binary dir|gem|/bin, /sbin, /usr/bi|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|/home/core/.ssh|Write below monitored dir|rpm_binaries|/home/core/.ssh|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh|Write below monitored dir|rpm_binaries|/boot, /lib, /lib64,|INC_SIG_EBPF_LINEAGE
+write|deb_binaries|/home/core/.ssh|Write below monitored dir|deb_binaries|/home/core/.ssh|INC_SIG_EBPF_LINEAGE
+write|deb_binaries|/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh|Write below monitored dir|deb_binaries|/boot, /lib, /lib64,|INC_SIG_EBPF_LINEAGE
+write|update-alternat|/home/core/.ssh|Write below monitored dir|update-alternat|/home/core/.ssh|INC_SIG_EBPF_LINEAGE
+write|update-alternat|/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh|Write below monitored dir|update-alternat|/boot, /lib, /lib64,|INC_SIG_EBPF_LINEAGE
+write|gem|/home/core/.ssh|Write below monitored dir|gem|/home/core/.ssh|INC_SIG_EBPF_LINEAGE
+write|gem|/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh|Write below monitored dir|gem|/boot, /lib, /lib64,|INC_SIG_EBPF_LINEAGE
+write|passwd_binaries|/etc/|Write below etc|passwd_binaries|/etc/|INC_SIG_EBPF_LINEAGE
+write|passwd_binaries|/etc/sw/keys|Write below etc|passwd_binaries|/etc/sw/keys|INC_SIG_EBPF_LINEAGE
+write|passwd_binaries|/etc/pki/realms|Write below etc|passwd_binaries|/etc/pki/realms|INC_SIG_EBPF_LINEAGE
+write|shadowutils_binaries|/etc/|Write below etc|shadowutils_binaries|/etc/|INC_SIG_EBPF_LINEAGE
+write|shadowutils_binaries|/etc/sw/keys|Write below etc|shadowutils_binaries|/etc/sw/keys|INC_SIG_EBPF_LINEAGE
+write|shadowutils_binaries|/etc/pki/realms|Write below etc|shadowutils_binaries|/etc/pki/realms|INC_SIG_EBPF_LINEAGE
+write|sysdigcloud_binaries|/etc/|Write below etc|sysdigcloud_binaries|/etc/|INC_SIG_EBPF_LINEAGE
+write|sysdigcloud_binaries|/etc/sw/keys|Write below etc|sysdigcloud_binaries|/etc/sw/keys|INC_SIG_EBPF_LINEAGE
+write|sysdigcloud_binaries|/etc/pki/realms|Write below etc|sysdigcloud_binaries|/etc/pki/realms|INC_SIG_EBPF_LINEAGE
+write|package_mgmt_binaries|/etc/|Write below etc|package_mgmt_binaries|/etc/|INC_SIG_EBPF_LINEAGE
+write|package_mgmt_binaries|/etc/sw/keys|Write below etc|package_mgmt_binaries|/etc/sw/keys|INC_SIG_EBPF_LINEAGE
+write|package_mgmt_binaries|/etc/pki/realms|Write below etc|package_mgmt_binaries|/etc/pki/realms|INC_SIG_EBPF_LINEAGE
+write|kubectl|/root/|Write below root|kubectl|/root/|INC_SIG_EBPF_LINEAGE
+write|kubectl|/root/.ZAP|Write below root|kubectl|/root/.ZAP|INC_SIG_EBPF_LINEAGE
+write|kubectl|/root/airflow|Write below root|kubectl|/root/airflow|INC_SIG_EBPF_LINEAGE
+write|oc|/root/|Write below root|oc|/root/|INC_SIG_EBPF_LINEAGE
+write|oc|/root/.ZAP|Write below root|oc|/root/.ZAP|INC_SIG_EBPF_LINEAGE
+write|oc|/root/airflow|Write below root|oc|/root/airflow|INC_SIG_EBPF_LINEAGE
+write|gugent|/root/|Write below root|gugent|/root/|INC_SIG_EBPF_LINEAGE
+write|gugent|/root/.ZAP|Write below root|gugent|/root/.ZAP|INC_SIG_EBPF_LINEAGE
+write|gugent|/root/airflow|Write below root|gugent|/root/airflow|INC_SIG_EBPF_LINEAGE
+write|dse-entrypoint|/root/|Write below root|dse-entrypoint|/root/|INC_SIG_EBPF_LINEAGE
+write|dse-entrypoint|/root/.ZAP|Write below root|dse-entrypoint|/root/.ZAP|INC_SIG_EBPF_LINEAGE
+write|dse-entrypoint|/root/airflow|Write below root|dse-entrypoint|/root/airflow|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|/var/lib/rpm|Write below rpm database|rpm_binaries|/var/lib/rpm|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|ansible|Write below rpm database|rpm_binaries|ansible|INC_SIG_EBPF_LINEAGE
+write|rpm_binaries|yum-dump.py|Write below rpm database|rpm_binaries|yum-dump.py|INC_SIG_EBPF_LINEAGE
+write|openscap_rpm_binaries|/var/lib/rpm|Write below rpm database|openscap_rpm_binaries|/var/lib/rpm|INC_SIG_EBPF_LINEAGE
+write|openscap_rpm_binaries|ansible|Write below rpm database|openscap_rpm_binaries|ansible|INC_SIG_EBPF_LINEAGE
+write|openscap_rpm_binaries|yum-dump.py|Write below rpm database|openscap_rpm_binaries|yum-dump.py|INC_SIG_EBPF_LINEAGE
+write|salt-call|/var/lib/rpm|Write below rpm database|salt-call|/var/lib/rpm|INC_SIG_EBPF_LINEAGE
+write|salt-call|ansible|Write below rpm database|salt-call|ansible|INC_SIG_EBPF_LINEAGE
+write|salt-call|yum-dump.py|Write below rpm database|salt-call|yum-dump.py|INC_SIG_EBPF_LINEAGE
+write|salt-minion|/var/lib/rpm|Write below rpm database|salt-minion|/var/lib/rpm|INC_SIG_EBPF_LINEAGE
+write|salt-minion|ansible|Write below rpm database|salt-minion|ansible|INC_SIG_EBPF_LINEAGE
+write|salt-minion|yum-dump.py|Write below rpm database|salt-minion|yum-dump.py|INC_SIG_EBPF_LINEAGE
+execve|rpm_binaries||Modify binary dirs|rpm_binaries|INC_SIG_EBPF_EXECVE
+execve|deb_binaries||Modify binary dirs|deb_binaries|INC_SIG_EBPF_EXECVE
+execve|update-alternat||Modify binary dirs|update-alternat|INC_SIG_EBPF_EXECVE
+execve|gem||Modify binary dirs|gem|INC_SIG_EBPF_EXECVE
+execve|npm||Modify binary dirs|npm|INC_SIG_EBPF_EXECVE
+execve|python_package_managers||Modify binary dirs|python_package_managers|INC_SIG_EBPF_EXECVE
+execve|sane-utils.post||Modify binary dirs|sane-utils.post|INC_SIG_EBPF_EXECVE
+execve|alternatives||Modify binary dirs|alternatives|INC_SIG_EBPF_EXECVE
+execve|rpm_binaries||Mkdir binary dirs|rpm_binaries|INC_SIG_EBPF_EXECVE
+execve|deb_binaries||Mkdir binary dirs|deb_binaries|INC_SIG_EBPF_EXECVE
+execve|update-alternat||Mkdir binary dirs|update-alternat|INC_SIG_EBPF_EXECVE
+execve|gem||Mkdir binary dirs|gem|INC_SIG_EBPF_EXECVE
+execve|npm||Mkdir binary dirs|npm|INC_SIG_EBPF_EXECVE
+execve|python_package_managers||Mkdir binary dirs|python_package_managers|INC_SIG_EBPF_EXECVE
+execve|sane-utils.post||Mkdir binary dirs|sane-utils.post|INC_SIG_EBPF_EXECVE
+execve|alternatives||Mkdir binary dirs|alternatives|INC_SIG_EBPF_EXECVE
+connect|lua||Interpreted procs inbound network activity|lua|INC_SIG_EBPF_OUTBOUND
+connect|node||Interpreted procs inbound network activity|node|INC_SIG_EBPF_OUTBOUND
+connect|perl||Interpreted procs inbound network activity|perl|INC_SIG_EBPF_OUTBOUND
+connect|perl5||Interpreted procs inbound network activity|perl5|INC_SIG_EBPF_OUTBOUND
+connect|perl6||Interpreted procs inbound network activity|perl6|INC_SIG_EBPF_OUTBOUND
+connect|php||Interpreted procs inbound network activity|php|INC_SIG_EBPF_OUTBOUND
+connect|python||Interpreted procs inbound network activity|python|INC_SIG_EBPF_OUTBOUND
+connect|python2||Interpreted procs inbound network activity|python2|INC_SIG_EBPF_OUTBOUND
+connect|lua||Interpreted procs outbound network activity|lua|INC_SIG_EBPF_OUTBOUND
+connect|node||Interpreted procs outbound network activity|node|INC_SIG_EBPF_OUTBOUND
+connect|perl||Interpreted procs outbound network activity|perl|INC_SIG_EBPF_OUTBOUND
+connect|perl5||Interpreted procs outbound network activity|perl5|INC_SIG_EBPF_OUTBOUND
+connect|perl6||Interpreted procs outbound network activity|perl6|INC_SIG_EBPF_OUTBOUND
+connect|php||Interpreted procs outbound network activity|php|INC_SIG_EBPF_OUTBOUND
+connect|python||Interpreted procs outbound network activity|python|INC_SIG_EBPF_OUTBOUND
+connect|python2||Interpreted procs outbound network activity|python2|INC_SIG_EBPF_OUTBOUND
+execve|docker||Kubernetes Client Tool Launched in Container|docker|INC_SIG_EBPF_EXECVE
+execve|kubectl||Kubernetes Client Tool Launched in Container|kubectl|INC_SIG_EBPF_EXECVE
+execve|crictl||Kubernetes Client Tool Launched in Container|crictl|INC_SIG_EBPF_EXECVE
+execve|sudoedit||Sudo Potential Privilege Escalation|sudoedit|INC_SIG_EBPF_EXECVE
+execve|sudo||Sudo Potential Privilege Escalation|sudo|INC_SIG_EBPF_EXECVE
+execve|pkexec||Polkit Local Privilege Escalation Vulnerability (CVE-2021-4034)|pkexec|INC_SIG_EBPF_EXECVE
+write|docker|/proc/self/fd/|Modify Container Entrypoint|docker|/proc/self/fd/|INC_SIG_EBPF_LINEAGE
+write|dockerd|/proc/self/fd/|Modify Container Entrypoint|dockerd|/proc/self/fd/|INC_SIG_EBPF_LINEAGE
+write|containerd-shim|/proc/self/fd/|Modify Container Entrypoint|containerd-shim|/proc/self/fd/|INC_SIG_EBPF_LINEAGE
+write|pause|/proc/self/fd/|Modify Container Entrypoint|pause|/proc/self/fd/|INC_SIG_EBPF_LINEAGE
+execve|w||Basic Interactive Reconnaissance|w|INC_SIG_EBPF_EXECVE
+execve|whoami||Basic Interactive Reconnaissance|whoami|INC_SIG_EBPF_EXECVE
+execve|id||Basic Interactive Reconnaissance|id|INC_SIG_EBPF_EXECVE
+execve|who||Basic Interactive Reconnaissance|who|INC_SIG_EBPF_EXECVE
+execve|uname||Basic Interactive Reconnaissance|uname|INC_SIG_EBPF_EXECVE
+execve|nc||Network Tool Executed During NPM Package Install|nc|INC_SIG_EBPF_EXECVE
+execve|ncat||Network Tool Executed During NPM Package Install|ncat|INC_SIG_EBPF_EXECVE
+execve|netcat||Network Tool Executed During NPM Package Install|netcat|INC_SIG_EBPF_EXECVE
+execve|nmap||Network Tool Executed During NPM Package Install|nmap|INC_SIG_EBPF_EXECVE
+execve|dig||Network Tool Executed During NPM Package Install|dig|INC_SIG_EBPF_EXECVE
+execve|tcpdump||Network Tool Executed During NPM Package Install|tcpdump|INC_SIG_EBPF_EXECVE
+execve|tshark||Network Tool Executed During NPM Package Install|tshark|INC_SIG_EBPF_EXECVE
+execve|ngrep||Network Tool Executed During NPM Package Install|ngrep|INC_SIG_EBPF_EXECVE
+execve|xmrig||Known Cryptominer Process Executed|xmrig|INC_SIG_EBPF_EXECVE
+execve|xmr-stak||Known Cryptominer Process Executed|xmr-stak|INC_SIG_EBPF_EXECVE
+execve|minerd||Known Cryptominer Process Executed|minerd|INC_SIG_EBPF_EXECVE
+execve|minergate||Known Cryptominer Process Executed|minergate|INC_SIG_EBPF_EXECVE
+execve|cpuminer||Known Cryptominer Process Executed|cpuminer|INC_SIG_EBPF_EXECVE
+execve|ccminer||Known Cryptominer Process Executed|ccminer|INC_SIG_EBPF_EXECVE
+execve|ethminer||Known Cryptominer Process Executed|ethminer|INC_SIG_EBPF_EXECVE
+execve|cgminer||Known Cryptominer Process Executed|cgminer|INC_SIG_EBPF_EXECVE
+execve|ash||Web Server Spawned Shell|ash|INC_SIG_EBPF_EXECVE
+execve|bash||Web Server Spawned Shell|bash|INC_SIG_EBPF_EXECVE
+execve|csh||Web Server Spawned Shell|csh|INC_SIG_EBPF_EXECVE
+execve|ksh||Web Server Spawned Shell|ksh|INC_SIG_EBPF_EXECVE
+execve|sh||Web Server Spawned Shell|sh|INC_SIG_EBPF_EXECVE
+execve|tcsh||Web Server Spawned Shell|tcsh|INC_SIG_EBPF_EXECVE
+execve|zsh||Web Server Spawned Shell|zsh|INC_SIG_EBPF_EXECVE
+execve|dash||Web Server Spawned Shell|dash|INC_SIG_EBPF_EXECVE
+execve|curl||Web Server Spawned Suspicious Child Process|curl|INC_SIG_EBPF_EXECVE
+execve|wget||Web Server Spawned Suspicious Child Process|wget|INC_SIG_EBPF_EXECVE
+execve|nc||Web Server Spawned Suspicious Child Process|nc|INC_SIG_EBPF_EXECVE
+execve|ncat||Web Server Spawned Suspicious Child Process|ncat|INC_SIG_EBPF_EXECVE
+execve|netcat||Web Server Spawned Suspicious Child Process|netcat|INC_SIG_EBPF_EXECVE
+execve|socat||Web Server Spawned Suspicious Child Process|socat|INC_SIG_EBPF_EXECVE
+execve|python||Web Server Spawned Suspicious Child Process|python|INC_SIG_EBPF_EXECVE
+execve|python3||Web Server Spawned Suspicious Child Process|python3|INC_SIG_EBPF_EXECVE
+openat||/dev/sd|Privileged Container Device Access|/dev/sd|INC_SIG_EBPF_LINEAGE
+openat||/dev/nvme|Privileged Container Device Access|/dev/nvme|INC_SIG_EBPF_LINEAGE
+openat||/dev/vd|Privileged Container Device Access|/dev/vd|INC_SIG_EBPF_LINEAGE
+openat||/dev/xvd|Privileged Container Device Access|/dev/xvd|INC_SIG_EBPF_LINEAGE
+openat|containerd|/host/|Container Access to Host Sensitive Paths|containerd|/host/|INC_SIG_EBPF_LINEAGE
+openat|containerd|/rootfs/|Container Access to Host Sensitive Paths|containerd|/rootfs/|INC_SIG_EBPF_LINEAGE
+openat|containerd|/hostfs/|Container Access to Host Sensitive Paths|containerd|/hostfs/|INC_SIG_EBPF_LINEAGE
+openat|containerd-shim|/host/|Container Access to Host Sensitive Paths|containerd-shim|/host/|INC_SIG_EBPF_LINEAGE
+openat|containerd-shim|/rootfs/|Container Access to Host Sensitive Paths|containerd-shim|/rootfs/|INC_SIG_EBPF_LINEAGE
+openat|containerd-shim|/hostfs/|Container Access to Host Sensitive Paths|containerd-shim|/hostfs/|INC_SIG_EBPF_LINEAGE
+openat|dockerd|/host/|Container Access to Host Sensitive Paths|dockerd|/host/|INC_SIG_EBPF_LINEAGE
+openat|dockerd|/rootfs/|Container Access to Host Sensitive Paths|dockerd|/rootfs/|INC_SIG_EBPF_LINEAGE
+openat|dockerd|/hostfs/|Container Access to Host Sensitive Paths|dockerd|/hostfs/|INC_SIG_EBPF_LINEAGE
+openat|docker|/host/|Container Access to Host Sensitive Paths|docker|/host/|INC_SIG_EBPF_LINEAGE
+openat|docker|/rootfs/|Container Access to Host Sensitive Paths|docker|/rootfs/|INC_SIG_EBPF_LINEAGE
+openat|docker|/hostfs/|Container Access to Host Sensitive Paths|docker|/hostfs/|INC_SIG_EBPF_LINEAGE
+openat||/etc/|Directory traversal monitored file read|/etc/|INC_SIG_EBPF_LINEAGE
+openat||/root/.ssh|Directory traversal monitored file read|/root/.ssh|INC_SIG_EBPF_LINEAGE
+openat|http_server_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file trusted after startup|http_server_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|http_server_binaries|/etc/shadow|Read sensitive file trusted after startup|http_server_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|http_server_binaries|/etc/sudoers|Read sensitive file trusted after startup|http_server_binaries|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+openat|db_server_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file trusted after startup|db_server_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|db_server_binaries|/etc/shadow|Read sensitive file trusted after startup|db_server_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|db_server_binaries|/etc/sudoers|Read sensitive file trusted after startup|db_server_binaries|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+openat|docker_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file trusted after startup|docker_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|docker_binaries|/etc/shadow|Read sensitive file trusted after startup|docker_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|docker_binaries|/etc/sudoers|Read sensitive file trusted after startup|docker_binaries|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+openat|sshd|/etc/sudoers.d, /etc/pam.d|Read sensitive file trusted after startup|sshd|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|sshd|/etc/shadow|Read sensitive file trusted after startup|sshd|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|sshd|/etc/sudoers|Read sensitive file trusted after startup|sshd|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+openat|user_mgmt_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file untrusted|user_mgmt_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|user_mgmt_binaries|ansible|Read sensitive file untrusted|user_mgmt_binaries|ansible|INC_SIG_EBPF_LINEAGE
+openat|user_mgmt_binaries|/etc/shadow|Read sensitive file untrusted|user_mgmt_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|userexec_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file untrusted|userexec_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|userexec_binaries|ansible|Read sensitive file untrusted|userexec_binaries|ansible|INC_SIG_EBPF_LINEAGE
+openat|userexec_binaries|/etc/shadow|Read sensitive file untrusted|userexec_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|package_mgmt_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file untrusted|package_mgmt_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|package_mgmt_binaries|ansible|Read sensitive file untrusted|package_mgmt_binaries|ansible|INC_SIG_EBPF_LINEAGE
+openat|package_mgmt_binaries|/etc/shadow|Read sensitive file untrusted|package_mgmt_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+openat|cron_binaries|/etc/sudoers.d, /etc/pam.d|Read sensitive file untrusted|cron_binaries|/etc/sudoers.d, /etc|INC_SIG_EBPF_LINEAGE
+openat|cron_binaries|ansible|Read sensitive file untrusted|cron_binaries|ansible|INC_SIG_EBPF_LINEAGE
+openat|cron_binaries|/etc/shadow|Read sensitive file untrusted|cron_binaries|/etc/shadow|INC_SIG_EBPF_LINEAGE
+execve|ash||Run shell untrusted|ash|INC_SIG_EBPF_EXECVE
+execve|bash||Run shell untrusted|bash|INC_SIG_EBPF_EXECVE
+execve|csh||Run shell untrusted|csh|INC_SIG_EBPF_EXECVE
+execve|ksh||Run shell untrusted|ksh|INC_SIG_EBPF_EXECVE
+execve|sh||Run shell untrusted|sh|INC_SIG_EBPF_EXECVE
+execve|tcsh||Run shell untrusted|tcsh|INC_SIG_EBPF_EXECVE
+execve|zsh||Run shell untrusted|zsh|INC_SIG_EBPF_EXECVE
+execve|dash||Run shell untrusted|dash|INC_SIG_EBPF_EXECVE
+execve|systemd-logind||System user interactive|systemd-logind|INC_SIG_EBPF_EXECVE
+execve|login||System user interactive|login|INC_SIG_EBPF_EXECVE
+execve|ash||Terminal shell in container|ash|INC_SIG_EBPF_EXECVE
+execve|csh||Terminal shell in container|csh|INC_SIG_EBPF_EXECVE
+execve|ksh||Terminal shell in container|ksh|INC_SIG_EBPF_EXECVE
+execve|tcsh||Terminal shell in container|tcsh|INC_SIG_EBPF_EXECVE
+execve|zsh||Terminal shell in container|zsh|INC_SIG_EBPF_EXECVE
+execve|dash||Terminal shell in container|dash|INC_SIG_EBPF_EXECVE
+execve|grep||Search Private Keys or Passwords|grep|INC_SIG_EBPF_EXECVE
+execve|egrep||Search Private Keys or Passwords|egrep|INC_SIG_EBPF_EXECVE
+execve|fgrep||Search Private Keys or Passwords|fgrep|INC_SIG_EBPF_EXECVE
+write|containerd|/var/log, /dev/log|Clear Log Activities|containerd|/var/log, /dev/log|INC_SIG_EBPF_LINEAGE
+execve|shred||Remove Bulk Data from Disk|shred|INC_SIG_EBPF_EXECVE
+execve|mkfs||Remove Bulk Data from Disk|mkfs|INC_SIG_EBPF_EXECVE
+execve|mke2fs||Remove Bulk Data from Disk|mke2fs|INC_SIG_EBPF_EXECVE
+write||/etc/shadow|Create Symlink Over Sensitive Files|/etc/shadow|INC_SIG_EBPF_LINEAGE
+write||/etc/sudoers|Create Symlink Over Sensitive Files|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+write||/etc/pam.conf|Create Symlink Over Sensitive Files|/etc/pam.conf|INC_SIG_EBPF_LINEAGE
+write||/etc/security/pwquality.conf|Create Symlink Over Sensitive Files|/etc/security/pwqual|INC_SIG_EBPF_LINEAGE
+write||/etc/shadow|Create Hardlink Over Sensitive Files|/etc/shadow|INC_SIG_EBPF_LINEAGE
+write||/etc/sudoers|Create Hardlink Over Sensitive Files|/etc/sudoers|INC_SIG_EBPF_LINEAGE
+write||/etc/pam.conf|Create Hardlink Over Sensitive Files|/etc/pam.conf|INC_SIG_EBPF_LINEAGE
+write||/etc/security/pwquality.conf|Create Hardlink Over Sensitive Files|/etc/security/pwqual|INC_SIG_EBPF_LINEAGE
+execve|debugfs||Debugfs Launched in Privileged Container|debugfs|INC_SIG_EBPF_EXECVE
+execve|known_ptrace_binaries||PTRACE attached to process|known_ptrace_binaries|INC_SIG_EBPF_EXECVE
+execve|grep||Find AWS Credentials|grep|INC_SIG_EBPF_EXECVE
+execve|egrep||Find AWS Credentials|egrep|INC_SIG_EBPF_EXECVE
+execve|fgrep||Find AWS Credentials|fgrep|INC_SIG_EBPF_EXECVE
+execve|ash||Execution from /dev/shm|ash|INC_SIG_EBPF_EXECVE
+execve|bash||Execution from /dev/shm|bash|INC_SIG_EBPF_EXECVE
+execve|csh||Execution from /dev/shm|csh|INC_SIG_EBPF_EXECVE
+execve|ksh||Execution from /dev/shm|ksh|INC_SIG_EBPF_EXECVE
+execve|sh||Execution from /dev/shm|sh|INC_SIG_EBPF_EXECVE
+execve|tcsh||Execution from /dev/shm|tcsh|INC_SIG_EBPF_EXECVE
+execve|zsh||Execution from /dev/shm|zsh|INC_SIG_EBPF_EXECVE
+execve|dash||Execution from /dev/shm|dash|INC_SIG_EBPF_EXECVE
+execve|runc||Fileless execution via memfd_create|runc|INC_SIG_EBPF_EXECVE

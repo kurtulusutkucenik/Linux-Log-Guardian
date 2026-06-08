@@ -1,0 +1,27 @@
+{
+  "date": "2026-06-08T19:49:26.695595+00:00",
+  "api_port": 8090,
+  "api_reachable": true,
+  "endpoint": "/api/v1/consult",
+  "tests": {
+    "sqli_union": {
+      "http_code": 403,
+      "expect": 403
+    },
+    "sqli_or": {
+      "http_code": 403,
+      "expect": 403
+    },
+    "benign_health": {
+      "http_code": 200,
+      "expect": 200
+    },
+    "lfi_attack": {
+      "http_code": 403,
+      "expect": 403
+    }
+  },
+  "nginx_snippet": "examples/nginx/snippets/log-guardian-inline-consult.conf",
+  "pass": true,
+  "note": "make install sonrasi: sudo systemctl restart log-guardian"
+}

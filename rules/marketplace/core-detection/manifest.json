@@ -1,0 +1,6 @@
+{
+  "id": "core-detection",
+  "version": "1.0.0",
+  "min_guardian": "2.0",
+  "tags": ["waf", "falco", "tier1"]
+}

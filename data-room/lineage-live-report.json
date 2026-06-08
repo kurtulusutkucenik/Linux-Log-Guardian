@@ -1,0 +1,19 @@
+{
+  "date": "2026-06-08T19:52:21.986876+00:00",
+  "pass": true,
+  "active_trees": 1,
+  "max_risk": 91.2,
+  "chain_risk": 91.2,
+  "event_types": [
+    "EXEC_SHELL",
+    "FILE_READ",
+    "FILE_WRITE",
+    "NET_CONNECT"
+  ],
+  "event_count": 4,
+  "comm": "nginx",
+  "export": "daemon",
+  "resolver_source": "daemon_file",
+  "demo_pid": 4821,
+  "hint": "openat/execve/connect zinciri \u2014 uretim attack_tree.json formati"
+}

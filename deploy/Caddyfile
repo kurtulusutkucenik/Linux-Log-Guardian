@@ -1,0 +1,36 @@
+# Log Guardian — TLS reverse proxy (Caddy)
+#
+# Prod (Let's Encrypt):
+#   DOMAIN=dashboard.example.com docker compose -f docker-compose.prod.yml up -d
+#
+# Lokal self-signed:
+#   DOMAIN=localhost docker compose -f docker-compose.prod.yml up -d
+#   curl -k https://localhost/api/tier
+
+{
+	email {$ACME_EMAIL:ops@localhost}
+}
+
+{$DOMAIN:localhost} {
+	encode gzip zstd
+
+	reverse_proxy dashboard:3000
+
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Frame-Options "DENY"
+		X-Content-Type-Options "nosniff"
+		Referrer-Policy "strict-origin-when-cross-origin"
+		-Server
+	}
+
+	log {
+		output stdout
+		format console
+	}
+}
+
+# HTTP → HTTPS
+http://{$DOMAIN:localhost} {
+	redir https://{host}{uri} permanent
+}

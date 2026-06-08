@@ -1,0 +1,69 @@
+{
+  "date": "2026-06-08T17:30:54.444209+00:00",
+  "corpus": "corpus/tr_hosting_corpus.access",
+  "manifest": "corpus/tr_hosting_manifest.json",
+  "lines_total": 500,
+  "alerts_total": 500,
+  "attack_recall_pct": 100.0,
+  "category_avg_recall_pct": 100.0,
+  "target_recall_pct": 85.0,
+  "categories": {
+    "benign": {
+      "lines": 93,
+      "alerts": 93,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "brute": {
+      "lines": 79,
+      "alerts": 79,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "lfi": {
+      "lines": 80,
+      "alerts": 80,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "log4shell": {
+      "lines": 1,
+      "alerts": 1,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "nosql": {
+      "lines": 1,
+      "alerts": 1,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "rce": {
+      "lines": 1,
+      "alerts": 1,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "scanner": {
+      "lines": 80,
+      "alerts": 80,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "sqli": {
+      "lines": 84,
+      "alerts": 84,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "xss": {
+      "lines": 81,
+      "alerts": 81,
+      "recall_pct": 100.0,
+      "pass": true
+    }
+  },
+  "pass": true,
+  "note": "Corpus replay (offline). brute=canli flood (LIVE=1). bash scripts/real_attack_suite.sh LIVE=1",
+  "attack_only_pass": true
+}

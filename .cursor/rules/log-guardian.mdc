@@ -1,0 +1,25 @@
+---
+description: Linux Log Guardian marka, kapsam ve modül rehberi
+alwaysApply: true
+---
+
+# Log Guardian proje kuralları
+
+## Marka
+- Dış metin: **Linux Log Guardian** veya kısaca **Log Guardian**
+- Binary/paket: `log-guardian` — "loganalyzer" yalnızca legacy metrik prefix (`loganalyzer_*`)
+- Detay: `docs/BRANDING.md`
+
+## Kapsam mesajı
+- İlk anlatım: **Core** = nginx 15 dk, log→WAF→kernel ban
+- XDR, fleet, Wasm, Copilot LLM = **opsiyonel katman**; "hepsi bir arada platform" dili kullanma
+- Enterprise roadmap = uzun vadeli vizyon; quickstart ile çeliştirme
+
+## Kod gezinme
+- Modül haritası ve token kuralları: kök `AGENTS.md`
+- Tüm repoyu tarama yerine göreve özgü 3–8 dosya oku
+- `graphify-out/graph.json` ham halde context'e ekleme
+
+## Grafana
+- Dashboard/alert: `grafana-dashboard.json`, `grafana-alerts.json`
+- Tenant değişkeni: `$tenant` — sorgularda `tenant_id="$tenant"`

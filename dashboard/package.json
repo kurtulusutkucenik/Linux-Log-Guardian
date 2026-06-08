@@ -1,0 +1,40 @@
+{
+  "name": "dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev --webpack",
+    "dev:stop": "bash scripts/dev-stop.sh",
+    "build": "next build --webpack",
+    "start": "next start",
+    "lint": "eslint",
+    "guardian:build": "bash -c 'cd .. && make -j$(nproc 2>/dev/null || echo 2) log-guardian log-guardian-daemon'",
+    "guardian:prod": "bash ../scripts/prod_stack_e2e.sh",
+    "guardian:status": "bash ../scripts/guardian_status_export.sh",
+    "guardian:wasm": "bash ../scripts/wasm_release.sh"
+  },
+  "dependencies": {
+    "@swc/helpers": "^0.5.15",
+    "@prisma/client": "^5.21.1",
+    "axios": "^1.16.1",
+    "clsx": "^2.1.1",
+    "jose": "^6.2.3",
+    "lucide-react": "^1.17.0",
+    "next": "16.2.7",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "recharts": "^3.8.1",
+    "tailwind-merge": "^3.6.0"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.7",
+    "prisma": "^5.21.1",
+    "tailwindcss": "^4",
+    "typescript": "^5"
+  }
+}

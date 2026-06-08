@@ -1,0 +1,49 @@
+name: Release proof pack
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  proof-pack:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
+            libcurl4-openssl-dev libssl-dev liburing-dev pkg-config zip
+
+      - name: Build
+        run: |
+          make fallback
+          make clean
+          make check-deps
+          make -j$(nproc)
+
+      - name: Offline rakip kanit
+        run: |
+          export LOGANALYZER_PASSWORD='DegistirBeni!123'
+          export SKIP_BAN_BENCH=1
+          export LIVE_ATTACK=0
+          FAST=1 bash scripts/competitive_suite.sh || true
+          bash scripts/rakip_kanit.sh
+
+      - name: Release pack
+        run: bash scripts/github_release_pack.sh
+
+      - name: Upload release assets
+        uses: actions/upload-artifact@v4
+        with:
+          name: log-guardian-proof-v${{ github.ref_name }}
+          path: |
+            release-pack.zip
+            competitive-proof.pdf
+            data-room.zip
+            real-attack-report.json
+            ja3-cluster-report.json
+            release-pack/RELEASE_NOTES.md

@@ -1,0 +1,39 @@
+# Log Guardian — OWASP CRS cekirdek imzalari (PCRE2 / JIT)
+# Tam CRS icin: python3 scripts/import_crs.py /path/to/coreruleset/rules
+# Format: CRS_REGEX=<pcre2>  (# opsiyonel yorum)
+
+# --- SQLi (CRS 942 ailesi ozeti) ---
+CRS_REGEX=(?i)(?:union\s+(?:all\s+)?select|select\s+.+\s+from)
+CRS_REGEX=(?i)(?:insert\s+into|delete\s+from|drop\s+(?:table|database))
+CRS_REGEX=(?i)(?:update\s+\w+\s+set|exec\s*\(|execute\s*\()
+CRS_REGEX=(?i)(?:xp_cmdshell|sp_executesql|waitfor\s+delay|benchmark\s*\()
+CRS_REGEX=(?i)(?:0x[0-9a-f]{8,}|char\s*\(\s*\d)
+
+# --- XSS (CRS 941) ---
+CRS_REGEX=(?i)<script[\s>\\/]
+CRS_REGEX=(?i)javascript\s*:
+CRS_REGEX=(?i)on(?:load|error|click|mouse|focus)\s*=
+CRS_REGEX=(?i)(?:document\.cookie|document\.write|\.innerHTML\s*=)
+
+# --- LFI / Path traversal (CRS 930) ---
+CRS_REGEX=(?i)(?:\.\./|\.\.\\|%2e%2e%2f|%252e%252e)
+CRS_REGEX=(?i)(?:/etc/passwd|/etc/shadow|/proc/self/)
+CRS_REGEX=(?i)(?:file://|php://filter|php://input|data://)
+
+# --- RCE / shell (CRS 932) ---
+CRS_REGEX=(?i)(?:\$\(|`[^`]+`|\|\s*(?:sh|bash|zsh)\b)
+CRS_REGEX=(?i)(?:;[\s]*(?:wget|curl|nc|bash|sh)\s)
+CRS_REGEX=(?i)(?:cmd\.exe|powershell\s+-)
+
+# --- SSRF (CRS 931) ---
+CRS_REGEX=(?i)(?:169\.254\.169\.254|metadata\.google)
+CRS_REGEX=(?i)(?:localhost|127\.0\.0\.1|0\.0\.0\.0|::1)
+CRS_REGEX=(?i)(?:gopher://|dict://|file:///)
+
+# --- Scanner / exploit UA (CRS 913) ---
+CRS_REGEX=(?i)(?:sqlmap|nikto|nmap|masscan|acunetix|nessus)
+CRS_REGEX=(?i)(?:dirbuster|gobuster|wfuzz|hydra)
+
+# --- Command injection fragments ---
+CRS_REGEX=(?i)(?:\|\||&&)\s*(?:cat|ls|id|whoami|uname)
+CRS_REGEX=(?i)/(?:bin/sh|bin/bash)\b

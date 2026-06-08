@@ -1,0 +1,28 @@
+# Linux Log Guardian — 72h soak (VPS)
+# Kurulum: sudo bash scripts/install_soak_systemd.sh
+# Baslat:  sudo systemctl start log-guardian-soak
+# Izleme:  bash scripts/soak_status.sh
+[Unit]
+Description=Linux Log Guardian soak test (72h stability)
+Documentation=file://docs/OPERATIONS.md
+After=network-online.target log-guardian.service log-guardian-daemon.service
+Wants=log-guardian.service log-guardian-daemon.service
+ConditionPathExists=@LG_SOAK_WORKDIR@/scripts/soak_test.sh
+
+[Service]
+Type=simple
+WorkingDirectory=@LG_SOAK_WORKDIR@
+Environment=SOAK_DURATION=259200
+Environment=SOAK_INTERVAL=300
+Environment=SOAK_REPORT=soak-report.json
+Environment=LOGANALYZER_PASSWORD=DegistirBeni!123
+EnvironmentFile=-/etc/log-guardian/env
+ExecStart=/bin/bash @LG_SOAK_WORKDIR@/scripts/soak_test.sh
+StandardOutput=append:@LG_SOAK_WORKDIR@/soak.log
+StandardError=append:@LG_SOAK_WORKDIR@/soak.log
+TimeoutStartSec=0
+# Reboot sonrasi otomatik devam ETMEZ — 72h tek parca; VPS acik kalsin
+Restart=no
+
+[Install]
+WantedBy=multi-user.target

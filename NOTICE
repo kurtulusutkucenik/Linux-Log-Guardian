@@ -1,0 +1,46 @@
+Linux Log Guardian — Third-Party Notices
+=========================================
+
+Copyright (c) 2026 kurtulusutkucenik. See LICENSE (MIT).
+
+This product bundles or interacts with the following third-party
+components. Their respective licenses apply to those components only.
+
+Runtime / native (C)
+--------------------
+- libbpf — LGPL-2.1 OR BSD-2-Clause (eBPF CO-RE loader)
+- liburing — MIT OR Apache-2.0 OR GPL-2.0 WITH Linux-syscall-note (io_uring)
+- PCRE2 — BSD 3-Clause (WAF regex engine)
+- SQLite — Public Domain (event / ban DB)
+- libcurl — curl license (threat feed HTTP)
+- systemd — LGPL-2.1+ (optional sd_notify watchdog)
+
+Dashboard (Next.js)
+-------------------
+- Next.js, React — MIT
+- axios, lucide-react, tailwindcss — MIT (see dashboard/package-lock.json)
+
+Rules / threat data (downloaded at runtime, not shipped)
+--------------------------------------------------------
+- OWASP Core Rule Set (CRS) — Apache-2.0 (via scripts/import_crs.py)
+- FireHOL blocklist-ipsets — various; see upstream README
+- ipdeny.com country zones — see ipdeny.com terms
+
+Optional / Pro tier
+-------------------
+- Wasmtime — Apache-2.0 (Wasm plugin runtime, when enabled)
+- Grafana — AGPL-3.0 (external observability UI; not embedded)
+- Prometheus — Apache-2.0 (metrics scrape target)
+
+AI Copilot (optional dashboard feature)
+---------------------------------------
+When enabled, prompts may be sent to configured LLM providers; no model
+weights are included in this repository.
+
+For full license texts, refer to each component's upstream repository or
+your OS package manager (`/usr/share/doc/*/copyright` on Debian/Ubuntu).
+
+Commercial IP assignment
+------------------------
+Exclusive sale of copyright and trademarks is documented separately from
+this MIT Community license. See docs/ for diligence and transfer templates.

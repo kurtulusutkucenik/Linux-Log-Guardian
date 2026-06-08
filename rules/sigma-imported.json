@@ -1,0 +1,10 @@
+{
+  "rules": [
+    {
+      "title": "Suspicious SQL injection strings",
+      "pattern": "(?i)(union\\ select|or\\ 1=1|information_schema)",
+      "file": "sample.yml"
+    }
+  ],
+  "count": 1
+}

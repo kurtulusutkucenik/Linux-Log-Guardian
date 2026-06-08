@@ -1,0 +1,33 @@
+{
+  "version": 1,
+  "marketplace": "log-guardian-rules",
+  "packages": [
+    {
+      "id": "core-detection",
+      "name": "Core Detection Pack",
+      "version": "1.0.0",
+      "author": "Linux Log Guardian",
+      "description": "SQLi, LFI, scanner temel imzalari + Falco host kurallari",
+      "files": [
+        "falco-host.lst",
+        "manifest.json",
+        "rules.waf"
+      ],
+      "sha256": "c678d7011feb73358549882898088886d8e23a5037c0d8deef12511d3a02cfac",
+      "signature": "1bc0dea555e678eba8f5a1e4cb531d8c7734875d1228c8693959db33cd8bb2c3"
+    },
+    {
+      "id": "sigma-web",
+      "name": "Sigma Web Pack",
+      "version": "1.0.0",
+      "author": "Linux Log Guardian",
+      "description": "Sigma ornek kurallari (web logsource)",
+      "files": [
+        "manifest.json",
+        "sigma.rules"
+      ],
+      "sha256": "c574b0dfd8451c68d8e0911836c6c1f561c01ab2c6aa249a4bade3c71576aea7",
+      "signature": "928e3274ed2eeabd44d6874ae7e0d758acf6c74a39cd1e39269494c912b4d8be"
+    }
+  ]
+}

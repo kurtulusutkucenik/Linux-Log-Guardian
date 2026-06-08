@@ -1,0 +1,15 @@
+{
+  "name": "log-guardian",
+  "private": true,
+  "description": "Linux Log Guardian monorepo — npm scriptleri proje kökünden",
+  "scripts": {
+    "dashboard:dev": "npm run dev --prefix dashboard",
+    "dashboard:build": "npm run build --prefix dashboard",
+    "guardian:build": "make -j$(nproc 2>/dev/null || echo 2) log-guardian log-guardian-daemon",
+    "guardian:prod": "bash scripts/prod_stack_e2e.sh",
+    "guardian:suite": "bash scripts/competitive_suite.sh",
+    "guardian:status": "bash scripts/guardian_status_export.sh",
+    "guardian:wasm": "bash scripts/wasm_release.sh",
+    "clean": "bash scripts/clean_workspace.sh"
+  }
+}

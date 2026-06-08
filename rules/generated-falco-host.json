@@ -1,0 +1,3704 @@
+{
+  "version": "2",
+  "engine": "falco_import_v2",
+  "stats": {
+    "files": 6,
+    "falco_rules": 161,
+    "macros": 315,
+    "lists": 107,
+    "skipped": 32
+  },
+  "rules": [
+    {
+      "name": "Terminal shell spawned|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "bash",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell spawned|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "sh",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell spawned|dash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "dash",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell spawned|zsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "zsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Netcat execution|nc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "nc",
+      "detail_sub": null
+    },
+    {
+      "name": "Netcat execution|ncat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "ncat",
+      "detail_sub": null
+    },
+    {
+      "name": "Python one-liner|python|-c",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "python",
+      "detail_sub": "-c"
+    },
+    {
+      "name": "Perl one-liner|perl|-e",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "perl",
+      "detail_sub": "-e"
+    },
+    {
+      "name": "Curl from web context|curl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "curl",
+      "detail_sub": null
+    },
+    {
+      "name": "Wget from web context|wget",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "wget",
+      "detail_sub": null
+    },
+    {
+      "name": "Read etc passwd|/etc/passwd",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/passwd"
+    },
+    {
+      "name": "Read etc shadow|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "SSH key access|id_rsa",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "id_rsa"
+    },
+    {
+      "name": "SSH directory access|.ssh/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".ssh/"
+    },
+    {
+      "name": "Proc self enumeration|/proc/self",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/proc/self"
+    },
+    {
+      "name": "Write below etc|/etc/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Cron persistence|crontab",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "crontab"
+    },
+    {
+      "name": "Shell profile write|.bashrc",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".bashrc"
+    },
+    {
+      "name": "Webshell drop|webshell",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "webshell"
+    },
+    {
+      "name": "PHP file write|.php",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".php"
+    },
+    {
+      "name": "Suspicious outbound 4444|:4444",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ":4444"
+    },
+    {
+      "name": "Suspicious outbound 1337|:1337",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ":1337"
+    },
+    {
+      "name": "Tor-like connect|tor",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "tor"
+    },
+    {
+      "name": "Pastebin egress|pastebin",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "pastebin"
+    },
+    {
+      "name": "Ngrok tunnel|ngrok",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "ngrok"
+    },
+    {
+      "name": "Memfd execution|memfd",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "memfd"
+    },
+    {
+      "name": "Read kubeconfig|kubeconfig",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "kubeconfig"
+    },
+    {
+      "name": "Read docker socket|docker.sock",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "docker.sock"
+    },
+    {
+      "name": "Sensitive env file|.env",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".env"
+    },
+    {
+      "name": "Reverse shell bash|bash|/dev/tcp",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "/dev/tcp"
+    },
+    {
+      "name": "Base64 decode exec|base64",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "base64"
+    },
+    {
+      "name": "Chmod suspicious|+x",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "+x"
+    },
+    {
+      "name": "Sudo elevation|sudo",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": "sudo",
+      "detail_sub": null
+    },
+    {
+      "name": "Sensitive write var log|/var/log/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "builtin-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/var/log/"
+    },
+    {
+      "name": "Read shadow backup|shadow-",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "shadow-"
+    },
+    {
+      "name": "Read passwd backup|passwd-",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "passwd-"
+    },
+    {
+      "name": "Access aws credentials|.aws/credentials",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".aws/credentials"
+    },
+    {
+      "name": "Access gcloud config|gcloud",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "gcloud"
+    },
+    {
+      "name": "Read kubernetes secrets|secrets",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "secrets"
+    },
+    {
+      "name": "Write systemd unit|.service",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ".service"
+    },
+    {
+      "name": "Write rc local|rc.local",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "rc.local"
+    },
+    {
+      "name": "Modify sudoers|sudoers",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "sudoers"
+    },
+    {
+      "name": "Modify hosts file|/etc/hosts",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/hosts"
+    },
+    {
+      "name": "Nmap execution|nmap",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "nmap",
+      "detail_sub": null
+    },
+    {
+      "name": "Masscan execution|masscan",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "masscan",
+      "detail_sub": null
+    },
+    {
+      "name": "Tcpdump sniff|tcpdump",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "tcpdump",
+      "detail_sub": null
+    },
+    {
+      "name": "Tshark sniff|tshark",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "tshark",
+      "detail_sub": null
+    },
+    {
+      "name": "Socat relay|socat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "socat",
+      "detail_sub": null
+    },
+    {
+      "name": "Openssl s client|openssl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "openssl",
+      "detail_sub": null
+    },
+    {
+      "name": "Ruby one liner|ruby|-e",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "ruby",
+      "detail_sub": "-e"
+    },
+    {
+      "name": "Node eval|node|-e",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "node",
+      "detail_sub": "-e"
+    },
+    {
+      "name": "Php cli exec|php|-r",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "php",
+      "detail_sub": "-r"
+    },
+    {
+      "name": "PowerShell style|powershell",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "powershell"
+    },
+    {
+      "name": "Curl pipe bash|curl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "curl"
+    },
+    {
+      "name": "Curl pipe bash|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "bash"
+    },
+    {
+      "name": "Wget pipe sh|wget",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "wget"
+    },
+    {
+      "name": "Wget pipe sh|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "sh"
+    },
+    {
+      "name": "Reverse shell dev tcp|/dev/tcp/",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/dev/tcp/"
+    },
+    {
+      "name": "Bind shell listener|:5555",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ":5555"
+    },
+    {
+      "name": "Metasploit default|:4444",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ":4444"
+    },
+    {
+      "name": "Cobalt strike beacon|:8443",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": ":8443"
+    },
+    {
+      "name": "DNS tunnel dig|dig",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "dig",
+      "detail_sub": null
+    },
+    {
+      "name": "Nslookup recon|nslookup",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "nslookup",
+      "detail_sub": null
+    },
+    {
+      "name": "Whois lookup|whois",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "whois",
+      "detail_sub": null
+    },
+    {
+      "name": "Git clone suspicious|git|clone",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "git",
+      "detail_sub": "clone"
+    },
+    {
+      "name": "Docker run shell|docker|run",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "run"
+    },
+    {
+      "name": "Kubectl exec|kubectl|exec",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "kubectl",
+      "detail_sub": "exec"
+    },
+    {
+      "name": "Helm install|helm",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "helm",
+      "detail_sub": null
+    },
+    {
+      "name": "Terraform apply|terraform",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": "terraform",
+      "detail_sub": null
+    },
+    {
+      "name": "Sensitive proc maps|/proc/self/maps",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "/proc/self/maps"
+    },
+    {
+      "name": "LD preload hijack|LD_PRELOAD",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "extra-pack.yaml",
+      "comm_sub": null,
+      "detail_sub": "LD_PRELOAD"
+    },
+    {
+      "name": "Read sensitive file untrusted|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "sample.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Terminal shell in container|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "sample.yaml",
+      "comm_sub": "bash",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "sample.yaml",
+      "comm_sub": "sh",
+      "detail_sub": null
+    },
+    {
+      "name": "Suspicious outbound|:4444",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "sample.yaml",
+      "comm_sub": null,
+      "detail_sub": ":4444"
+    },
+    {
+      "name": "Modify Shell Configuration File|ash|/etc/zsh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Modify Shell Configuration File|ash|bash_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|ash|csh_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|bash|/etc/zsh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Modify Shell Configuration File|bash|bash_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|bash|csh_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|csh|/etc/zsh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Modify Shell Configuration File|csh|bash_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|csh|csh_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|ksh|/etc/zsh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Modify Shell Configuration File|ksh|bash_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Modify Shell Configuration File|ksh|csh_config_files",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Schedule Cron Jobs|/etc/cron",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/cron"
+    },
+    {
+      "name": "Read ssh information|sshd|/root/.ssh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Read ssh information|sftp-server|/root/.ssh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sftp-server",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Read ssh information|ssh-agent|/root/.ssh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ssh-agent",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Read ssh information|ssh|/root/.ssh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ssh",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "DB program spawned process|mysqld",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "mysqld",
+      "detail_sub": null
+    },
+    {
+      "name": "DB program spawned process|postgres",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "postgres",
+      "detail_sub": null
+    },
+    {
+      "name": "DB program spawned process|sqlplus",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sqlplus",
+      "detail_sub": null
+    },
+    {
+      "name": "Change thread namespace|docker_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "docker_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Change thread namespace|k8s_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "k8s_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Change thread namespace|lxd_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "lxd_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Change thread namespace|nsenter|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nsenter",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "System procs network activity|coreutils_binaries|:53",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "coreutils_binaries",
+      "detail_sub": ":53"
+    },
+    {
+      "name": "System procs network activity|user_mgmt_binaries|:53",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "user_mgmt_binaries",
+      "detail_sub": ":53"
+    },
+    {
+      "name": "System procs network activity|ash|:53",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": ":53"
+    },
+    {
+      "name": "System procs network activity|bash|:53",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": ":53"
+    },
+    {
+      "name": "Program run with disallowed http proxy env|curl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "curl",
+      "detail_sub": null
+    },
+    {
+      "name": "Program run with disallowed http proxy env|wget",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "wget",
+      "detail_sub": null
+    },
+    {
+      "name": "Non sudo setuid|known_setuid_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "known_setuid_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Non sudo setuid|userexec_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "userexec_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Non sudo setuid|mail_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "mail_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "Non sudo setuid|docker_binaries|sdjagent.jar",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "docker_binaries",
+      "detail_sub": "sdjagent.jar"
+    },
+    {
+      "name": "User mgmt binaries|login_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "login_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|passwd_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "passwd_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|shadowutils_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "shadowutils_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|su",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "su",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|sudo",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sudo",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|lastlog",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "lastlog",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|nologin",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nologin",
+      "detail_sub": null
+    },
+    {
+      "name": "User mgmt binaries|unix_chkpwd",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "unix_chkpwd",
+      "detail_sub": null
+    },
+    {
+      "name": "Create files below dev|blkid|/dev/tty",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "blkid",
+      "detail_sub": "/dev/tty"
+    },
+    {
+      "name": "Create files below dev|blkid|/dev/null",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "blkid",
+      "detail_sub": "/dev/null"
+    },
+    {
+      "name": "Create files below dev|blkid|/dev/stdin",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "blkid",
+      "detail_sub": "/dev/stdin"
+    },
+    {
+      "name": "Create files below dev|rename_device|/dev/tty",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "rename_device",
+      "detail_sub": "/dev/tty"
+    },
+    {
+      "name": "Create files below dev|rename_device|/dev/null",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "rename_device",
+      "detail_sub": "/dev/null"
+    },
+    {
+      "name": "Create files below dev|rename_device|/dev/stdin",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "rename_device",
+      "detail_sub": "/dev/stdin"
+    },
+    {
+      "name": "Create files below dev|update_engine|/dev/tty",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "update_engine",
+      "detail_sub": "/dev/tty"
+    },
+    {
+      "name": "Create files below dev|update_engine|/dev/null",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "update_engine",
+      "detail_sub": "/dev/null"
+    },
+    {
+      "name": "Create files below dev|update_engine|/dev/stdin",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "update_engine",
+      "detail_sub": "/dev/stdin"
+    },
+    {
+      "name": "Create files below dev|sgdisk|/dev/tty",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sgdisk",
+      "detail_sub": "/dev/tty"
+    },
+    {
+      "name": "Create files below dev|sgdisk|/dev/null",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sgdisk",
+      "detail_sub": "/dev/null"
+    },
+    {
+      "name": "Create files below dev|sgdisk|/dev/stdin",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sgdisk",
+      "detail_sub": "/dev/stdin"
+    },
+    {
+      "name": "Launch Package Management Process in Container|rpm_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|deb_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|update-alternat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|gem",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|npm",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "npm",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|python_package_managers",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "python_package_managers",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|sane-utils.post",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sane-utils.post",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Package Management Process in Container|alternatives",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "alternatives",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|nc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nc",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|ncat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ncat",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|netcat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "netcat",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|nmap",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nmap",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|dig",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "dig",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|tcpdump",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tcpdump",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|tshark",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tshark",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool in Container|ngrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ngrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|nc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nc",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|ncat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ncat",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|netcat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "netcat",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|nmap",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "nmap",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|dig",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "dig",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|tcpdump",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tcpdump",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|tshark",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tshark",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Suspicious Network Tool on Host|ngrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ngrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Delete or rename shell history|docker|/var/lib/docker",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "/var/lib/docker"
+    },
+    {
+      "name": "Delete or rename shell history|dockerd|/var/lib/docker",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "dockerd",
+      "detail_sub": "/var/lib/docker"
+    },
+    {
+      "name": "Delete or rename shell history|containerd-shim|/var/lib/docker",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "containerd-shim",
+      "detail_sub": "/var/lib/docker"
+    },
+    {
+      "name": "Delete or rename shell history|pause|/var/lib/docker",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "pause",
+      "detail_sub": "/var/lib/docker"
+    },
+    {
+      "name": "Set Setuid or Setgid bit|hyperkube",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "hyperkube",
+      "detail_sub": null
+    },
+    {
+      "name": "Set Setuid or Setgid bit|kubelet",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "kubelet",
+      "detail_sub": null
+    },
+    {
+      "name": "Set Setuid or Setgid bit|k3s-agent",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "k3s-agent",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Remote File Copy Tools in Container|rsync",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "rsync",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Remote File Copy Tools in Container|scp",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "scp",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Remote File Copy Tools in Container|sftp",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sftp",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Remote File Copy Tools in Container|dcp",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "dcp",
+      "detail_sub": null
+    },
+    {
+      "name": "Mount Launched in Privileged Container|mount",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "mount",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Ingress Remote File Copy Tools in Container|wget",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "wget",
+      "detail_sub": null
+    },
+    {
+      "name": "Launch Ingress Remote File Copy Tools in Container|curl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "curl",
+      "detail_sub": null
+    },
+    {
+      "name": "Read environment variable from /proc files|scsi_id",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "scsi_id",
+      "detail_sub": null
+    },
+    {
+      "name": "Read environment variable from /proc files|argoexec",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "argoexec",
+      "detail_sub": null
+    },
+    {
+      "name": "Exfiltrating Artifacts via Kubernetes Control Plane|tar|/etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tar",
+      "detail_sub": "/etc"
+    },
+    {
+      "name": "Exfiltrating Artifacts via Kubernetes Control Plane|tar|/proc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tar",
+      "detail_sub": "/proc"
+    },
+    {
+      "name": "Exfiltrating Artifacts via Kubernetes Control Plane|tar|/lib",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "tar",
+      "detail_sub": "/lib"
+    },
+    {
+      "name": "Adding ssh keys to authorized_keys|sshd|/root/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Adding ssh keys to authorized_keys|sftp-server|/root/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sftp-server",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Adding ssh keys to authorized_keys|ssh-agent|/root/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ssh-agent",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Adding ssh keys to authorized_keys|ssh|/root/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "ssh",
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Backdoored library loaded into SSHD (CVE-2024-3094)|sshd",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": null
+    },
+    {
+      "name": "BPF Program Not Profiled|falco",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "falco",
+      "detail_sub": null
+    },
+    {
+      "name": "BPF Program Not Profiled|bpftool",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "bpftool",
+      "detail_sub": null
+    },
+    {
+      "name": "BPF Program Not Profiled|systemd",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-incubating_rules.yaml",
+      "comm_sub": "systemd",
+      "detail_sub": null
+    },
+    {
+      "name": "Read Shell Configuration File|ash|/etc/zsh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Read Shell Configuration File|ash|bash_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|ash|csh_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|bash|/etc/zsh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Read Shell Configuration File|bash|bash_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|bash|csh_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|csh|/etc/zsh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Read Shell Configuration File|csh|bash_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|csh|csh_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|ksh|/etc/zsh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "/etc/zsh"
+    },
+    {
+      "name": "Read Shell Configuration File|ksh|bash_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "bash_config_files"
+    },
+    {
+      "name": "Read Shell Configuration File|ksh|csh_config_files",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": "csh_config_files"
+    },
+    {
+      "name": "Update Package Repository|rpm_binaries|/etc/apt/sources.lis",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt"
+    },
+    {
+      "name": "Update Package Repository|deb_binaries|/etc/apt/sources.lis",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": "/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt"
+    },
+    {
+      "name": "Update Package Repository|update-alternat|/etc/apt/sources.lis",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": "/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt"
+    },
+    {
+      "name": "Update Package Repository|gem|/etc/apt/sources.lis",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": "/etc/apt/sources.list.d, /etc/yum.repos.d, /etc/apt"
+    },
+    {
+      "name": "Write below binary dir|rpm_binaries|/bin, /sbin, /usr/bi",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "/bin, /sbin, /usr/bin, /usr/sbin"
+    },
+    {
+      "name": "Write below binary dir|deb_binaries|/bin, /sbin, /usr/bi",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": "/bin, /sbin, /usr/bin, /usr/sbin"
+    },
+    {
+      "name": "Write below binary dir|update-alternat|/bin, /sbin, /usr/bi",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": "/bin, /sbin, /usr/bin, /usr/sbin"
+    },
+    {
+      "name": "Write below binary dir|gem|/bin, /sbin, /usr/bi",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": "/bin, /sbin, /usr/bin, /usr/sbin"
+    },
+    {
+      "name": "Write below monitored dir|rpm_binaries|/home/core/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "/home/core/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|rpm_binaries|/boot, /lib, /lib64,",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|deb_binaries|/home/core/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": "/home/core/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|deb_binaries|/boot, /lib, /lib64,",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": "/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|update-alternat|/home/core/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": "/home/core/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|update-alternat|/boot, /lib, /lib64,",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": "/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|gem|/home/core/.ssh",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": "/home/core/.ssh"
+    },
+    {
+      "name": "Write below monitored dir|gem|/boot, /lib, /lib64,",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": "/boot, /lib, /lib64, /usr/lib, /usr/local/lib, /usr/local/sbin, /usr/local/bin, /root/.ssh"
+    },
+    {
+      "name": "Write below etc|passwd_binaries|/etc/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "passwd_binaries",
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Write below etc|passwd_binaries|/etc/sw/keys",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "passwd_binaries",
+      "detail_sub": "/etc/sw/keys"
+    },
+    {
+      "name": "Write below etc|passwd_binaries|/etc/pki/realms",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "passwd_binaries",
+      "detail_sub": "/etc/pki/realms"
+    },
+    {
+      "name": "Write below etc|shadowutils_binaries|/etc/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "shadowutils_binaries",
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Write below etc|shadowutils_binaries|/etc/sw/keys",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "shadowutils_binaries",
+      "detail_sub": "/etc/sw/keys"
+    },
+    {
+      "name": "Write below etc|shadowutils_binaries|/etc/pki/realms",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "shadowutils_binaries",
+      "detail_sub": "/etc/pki/realms"
+    },
+    {
+      "name": "Write below etc|sysdigcloud_binaries|/etc/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sysdigcloud_binaries",
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Write below etc|sysdigcloud_binaries|/etc/sw/keys",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sysdigcloud_binaries",
+      "detail_sub": "/etc/sw/keys"
+    },
+    {
+      "name": "Write below etc|sysdigcloud_binaries|/etc/pki/realms",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sysdigcloud_binaries",
+      "detail_sub": "/etc/pki/realms"
+    },
+    {
+      "name": "Write below etc|package_mgmt_binaries|/etc/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Write below etc|package_mgmt_binaries|/etc/sw/keys",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "/etc/sw/keys"
+    },
+    {
+      "name": "Write below etc|package_mgmt_binaries|/etc/pki/realms",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "/etc/pki/realms"
+    },
+    {
+      "name": "Write below root|kubectl|/root/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "kubectl",
+      "detail_sub": "/root/"
+    },
+    {
+      "name": "Write below root|kubectl|/root/.ZAP",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "kubectl",
+      "detail_sub": "/root/.ZAP"
+    },
+    {
+      "name": "Write below root|kubectl|/root/airflow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "kubectl",
+      "detail_sub": "/root/airflow"
+    },
+    {
+      "name": "Write below root|oc|/root/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "oc",
+      "detail_sub": "/root/"
+    },
+    {
+      "name": "Write below root|oc|/root/.ZAP",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "oc",
+      "detail_sub": "/root/.ZAP"
+    },
+    {
+      "name": "Write below root|oc|/root/airflow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "oc",
+      "detail_sub": "/root/airflow"
+    },
+    {
+      "name": "Write below root|gugent|/root/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gugent",
+      "detail_sub": "/root/"
+    },
+    {
+      "name": "Write below root|gugent|/root/.ZAP",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gugent",
+      "detail_sub": "/root/.ZAP"
+    },
+    {
+      "name": "Write below root|gugent|/root/airflow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gugent",
+      "detail_sub": "/root/airflow"
+    },
+    {
+      "name": "Write below root|dse-entrypoint|/root/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dse-entrypoint",
+      "detail_sub": "/root/"
+    },
+    {
+      "name": "Write below root|dse-entrypoint|/root/.ZAP",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dse-entrypoint",
+      "detail_sub": "/root/.ZAP"
+    },
+    {
+      "name": "Write below root|dse-entrypoint|/root/airflow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dse-entrypoint",
+      "detail_sub": "/root/airflow"
+    },
+    {
+      "name": "Write below rpm database|rpm_binaries|/var/lib/rpm",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "/var/lib/rpm"
+    },
+    {
+      "name": "Write below rpm database|rpm_binaries|ansible",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Write below rpm database|rpm_binaries|yum-dump.py",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": "yum-dump.py"
+    },
+    {
+      "name": "Write below rpm database|openscap_rpm_binaries|/var/lib/rpm",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "openscap_rpm_binaries",
+      "detail_sub": "/var/lib/rpm"
+    },
+    {
+      "name": "Write below rpm database|openscap_rpm_binaries|ansible",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "openscap_rpm_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Write below rpm database|openscap_rpm_binaries|yum-dump.py",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "openscap_rpm_binaries",
+      "detail_sub": "yum-dump.py"
+    },
+    {
+      "name": "Write below rpm database|salt-call|/var/lib/rpm",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-call",
+      "detail_sub": "/var/lib/rpm"
+    },
+    {
+      "name": "Write below rpm database|salt-call|ansible",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-call",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Write below rpm database|salt-call|yum-dump.py",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-call",
+      "detail_sub": "yum-dump.py"
+    },
+    {
+      "name": "Write below rpm database|salt-minion|/var/lib/rpm",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-minion",
+      "detail_sub": "/var/lib/rpm"
+    },
+    {
+      "name": "Write below rpm database|salt-minion|ansible",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-minion",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Write below rpm database|salt-minion|yum-dump.py",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "salt-minion",
+      "detail_sub": "yum-dump.py"
+    },
+    {
+      "name": "Modify binary dirs|rpm_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|deb_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|update-alternat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|gem",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|npm",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "npm",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|python_package_managers",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python_package_managers",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|sane-utils.post",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sane-utils.post",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify binary dirs|alternatives",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "alternatives",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|rpm_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "rpm_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|deb_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "deb_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|update-alternat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "update-alternat",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|gem",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "gem",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|npm",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "npm",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|python_package_managers",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python_package_managers",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|sane-utils.post",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sane-utils.post",
+      "detail_sub": null
+    },
+    {
+      "name": "Mkdir binary dirs|alternatives",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "alternatives",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|lua",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "lua",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|node",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "node",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|perl",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|perl5",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl5",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|perl6",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl6",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|php",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "php",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|python",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs inbound network activity|python2",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python2",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|lua",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "lua",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|node",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "node",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|perl",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|perl5",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl5",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|perl6",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "perl6",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|php",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "php",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|python",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python",
+      "detail_sub": null
+    },
+    {
+      "name": "Interpreted procs outbound network activity|python2",
+      "type": "connect",
+      "inc_sig": "INC_SIG_EBPF_OUTBOUND",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python2",
+      "detail_sub": null
+    },
+    {
+      "name": "Kubernetes Client Tool Launched in Container|docker",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": null
+    },
+    {
+      "name": "Kubernetes Client Tool Launched in Container|kubectl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "kubectl",
+      "detail_sub": null
+    },
+    {
+      "name": "Kubernetes Client Tool Launched in Container|crictl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "crictl",
+      "detail_sub": null
+    },
+    {
+      "name": "Sudo Potential Privilege Escalation|sudoedit",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sudoedit",
+      "detail_sub": null
+    },
+    {
+      "name": "Sudo Potential Privilege Escalation|sudo",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sudo",
+      "detail_sub": null
+    },
+    {
+      "name": "Polkit Local Privilege Escalation Vulnerability (CVE-2021-4034)|pkexec",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "pkexec",
+      "detail_sub": null
+    },
+    {
+      "name": "Modify Container Entrypoint|docker|/proc/self/fd/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "/proc/self/fd/"
+    },
+    {
+      "name": "Modify Container Entrypoint|dockerd|/proc/self/fd/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dockerd",
+      "detail_sub": "/proc/self/fd/"
+    },
+    {
+      "name": "Modify Container Entrypoint|containerd-shim|/proc/self/fd/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd-shim",
+      "detail_sub": "/proc/self/fd/"
+    },
+    {
+      "name": "Modify Container Entrypoint|pause|/proc/self/fd/",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "pause",
+      "detail_sub": "/proc/self/fd/"
+    },
+    {
+      "name": "Basic Interactive Reconnaissance|w",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "w",
+      "detail_sub": null
+    },
+    {
+      "name": "Basic Interactive Reconnaissance|whoami",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "whoami",
+      "detail_sub": null
+    },
+    {
+      "name": "Basic Interactive Reconnaissance|id",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "id",
+      "detail_sub": null
+    },
+    {
+      "name": "Basic Interactive Reconnaissance|who",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "who",
+      "detail_sub": null
+    },
+    {
+      "name": "Basic Interactive Reconnaissance|uname",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "uname",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|nc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "nc",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|ncat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ncat",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|netcat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "netcat",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|nmap",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "nmap",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|dig",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dig",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|tcpdump",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "tcpdump",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|tshark",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "tshark",
+      "detail_sub": null
+    },
+    {
+      "name": "Network Tool Executed During NPM Package Install|ngrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ngrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|xmrig",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "xmrig",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|xmr-stak",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "xmr-stak",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|minerd",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "minerd",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|minergate",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "minergate",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|cpuminer",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "cpuminer",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|ccminer",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ccminer",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|ethminer",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ethminer",
+      "detail_sub": null
+    },
+    {
+      "name": "Known Cryptominer Process Executed|cgminer",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "cgminer",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|ash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|csh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|ksh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "sh",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|tcsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "tcsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|zsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "zsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Shell|dash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dash",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|curl",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "curl",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|wget",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "wget",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|nc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "nc",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|ncat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "ncat",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|netcat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "netcat",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|socat",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "socat",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|python",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python",
+      "detail_sub": null
+    },
+    {
+      "name": "Web Server Spawned Suspicious Child Process|python3",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "python3",
+      "detail_sub": null
+    },
+    {
+      "name": "Privileged Container Device Access|/dev/sd",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/dev/sd"
+    },
+    {
+      "name": "Privileged Container Device Access|/dev/nvme",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/dev/nvme"
+    },
+    {
+      "name": "Privileged Container Device Access|/dev/vd",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/dev/vd"
+    },
+    {
+      "name": "Privileged Container Device Access|/dev/xvd",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/dev/xvd"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd|/host/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd",
+      "detail_sub": "/host/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd|/rootfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd",
+      "detail_sub": "/rootfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd|/hostfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd",
+      "detail_sub": "/hostfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd-shim|/host/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd-shim",
+      "detail_sub": "/host/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd-shim|/rootfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd-shim",
+      "detail_sub": "/rootfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|containerd-shim|/hostfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "containerd-shim",
+      "detail_sub": "/hostfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|dockerd|/host/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dockerd",
+      "detail_sub": "/host/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|dockerd|/rootfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dockerd",
+      "detail_sub": "/rootfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|dockerd|/hostfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "dockerd",
+      "detail_sub": "/hostfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|docker|/host/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "/host/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|docker|/rootfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "/rootfs/"
+    },
+    {
+      "name": "Container Access to Host Sensitive Paths|docker|/hostfs/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco-sandbox_rules.yaml",
+      "comm_sub": "docker",
+      "detail_sub": "/hostfs/"
+    },
+    {
+      "name": "Directory traversal monitored file read|/etc/",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/"
+    },
+    {
+      "name": "Directory traversal monitored file read|/root/.ssh",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/root/.ssh"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|http_server_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "http_server_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|http_server_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "http_server_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|http_server_binaries|/etc/sudoers",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "http_server_binaries",
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|db_server_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "db_server_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|db_server_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "db_server_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|db_server_binaries|/etc/sudoers",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "db_server_binaries",
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|docker_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "docker_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|docker_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "docker_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|docker_binaries|/etc/sudoers",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "docker_binaries",
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|sshd|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|sshd|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file trusted after startup|sshd|/etc/sudoers",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "sshd",
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Read sensitive file untrusted|user_mgmt_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "user_mgmt_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file untrusted|user_mgmt_binaries|ansible",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "user_mgmt_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Read sensitive file untrusted|user_mgmt_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "user_mgmt_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file untrusted|userexec_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "userexec_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file untrusted|userexec_binaries|ansible",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "userexec_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Read sensitive file untrusted|userexec_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "userexec_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file untrusted|package_mgmt_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file untrusted|package_mgmt_binaries|ansible",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Read sensitive file untrusted|package_mgmt_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "package_mgmt_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Read sensitive file untrusted|cron_binaries|/etc/sudoers.d, /etc",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "cron_binaries",
+      "detail_sub": "/etc/sudoers.d, /etc/pam.d"
+    },
+    {
+      "name": "Read sensitive file untrusted|cron_binaries|ansible",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "cron_binaries",
+      "detail_sub": "ansible"
+    },
+    {
+      "name": "Read sensitive file untrusted|cron_binaries|/etc/shadow",
+      "type": "openat",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "cron_binaries",
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Run shell untrusted|ash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|csh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|ksh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "sh",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|tcsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "tcsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|zsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "zsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Run shell untrusted|dash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "dash",
+      "detail_sub": null
+    },
+    {
+      "name": "System user interactive|systemd-logind",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "systemd-logind",
+      "detail_sub": null
+    },
+    {
+      "name": "System user interactive|login",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "login",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|ash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|csh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|ksh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|tcsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "tcsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|zsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "zsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Terminal shell in container|dash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "dash",
+      "detail_sub": null
+    },
+    {
+      "name": "Search Private Keys or Passwords|grep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "grep",
+      "detail_sub": null
+    },
+    {
+      "name": "Search Private Keys or Passwords|egrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "egrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Search Private Keys or Passwords|fgrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "fgrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Clear Log Activities|containerd|/var/log, /dev/log",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "containerd",
+      "detail_sub": "/var/log, /dev/log"
+    },
+    {
+      "name": "Remove Bulk Data from Disk|shred",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "shred",
+      "detail_sub": null
+    },
+    {
+      "name": "Remove Bulk Data from Disk|mkfs",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "mkfs",
+      "detail_sub": null
+    },
+    {
+      "name": "Remove Bulk Data from Disk|mke2fs",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "mke2fs",
+      "detail_sub": null
+    },
+    {
+      "name": "Create Symlink Over Sensitive Files|/etc/shadow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Create Symlink Over Sensitive Files|/etc/sudoers",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Create Symlink Over Sensitive Files|/etc/pam.conf",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/pam.conf"
+    },
+    {
+      "name": "Create Symlink Over Sensitive Files|/etc/security/pwqual",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/security/pwquality.conf"
+    },
+    {
+      "name": "Create Hardlink Over Sensitive Files|/etc/shadow",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/shadow"
+    },
+    {
+      "name": "Create Hardlink Over Sensitive Files|/etc/sudoers",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/sudoers"
+    },
+    {
+      "name": "Create Hardlink Over Sensitive Files|/etc/pam.conf",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/pam.conf"
+    },
+    {
+      "name": "Create Hardlink Over Sensitive Files|/etc/security/pwqual",
+      "type": "write",
+      "inc_sig": "INC_SIG_EBPF_LINEAGE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": null,
+      "detail_sub": "/etc/security/pwquality.conf"
+    },
+    {
+      "name": "Debugfs Launched in Privileged Container|debugfs",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "debugfs",
+      "detail_sub": null
+    },
+    {
+      "name": "PTRACE attached to process|known_ptrace_binaries",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "known_ptrace_binaries",
+      "detail_sub": null
+    },
+    {
+      "name": "Find AWS Credentials|grep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "grep",
+      "detail_sub": null
+    },
+    {
+      "name": "Find AWS Credentials|egrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "egrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Find AWS Credentials|fgrep",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "fgrep",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|ash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ash",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|bash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "bash",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|csh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "csh",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|ksh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "ksh",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|sh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "sh",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|tcsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "tcsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|zsh",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "zsh",
+      "detail_sub": null
+    },
+    {
+      "name": "Execution from /dev/shm|dash",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "dash",
+      "detail_sub": null
+    },
+    {
+      "name": "Fileless execution via memfd_create|runc",
+      "type": "execve",
+      "inc_sig": "INC_SIG_EBPF_EXECVE",
+      "source": "falco_import_v2",
+      "source_file": "falco_rules.yaml",
+      "comm_sub": "runc",
+      "detail_sub": null
+    }
+  ],
+  "count": 410
+}

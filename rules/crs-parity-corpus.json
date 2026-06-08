@@ -1,0 +1,34 @@
+{
+  "version": 1,
+  "description": "OWASP CRS-benzeri saldiri + benign URL ornekleri",
+  "attacks": [
+    { "id": "sqli_union", "category": "sqli", "query": "id=1+UNION+SELECT+null,null" },
+    { "id": "sqli_or", "category": "sqli", "query": "user=admin'+OR+'1'='1" },
+    { "id": "sqli_drop", "category": "sqli", "query": "q=1;+DROP+TABLE+users" },
+    { "id": "sqli_sleep", "category": "sqli", "query": "id=1'+AND+sleep(5)--" },
+    { "id": "xss_script", "category": "xss", "query": "msg=%3Cscript%3Ealert(1)%3C/script%3E" },
+    { "id": "xss_js", "category": "xss", "query": "url=javascript:alert(document.cookie)" },
+    { "id": "xss_onerror", "category": "xss", "query": "name=%3Cimg+src=x+onerror=alert(1)%3E" },
+    { "id": "lfi_passwd", "category": "lfi", "query": "file=../../../etc/passwd" },
+    { "id": "lfi_encoded", "category": "lfi", "query": "path=%2e%2e%2f%2e%2e%2fetc%2fshadow" },
+    { "id": "rfi_php", "category": "rfi", "query": "page=php://filter/read=convert.base64-encode/resource=index.php" },
+    { "id": "rce_shell", "category": "rce", "query": "cmd=;+/bin/bash+-c+id" },
+    { "id": "rce_pipe", "category": "rce", "query": "x=|+whoami" },
+    { "id": "ssrf_meta", "category": "ssrf", "query": "url=http://169.254.169.254/latest/meta-data/" },
+    { "id": "scanner_ua", "category": "scanner", "query": "scan=1", "ua": "sqlmap/1.4.12" },
+    { "id": "scanner_nikto", "category": "scanner", "query": "test=1", "ua": "Nikto/2.1.6" },
+    { "id": "cmd_powershell", "category": "rce", "query": "run=powershell+-enc+abc" },
+    { "id": "sqli_hex", "category": "sqli", "query": "id=0x41414141" },
+    { "id": "xss_inner", "category": "xss", "query": "body=document.write('xss')" }
+  ],
+  "benign": [
+    { "id": "home", "query": "page=home" },
+    { "id": "search", "query": "q=hello+world" },
+    { "id": "product", "query": "sku=ABC-12345" },
+    { "id": "login_fail", "query": "user=demo&pass=wrong", "status_note": "401 ok" },
+    { "id": "api_json", "query": "format=json&limit=10" },
+    { "id": "static", "query": "v=20260603" },
+    { "id": "health", "query": "" },
+    { "id": "unicode", "query": "q=%C3%96rnek" }
+  ]
+}

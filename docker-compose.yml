@@ -1,0 +1,49 @@
+# Log Guardian — Lite stack (dashboard + opsiyonel analyzer)
+# Kullanim: docker compose up dashboard
+# Tam stack:  docker compose --profile full up
+
+services:
+  dashboard:
+    build:
+      context: ./dashboard
+      dockerfile: Dockerfile
+    container_name: log-guardian-dashboard
+    ports:
+      - "127.0.0.1:3000:3000"
+    environment:
+      - DATABASE_URL=file:/app/prisma/dev.db
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET required — min 32 chars}
+      - NODE_ENV=production
+      - LOG_GUARDIAN_TIER=${LOG_GUARDIAN_TIER:-community}
+    volumes:
+      - dashboard_data:/app/prisma
+    restart: unless-stopped
+
+  # Host network: nginx log + eBPF (gelismis; root ve kernel BPF gerekir)
+  analyzer:
+    profiles: ["full"]
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: log-guardian-analyzer
+    network_mode: host
+    privileged: true
+    cap_add:
+      - BPF
+      - NET_ADMIN
+      - NET_RAW
+      - SYS_RESOURCE
+      - PERFMON
+    environment:
+      - IFACE=${IFACE:-eth0}
+      - LOG_PATH=${LOG_PATH:-/var/log/nginx/access.log}
+      - LOGANALYZER_PASSWORD=${LOGANALYZER_PASSWORD:-DegistirBeni!123}
+    volumes:
+      - /sys/kernel/btf/vmlinux:/sys/kernel/btf/vmlinux:ro
+      - /sys/fs/bpf:/sys/fs/bpf:rw
+      - /var/log/nginx:/var/log/nginx:ro
+      - ./data:/etc/log-guardian
+    restart: unless-stopped
+
+volumes:
+  dashboard_data:

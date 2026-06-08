@@ -1,0 +1,90 @@
+{
+  "version": 2,
+  "standards": ["SOC2 Type II", "PCI-DSS v4.0", "KVKK", "ISO/IEC 27001"],
+  "controls": [
+    {
+      "standard": "SOC2",
+      "id": "CC6.1",
+      "name": "Logical & Physical Access Security",
+      "detail": "EXECVE_GUARD + eBPF execve tracepoint kills unauthorized shell from web processes.",
+      "metric": "rce_detections"
+    },
+    {
+      "standard": "SOC2",
+      "id": "CC6.6",
+      "name": "Logical Access from Untrusted Networks",
+      "detail": "XDP/BPF edge blacklist with ipset fallback; ban pipeline IPC→XDP→ipset.",
+      "metric": "ban_pipeline_ipc"
+    },
+    {
+      "standard": "SOC2",
+      "id": "CC7.2",
+      "name": "System Monitoring & Anomaly Detection",
+      "detail": "SIEM forwarder + log-guardian metrics; EPS and alert counters.",
+      "metric": "events_processed"
+    },
+    {
+      "standard": "SOC2",
+      "id": "CC7.3",
+      "name": "Security Event Response",
+      "detail": "MITRE-tagged alerts, incident engine, AUTO_BAN_MIN_RISK policy.",
+      "metric": "alerts_total"
+    },
+    {
+      "standard": "PCI-DSS",
+      "id": "Req 6.4",
+      "name": "Web Application Protection",
+      "detail": "PCRE2-JIT WAF + OpenAPI strict v2 schema firewall.",
+      "metric": "crs_parity_pass"
+    },
+    {
+      "standard": "PCI-DSS",
+      "id": "Req 10.2",
+      "name": "Audit Log Implementation",
+      "detail": "HMAC-signed JSON audit log + SQLite events.db + ban-policy audit JSONL.",
+      "metric": "db_available"
+    },
+    {
+      "standard": "PCI-DSS",
+      "id": "Req 11.5",
+      "name": "Intrusion Detection",
+      "detail": "inotify honey-trap + eBPF lineage attack tree.",
+      "metric": "lineage_events"
+    },
+    {
+      "standard": "KVKK",
+      "id": "m.12",
+      "name": "Kişisel Verilerin Güvenliği",
+      "detail": "Teknik/idari tedbirler: şifreli audit (HMAC), tenant DB ayrımı, erişim kontrolü.",
+      "metric": "tenant_isolation"
+    },
+    {
+      "standard": "KVKK",
+      "id": "m.15",
+      "name": "Veri Sorumlusu Yükümlülükleri",
+      "detail": "Olay kaydı, ihlal tespiti ve otomatik engelleme kanıtı (events.db).",
+      "metric": "alerts_total"
+    },
+    {
+      "standard": "KVKK",
+      "id": "m.18",
+      "name": "Veri Güvenliğine İlişkin Yükümlülükler",
+      "detail": "False-positive oranı hedefi <%5; adaptive FP trust EMA.",
+      "metric": "fp_rate_ok"
+    },
+    {
+      "standard": "KVKK",
+      "id": "m.4",
+      "name": "Kişisel Verilerin İşlenme Şartları",
+      "detail": "Log minimizasyonu: whitelist, FP suppression, tenant-scoped telemetry.",
+      "metric": "fp_suppression"
+    },
+    {
+      "standard": "ISO 27001",
+      "id": "A.16.1",
+      "name": "Information Security Incident Management",
+      "detail": "Mesh/etcd threat intel + threat feed pipeline (AbuseIPDB/OTX/STIX).",
+      "metric": "threat_feed_iocs"
+    }
+  ]
+}

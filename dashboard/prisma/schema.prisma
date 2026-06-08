@@ -1,0 +1,115 @@
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Tenant {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+
+  users      User[]
+  apiKeys    ApiKey[]
+  telemetries Telemetry[]
+  commands   AgentCommand[]
+}
+
+model User {
+  id           String   @id @default(uuid())
+  username     String   @unique
+  passwordHash String
+  tenantId     String
+  tenant       Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  isAdmin      Boolean  @default(false)
+  createdAt    DateTime @default(now())
+}
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  key         String   @unique // Düz metin olarak saklayacağız (kolaylık için, normalde hash olmalı)
+  description String?
+  tenantId    String
+  tenant      Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+}
+
+model Telemetry {
+  id             String   @id @default(uuid())
+  agentId        String
+  tenantId       String
+  tenant         Tenant   @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  eps            Float    @default(0)
+  totalLines     Int      @default(0)
+  alertsTotal    Int      @default(0)
+  rceDetections  Int      @default(0)
+  tarpitActive   Int      @default(0)
+  tarpitTrapped  Int      @default(0)
+  meshPeers      Int      @default(0)
+  uniqueIps      Int      @default(0)
+  tlsDecrypted   Int      @default(0)
+  etcdPeers      Int      @default(0)
+  // eBPF lineage dump from agent_sync (attack_tree.json)
+  attackTreeJson String   @default("[]")
+  incidentsActive      Int @default(0)
+  incidentsCorrelated  Int @default(0)
+
+  lastSeen       DateTime @default(now())
+
+  @@unique([agentId, tenantId])
+}
+
+model AgentCommand {
+  id             String    @id @default(uuid())
+  tenantId       String
+  tenant         Tenant    @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  targetAgentId  String?   // NULL ise o tenant'ın tüm ajanları için geçerli (Global Command)
+  commandType    String    // "BAN_IP", "PUSH_WAF_RULE", "PUSH_THREAT_FEED", "PUSH_CONFIG", "PUSH_SCHEMA", "PUSH_WASM_PLUGIN"
+  payload        String    // JSON string
+  executed       Boolean   @default(false)
+  status         String    @default("pending") // "pending", "delivered", "executed", "failed"
+  executedAt     DateTime?
+  createdAt      DateTime  @default(now())
+}
+
+// Fleet Policy: Tüm filoya dağıtılan politikalar
+model FleetPolicy {
+  id                String   @id @default(uuid())
+  tenantId          String
+  policyType        String   // "WAF_RULE", "THREAT_FEED", "CONFIG", "SCHEMA", "WASM_PLUGIN"
+  name              String
+  payload           String   // JSON veya düz metin
+  pushedAt          DateTime @default(now())
+  acknowledgedCount Int      @default(0)
+  totalAgents       Int      @default(0)
+  active            Boolean  @default(true)
+}
+
+// OpenAPI Schema kayıtları (Feature 1)
+model SchemaRegistry {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String
+  version    String   @default("1.0")
+  jsonContent String  // OpenAPI JSON
+  active     Boolean  @default(true)
+  uploadedAt DateTime @default(now())
+}
+
+// Wasm Plugin kayıtları (Feature 4)
+model WasmPlugin {
+  id          String   @id @default(uuid())
+  tenantId    String
+  name        String
+  version     String   @default("1.0")
+  filePath    String
+  active      Boolean  @default(true)
+  uploadedAt  DateTime @default(now())
+  callsTotal  Int      @default(0)
+  blocksTotal Int      @default(0)
+}
+

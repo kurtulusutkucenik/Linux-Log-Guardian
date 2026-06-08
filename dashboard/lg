@@ -1,0 +1,53 @@
+#!/usr/bin/env bash
+# Log Guardian CLI — dashboard klasöründen de çalışır (proje köküne geçer)
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+
+usage() {
+  cat <<'EOF'
+Kullanım (dashboard/ içinden):
+  ./lg prod              # prod_stack_e2e (Wasm + lineage + L7)
+  ./lg suite             # competitive_suite (tam kanıt)
+  ./lg status            # guardian-status.json export
+  ./lg wasm              # wasm_release (native plugin)
+  ./lg build             # make log-guardian + daemon
+  ./lg daemon eth0       # sudo log-guardian-daemon --iface eth0
+  ./lg sh scripts/...    # kökte herhangi bir script
+
+Proje kökü: cd ..  veya  cd ~/Masaüstü/Log\ Analyzer
+EOF
+}
+
+cmd="${1:-help}"
+shift || true
+
+case "$cmd" in
+  help|-h|--help) usage ;;
+  prod)   bash scripts/prod_stack_e2e.sh "$@" ;;
+  suite)  bash scripts/competitive_suite.sh "$@" ;;
+  status) bash scripts/guardian_status_export.sh "$@" ;;
+  wasm)   bash scripts/wasm_release.sh "$@" ;;
+  build)
+    make -j"$(nproc 2>/dev/null || echo 2)" log-guardian log-guardian-daemon
+    echo "[lg] OK: $ROOT/log-guardian"
+    ;;
+  daemon)
+    IFACE="${1:-eth0}"
+    if [[ ! -x "$ROOT/log-guardian-daemon" ]]; then
+      echo "[lg] log-guardian-daemon yok — önce: ./lg build" >&2
+      exit 1
+    fi
+    exec sudo "$ROOT/log-guardian-daemon" --iface "$IFACE" "${@:2}"
+    ;;
+  sh)
+    [[ $# -gt 0 ]] || { echo "lg sh <script> [args...]" >&2; exit 1; }
+    exec bash "$@"
+    ;;
+  *)
+    echo "[lg] Bilinmeyen komut: $cmd" >&2
+    usage
+    exit 1
+    ;;
+esac

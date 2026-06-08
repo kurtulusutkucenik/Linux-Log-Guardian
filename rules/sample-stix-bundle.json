@@ -1,0 +1,15 @@
+{
+  "type": "bundle",
+  "id": "bundle--sample-tier2",
+  "objects": [
+    {
+      "type": "indicator",
+      "pattern": "[ipv4-addr:value = '203.0.113.50']",
+      "labels": ["malicious-activity"]
+    },
+    {
+      "type": "ipv4-addr",
+      "value": "203.0.113.51"
+    }
+  ]
+}

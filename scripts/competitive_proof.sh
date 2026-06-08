@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+# competitive_suite ciktilarini tek JSON + PDF data room paketine donustur
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$ROOT"
+
+python3 scripts/competitive_proof_build.py -o competitive-proof.json
+
+VENV="$ROOT/.venv-compliance"
+if [[ ! -x "$VENV/bin/python" ]]; then
+  python3 -m venv "$VENV" 2>/dev/null || true
+fi
+if [[ -x "$VENV/bin/pip" ]]; then
+  "$VENV/bin/pip" install -q fpdf2 2>/dev/null || true
+fi
+PDF_PY="${VENV}/bin/python"
+if [[ ! -x "$PDF_PY" ]]; then
+  PDF_PY=python3
+fi
+
+if "$PDF_PY" -c "import fpdf" 2>/dev/null; then
+  "$PDF_PY" -W ignore::DeprecationWarning scripts/competitive_proof_pdf.py \
+    -i competitive-proof.json -o competitive-proof.pdf --locale en
+else
+  echo "[INFO] PDF atlandi — pip install fpdf2 veya .venv-compliance"
+fi
+
+echo "[OK] competitive_proof -> competitive-proof.json competitive-proof.pdf (EN)"

@@ -1,0 +1,3 @@
+# Sigma web ornek
+CRS_REGEX id:9910001 "uri,args" "(?i)(<script|javascript:)" "block" "XSS marketplace"
+CRS_REGEX id:9910002 "uri,args" "(?i)(cmd=|exec=|system\()" "block" "RCE params"

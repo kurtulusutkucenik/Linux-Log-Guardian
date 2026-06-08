@@ -1,0 +1,90 @@
+# ── Derlenmiş binary'ler ─────────────────────────────────────────
+log-guardian
+log-guardian-daemon
+tester
+siem_engine
+loganalyzer
+loganalyzer-daemon
+
+# ── Build / analiz cache ─────────────────────────────────────────
+graphify-out/
+dashboard/.next/
+*.daemon.o
+bench-report.txt
+bench-ban-latency.json
+bench-vs-modsec.json
+fp-report.json
+fp-report.txt
+fp-trust.json
+guardian-status.json
+attack_tree.json
+incidents-snapshot.json
+soak-report.json
+soak-report.jsonl
+
+# ── Obje dosyaları ───────────────────────────────────────────────
+*.o
+
+# ── Gizli / hassas konfigürasyon ─────────────────────────────────
+# Şifre hash'i ve gerçek ortam ayarlarını içerir
+test_rules.conf
+
+# Gerçek deploy config'i (token, key, path içerebilir)
+# rules.conf paylaşılır AMA içine gerçek token yazılmışsa buraya ekle:
+# rules.conf
+
+# ── Veritabanı ve log dosyaları ──────────────────────────────────
+*.db
+*.db-shm
+*.db-wal
+*.log
+*.sqlite
+*.sqlite3
+
+# Yerel test / yanlışlıkla oluşan hassas dosyalar
+password.txt
+wallet.dat
+
+# ── Analiz çıktıları (kullanıcıya özel) ─────────────────────────
+analiz_ozet.txt
+analiz_sonucu.json
+
+# ── vmlinux.h (makine-spesifik, çok büyük) ───────────────────────
+vmlinux.h
+
+# ── Ortam değişkeni dosyaları ─────────────────────────────────────
+.env
+.env.*
+*.env
+
+# ── IDE / editör dosyaları ────────────────────────────────────────
+.vscode/
+*.code-workspace
+.idea/
+*.swp
+*.swo
+*~
+
+# ── OS dosyaları ─────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── Vendor (Falco CE clone) ───────────────────────────────────────
+vendor/falco-rules/
+vendor/wasmtime/
+.cache/
+data/ban-policy-audit.jsonl
+data/threat-feed-audit.jsonl
+data/tenants/
+copilot-rag-context.json
+tenant-isolation-report.json
+rules/installed-marketplace/
+rules/marketplace/*/.sha256
+rules/marketplace/*/.signature
+crs-parity-report.json
+wasm-status.json
+compliance-report.json
+compliance-report.pdf
+competitive-proof.json
+competitive-proof.pdf
+.venv-compliance/

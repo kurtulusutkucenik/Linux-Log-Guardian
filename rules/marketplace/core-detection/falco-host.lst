@@ -1,0 +1,8 @@
+# Falco host kurallari (ornek)
+rule marketplace_shell_spawn
+  desc: Suspicious shell from web parent
+  match: execve /bin/sh parent=nginx
+
+rule marketplace_sensitive_read
+  desc: Read /etc/shadow
+  match: openat /etc/shadow

@@ -1,0 +1,4 @@
+# Core WAF imzalari — marketplace paketi
+CRS_REGEX id:9900101 "uri,args" "(?i)(union\s+select|or\s+1\s*=\s*1)" "block" "SQLi union"
+CRS_REGEX id:9900102 "uri,args" "(?i)(\.\./|\.\.\\\\|/etc/passwd)" "block" "Path traversal"
+CRS_REGEX id:9900103 "uri,args" "(?i)(nikto|sqlmap|acunetix|masscan)" "block" "Scanner UA"

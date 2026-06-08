@@ -1,0 +1,179 @@
+{
+  "apiVersion": 1,
+  "groups": [
+    {
+      "name": "log-guardian",
+      "interval": "30s",
+      "rules": [
+        {
+          "uid": "lg-eps-low",
+          "title": "Log Guardian EPS düşük",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "rate(loganalyzer_lines_total{tenant_id=~\".+\"}[5m])",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "5m",
+          "annotations": {
+            "summary": "Log işleme hızı beklenenin altında — daemon veya log kaynağını kontrol edin."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-alerts-spike",
+          "title": "Log Guardian alert artışı",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_alerts_total{tenant_id=~\".+\"}[5m]) > 50",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "2m",
+          "annotations": {
+            "summary": "5 dakikada 50+ yeni alert — Copilot / dashboard üzerinden inceleyin."
+          },
+          "labels": { "severity": "critical", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-ban-fail",
+          "title": "Log Guardian ban başarısız",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_bans_fail{tenant_id=~\".+\"}[5m]) > 0",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "1m",
+          "annotations": {
+            "summary": "Ban pipeline hata verdi — IPC, XDP ve ipset izinlerini kontrol edin."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-parse-errors",
+          "title": "Log Guardian parse hatası artışı",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_parse_errors_total{tenant_id=~\".+\"}[5m]) > 10",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "3m",
+          "annotations": {
+            "summary": "Log formatı veya nginx log_format uyumsuzluğu — examples/nginx-log-guardian.conf ile karşılaştırın."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-threat-stale",
+          "title": "Log Guardian threat intel eski",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "loganalyzer_threat_feed_enabled{tenant_id=~\".+\"} == 1 and loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"} > 0 and (time() - loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"}) > 86400",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "1h",
+          "annotations": {
+            "summary": "Threat feed 24 saatten eski — bash scripts/threat_feed_e2e.sh veya API key kontrol."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-fp-warmup",
+          "title": "Log Guardian FP learn isinmadi",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "loganalyzer_fp_learn_enabled{tenant_id=~\".+\"} == 1 and loganalyzer_fp_trusted_ips{tenant_id=~\".+\"} == 0",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "24h",
+          "annotations": {
+            "summary": "FP_LEARN acik ama trusted_ips=0 — ilk hafta normal; 30 gun sonra hala 0 ise corpus kontrol."
+          },
+          "labels": { "severity": "info", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-webhook-fail",
+          "title": "Log Guardian webhook gonderim hatasi",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_webhook_fail_total{tenant_id=~\".+\"}[5m]) > 0",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "2m",
+          "annotations": {
+            "summary": "Telegram/webhook HTTP hatasi — token, chat_id ve ag erisimini kontrol edin."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-webhook-queue-drop",
+          "title": "Log Guardian webhook kuyruk tasmasi",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_webhook_queue_drops_total{tenant_id=~\".+\"}[5m]) > 0",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "1m",
+          "annotations": {
+            "summary": "Async webhook kuyrugu doldu — WEBHOOK_COOLDOWN veya alarm hacmini ayarlayin."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        }
+      ]
+    }
+  ]
+}

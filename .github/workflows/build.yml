@@ -1,0 +1,112 @@
+name: Linux Log Guardian CI
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
+          libcurl4-openssl-dev libssl-dev liburing-dev pkg-config curl
+
+    - name: Build Fallback Mode (No XDP)
+      run: make fallback
+
+    - name: Build Native
+      run: |
+        make clean
+        make check-deps
+        make
+
+    - name: Rust toolchain (Wasm plugins)
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Wasm release build (HAVE_WASM=1)
+      run: bash scripts/wasm_gate.sh
+
+    - name: Competitive suite + merge gate
+      run: |
+        export LOGANALYZER_PASSWORD='DegistirBeni!123'
+        export REQUIRE_WASM_NATIVE=1
+        export SKIP_BAN_BENCH=1
+        export COMPETITIVE_FAST=1
+        bash scripts/competitive_suite.sh
+      env:
+        REQUIRE_WASM_NATIVE: "1"
+
+    - name: Laptop dev gate (offline kanit — VPS/webhook yok)
+      run: |
+        export LOGANALYZER_PASSWORD='DegistirBeni!123'
+        export COMPETITIVE_FAST=1
+        export LIVE=0
+        export SKIP_CONSULT=1
+        bash scripts/laptop_dev_gate.sh
+
+    - name: Real attack + distributed cluster proof (offline)
+      run: |
+        export LOGANALYZER_PASSWORD='DegistirBeni!123'
+        export LIVE=0
+        bash scripts/real_attack_suite.sh
+        bash scripts/ja3_cluster_proof.sh
+        bash scripts/competitive_proof.sh
+
+    - name: Upload proof artefacts
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: competitive-proof
+        path: |
+          real-attack-report.json
+          ja3-cluster-report.json
+          competitive-proof.json
+          competitive-proof.pdf
+          data-room.zip
+
+    - name: Webhook config smoke (dry-run)
+      run: bash scripts/webhook_smoke_test.sh
+
+  k8s-operator:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+    - uses: actions/setup-go@v5
+      with:
+        go-version: '1.22'
+    - name: Build K8s operator
+      working-directory: k8s-operator
+      run: go build -v .
+    - name: Admission webhook smoke
+      run: bash scripts/k8s_admission_test.sh
+
+  wasm:
+    runs-on: ubuntu-22.04
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install build deps
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y clang curl pkg-config libpcre2-dev libsqlite3-dev \
+          libcurl4-openssl-dev libssl-dev liburing-dev libbpf-dev
+
+    - name: Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Wasm gate (HAVE_WASM=1)
+      run: bash scripts/wasm_gate.sh
+
+    - name: Upload wasm status
+      uses: actions/upload-artifact@v4
+      if: always()
+      with:
+        name: wasm-status
+        path: wasm-status.json

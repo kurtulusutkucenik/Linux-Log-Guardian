@@ -1,0 +1,92 @@
+# Log Guardian built-in Falco-style pack (~host/lineage kurallari)
+# scripts/falco_import.py rules/falco/ -o rules/generated-falco-host.json
+
+- rule: Terminal shell spawned
+  condition: spawned_process and proc.name in (bash, sh, dash, zsh)
+
+- rule: Netcat execution
+  condition: spawned_process and proc.name in (nc, ncat)
+
+- rule: Python one-liner
+  condition: spawned_process and proc.name = python and proc.cmdline contains -c
+
+- rule: Perl one-liner
+  condition: spawned_process and proc.name = perl and proc.cmdline contains -e
+
+- rule: Curl from web context
+  condition: spawned_process and proc.name = curl
+
+- rule: Wget from web context
+  condition: spawned_process and proc.name = wget
+
+- rule: Read etc passwd
+  condition: openat and fd.name contains /etc/passwd
+
+- rule: Read etc shadow
+  condition: openat and fd.name contains /etc/shadow
+
+- rule: SSH key access
+  condition: openat and fd.name contains id_rsa
+
+- rule: SSH directory access
+  condition: openat and fd.name contains .ssh/
+
+- rule: Proc self enumeration
+  condition: openat and fd.name contains /proc/self
+
+- rule: Write below etc
+  condition: write and fd.name contains /etc/
+
+- rule: Cron persistence
+  condition: write and fd.name contains crontab
+
+- rule: Shell profile write
+  condition: write and fd.name contains .bashrc
+
+- rule: Webshell drop
+  condition: write and fd.name contains webshell
+
+- rule: PHP file write
+  condition: write and fd.name contains .php
+
+- rule: Suspicious outbound 4444
+  condition: connect and fd.sport=4444
+
+- rule: Suspicious outbound 1337
+  condition: connect and fd.sport=1337
+
+- rule: Tor-like connect
+  condition: connect and fd.name contains tor
+
+- rule: Pastebin egress
+  condition: connect and fd.name contains pastebin
+
+- rule: Ngrok tunnel
+  condition: connect and fd.name contains ngrok
+
+- rule: Memfd execution
+  condition: spawned_process and proc.cmdline contains memfd
+
+- rule: Read kubeconfig
+  condition: openat and fd.name contains kubeconfig
+
+- rule: Read docker socket
+  condition: openat and fd.name contains docker.sock
+
+- rule: Sensitive env file
+  condition: openat and fd.name contains .env
+
+- rule: Reverse shell bash
+  condition: spawned_process and proc.name = bash and proc.cmdline contains /dev/tcp
+
+- rule: Base64 decode exec
+  condition: spawned_process and proc.cmdline contains base64
+
+- rule: Chmod suspicious
+  condition: spawned_process and proc.name = chmod and proc.cmdline contains +x
+
+- rule: Sudo elevation
+  condition: spawned_process and proc.name = sudo
+
+- rule: Sensitive write var log
+  condition: write and fd.name contains /var/log/

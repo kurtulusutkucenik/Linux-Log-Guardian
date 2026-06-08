@@ -1,0 +1,30 @@
+# Falco → Log Guardian sinyal eslemesi (MVP)
+# Tam Falco CE uyumlulugu hedef degil; ortak MITRE/Sigma kurallari icin rehber.
+version: "0.1"
+mappings:
+  - falco: "Unexpected outbound connection"
+    guardian_signal: INC_SIG_EBPF_OUTBOUND
+    waf_category: null
+    mitre: T1071
+  - falco: "Terminal shell in container"
+    guardian_signal: INC_SIG_EBPF_EXECVE
+    mitre: T1059
+  - falco: "Write below etc"
+    guardian_signal: INC_SIG_EBPF_LINEAGE
+    lineage_type: LINEAGE_WRITE
+    mitre: T1565
+  - falco: "Read sensitive file untrusted"
+    guardian_signal: INC_SIG_EBPF_LINEAGE
+    lineage_type: LINEAGE_OPENAT
+    mitre: T1005
+  - falco: "SQL injection attempt"
+    guardian_signal: INC_SIG_LOG_SQLI
+    waf_category: SQLi
+    mitre: T1190
+  - falco: "Brute force SSH"
+    guardian_signal: INC_SIG_LOG_BRUTE
+    mitre: T1110
+  - falco: "K8s anonymous request"
+    guardian_signal: INC_SIG_LOG_WAF
+    rules_conf: K8S_GUARD=1
+    mitre: T1610

@@ -1,0 +1,215 @@
+{
+  "date": "2026-06-08T19:47:52.245287+00:00",
+  "corpus": "corpus/real_attack_corpus.access",
+  "manifest": "corpus/real_attack_manifest.json",
+  "lines_total": 1000,
+  "alerts_total": 1010,
+  "attack_recall_pct": 101.0,
+  "category_avg_recall_pct": 100.6,
+  "target_recall_pct": 85.0,
+  "categories": {
+    "api_abuse": {
+      "lines": 67,
+      "alerts": 67,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "brute": {
+      "lines": 27,
+      "alerts": 27,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "crlf": {
+      "lines": 20,
+      "alerts": 20,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "distributed": {
+      "lines": 80,
+      "alerts": 80,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "jwt_abuse": {
+      "lines": 26,
+      "alerts": 26,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "lfi": {
+      "lines": 42,
+      "alerts": 42,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "log4shell": {
+      "lines": 21,
+      "alerts": 21,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "nosql": {
+      "lines": 36,
+      "alerts": 36,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "open_redirect": {
+      "lines": 26,
+      "alerts": 26,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "post_sqli": {
+      "lines": 73,
+      "alerts": 73,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "rce": {
+      "lines": 41,
+      "alerts": 41,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "scanner": {
+      "lines": 98,
+      "alerts": 107,
+      "recall_pct": 109.2,
+      "pass": true
+    },
+    "sqli": {
+      "lines": 172,
+      "alerts": 172,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssrf": {
+      "lines": 38,
+      "alerts": 38,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssti": {
+      "lines": 38,
+      "alerts": 38,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "tr_scan": {
+      "lines": 36,
+      "alerts": 37,
+      "recall_pct": 102.8,
+      "pass": true
+    },
+    "webshell": {
+      "lines": 26,
+      "alerts": 26,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "xss": {
+      "lines": 107,
+      "alerts": 107,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "xxe": {
+      "lines": 26,
+      "alerts": 26,
+      "recall_pct": 100.0,
+      "pass": true
+    }
+  },
+  "pass": true,
+  "note": "Corpus replay (offline). brute=canli flood (LIVE=1). bash scripts/real_attack_suite.sh LIVE=1",
+  "live": {
+    "enabled": true,
+    "host": "127.0.0.1",
+    "port": 80,
+    "pass": true,
+    "nginx_up": true,
+    "summary": {
+      "sent_total": 522,
+      "refused_total": 522,
+      "replay_alerts": 0,
+      "ban_evidence": false,
+      "bans_active_before": 7,
+      "bans_active_after": 7,
+      "metrics_alerts": 0.0,
+      "ipc": "ok",
+      "ban_pipeline": {
+        "ipc": 0,
+        "xdp": 0,
+        "ipset": 0,
+        "failed": 0
+      }
+    },
+    "scenarios": [
+      {
+        "mode": "sqli",
+        "duration_sec": 5,
+        "threads": 2,
+        "rps_per_thread": 25,
+        "sent": 40,
+        "refused": 40,
+        "timeout": 40,
+        "nginx_up": true,
+        "replay_alerts": 0,
+        "pass": true
+      },
+      {
+        "mode": "post_sqli",
+        "duration_sec": 5,
+        "threads": 2,
+        "rps_per_thread": 18,
+        "sent": 50,
+        "refused": 50,
+        "timeout": 50,
+        "nginx_up": true,
+        "replay_alerts": 0,
+        "pass": true
+      },
+      {
+        "mode": "brute",
+        "duration_sec": 5,
+        "threads": 2,
+        "rps_per_thread": 12,
+        "sent": 134,
+        "refused": 134,
+        "timeout": 134,
+        "nginx_up": true,
+        "replay_alerts": 0,
+        "pass": true
+      },
+      {
+        "mode": "ddos",
+        "duration_sec": 4,
+        "threads": 3,
+        "rps_per_thread": 50,
+        "sent": 297,
+        "refused": 297,
+        "timeout": 297,
+        "nginx_up": true,
+        "replay_alerts": 0,
+        "pass": true
+      },
+      {
+        "mode": "slow",
+        "duration_sec": 5,
+        "threads": 1,
+        "rps_per_thread": 1,
+        "sent": 1,
+        "refused": 1,
+        "timeout": 1,
+        "nginx_up": true,
+        "replay_alerts": 0,
+        "pass": true
+      }
+    ],
+    "date": "2026-06-08T19:48:54.206902+00:00"
+  },
+  "updated": "2026-06-08T19:48:54.237456+00:00"
+}

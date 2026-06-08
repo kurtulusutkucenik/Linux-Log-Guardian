@@ -1,0 +1,12 @@
+# Ornek Falco kurali — falco_import.py test
+- rule: Read sensitive file untrusted
+  desc: Detect reads of /etc/shadow
+  condition: openat and fd.name contains /etc/shadow
+
+- rule: Terminal shell in container
+  desc: Unexpected shell
+  condition: spawned_process and proc.name in (bash, sh)
+
+- rule: Suspicious outbound
+  desc: Connect to suspicious port
+  condition: outbound and fd.sport=4444

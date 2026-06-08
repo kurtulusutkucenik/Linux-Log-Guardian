@@ -1,0 +1,5 @@
+# Sigma-imported PCRE patterns — scripts/sigma_import.py
+# rules.conf: CRS_RULES=rules/sigma-imported.rules (veya birlestir)
+
+# SIGMA: Suspicious SQL injection strings
+CRS_REGEX=(?i)(union\ select|or\ 1=1|information_schema)

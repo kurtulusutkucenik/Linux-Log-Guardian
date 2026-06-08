@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-08T19:49:11.207739+00:00",
+  "mode": "live-append",
+  "nginx_log": "/var/log/nginx/access.log",
+  "ip_block": "45.33.149.1-45.33.149.5",
+  "cluster_min_ips": 3,
+  "lines_injected": 5,
+  "ban_pipeline_before": 0,
+  "ban_pipeline_after": 0,
+  "ban_pipeline_delta": 0,
+  "alerts_delta": 5,
+  "ja3_cluster_flush_this_run": false,
+  "pass": true,
+  "hint": "Tekrar kosu icin otomatik yeni IP blogu; sudo bash scripts/ja3_cluster_ban_live.sh"
+}

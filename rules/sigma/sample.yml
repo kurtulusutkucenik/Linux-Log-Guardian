@@ -1,0 +1,10 @@
+title: Suspicious SQL injection strings
+logsource:
+  category: webserver
+detection:
+  keywords:
+    - union select
+    - or 1=1
+    - information_schema
+  condition: keywords
+level: high

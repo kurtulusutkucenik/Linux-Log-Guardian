@@ -1,0 +1,106 @@
+# Ek host kurallari — yerel 50+ import hedefi (ag gerektirmez)
+
+- rule: Read shadow backup
+  condition: openat and fd.name contains shadow-
+
+- rule: Read passwd backup
+  condition: openat and fd.name contains passwd-
+
+- rule: Access aws credentials
+  condition: openat and fd.name contains .aws/credentials
+
+- rule: Access gcloud config
+  condition: openat and fd.name contains gcloud
+
+- rule: Read kubernetes secrets
+  condition: openat and fd.name contains secrets
+
+- rule: Write systemd unit
+  condition: write and fd.name contains .service
+
+- rule: Write rc local
+  condition: write and fd.name contains rc.local
+
+- rule: Modify sudoers
+  condition: write and fd.name contains sudoers
+
+- rule: Modify hosts file
+  condition: write and fd.name contains /etc/hosts
+
+- rule: Nmap execution
+  condition: spawned_process and proc.name = nmap
+
+- rule: Masscan execution
+  condition: spawned_process and proc.name = masscan
+
+- rule: Tcpdump sniff
+  condition: spawned_process and proc.name = tcpdump
+
+- rule: Tshark sniff
+  condition: spawned_process and proc.name = tshark
+
+- rule: Socat relay
+  condition: spawned_process and proc.name = socat
+
+- rule: Openssl s client
+  condition: spawned_process and proc.name = openssl
+
+- rule: Ruby one liner
+  condition: spawned_process and proc.name = ruby and proc.cmdline contains -e
+
+- rule: Node eval
+  condition: spawned_process and proc.name = node and proc.cmdline contains -e
+
+- rule: Php cli exec
+  condition: spawned_process and proc.name = php and proc.cmdline contains -r
+
+- rule: PowerShell style
+  condition: spawned_process and proc.cmdline contains powershell
+
+- rule: Curl pipe bash
+  condition: spawned_process and proc.cmdline contains curl and proc.cmdline contains bash
+
+- rule: Wget pipe sh
+  condition: spawned_process and proc.cmdline contains wget and proc.cmdline contains sh
+
+- rule: Reverse shell dev tcp
+  condition: spawned_process and proc.cmdline contains /dev/tcp/
+
+- rule: Bind shell listener
+  condition: connect and fd.sport=5555
+
+- rule: Metasploit default
+  condition: connect and fd.sport=4444
+
+- rule: Cobalt strike beacon
+  condition: connect and fd.sport=8443
+
+- rule: DNS tunnel dig
+  condition: spawned_process and proc.name = dig
+
+- rule: Nslookup recon
+  condition: spawned_process and proc.name = nslookup
+
+- rule: Whois lookup
+  condition: spawned_process and proc.name = whois
+
+- rule: Git clone suspicious
+  condition: spawned_process and proc.name = git and proc.cmdline contains clone
+
+- rule: Docker run shell
+  condition: spawned_process and proc.name = docker and proc.cmdline contains run
+
+- rule: Kubectl exec
+  condition: spawned_process and proc.name = kubectl and proc.cmdline contains exec
+
+- rule: Helm install
+  condition: spawned_process and proc.name = helm
+
+- rule: Terraform apply
+  condition: spawned_process and proc.name = terraform
+
+- rule: Sensitive proc maps
+  condition: openat and fd.name contains /proc/self/maps
+
+- rule: LD preload hijack
+  condition: openat and fd.name contains LD_PRELOAD

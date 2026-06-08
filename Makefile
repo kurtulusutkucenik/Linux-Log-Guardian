@@ -1,0 +1,293 @@
+# Hedef dizin
+PREFIX  ?= /usr/local
+BINDIR   = $(PREFIX)/bin
+CONFDIR  = /etc/log-guardian
+UNITDIR  = /etc/systemd/system
+
+CC      = clang
+CFLAGS  = -Wall -Wextra -O2 -pthread -mavx2 \
+          -D_POSIX_C_SOURCE=200809L \
+          -DHAVE_LIBBPF
+LDFLAGS = -pthread
+LIBS    = -lsqlite3 -lcurl -lssl -lcrypto -lpcre2-8 \
+          -lm -lbpf -lelf -lz -luring -ldl -lseccomp
+
+# ── ZeroMQ opsiyonel bagimliligi ──────────────────────────────
+HAVE_ZMQ ?= $(shell pkg-config --exists libzmq 2>/dev/null && echo 1 || echo 0)
+ifeq ($(HAVE_ZMQ),1)
+  CFLAGS += -DHAVE_ZMQ
+  LIBS   += $(shell pkg-config --libs libzmq)
+  ifndef LG_QUIET_BUILD
+    $(info [MESH] ZeroMQ bulundu, Mesh Intel etkin.)
+  endif
+else
+  ifndef LG_QUIET_BUILD
+    $(info [MESH] ZeroMQ bulunamadi, Mesh Intel devre disi (HAVE_ZMQ=0).)
+  endif
+endif
+
+# ── Etcd Mesh opsiyonel bagimliligi (Phase 5) ─────────────────
+# -DHAVE_ETCD ile aktif; libcurl zaten LIBS'te mevcut.
+# Devre disi birakmak icin: make HAVE_ETCD=0
+HAVE_ETCD ?= 1
+ifeq ($(HAVE_ETCD),1)
+  CFLAGS += -DHAVE_ETCD
+  ifndef LG_QUIET_BUILD
+    $(info [ETCD] Etcd Mesh etkin (HAVE_ETCD=1). libcurl kullanilacak.)
+  endif
+else
+  ifndef LG_QUIET_BUILD
+    $(info [ETCD] Etcd Mesh devre disi (HAVE_ETCD=0).)
+  endif
+endif
+
+# ── WebAssembly Plugin Destegi (Feature 4) ────────────────────────
+# HAVE_WASM=1: Wasmtime C API (pkg-config veya vendor/wasmtime)
+WASMTIME_ROOT ?= $(CURDIR)/vendor/wasmtime
+ifeq ($(strip $(WASMTIME_ROOT)),)
+  override WASMTIME_ROOT := $(CURDIR)/vendor/wasmtime
+endif
+HAVE_WASM ?= $(shell \
+  if pkg-config --exists wasmtime 2>/dev/null; then echo 1; \
+  elif test -f "$(WASMTIME_ROOT)/lib/libwasmtime.so" -o -f "$(WASMTIME_ROOT)/lib/libwasmtime.a"; then echo 1; \
+  else echo 0; fi)
+ifeq ($(HAVE_WASM),1)
+  CFLAGS += -DHAVE_WASM
+  WASM_LIBDIR = $(PREFIX)/lib/log-guardian
+  ifeq ($(shell pkg-config --exists wasmtime 2>/dev/null && echo y),y)
+    CFLAGS += $(shell pkg-config --cflags wasmtime)
+    WASM_LIBS := $(shell pkg-config --libs wasmtime)
+  else
+    CFLAGS += -I"$(WASMTIME_ROOT)/include"
+    WASM_LIBS := -L"$(WASMTIME_ROOT)/lib" -lwasmtime -lpthread -ldl -lm
+    LDFLAGS += -Wl,-rpath,"$(WASM_LIBDIR)" -Wl,-rpath,"$(WASMTIME_ROOT)/lib"
+  endif
+  LIBS += $(WASM_LIBS)
+  ifndef LG_QUIET_BUILD
+    $(info [WASM] Wasmtime C API etkin (HAVE_WASM=1).)
+  endif
+else
+  ifndef LG_QUIET_BUILD
+    $(info [WASM] Wasmtime bulunamadi, Wasm stub modu aktif (HAVE_WASM=0).)
+  endif
+endif
+
+# ── Hedef binary'ler ────────────────────────────────────────────
+TARGET        = log-guardian
+DAEMON        = log-guardian-daemon
+TESTER        = tester
+XDP_OBJ       = xdp_filter.o
+UPROBE_OBJ    = tls_uprobe.o
+SYSCALL_OBJ   = syscall_uprobe.o
+LINEAGE_OBJ   = lineage_probe.o
+HTTP_L7_OBJ   = http_l7_probe.o
+
+# ── Analyzer kaynak dosyaları (yetkisiz proses) ───────────────────
+SRCS = main.c parser.c anomaly.c db.c tui.c webhook.c telegram_bot.c \
+       ip_map.c min_heap.c memory_pool.c pcre_engine.c \
+       xdp_loader.c metrics.c siem_fsm.c logger.c \
+       daemon_ipc.c ipc_auth.c ban_pipeline.c adaptive_threshold.c waf_rules.c \
+       ja3_engine.c ja3_cluster.c apt_graph.c deception.c covert_ch.c threat_feed.c \
+       crypto_utils.c auth.c firewall.c trap_watcher.c api_server.c \
+       k8s_guard.c k8s_webhook.c tarpit_server.c mesh_intel.c agent_sync.c \
+       siem_forwarder.c etcd_mesh.c \
+       schema_validator.c attack_tree.c attack_tree_snapshot.c wasm_runtime.c daemon_stats.c mesh_backend.c incident_engine.c rules_fleet.c \
+       falco_host_rules.c endpoint_baseline.c geoip_feed.c tenant_db.c tenant_policy.c fp_trust.c ban_policy.c l7_telemetry.c
+OBJS = $(SRCS:.c=.o)
+
+# ── eBPF daemon kaynak dosyaları (root prosesi) ──────────────────
+DAEMON_SRCS = ebpf_daemon.c daemon_ipc.c ipc_auth.c daemon_stats.c logger.c k8s_guard.c k8s_webhook.c attack_tree.c falco_host_rules.c firewall.c
+DAEMON_OBJS = $(DAEMON_SRCS:.c=.daemon.o)
+
+# ── CO-RE: vmlinux.h hedef makinenin BTF'inden üretilir ──────
+VMLINUX_H = vmlinux.h
+
+all: $(TARGET) $(DAEMON) $(TESTER) $(XDP_OBJ) $(UPROBE_OBJ) $(SYSCALL_OBJ) $(LINEAGE_OBJ) $(HTTP_L7_OBJ)
+
+# ── Ana analyzer binary ───────────────────────────────────────
+$(TARGET): $(OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(OBJS) $(LIBS)
+
+# ── eBPF daemon binary (ayrı, yalnızca libbpf + logger) ──────
+# Her kaynak .daemon.o olarak derlenir (farklı nesne uzayı)
+$(DAEMON): $(DAEMON_OBJS)
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(DAEMON_OBJS) \
+	      -lbpf -lelf -lz -ldl -luring -lcurl
+
+%.daemon.o: %.c
+	$(CC) $(CFLAGS) -DLOG_GUARDIAN_DAEMON -c $< -o $@
+
+# ── Tester ───────────────────────────────────────────────────
+$(TESTER): tester.c
+	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ tester.c
+
+# ── CO-RE: vmlinux.h — hedef çekirdek BTF'ini kullan ─────────
+# bpftool mevcut değilse boş başlık oluşturulur (fallback).
+$(VMLINUX_H):
+	@if command -v bpftool >/dev/null 2>&1 && \
+	    [ -f /sys/kernel/btf/vmlinux ]; then \
+	    echo "[CORE] vmlinux.h uretiliyor..."; \
+	    bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@; \
+	    echo "[CORE] vmlinux.h hazir ($$(wc -l < $@) satir)."; \
+	else \
+	    echo "[CORE] bpftool/BTF mevcut degil, fallback baslik kullaniliyor."; \
+	    printf '/* vmlinux.h — CO-RE fallback: bpftool ile uretilmedi */\n' > $@; \
+	fi
+
+# ── XDP/eBPF kernel nesnesi (CO-RE) ──────────────────────────
+# vmlinux.h varsa kullan; yoksa geleneksel linux/*.h ile derle.
+$(XDP_OBJ): xdp_filter.c $(VMLINUX_H)
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+	      -D__BPF_TRACING__ \
+	      -I. \
+	      -I/usr/include/bpf \
+	      -I/usr/include/x86_64-linux-gnu \
+	      -c xdp_filter.c -o $@
+
+# ── eBPF uprobe nesnesi (TLS In-Memory Sensor) ────────────────────
+# tls_uprobe.c yalnizca __BPF_TRACING__ kapsaminda derlenir.
+# Linux >= 5.5 (uprobe + ring buffer) gerektirir.
+$(UPROBE_OBJ): tls_uprobe.c $(VMLINUX_H)
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+	      -D__BPF_TRACING__ \
+	      -I. \
+	      -I/usr/include/bpf \
+	      -I/usr/include/x86_64-linux-gnu \
+	      -c tls_uprobe.c -o $@
+
+# ── eBPF execve tracepoint nesnesi (Zero Trust RCE Sensor) ──────────
+# sys_enter_execve hook'u: web proseslerin shell spawn etmesini engeller.
+# Linux >= 5.8 (ring buffer + cgroup helpers) gerektirir.
+$(SYSCALL_OBJ): syscall_uprobe.c $(VMLINUX_H)
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+	      -D__BPF_TRACING__ \
+	      -I. \
+	      -I/usr/include/bpf \
+	      -I/usr/include/x86_64-linux-gnu \
+	      -c syscall_uprobe.c -o $@
+
+# ── eBPF Lineage Probe (Process & Network Soyağacı — Feature 3) ──────
+# openat/execve/connect/write tracepoint'lari; Attack Tree olusturur.
+# Linux >= 5.8 (ring buffer) gerektirir.
+$(LINEAGE_OBJ): lineage_probe.c $(VMLINUX_H)
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+	      -D__BPF_TRACING__ \
+	      -I. \
+	      -I/usr/include/bpf \
+	      -I/usr/include/x86_64-linux-gnu \
+	      -c lineage_probe.c -o $@
+
+$(HTTP_L7_OBJ): http_l7_probe.c $(VMLINUX_H)
+	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+	      -D__BPF_TRACING__ \
+	      -I. \
+	      -I/usr/include/bpf \
+	      -I/usr/include/x86_64-linux-gnu \
+	      -c http_l7_probe.c -o $@
+
+
+# ── Genel .o kuralı ───────────────────────────────────────────
+%.o: %.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+# ── Temizlik ──────────────────────────────────────────────────────────
+clean:
+	rm -f $(OBJS) $(DAEMON_OBJS) \
+	      $(TARGET) $(DAEMON) $(TESTER) \
+	      $(XDP_OBJ) $(UPROBE_OBJ) $(SYSCALL_OBJ) $(LINEAGE_OBJ) $(HTTP_L7_OBJ) \
+	      events.db $(VMLINUX_H)
+
+# ── Kurulum ──────────────────────────────────────────────────
+install: $(TARGET) $(DAEMON)
+	install -d $(DESTDIR)$(BINDIR)
+	install -m 755 $(TARGET) $(DESTDIR)$(BINDIR)/
+	install -m 755 $(DAEMON)  $(DESTDIR)$(BINDIR)/
+	@if [ -f $(TESTER) ]; then install -m 755 $(TESTER) $(DESTDIR)$(BINDIR)/; fi
+
+	install -d $(DESTDIR)$(CONFDIR)
+	if [ ! -f $(DESTDIR)$(CONFDIR)/rules.conf ]; then \
+		install -m 600 rules.conf $(DESTDIR)$(CONFDIR)/; \
+	fi
+	install -d $(DESTDIR)$(CONFDIR)/rules
+	install -m 644 rules/crs-core.rules $(DESTDIR)$(CONFDIR)/rules/ 2>/dev/null || true
+	install -m 644 rules/crs-bundle.rules $(DESTDIR)$(CONFDIR)/rules/ 2>/dev/null || true
+
+	@if [ -f $(XDP_OBJ) ]; then install -m 755 $(XDP_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+	@if [ -f $(UPROBE_OBJ) ]; then install -m 755 $(UPROBE_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+	@if [ -f $(SYSCALL_OBJ) ]; then install -m 755 $(SYSCALL_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+	@if [ -f $(LINEAGE_OBJ) ]; then install -m 755 $(LINEAGE_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+	@if [ -f $(HTTP_L7_OBJ) ]; then install -m 755 $(HTTP_L7_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+
+	@if [ "$(HAVE_WASM)" = "1" ] && [ -f "$(WASMTIME_ROOT)/lib/libwasmtime.so" ]; then \
+		install -d "$(DESTDIR)$(PREFIX)/lib/log-guardian"; \
+		install -m 755 "$(WASMTIME_ROOT)/lib/libwasmtime.so" "$(DESTDIR)$(PREFIX)/lib/log-guardian/"; \
+	fi
+
+	@echo ""
+	@echo "Kurulum tamamlandi."
+	@echo "Daemon baslatmak icin  : systemctl enable --now log-guardian-daemon"
+	@echo "Analyzer baslatmak icin: systemctl enable --now log-guardian"
+	@echo "Binary guncellediyseniz   : sudo systemctl restart log-guardian-daemon log-guardian"
+
+# ── Derleme modları ───────────────────────────────────────────
+debug: CFLAGS += -g -O0 -DDEBUG
+debug: all
+
+bench: CFLAGS += -O3 -march=native -flto
+bench: all
+
+bench-run: all
+
+bench-report: all
+	bash scripts/bench_report.sh
+	@bash scripts/bench.sh
+
+# ── Güvenlik testi ───────────────────────────────────────────
+security-test: $(TARGET) $(TESTER)
+	@echo "--- Security Testleri (Memory & Async Attack) ---"
+	@./tester --mode sqli          --host 127.0.0.1 --port 80 &
+	@./tester --mode slow          --host 127.0.0.1 --port 80 &
+	@echo "Test bitti."
+
+# ── Intelligence Motoru Testleri ─────────────────────────────
+intel-test: $(TESTER)
+	@echo "--- Intelligence Engine Testleri ---"
+	@echo "[1/3] JA3 Fingerprint testi (443 portuna TLS baglanti)..."
+	@./tester --mode ja3-test       --host 127.0.0.1 --port 443 || true
+	@echo "[2/3] APT Swarm testi (10 farkli IP, ayni payload)..."
+	@./tester --mode apt-swarm      --host 127.0.0.1 --count 10 --payload "/../etc/passwd" || true
+	@echo "[3/3] Cookie Entropy testi (exfil simulasyonu)..."
+	@./tester --mode cookie-entropy --host 127.0.0.1 --port 80  || true
+	@echo "--- Intel testleri tamamlandi ---"
+
+# ── Bağımlılık kontrolu ───────────────────────────────────────
+check-deps:
+	@echo "=== Bagimlilik Kontrolu ==="
+	@DEPS_OK=1; \
+	for cmd in clang pkg-config bpftool; do \
+	    if command -v $$cmd >/dev/null 2>&1; then echo "  [ OK ] $$cmd"; \
+	    else echo "  [EKSIK] $$cmd"; DEPS_OK=0; fi; \
+	done; \
+	for lib in liburing libpcre2-8 sqlite3 libcurl; do \
+	    if pkg-config --exists $$lib 2>/dev/null; then echo "  [ OK ] lib $$lib"; \
+	    else echo "  [EKSIK] lib $$lib"; DEPS_OK=0; fi; \
+	done; \
+	[ -f /sys/kernel/btf/vmlinux ] && echo "  [ OK ] BTF (CO-RE native)" || echo "  [WARN] BTF yok - fallback kullanilacak"; \
+	echo "  [INFO] Kernel: $$(uname -r)"; \
+	echo "  [INFO] Etcd Mesh: HAVE_ETCD=$(HAVE_ETCD), ZeroMQ: HAVE_ZMQ=$(HAVE_ZMQ)"; \
+	[ $$DEPS_OK -eq 1 ] && echo "=== Tum bagimliliklar mevcut ===" || echo "=== EKSIK bagimliliklar var ==="
+
+# ── XDP'siz fallback (eski kernel / BTF yoksa) ───────────────
+fallback: CFLAGS += -DXDP_DISABLED
+fallback: $(TARGET) $(DAEMON) $(TESTER)
+	@echo "[FALLBACK] XDP devre disi derlendi. iptables/nftables modu aktif."
+
+# ── Prod Wasm release (Wasmtime + hot-plug) ───────────────────
+wasm-release:
+	bash scripts/wasm_release.sh
+
+release: wasm-release
+	@echo "[release] log-guardian HAVE_WASM=1 hazir — tam kapı:"
+	@echo "  bash scripts/competitive_suite.sh"
+
+.PHONY: all clean install debug bench bench-run bench-report security-test intel-test check-deps fallback wasm-release release

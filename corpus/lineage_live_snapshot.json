@@ -1,0 +1,44 @@
+[
+  {
+    "pid": 91001,
+    "comm": "nginx",
+    "risk": 91.2,
+    "firstSeen": 1717334400,
+    "lastSeen": 1717334465,
+    "export": "daemon",
+    "events": [
+      {
+        "type": "FILE_READ",
+        "pid": 91001,
+        "ppid": 1200,
+        "comm": "nginx",
+        "detail": "/etc/passwd",
+        "ts": 1717334401
+      },
+      {
+        "type": "EXEC_SHELL",
+        "pid": 91002,
+        "ppid": 91001,
+        "comm": "sh",
+        "detail": "/bin/sh",
+        "ts": 1717334412
+      },
+      {
+        "type": "NET_CONNECT",
+        "pid": 91003,
+        "ppid": 91002,
+        "comm": "curl",
+        "detail": "203.0.113.55:443",
+        "ts": 1717334425
+      },
+      {
+        "type": "FILE_WRITE",
+        "pid": 91002,
+        "ppid": 91001,
+        "comm": "sh",
+        "detail": "/tmp/.cache_payload",
+        "ts": 1717334438
+      }
+    ]
+  }
+]
