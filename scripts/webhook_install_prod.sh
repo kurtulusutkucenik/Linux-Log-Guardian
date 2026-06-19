@@ -221,5 +221,7 @@ elif [[ "${1:-}" == "--test-all" ]]; then
     echo "  [batch] WARN ozet DM'e gitti (10sn penceresi)"
   fi
   echo "[OK] Telegram alert + ban + trap gonderildi"
+  echo "  [TEST] RFC5737 IP (203.0.113.x) — gercek saldirgan degil; ipset test ban:"
+  echo "    sudo log-guardian unban 203.0.113.99   # webhook-test ban"
   echo "  Tam prod E2E: sudo bash scripts/webhook_prod_e2e.sh"
 fi

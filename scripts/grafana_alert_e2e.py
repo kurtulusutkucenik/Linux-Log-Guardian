@@ -162,6 +162,10 @@ def main() -> int:
         )
         return 1
 
+    # Topic yalnizca supergroup (-100…) icin; DM'e message_thread_id → Telegram 400
+    if not str(chat_id).startswith("-100"):
+        message_thread_id = 0
+
     if not skip_send and not token_usable(token):
         print(
             "[grafana_alert_e2e] FAIL: bot token okunamadi (Grafana API [REDACTED]) — "
