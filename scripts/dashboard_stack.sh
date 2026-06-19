@@ -19,18 +19,24 @@ bash "$ROOT/scripts/sync_dashboard_data.sh"
 echo "[dashboard_stack] Prometheus + Grafana..."
 bash "$ROOT/scripts/grafana_stack.sh"
 
-export JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
+bash "$ROOT/scripts/laptop_jwt_setup.sh"
 echo "[dashboard_stack] TLS dashboard..."
 bash "$ROOT/scripts/tls_proxy_up.sh"
 
+if ! systemctl --user is-enabled log-guardian-laptop-stack.service &>/dev/null 2>&1; then
+  echo "[dashboard_stack] Reboot kaliciligi..."
+  bash "$ROOT/scripts/install_laptop_stack_boot.sh" 2>/dev/null || true
+fi
+
 echo ""
 echo "[OK] dashboard_stack"
-echo "  Dashboard:  https://${DOMAIN:-localhost}:${HTTPS_PORT:-8443}/  (admin / ChangeMeOnFirstLogin!)"
+echo "  Dashboard:  https://${DOMAIN:-localhost}:${HTTPS_PORT:-8443}/  (admin — parola: .env DASHBOARD_ADMIN_PASSWORD veya ChangeMeOnFirstLogin!)"
 echo "  Grafana:    http://127.0.0.1:${GRAFANA_PORT:-3002}  (admin/admin)"
 echo "  Prometheus: http://127.0.0.1:9090"
 echo "  Metrikler:  curl http://127.0.0.1:9091/metrics  (relay :19091 Docker icin)"
 echo ""
 echo "  Smoke: bash scripts/grafana_smoke_test.sh"
+echo "  Reboot: bash scripts/install_laptop_stack_boot.sh"
 echo "  Durdur:"
 echo "    docker compose -f docker-compose.prod.yml down"
 echo "    docker rm -f prometheus-lg grafana-lg"

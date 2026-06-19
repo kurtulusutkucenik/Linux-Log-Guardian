@@ -67,14 +67,45 @@ if [[ "${EUID:-$(id -u)}" -eq 0 ]] && command -v nginx >/dev/null; then
   else
     warn "nginx -t FAIL — snippet'leri site config'inize include edin: docs/EDGE_PROTECTION.md"
   fi
+  if STRICT_EXIT=1 bash "$ROOT/scripts/enforce_nginx_log_format.sh"; then
+    echo "[OK] log_guardian format (STRICT)"
+  else
+    warn "log_guardian format kurulamadi — sudo bash scripts/fix_nginx_log_format.sh"
+  fi
+  install -m 644 "$ROOT/examples/nginx/snippets/log-guardian-inline-consult.conf" /etc/nginx/snippets/ 2>/dev/null || true
+  install -m 644 "$ROOT/examples/nginx/snippets/log-guardian-inline-server.conf" /etc/nginx/snippets/ 2>/dev/null || true
+  bash "$ROOT/scripts/merge_nginx_inline_consult.sh" 2>/dev/null || true
+  systemctl restart log-guardian 2>/dev/null || true
+  sleep 2
+  if STRICT_EXIT=1 bash "$ROOT/scripts/enforce_nginx_inline_consult.sh"; then
+    echo "[OK] inline consult (STRICT)"
+  else
+    warn "inline consult kurulamadi — sudo bash scripts/fix_nginx_inline_consult.sh"
+  fi
 else
   echo "[INFO] nginx yok veya root degil — snippet manuel: examples/nginx/snippets/"
 fi
 
-# 3) NIC / XDP
+# 3) Threat intel prod (timer + TTL + sync)
+if [[ "${EUID:-$(id -u)}" -eq 0 ]]; then
+  if bash "$ROOT/scripts/enable_threat_intel_prod.sh"; then
+    echo "[OK] threat intel prod bootstrap"
+  else
+    warn "threat intel prod — sudo bash scripts/enable_threat_intel_prod.sh"
+  fi
+  if bash "$ROOT/scripts/threat_intel_prod_proof.sh"; then
+    echo "[OK] threat_intel_prod_proof"
+  else
+    warn "threat_intel_prod_proof eksik — fixture: THREAT_INTEL_FIXTURE=corpus/fixtures/firehol_sample.netset"
+  fi
+else
+  warn "Root olmadan threat intel prod atlandi"
+fi
+
+# 4) NIC / XDP
 bash "$ROOT/scripts/prod_nic_xdp_check.sh"
 
-# 4) Whitelist hatirlatma
+# 5) Whitelist hatirlatma
 if [[ -f /etc/log-guardian/rules.conf ]]; then
   n=$(grep -c '^WHITELIST_IP=' /etc/log-guardian/rules.conf 2>/dev/null || echo 0)
   if [[ "$n" -le 2 ]]; then
@@ -84,12 +115,14 @@ if [[ -f /etc/log-guardian/rules.conf ]]; then
   fi
 fi
 
-# 5) Yuk testi (nginx varsa)
+# 6) Hibrit kanit (inline + log)
 if curl -sf --max-time 2 http://127.0.0.1:80/ -o /dev/null 2>/dev/null; then
+  echo "--- nginx_hybrid_proof ---"
+  bash "$ROOT/scripts/nginx_hybrid_proof.sh" || warn "nginx_hybrid_proof eksik (inline veya log format?)"
   echo "--- nginx_attack_test ---"
   bash "$ROOT/scripts/nginx_attack_test.sh" || warn "nginx_attack_test tam ban kaniti vermedi (log formati?)"
 else
-  echo "[SKIP] nginx_attack_test — :80 kapali (nginx kurunca: bash scripts/nginx_attack_test.sh)"
+  echo "[SKIP] nginx_hybrid_proof — :80 kapali"
 fi
 
 echo ""

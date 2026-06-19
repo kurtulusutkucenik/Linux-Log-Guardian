@@ -57,5 +57,16 @@ ReadWritePaths=${CONF_DIR} /var/log/nginx
 WantedBy=multi-user.target
 EOF
 
+install -d /etc/systemd/system/log-guardian.service.d
+if [[ -f "$ROOT/deploy/log-guardian.service.d/20-readwrite.conf" ]]; then
+  install -m 644 "$ROOT/deploy/log-guardian.service.d/20-readwrite.conf" \
+    /etc/systemd/system/log-guardian.service.d/20-readwrite.conf
+else
+  cat > /etc/systemd/system/log-guardian.service.d/20-readwrite.conf <<'DROPIN'
+[Service]
+ReadWritePaths=/etc/log-guardian /var/log/nginx /var/lib/log-guardian
+DROPIN
+fi
+
 systemctl daemon-reload
 echo "[OK] repair_systemd_units — systemctl restart log-guardian-daemon log-guardian"

@@ -26,6 +26,7 @@
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
 #include <grp.h>
 #include <arpa/inet.h>
 #include <syslog.h>
@@ -52,32 +53,25 @@ static volatile int g_bans_json_dirty = 0;
 
 static void export_active_bans_json(void)
 {
-    FILE *fp = popen("/sbin/ipset list log_analyzer_block_v4 -o plain 2>/dev/null", "r");
-    if (!fp) return;
+    char ips[BANS_JSON_EXPORT_MAX][64];
+    int total = 0;
+    int n = ipset_list_v4_members(ips, BANS_JSON_EXPORT_MAX, &total);
+    if (n < 0)
+        return;
 
     FILE *out = fopen(ACTIVE_BANS_JSON ".tmp", "w");
-    if (!out) { pclose(fp); return; }
+    if (!out)
+        return;
 
     fprintf(out, "{\"ips\":[");
-    char line[256];
-    int first = 1;
-    int total = 0;
-    int exported = 0;
-    while (fgets(line, sizeof(line), fp)) {
-        char ip[64] = {0};
-        if (sscanf(line, "%63s", ip) != 1) continue;
-        if (strchr(ip, '.') == NULL) continue;
-        total++;
-        if (exported >= BANS_JSON_EXPORT_MAX) continue;
-        if (!first) fputc(',', out);
-        first = 0;
-        exported++;
-        fprintf(out, "\"%s\"", ip);
+    for (int i = 0; i < n; i++) {
+        if (i > 0)
+            fputc(',', out);
+        fprintf(out, "\"%s\"", ips[i]);
     }
     fprintf(out, "],\"total_count\":%d,\"truncated\":%s,\"source\":\"ipset\"}\n",
-            total, (total > exported) ? "true" : "false");
+            total, (total > n) ? "true" : "false");
     fclose(out);
-    pclose(fp);
     rename(ACTIVE_BANS_JSON ".tmp", ACTIVE_BANS_JSON);
     chmod(ACTIVE_BANS_JSON, 0644);
     const char *grp_name = getenv("LOG_GUARDIAN_IPC_GROUP");
@@ -348,8 +342,12 @@ static int do_ban_v4(const char *ip, uint8_t prefix) {
         uint8_t val = 1;
         rc = bpf_map_update_elem(g_map_v4_fd, &key, &val, BPF_ANY);
     }
-    if (rc != 0)
-        rc = run_ipset_ip("add", g_ipset_v4, ip);
+    if (rc != 0) {
+        int iprc = run_ipset_ip("add", g_ipset_v4, ip);
+        if (iprc != 0)
+            syslog(LOG_WARNING, "[DAEMON] ipset add %s -> exit %d", ip, iprc);
+        rc = iprc;
+    }
     return rc;
 }
 
@@ -362,24 +360,35 @@ static int do_tarpit_v4(const char *ip, uint8_t prefix, uint8_t prob) {
 }
 
 static int do_unban_v4(const char *ip, uint8_t prefix) {
-    int rc = -1;
     if (g_map_v4_fd >= 0) {
         struct in_addr addr;
-        if (inet_pton(AF_INET, ip, &addr) != 1) return -1;
-        struct lpm_key_v4 key = { .prefixlen = prefix, .ipv4_addr = addr.s_addr };
-        rc = bpf_map_delete_elem(g_map_v4_fd, &key);
+        if (inet_pton(AF_INET, ip, &addr) == 1) {
+            struct lpm_key_v4 key = { .prefixlen = prefix, .ipv4_addr = addr.s_addr };
+            bpf_map_delete_elem(g_map_v4_fd, &key);
+        }
     }
-    if (rc != 0)
-        rc = run_ipset_ip("del", g_ipset_v4, ip);
-    return rc;
+    if (run_ipset_ip("del", g_ipset_v4, ip) == 0)
+        return 0;
+    if (run_ipset_ip("test", g_ipset_v4, ip) != 0)
+        return 0;
+    return -1;
 }
 
 static int do_ban_v6(const char *ip) {
-    if (g_map_v6_fd < 0) return -1;
-    struct in6_addr addr;
-    if (inet_pton(AF_INET6, ip, &addr) != 1) return -1;
-    uint8_t val = 1;
-    return bpf_map_update_elem(g_map_v6_fd, addr.s6_addr, &val, BPF_ANY);
+    int rc = -1;
+    if (g_map_v6_fd >= 0) {
+        struct in6_addr addr;
+        if (inet_pton(AF_INET6, ip, &addr) != 1) return -1;
+        uint8_t val = 1;
+        rc = bpf_map_update_elem(g_map_v6_fd, addr.s6_addr, &val, BPF_ANY);
+    }
+    if (rc != 0) {
+        int iprc = run_ipset_ip("add", g_ipset_v6, ip);
+        if (iprc != 0)
+            syslog(LOG_WARNING, "[DAEMON] ipset v6 add %s -> exit %d", ip, iprc);
+        rc = iprc;
+    }
+    return rc;
 }
 
 static int do_tarpit_v6(const char *ip, uint8_t prob) {
@@ -390,14 +399,89 @@ static int do_tarpit_v6(const char *ip, uint8_t prob) {
 }
 
 static int do_unban_v6(const char *ip) {
-    if (g_map_v6_fd < 0) return -1;
-    struct in6_addr addr;
-    if (inet_pton(AF_INET6, ip, &addr) != 1) return -1;
-    return bpf_map_delete_elem(g_map_v6_fd, addr.s6_addr);
+    if (g_map_v6_fd >= 0) {
+        struct in6_addr addr;
+        if (inet_pton(AF_INET6, ip, &addr) == 1)
+            bpf_map_delete_elem(g_map_v6_fd, addr.s6_addr);
+    }
+    if (run_ipset_ip("del", g_ipset_v6, ip) == 0)
+        return 0;
+    if (run_ipset_ip("test", g_ipset_v6, ip) != 0)
+        return 0;
+    return -1;
 }
 
 
 /* ── Uprobe Hybrid Loader (Dinamik + Statik OpenSSL) ───────── */
+
+static const char *resolve_nm_bin(void)
+{
+    static const char *cands[] = { "/usr/bin/nm", "/bin/nm", NULL };
+    for (int i = 0; cands[i]; i++)
+        if (access(cands[i], X_OK) == 0)
+            return cands[i];
+    return "/usr/bin/nm";
+}
+
+static unsigned long nm_lookup_sym(const char *elf, const char *sym, int dynamic)
+{
+    int pipefd[2];
+    if (!elf || !elf[0] || !sym || pipe(pipefd) < 0)
+        return 0;
+
+    const char *nm = resolve_nm_bin();
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return 0;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        int dn = open("/dev/null", O_WRONLY);
+        if (dn >= 0) {
+            dup2(dn, STDERR_FILENO);
+            close(dn);
+        }
+        if (dynamic) {
+            char *const av[] = { (char *)nm, "-D", (char *)elf, NULL };
+            execve(nm, av, (char *[]){ NULL });
+        } else {
+            char *const av[] = { (char *)nm, (char *)elf, NULL };
+            execve(nm, av, (char *[]){ NULL });
+        }
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    char buf[8192];
+    ssize_t total = 0;
+    while (total < (ssize_t)(sizeof(buf) - 1)) {
+        ssize_t r = read(pipefd[0], buf + total, sizeof(buf) - 1 - (size_t)total);
+        if (r <= 0)
+            break;
+        total += r;
+    }
+    close(pipefd[0]);
+    waitpid(pid, NULL, 0);
+    buf[total] = '\0';
+
+    for (char *line = buf; line && *line; ) {
+        char *nl = strchr(line, '\n');
+        if (nl)
+            *nl = '\0';
+        unsigned long addr = 0;
+        char typ[8], name[64];
+        if (sscanf(line, "%lx %7s %63s", &addr, typ, name) == 3 &&
+            strcmp(name, sym) == 0) {
+            return addr;
+        }
+        line = nl ? nl + 1 : NULL;
+    }
+    return 0;
+}
 
 /*
  * ssl_find_binary:
@@ -437,31 +521,11 @@ static int ssl_find_binary(pid_t pid, char *target_path, size_t path_len,
     /* Dinamik: libssl.so bulundu */
     if (libssl_path[0] != '\0') {
         strncpy(target_path, libssl_path, path_len - 1);
-        /* Sembol offset'i ELF'ten çıkar */
+        target_path[path_len - 1] = '\0';
         *offset_read  = 0;
         *offset_write = 0;
-        /* nm -D ile SSL_read adresini bul */
-        char cmd[512];
-        snprintf(cmd, sizeof(cmd), "nm -D '%s' 2>/dev/null | grep -w SSL_read",
-                 libssl_path);
-        FILE *nm = popen(cmd, "r");
-        if (nm) {
-            unsigned long sym_addr;
-            char sym_type[4], sym_name[64];
-            if (fscanf(nm, "%lx %s %s", &sym_addr, sym_type, sym_name) == 3)
-                *offset_read = sym_addr;
-            pclose(nm);
-        }
-        snprintf(cmd, sizeof(cmd), "nm -D '%s' 2>/dev/null | grep -w SSL_write",
-                 libssl_path);
-        nm = popen(cmd, "r");
-        if (nm) {
-            unsigned long sym_addr;
-            char sym_type[4], sym_name[64];
-            if (fscanf(nm, "%lx %s %s", &sym_addr, sym_type, sym_name) == 3)
-                *offset_write = sym_addr;
-            pclose(nm);
-        }
+        *offset_read  = nm_lookup_sym(libssl_path, "SSL_read", 1);
+        *offset_write = nm_lookup_sym(libssl_path, "SSL_write", 1);
         (void)map_base;
         return (*offset_read > 0) ? 0 : -1;
     }
@@ -473,30 +537,10 @@ static int ssl_find_binary(pid_t pid, char *target_path, size_t path_len,
     if (r <= 0) return -1;
     exe_path[r] = '\0';
     strncpy(target_path, exe_path, path_len - 1);
+    target_path[path_len - 1] = '\0';
 
-    /* ELF symbol table tara—statik binary icin */
-    char cmd[512];
-    snprintf(cmd, sizeof(cmd), "nm '%s' 2>/dev/null | grep -w SSL_read",
-             exe_path);
-    FILE *nm = popen(cmd, "r");
-    *offset_read = 0; *offset_write = 0;
-    if (nm) {
-        unsigned long sym_addr;
-        char sym_type[4], sym_name[64];
-        if (fscanf(nm, "%lx %s %s", &sym_addr, sym_type, sym_name) == 3)
-            *offset_read = sym_addr;
-        pclose(nm);
-    }
-    snprintf(cmd, sizeof(cmd), "nm '%s' 2>/dev/null | grep -w SSL_write",
-             exe_path);
-    nm = popen(cmd, "r");
-    if (nm) {
-        unsigned long sym_addr;
-        char sym_type[4], sym_name[64];
-        if (fscanf(nm, "%lx %s %s", &sym_addr, sym_type, sym_name) == 3)
-            *offset_write = sym_addr;
-        pclose(nm);
-    }
+    *offset_read  = nm_lookup_sym(exe_path, "SSL_read", 0);
+    *offset_write = nm_lookup_sym(exe_path, "SSL_write", 0);
     return (*offset_read > 0) ? 1 : -1;  /* 1=statik */
 }
 
@@ -939,28 +983,50 @@ static void handle_client(int client_fd) {
     }
 
     int rc = 0;
+    msg.ip[sizeof(msg.ip) - 1] = '\0';
+    uint8_t v4_prefix = msg.prefix ? msg.prefix : 32;
 
     switch (msg.cmd) {
         case IPC_CMD_BAN_V4:
-            rc = do_ban_v4(msg.ip, msg.prefix ? msg.prefix : 32);
+            if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid ban v4", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_ban_v4(msg.ip, v4_prefix);
+            }
             syslog(LOG_INFO, "[DAEMON] BAN v4 %s/%u: %s",
-                   msg.ip, (unsigned)msg.prefix, rc == 0 ? "OK" : "FAIL");
+                   msg.ip, (unsigned)v4_prefix, rc == 0 ? "OK" : "FAIL");
             break;
 
         case IPC_CMD_BAN_V6:
-            rc = do_ban_v6(msg.ip);
+            if (ipc_validate_ban_ipv6(msg.ip) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid ban v6", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_ban_v6(msg.ip);
+            }
             syslog(LOG_INFO, "[DAEMON] BAN v6 %s: %s",
                    msg.ip, rc == 0 ? "OK" : "FAIL");
             break;
 
         case IPC_CMD_UNBAN_V4:
-            rc = do_unban_v4(msg.ip, msg.prefix ? msg.prefix : 32);
+            if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid unban v4", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_unban_v4(msg.ip, v4_prefix);
+            }
             syslog(LOG_INFO, "[DAEMON] UNBAN v4 %s/%u: %s",
-                   msg.ip, (unsigned)msg.prefix, rc == 0 ? "OK" : "FAIL");
+                   msg.ip, (unsigned)v4_prefix, rc == 0 ? "OK" : "FAIL");
             break;
 
         case IPC_CMD_UNBAN_V6:
-            rc = do_unban_v6(msg.ip);
+            if (ipc_validate_ban_ipv6(msg.ip) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid unban v6", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_unban_v6(msg.ip);
+            }
             syslog(LOG_INFO, "[DAEMON] UNBAN v6 %s: %s",
                    msg.ip, rc == 0 ? "OK" : "FAIL");
             break;
@@ -970,13 +1036,23 @@ static void handle_client(int client_fd) {
             break;
 
         case IPC_CMD_TARPIT_V4:
-            rc = do_tarpit_v4(msg.ip, msg.prefix ? msg.prefix : 32, msg.prob);
+            if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid tarpit v4", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_tarpit_v4(msg.ip, v4_prefix, msg.prob);
+            }
             syslog(LOG_INFO, "[DAEMON] TARPIT v4 %s/%u prob=%u: %s",
-                   msg.ip, (unsigned)msg.prefix, msg.prob, rc == 0 ? "OK" : "FAIL");
+                   msg.ip, (unsigned)v4_prefix, msg.prob, rc == 0 ? "OK" : "FAIL");
             break;
 
         case IPC_CMD_TARPIT_V6:
-            rc = do_tarpit_v6(msg.ip, msg.prob);
+            if (ipc_validate_ban_ipv6(msg.ip) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid tarpit v6", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_tarpit_v6(msg.ip, msg.prob);
+            }
             syslog(LOG_INFO, "[DAEMON] TARPIT v6 %s prob=%u: %s",
                    msg.ip, msg.prob, rc == 0 ? "OK" : "FAIL");
             break;
@@ -999,24 +1075,37 @@ static void handle_client(int client_fd) {
             syslog(LOG_CRIT,
                    "[DAEMON] RCE ALERT: PID=%u Cmd=%.64s IP=%s",
                    msg.pid, msg.cmdline, msg.ip);
-            /* Kaynağı hemen ban'la (ip alanı doluysa) */
-            if (msg.ip[0] != '\0')
-                rc = do_ban_v4(msg.ip, msg.prefix ? msg.prefix : 32);
-            else
+            if (msg.ip[0] != '\0') {
+                if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0)
+                    rc = -1;
+                else
+                    rc = do_ban_v4(msg.ip, v4_prefix);
+            } else {
                 rc = 0;
+            }
             break;
 
         case IPC_CMD_TARPIT_START:
-            rc = do_tarpit_v4(msg.ip, msg.prefix ? msg.prefix : 32, msg.prob);
+            if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid tarpit start", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_tarpit_v4(msg.ip, v4_prefix, msg.prob);
+            }
             syslog(LOG_INFO, "[DAEMON] TARPIT_START %s/%u prob=%u: %s",
-                   msg.ip, (unsigned)msg.prefix, msg.prob,
+                   msg.ip, (unsigned)v4_prefix, msg.prob,
                    rc == 0 ? "OK" : "FAIL");
             break;
 
         case IPC_CMD_TARPIT_STOP:
-            rc = do_unban_v4(msg.ip, msg.prefix ? msg.prefix : 32);
+            if (ipc_validate_ban_ipv4(msg.ip, &v4_prefix) != 0) {
+                rc = -1;
+                strncpy(resp.errmsg, "invalid tarpit stop", sizeof(resp.errmsg) - 1);
+            } else {
+                rc = do_unban_v4(msg.ip, v4_prefix);
+            }
             syslog(LOG_INFO, "[DAEMON] TARPIT_STOP %s/%u: %s",
-                   msg.ip, (unsigned)msg.prefix, rc == 0 ? "OK" : "FAIL");
+                   msg.ip, (unsigned)v4_prefix, rc == 0 ? "OK" : "FAIL");
             break;
 
         default:
@@ -1033,7 +1122,8 @@ static void handle_client(int client_fd) {
     }
 
     send(client_fd, &resp, sizeof(resp), MSG_NOSIGNAL);
-    if (rc == 0 && (msg.cmd == IPC_CMD_BAN_V4 || msg.cmd == IPC_CMD_UNBAN_V4))
+    if (rc == 0 && (msg.cmd == IPC_CMD_BAN_V4 || msg.cmd == IPC_CMD_UNBAN_V4
+                    || msg.cmd == IPC_CMD_BAN_V6 || msg.cmd == IPC_CMD_UNBAN_V6))
         g_bans_json_dirty = 1;
     close(client_fd);
 }

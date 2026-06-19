@@ -1,7 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import { RefreshCw, ShieldBan } from "lucide-react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
 import { BanIpButton } from "./BanIpButton";
 import { useBanPreview } from "@/context/BannedIpsContext";
@@ -15,9 +17,17 @@ const PREVIEW_LIMIT = 15;
 
 export function BannedIpsPanel({ compact = false, className = "" }: Props) {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
+  const highlightIp = searchParams.get("ip")?.trim() || "";
   const { bans, totalCount, truncated, source, loading, refreshing, refresh } =
     useBanPreview(PREVIEW_LIMIT);
   const spinning = loading || refreshing;
+
+  useEffect(() => {
+    if (!highlightIp) return;
+    const el = document.getElementById(`ban-ip-${highlightIp}`);
+    el?.scrollIntoView({ behavior: "smooth", block: "center" });
+  }, [highlightIp, bans.length]);
 
   return (
     <div
@@ -79,7 +89,12 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
             {bans.map((b) => (
               <li
                 key={b.ip}
-                className="flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-black/30 border border-white/10 hover:border-red-500/15 transition-colors"
+                id={`ban-ip-${b.ip}`}
+                className={`flex items-center justify-between gap-3 py-2 px-3 rounded-lg bg-black/30 border transition-colors ${
+                  highlightIp === b.ip
+                    ? "border-primary ring-1 ring-primary/40"
+                    : "border-white/10 hover:border-red-500/15"
+                }`}
               >
                 <div className="min-w-0">
                   <span className="font-mono text-sm text-red-300 truncate block">{b.ip}</span>

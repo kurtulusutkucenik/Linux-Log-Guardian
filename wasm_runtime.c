@@ -1,3 +1,4 @@
+#define _GNU_SOURCE
 /* wasm_runtime.c — WebAssembly Plugin Engine (Feature 4)
  *
  * HAVE_WASM=1 → Wasmtime C API entegrasyonu
@@ -16,10 +17,12 @@
 #include <stdatomic.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <limits.h>
 #include <time.h>
 
 #ifdef HAVE_WASM
-  #include <wasm.h>   /* Wasmtime C API */
+  #include <wasm.h>
+  #include <wasmtime.h>
 #endif
 
 /* ── İç Veri Yapıları ───────────────────────────────────────────── */
@@ -105,6 +108,81 @@ static atomic_uint_fast64_t g_total_calls  = 0;
 static atomic_uint_fast64_t g_total_blocks = 0;
 
 #ifdef HAVE_WASM
+static uint64_t wasm_exec_fuel_budget(void)
+{
+    const char *e = getenv("WASM_EXEC_FUEL");
+    if (!e || !e[0])
+        return 500000u;
+    unsigned long long v = strtoull(e, NULL, 10);
+    return v > 0 ? (uint64_t)v : 500000u;
+}
+
+static size_t wasm_max_input_bytes(void)
+{
+    const char *e = getenv("WASM_MAX_INPUT_BYTES");
+    if (!e || !e[0])
+        return 65536u;
+    long v = strtol(e, NULL, 10);
+    if (v < 1024)
+        return 1024u;
+    if (v > 1048576L)
+        return 1048576u;
+    return (size_t)v;
+}
+
+static size_t wasm_max_memory_bytes(void)
+{
+    const char *e = getenv("WASM_MAX_MEMORY_BYTES");
+    if (!e || !e[0])
+        return 1048576u;
+    long v = strtol(e, NULL, 10);
+    if (v < 65536L)
+        return 65536u;
+    if (v > 16777216L)
+        return 16777216u;
+    return (size_t)v;
+}
+
+static int wasm_refuel_store(wasm_store_t *store)
+{
+    if (!store)
+        return -1;
+    wasmtime_context_t *ctx =
+        wasmtime_store_context((wasmtime_store_t *)store);
+    wasmtime_error_t *err =
+        wasmtime_context_set_fuel(ctx, wasm_exec_fuel_budget());
+    if (err) {
+        wasmtime_error_delete(err);
+        return -1;
+    }
+    return 0;
+}
+
+static int wasm_plugin_path_allowed(const char *wasm_path)
+{
+    if (!wasm_path || !wasm_path[0] || strstr(wasm_path, "..") != NULL)
+        return 0;
+
+    char dir_real[PATH_MAX];
+    char file_real[PATH_MAX];
+    if (realpath(g_plugin_dir, dir_real) == NULL) {
+        size_t dlen = strlen(g_plugin_dir);
+        return strncmp(wasm_path, g_plugin_dir, dlen) == 0 &&
+               (wasm_path[dlen] == '/' || wasm_path[dlen] == '\0');
+    }
+    if (realpath(wasm_path, file_real) == NULL)
+        return 0;
+
+    size_t dlen = strlen(dir_real);
+    if (strncmp(file_real, dir_real, dlen) != 0)
+        return 0;
+    if (file_real[dlen] != '/' && file_real[dlen] != '\0')
+        return 0;
+    return 1;
+}
+#endif
+
+#ifdef HAVE_WASM
 static wasm_engine_t *g_engine = NULL;
 static wasm_store_t  *g_shared_store = NULL;
 #endif
@@ -119,6 +197,7 @@ static wasm_store_t  *g_shared_store = NULL;
 static int      g_inotify_fd = -1;
 static pthread_t g_watch_tid;
 static int       g_watch_stop = 0;
+static int       g_watch_started = 0;
 
 static void *plugin_watch_thread(void *arg) {
     (void)arg;
@@ -153,7 +232,14 @@ int wasm_runtime_init(void) {
     g_plugin_count = 0;
 
 #ifdef HAVE_WASM
-    g_engine = wasm_engine_new();
+    wasm_config_t *cfg = wasm_config_new();
+    if (!cfg) {
+        log_rl(LOG_INFO, "HATA: Wasmtime config olusturulamadi");
+        return -1;
+    }
+    wasmtime_config_consume_fuel_set(cfg, true);
+    g_engine = wasm_engine_new_with_config(cfg);
+    /* cfg ownership engine'e gecer — wasm_config_delete cagirma */
     if (!g_engine) {
         log_rl(LOG_INFO, "HATA: Wasmtime engine başlatılamadı");
         return -1;
@@ -179,7 +265,10 @@ int wasm_runtime_init(void) {
     g_inotify_fd = inotify_init1(IN_NONBLOCK);
     if (g_inotify_fd >= 0) {
         inotify_add_watch(g_inotify_fd, g_plugin_dir, IN_CREATE | IN_MOVED_TO);
-        pthread_create(&g_watch_tid, NULL, plugin_watch_thread, NULL);
+        if (pthread_create(&g_watch_tid, NULL, plugin_watch_thread, NULL) == 0)
+            g_watch_started = 1;
+        else
+            log_rl(LOG_WARNING, "Plugin izleme thread baslatilamadi");
         log_rl(LOG_INFO, "Plugin dizini izleniyor: %s", g_plugin_dir);
     }
 #endif
@@ -188,7 +277,14 @@ int wasm_runtime_init(void) {
 
 /* ── plugin yükle ───────────────────────────────────────────────── */
 int wasm_plugin_load(const char *wasm_path) {
-    if (!wasm_path) return -1;
+    if (!wasm_path)
+        return -1;
+#ifdef HAVE_WASM
+    if (!wasm_plugin_path_allowed(wasm_path)) {
+        log_rl(LOG_WARNING, "Wasm plugin yolu reddedildi: %s", wasm_path);
+        return -1;
+    }
+#endif
 
     /* Dosya adından isim türet */
     const char *base = strrchr(wasm_path, '/');
@@ -370,28 +466,43 @@ WasmVerdict wasm_plugin_analyze(const char *req_json,
             pthread_mutex_lock(&g_wasm_exec_mutex);
             if (req_json) {
                 size_t jlen = strlen(req_json);
-                size_t need = jlen + 1;
-                size_t mem_sz = wasm_memory_data_size(p->memory);
-                if (need > mem_sz) {
-                    size_t delta = need - mem_sz;
-                    size_t pages = (delta + 65535u) / 65536u;
-                    if (pages == 0) pages = 1;
-                    wasm_memory_grow(p->memory, pages);
-                    mem_sz = wasm_memory_data_size(p->memory);
-                }
-                byte_t *mem = wasm_memory_data(p->memory);
-                if (mem && need <= mem_sz) {
-                    memcpy(mem, req_json, jlen + 1);
-                    wasm_val_t args[2] = {
-                        {.kind = WASM_I32, .of.i32 = 0},
-                        {.kind = WASM_I32, .of.i32 = (int32_t)jlen}
-                    };
-                    wasm_val_t results[1] = {{.kind = WASM_I32}};
-                    wasm_val_vec_t av = {2, args}, rv = {1, results};
-                    if (wasm_func_call(p->analyze_fn, &av, &rv)) {
-                        log_rl(LOG_INFO, "Wasm plugin trap: %s", p->info.name);
+                size_t max_in = wasm_max_input_bytes();
+                size_t max_mem = wasm_max_memory_bytes();
+                if (jlen > max_in) {
+                    log_rl(LOG_WARNING, "Wasm input limit: %s (%zu byte)",
+                           p->info.name, jlen);
+                } else if (wasm_refuel_store(p->store) != 0) {
+                    log_rl(LOG_WARNING, "Wasm fuel ayarlanamadi: %s", p->info.name);
+                } else {
+                    size_t need = jlen + 1;
+                    size_t mem_sz = wasm_memory_data_size(p->memory);
+                    if (need <= max_mem) {
+                        if (need > mem_sz) {
+                            size_t pages = (need - mem_sz + 65535u) / 65536u;
+                            if (pages == 0)
+                                pages = 1;
+                            if (mem_sz + pages * 65536u <= max_mem)
+                                wasm_memory_grow(p->memory, pages);
+                            mem_sz = wasm_memory_data_size(p->memory);
+                        }
+                        byte_t *mem = wasm_memory_data(p->memory);
+                        if (mem && need <= mem_sz && need <= max_mem) {
+                            memcpy(mem, req_json, jlen + 1);
+                            wasm_val_t args[2] = {
+                                {.kind = WASM_I32, .of.i32 = 0},
+                                {.kind = WASM_I32, .of.i32 = (int32_t)jlen}
+                            };
+                            wasm_val_t results[1] = {{.kind = WASM_I32}};
+                            wasm_val_vec_t av = {2, args}, rv = {1, results};
+                            if (wasm_func_call(p->analyze_fn, &av, &rv)) {
+                                log_rl(LOG_INFO, "Wasm plugin trap/fuel: %s",
+                                       p->info.name);
+                            } else {
+                                verdict = (WasmVerdict)results[0].of.i32;
+                            }
+                        }
                     } else {
-                        verdict = (WasmVerdict)results[0].of.i32;
+                        log_rl(LOG_WARNING, "Wasm memory limit: %s", p->info.name);
                     }
                 }
             }
@@ -489,9 +600,14 @@ int wasm_runtime_count_native_plugins(void)
 
 void wasm_runtime_destroy(void) {
 #if defined(HAVE_WASM) && defined(__linux__)
-    g_watch_stop = 1;
-    if (g_inotify_fd >= 0) { close(g_inotify_fd); g_inotify_fd = -1; }
-    pthread_join(g_watch_tid, NULL);
+    if (g_inotify_fd >= 0) {
+        g_watch_stop = 1;
+        close(g_inotify_fd);
+        g_inotify_fd = -1;
+        if (g_watch_started)
+            pthread_join(g_watch_tid, NULL);
+        g_watch_started = 0;
+    }
 #endif
     pthread_rwlock_wrlock(&g_rwlock);
     for (int i = 0; i < g_plugin_count; i++) {

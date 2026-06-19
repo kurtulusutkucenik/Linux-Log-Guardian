@@ -5,12 +5,12 @@ Dashboard'u internete acmadan once **HTTPS zorunlu**. Iki yol:
 ## 1. Docker + Caddy (onerilen)
 
 ```bash
-export JWT_SECRET=$(openssl rand -hex 32)
+bash scripts/laptop_jwt_setup.sh
 export DOMAIN=dashboard.example.com    # veya localhost (self-signed)
 export ACME_EMAIL=ops@example.com
 
-bash scripts/tls_proxy_up.sh
-# veya: bash scripts/quickstart-docker.sh prod
+bash scripts/dashboard_stack.sh
+# veya yalnizca TLS: bash scripts/tls_proxy_up.sh
 ```
 
 Dogrulama:
@@ -24,7 +24,7 @@ Stack: `docker-compose.prod.yml` — dashboard yalnizca internal network; disari
 
 | Degisken | Aciklama |
 |----------|----------|
-| `JWT_SECRET` | Zorunlu, min 32 karakter |
+| `JWT_SECRET` | `.env` (laptop_jwt_setup.sh), min 32 karakter |
 | `DOMAIN` | Let's Encrypt domain veya `localhost` |
 | `LOG_GUARDIAN_TIER` | `pro` / `enterprise` |
 | `HTTP_PORT` / `HTTPS_PORT` | Varsayilan **8080/8443** (80/443 mesgulse); prod'da 80/443 |
@@ -59,4 +59,4 @@ SAAS_TOKEN=<install.sh veya dashboard API key>
 - [ ] Dashboard port 3000 host'a publish edilmedi (prod compose)
 - [ ] HSTS aktif (`tls_proxy_test.sh`)
 - [ ] `LOG_GUARDIAN_IPC_TOKEN` `/etc/log-guardian/env` icinde
-- [ ] 72s soak: `bash scripts/soak_test.sh` (bkz. `docs/SOAK_TEST.md`)
+- [ ] 72h soak: `bash scripts/laptop_soak_72h.sh --start` (laptop) veya `bash scripts/soak_start.sh` (bkz. `docs/SOAK_TEST.md`)

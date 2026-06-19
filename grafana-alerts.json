@@ -15,14 +15,14 @@
               "relativeTimeRange": { "from": 300, "to": 0 },
               "datasourceUid": "prometheus",
               "model": {
-                "expr": "rate(loganalyzer_lines_total{tenant_id=~\".+\"}[5m])",
+                "expr": "(loganalyzer_lines_total{tenant_id=~\".+\"} > bool 100) * (increase(loganalyzer_lines_total{tenant_id=~\".+\"}[15m]) > bool 5) * (rate(loganalyzer_lines_total{tenant_id=~\".+\"}[5m]) < bool 0.5)",
                 "intervalMs": 1000
               }
             }
           ],
-          "for": "5m",
+          "for": "10m",
           "annotations": {
-            "summary": "Log işleme hızı beklenenin altında — daemon veya log kaynağını kontrol edin."
+            "summary": "Son 15 dk'da log vardi ama EPS dusuk — analyzer veya nginx log kaynagini kontrol edin. (Bosta laptop: bench sonrasi 15+ dk sessizlikte tetiklenmez.)"
           },
           "labels": { "severity": "warning", "product": "log-guardian" }
         },
@@ -99,7 +99,7 @@
               "relativeTimeRange": { "from": 300, "to": 0 },
               "datasourceUid": "prometheus",
               "model": {
-                "expr": "loganalyzer_threat_feed_enabled{tenant_id=~\".+\"} == 1 and loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"} > 0 and (time() - loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"}) > 86400",
+                "expr": "(loganalyzer_threat_feed_enabled{tenant_id=~\".+\"} == bool 1) * (loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"} > bool 0) * ((time() - loganalyzer_threat_last_sync_ts{tenant_id=~\".+\"}) > bool 86400)",
                 "intervalMs": 1000
               }
             }
@@ -107,6 +107,48 @@
           "for": "1h",
           "annotations": {
             "summary": "Threat feed 24 saatten eski — bash scripts/threat_feed_e2e.sh veya API key kontrol."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-threat-sync-fail",
+          "title": "Log Guardian threat sync hatalari",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "(loganalyzer_threat_feed_enabled{tenant_id=~\".+\"} == bool 1) * (loganalyzer_threat_last_failed{tenant_id=~\".+\"} > bool 0)",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "15m",
+          "annotations": {
+            "summary": "Threat feed son sync'te basarisiz IOC var — log-guardian threat-feed-sync ve threat-feed.env kontrol."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-api-auth-spike",
+          "title": "Log Guardian API yetkisiz istek artisi",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 900, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "increase(loganalyzer_api_auth_fail_total{tenant_id=~\".+\"}[15m]) > 20",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "5m",
+          "annotations": {
+            "summary": "API 403 artisi — token taramasi veya dashboard token uyumsuz; bash scripts/api_fail_closed_test.sh"
           },
           "labels": { "severity": "warning", "product": "log-guardian" }
         },
@@ -120,7 +162,7 @@
               "relativeTimeRange": { "from": 300, "to": 0 },
               "datasourceUid": "prometheus",
               "model": {
-                "expr": "loganalyzer_fp_learn_enabled{tenant_id=~\".+\"} == 1 and loganalyzer_fp_trusted_ips{tenant_id=~\".+\"} == 0",
+                "expr": "(loganalyzer_fp_learn_enabled{tenant_id=~\".+\"} == bool 1) * (loganalyzer_fp_trusted_ips{tenant_id=~\".+\"} == bool 0)",
                 "intervalMs": 1000
               }
             }

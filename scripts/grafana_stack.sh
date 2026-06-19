@@ -7,7 +7,8 @@ cd "$ROOT"
 GRAFANA_PORT="${GRAFANA_PORT:-3002}"
 GRAFANA_USER="${GRAFANA_USER:-admin}"
 GRAFANA_PASS="${GRAFANA_PASS:-admin}"
-PROM_HOST="${PROM_HOST:-172.17.0.1}"
+# Grafana container → host'taki Prometheus (host network :9090)
+PROM_HOST="${PROM_HOST:-host.docker.internal}"
 
 fail() { echo "[grafana_stack] FAIL: $*" >&2; exit 1; }
 
@@ -34,15 +35,17 @@ echo "[grafana_stack] eski container temizleniyor..."
 docker rm -f prometheus-lg grafana-lg 2>/dev/null || true
 
 echo "[grafana_stack] Prometheus (host network → 127.0.0.1:9091)..."
-docker run -d --name prometheus-lg --network host \
+docker run -d --name prometheus-lg --network host --restart unless-stopped \
   -v "$PROM_CFG:/etc/prometheus/prometheus.yml:ro" \
   prom/prometheus >/dev/null
 
 echo "[grafana_stack] Grafana :${GRAFANA_PORT}..."
-docker run -d --name grafana-lg -p "127.0.0.1:${GRAFANA_PORT}:3000" \
+docker run -d --name grafana-lg --restart unless-stopped \
+  -p "127.0.0.1:${GRAFANA_PORT}:3000" \
   --add-host=host.docker.internal:host-gateway \
   -e GF_SECURITY_ADMIN_USER="$GRAFANA_USER" \
   -e GF_SECURITY_ADMIN_PASSWORD="$GRAFANA_PASS" \
+  -e GF_SERVER_ROOT_URL="http://127.0.0.1:${GRAFANA_PORT}/" \
   grafana/grafana >/dev/null
 
 echo "[grafana_stack] Grafana API bekleniyor..."
@@ -78,9 +81,16 @@ export GRAFANA_PROM_DS="Prometheus"
 echo "[grafana_stack] dashboard + alert provision..."
 bash "$ROOT/scripts/grafana_provision.sh"
 
+if [[ -f /etc/log-guardian/webhook.env || -f "$ROOT/.env.grafana.telegram.local" ]]; then
+  echo "[grafana_stack] Telegram contact (#30)..."
+  bash "$ROOT/scripts/grafana_telegram_contact.sh" --from-webhook-warn 2>/dev/null \
+    || echo "[grafana_stack] UYARI: contact atlandi — bash scripts/grafana_telegram_contact.sh --from-webhook-warn"
+fi
+
 echo ""
 echo "[OK] grafana_stack"
 echo "  Grafana:    ${GRAFANA_URL}  (${GRAFANA_USER}/${GRAFANA_PASS})"
 echo "  Prometheus: http://127.0.0.1:9090"
 echo "  Smoke:      bash scripts/grafana_smoke_test.sh"
+echo "  Alert E2E:  bash scripts/grafana_alert_e2e.sh"
 echo "  Durdur:     docker rm -f prometheus-lg grafana-lg"

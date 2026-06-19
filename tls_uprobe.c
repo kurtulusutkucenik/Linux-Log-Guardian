@@ -16,20 +16,7 @@
  */
 #ifdef __BPF_TRACING__
 
-#if __has_include("vmlinux.h") && !defined(BPF_NO_VMLINUX)
-# include "vmlinux.h"
-# define VMLINUX_LOADED 1
-#endif
-
-#ifndef VMLINUX_LOADED
-# include <linux/bpf.h>
-# include <linux/ptrace.h>
-# include <linux/types.h>
-#endif
-
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
+#include "bpf_compat.h"
 
 /* ── TLS Plaintext Event yapısı ──────────────────────────────────── */
 #define TLS_PAYLOAD_MAX 1024   /* Yakalanan max plaintext boyutu */

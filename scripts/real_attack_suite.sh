@@ -6,6 +6,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+
+if [[ -f /etc/log-guardian/rules.conf ]] && [[ "$(id -u)" -ne 0 ]]; then
+  if ! needs_sudo_lg_replay; then
+    echo "[INFO] ozel ACCESS_PASSWORD_KDF — sudo ile replay"
+    exec sudo -E LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-}" bash "$0" "$@"
+  fi
+fi
+load_lg_replay_password
+
+# Laptop/fast gate: kategori replay timeout onleme (tam suite: REAL_ATTACK_SKIP_CATEGORIES=0)
+if [[ "${COMPETITIVE_FAST:-0}" == "1" && "${REAL_ATTACK_SKIP_CATEGORIES:-0}" == "1" ]]; then
+  export REAL_ATTACK_REPLAY_TIMEOUT="${REAL_ATTACK_REPLAY_TIMEOUT:-600}"
+fi
 
 LIVE="${LIVE:-0}"
 HOST="${ATTACK_HOST:-127.0.0.1}"

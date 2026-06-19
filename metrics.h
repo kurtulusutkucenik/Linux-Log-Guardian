@@ -46,6 +46,8 @@ typedef struct {
     /* ── Threat intel + FP learn + ban pipeline (Grafana SOC) ── */
     long threat_last_sync_ts;   /* Unix ts — son threat feed sync    */
     long threat_total_iocs;     /* Toplam IOC sayisi                 */
+    long threat_last_applied;   /* Son sync'te uygulanan IOC         */
+    long threat_last_failed;    /* Son sync'te basarisiz IOC         */
     long threat_feed_enabled;   /* 1=acik                          */
     long fp_trusted_ips;        /* FP_LEARN guvenilir IP             */
     long fp_partial_ips;        /* Kismi guven                      */
@@ -63,10 +65,20 @@ typedef struct {
     long webhook_queue_depth;   /* Anlik kuyruk derinligi           */
     long webhook_telegram_route; /* 1=CRIT/WARN ayri hedef          */
     long webhook_telegram_batch_sec; /* WARN/INFO ozet penceresi    */
+    long telegram_ack_24h;       /* Son 24s Telegram onay sayisi   */
+    long telegram_unacked_24h;   /* Onay bekleyen alarm/ban (24s)  */
+    long webhook_quiet_enabled;  /* WEBHOOK_QUIET_HOURS ayarli     */
+    long webhook_quiet_active;   /* Simdi sessiz pencerede mi      */
+    long api_requests_total;     /* REST API istek sayisi          */
+    long api_auth_fail_total;    /* API 403 (token yok/hatali)     */
+    long api_rate_limited_total; /* API 429 rate limit             */
 } MetricsSnapshot;
 
 /* main.c bu fonksiyonu çağırarak anlık sayaçları metrics modülüne iletir */
 void metrics_update(const MetricsSnapshot *snap);
+
+/* FP store yuklendikten sonra — log satiri beklemeden gauge yayinla */
+void metrics_refresh_fp_trust(long trusted, long partial, long enabled, long suppressed);
 
 /* Prometheus label: tenant_id (rules.conf TENANT_ID) */
 void metrics_set_tenant_id(const char *tenant_id);

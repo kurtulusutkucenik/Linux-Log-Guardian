@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-15T19:40:57.828266+00:00",
+  "mode": "corpus replay proof",
+  "ip_block": "203.0.113.211-203.0.113.214",
+  "lines": 4,
+  "phase1_no_ban_no_webhook": {
+    "alerts_total": 4,
+    "webhook_dry_run_lines": 0,
+    "pass": true
+  },
+  "phase2_webhook_control": {
+    "webhook_dry_run_lines": 8,
+    "pass": true
+  },
+  "phase3_ban_enabled": {
+    "skipped": false,
+    "ipset_hits": 4,
+    "pass": true
+  },
+  "pass": true,
+  "note": "faz1: corpus replay Telegram kapali; faz3: force_waf ile ipset (prod davranisi)"
+}

@@ -1,39 +1,38 @@
 # Quick start — Docker (Dashboard)
 
+## Önerilen (TLS + Grafana + JWT kalıcı)
+
+```bash
+bash scripts/dashboard_stack.sh
+```
+
+Giriş: `https://localhost:8443` — `admin` / `.env` `DASHBOARD_ADMIN_PASSWORD` veya `ChangeMeOnFirstLogin!`
+
+Laptop matris: [LAPTOP_OPS.md](LAPTOP_OPS.md)
+
 ## Dev (HTTP, localhost:3000)
 
 ```bash
-export JWT_SECRET=$(openssl rand -hex 32)
 bash scripts/quickstart-docker.sh
+cd dashboard && DASHBOARD_SEED=1 node prisma/seed.mjs
 ```
 
-Ilk giris (seed):
+## Prod TLS (yalnızca dashboard)
 
 ```bash
-cd dashboard
-DASHBOARD_SEED=1 DASHBOARD_ADMIN_PASSWORD='GucluParola!' node prisma/seed.mjs
-```
-
-## Prod TLS (Caddy, 443)
-
-```bash
-export JWT_SECRET=$(openssl rand -hex 32)
-export DOMAIN=localhost   # veya dashboard.example.com
-bash scripts/quickstart-docker.sh prod
+bash scripts/laptop_jwt_setup.sh
+export DOMAIN=localhost
 bash scripts/tls_proxy_test.sh
 ```
 
-Detay: [docs/TLS_PRODUCTION.md](TLS_PRODUCTION.md)
+Detay: [TLS_PRODUCTION.md](TLS_PRODUCTION.md)
 
-## Manuel
+## Manuel compose
 
 ```bash
-export JWT_SECRET=$(openssl rand -hex 32)
-docker compose build dashboard
-docker compose up dashboard
+bash scripts/laptop_jwt_setup.sh   # JWT -> .env
+docker compose -f docker-compose.prod.yml up -d --build
 ```
-
-Prod stack: `docker compose -f docker-compose.prod.yml up -d --build`
 
 ## Analyzer + daemon (host, `full` profil)
 
@@ -61,7 +60,8 @@ TENANT_ID=default
 
 ```bash
 sudo systemctl start log-guardian-daemon log-guardian
-bash scripts/soak_start.sh
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start   # once 1 saat
+# bash scripts/laptop_soak_72h.sh --start            # 72 saat
 bash scripts/soak_status.sh
 ```
 

@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# FP trust store -> prod (/etc/log-guardian)
+#   bash scripts/fp_learn_warmup.sh
+#   sudo bash scripts/install_fp_trust_prod.sh
+#   sudo bash scripts/install_fp_trust_prod.sh data/fp-trust.lst
+set -euo pipefail
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
+
+resolve_store() {
+  local rel="${1:-data/fp-trust.lst}"
+  local base="/etc/log-guardian"
+  if [[ -f "$CONF" ]]; then
+    rel=$(grep -E '^FP_TRUST_STORE=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || echo "$rel")
+    base=$(dirname "$CONF")
+  fi
+  if [[ "$rel" == /* ]]; then
+    echo "$rel"
+  else
+    echo "$base/$rel"
+  fi
+}
+
+SRC="${1:-}"
+if [[ -z "$SRC" ]]; then
+  for c in "$ROOT/data/fp-trust-warmup.lst" "$ROOT/data/fp-trust.lst"; do
+    [[ -f "$c" ]] && SRC="$c" && break
+  done
+fi
+[[ -n "$SRC" && -f "$SRC" ]] || {
+  echo "[install_fp_trust] FAIL: kaynak yok" >&2
+  echo "  once: bash scripts/fp_learn_warmup.sh" >&2
+  echo "  veya: sudo bash scripts/install_fp_trust_prod.sh /path/to/fp-trust.lst" >&2
+  exit 1
+}
+
+DEST="$(resolve_store)"
+DEST_DIR=$(dirname "$DEST")
+
+[[ "$(id -u)" -eq 0 ]] || { echo "[install_fp_trust] sudo gerekli" >&2; exit 1; }
+
+mkdir -p "$DEST_DIR"
+chown root:log-guardian "$DEST_DIR" 2>/dev/null || true
+chmod 2770 "$DEST_DIR"
+install -m 660 -o log-guardian -g log-guardian "$SRC" "$DEST"
+lines=$(wc -l <"$DEST" | tr -d ' ')
+echo "[OK] install_fp_trust: $SRC -> $DEST ($lines satir)"
+echo "  sudo systemctl stop log-guardian   # calisiyorsa — restart bos havuzu diske yazabilir"
+echo "  sudo systemctl start log-guardian"

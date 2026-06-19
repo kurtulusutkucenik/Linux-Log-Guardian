@@ -102,30 +102,19 @@ Yaygin hatalar:
 ## Adim 5 — TLS Dashboard (Docker)
 
 ```bash
-export JWT_SECRET=$(openssl rand -hex 32)
-export DOMAIN=localhost
-export HTTP_PORT=8080 HTTPS_PORT=8443   # 80/443 mesgulse
-bash scripts/install_steps.sh 5-dashboard
+bash scripts/laptop_jwt_setup.sh
+# veya tam stack (Grafana dahil):
+bash scripts/dashboard_stack.sh
 ```
 
-Arka planda eski container varsa `tls_proxy_up.sh` otomatik temizler.
+JWT kalici `.env` dosyasinda; her restart'ta oturum dusmez.
 
-Manuel (ayni is):
+Panel: https://localhost:8443 — `admin` / `.env` `DASHBOARD_ADMIN_PASSWORD` veya `ChangeMeOnFirstLogin!`
 
-```bash
-export JWT_SECRET=$(openssl rand -hex 32)
-bash scripts/dashboard_prod_smoke.sh   # next build (standalone)
-bash scripts/tls_proxy_up.sh           # Caddy + dashboard
-bash scripts/tls_proxy_test.sh
-```
-
-Panel: https://localhost:8443
-
-Ilk admin (seed):
+Opsiyonel parola:
 
 ```bash
-cd dashboard
-DASHBOARD_SEED=1 DASHBOARD_ADMIN_PASSWORD='GucluParola!' node prisma/seed.mjs
+DASHBOARD_ADMIN_PASSWORD='GucluParola!' bash scripts/laptop_jwt_setup.sh
 ```
 
 ---
@@ -142,7 +131,7 @@ SOAK_SHORT=1 bash scripts/install_steps.sh 6-soak
 
 ```bash
 sudo systemctl start log-guardian-daemon log-guardian
-bash scripts/soak_start.sh
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start
 ```
 
 Izleme (test uzun surer — arka planda calisir):

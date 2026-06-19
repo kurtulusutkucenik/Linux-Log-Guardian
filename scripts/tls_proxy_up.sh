@@ -4,15 +4,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+if [[ -f "$ROOT/.env" ]]; then
+  set -a
+  # shellcheck disable=SC1091
+  source "$ROOT/.env"
+  set +a
+fi
 if [[ -z "${JWT_SECRET:-}" ]]; then
-  if command -v openssl >/dev/null 2>&1; then
-    export JWT_SECRET
-    JWT_SECRET=$(openssl rand -hex 32)
-    echo "[tls_proxy_up] JWT_SECRET uretildi (bu shell icin export edildi)"
-  else
-    echo "[tls_proxy_up] JWT_SECRET gerekli (min 32 karakter)" >&2
-    exit 1
-  fi
+  echo "[tls_proxy_up] JWT_SECRET yok — once: bash scripts/laptop_jwt_setup.sh" >&2
+  exit 1
 fi
 
 export DOMAIN="${DOMAIN:-localhost}"

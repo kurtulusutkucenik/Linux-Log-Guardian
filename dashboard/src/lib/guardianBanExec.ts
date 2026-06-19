@@ -42,11 +42,24 @@ export async function executeGuardianBan(opts: {
   ).replace(/\/$/, "");
 
   if (apiBase) {
+    const apiToken = process.env.GUARDIAN_API_TOKEN?.trim();
+    if (!apiToken) {
+      return {
+        ok: false,
+        via: "analyzer_api",
+        ip,
+        action,
+        message:
+          "GUARDIAN_API_TOKEN eksik — bash scripts/sync_dashboard_api_token.sh",
+      };
+    }
     try {
       const path = action === "unban" ? "/api/v1/unban" : "/api/v1/ban";
       const url = `${apiBase}${path}?ip=${encodeURIComponent(ip)}&reason=${encodeURIComponent(reason)}`;
       const res = await fetch(url, {
         method: "POST",
+        headers: { Authorization: `Bearer ${apiToken}` },
+        cache: "no-store",
         signal: AbortSignal.timeout(10_000),
       });
       const body = (await res.json().catch(() => ({}))) as {

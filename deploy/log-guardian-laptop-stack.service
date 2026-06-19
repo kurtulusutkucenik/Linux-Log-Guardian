@@ -1,0 +1,17 @@
+# Linux Log Guardian — laptop dashboard + Grafana boot (user unit)
+# Kurulum: bash scripts/install_laptop_stack_boot.sh
+[Unit]
+Description=Linux Log Guardian laptop dashboard stack
+Documentation=file://docs/LAPTOP_OPS.md
+After=network-online.target docker.service
+Wants=docker.service
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+Environment=LOGANALYZER_PASSWORD=DegistirBeni!123
+ExecStart=/bin/bash -c 'cd "@LG_STACK_WORKDIR@" && exec bash scripts/laptop_stack_boot.sh'
+TimeoutStartSec=600
+
+[Install]
+WantedBy=default.target

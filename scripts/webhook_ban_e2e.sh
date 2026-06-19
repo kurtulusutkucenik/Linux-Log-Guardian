@@ -14,10 +14,13 @@ ATTACK_IP="203.0.113.198"
 
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
 
-cat > "$RULES" <<'EOF'
+CRS_BUNDLE="$ROOT/rules/crs-bundle.rules"
+[[ -f "$CRS_BUNDLE" ]] || { echo "[FAIL] CRS bundle yok: $CRS_BUNDLE — make / scripts/import_crs.py" >&2; exit 1; }
+
+{
+  cat <<'STATICEOF'
 ACCESS_PASSWORD_KDF=pbkdf2$100000$6560e0aa800d47957280cab9a1038847$b0c64cf98788c6921356411f05f1fbc60fbdf6a7e487b34124576866e97cb504
 CRS_ENABLED=1
-CRS_RULES=rules/crs-bundle.rules
 AUTO_BAN=1
 AUTO_BAN_MIN_RISK=60
 WEBHOOK_ENABLED=1
@@ -34,7 +37,9 @@ BLOCK_COUNTRIES=
 WHITELIST_IP=
 SIEM_FORWARDER_ENABLED=0
 FP_LEARN=0
-EOF
+STATICEOF
+  echo "CRS_RULES=$CRS_BUNDLE"
+} >"$RULES"
 chmod 600 "$RULES"
 
 cat > "$ATTACK_LOG" <<EOF
@@ -43,8 +48,8 @@ EOF
 
 export WEBHOOK_ENABLED=1
 export WEBHOOK_DRY_RUN=1
-export LOGANALYZER_DISCORD_WEBHOOK_URL="https://discord.com/api/webhooks/000000000000000000/FAKE"
-export LOGANALYZER_SLACK_WEBHOOK_URL="https://hooks.slack.com/services/T00/B00/FAKE"
+export LOGANALYZER_TELEGRAM_TOKEN="000000000:FAKE"
+export LOGANALYZER_TELEGRAM_CHAT_ID="-1001234567890"
 
 echo "=== webhook_ban_e2e ==="
 
@@ -59,12 +64,21 @@ echo "$ban_test" | grep -qi 'BAN' || {
 }
 echo "[OK] webhook-test ban (dry-run)"
 
-combined=$(./log-guardian "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1 || true)
-alerts=$(echo "$combined" | grep -o '"alerts_total"[[:space:]]*:[[:space:]]*[0-9]*' | tail -1 | grep -o '[0-9]*$' || echo 0)
+combined=$(./log-guardian "$ATTACK_LOG" --no-tui --json --no-ban --rules "$RULES" 2>&1 || true)
+alerts=$(echo "$combined" | python3 -c "
+import json, re, sys
+raw = sys.stdin.read()
+try:
+    d = json.loads(raw[raw.find('{'):raw.rfind('}')+1])
+    print(int(d.get('alerts_total', 0)))
+except Exception:
+    m = re.search(r'\"alerts_total\"\s*:\s*(\d+)', raw)
+    print(m.group(1) if m else 0)
+" 2>/dev/null || echo 0)
 
 if [[ "${alerts:-0}" -lt 1 ]]; then
-  echo "[FAIL] saldiri logundan alarm uretilmedi (CRS rules kontrol)" >&2
-  echo "$combined" | tail -n 8 >&2
+  echo "[FAIL] saldiri logundan alarm uretilmedi (CRS: $CRS_BUNDLE)" >&2
+  echo "$combined" | grep -E '\[CRS\]|\[WAF\]|alerts_total|sqli' | tail -n 12 >&2 || echo "$combined" | tail -n 8 >&2
   exit 1
 fi
 echo "[OK] saldiri logu alerts_total=$alerts"

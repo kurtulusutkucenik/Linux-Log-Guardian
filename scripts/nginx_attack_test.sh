@@ -6,6 +6,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+
+if [[ -f /etc/log-guardian/rules.conf ]] && [[ "$(id -u)" -ne 0 ]]; then
+  if ! needs_sudo_lg_replay; then
+    echo "[INFO] ozel ACCESS_PASSWORD_KDF — sudo ile replay"
+    exec sudo -E LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-}" bash "$0" "$@"
+  fi
+fi
+load_lg_replay_password
 
 fail() { echo "[nginx_attack_test] FAIL: $*" >&2; exit 1; }
 
@@ -40,8 +50,9 @@ else
   echo "[WARN] nginx access log yok: $NGINX_LOG"
 fi
 
-if ! curl -sf --max-time 2 "http://${HOST}:${PORT}/" -o /dev/null 2>/dev/null; then
-  echo "[WARN] http://${HOST}:${PORT}/ yanit vermedi — nginx ayakta mi?"
+live_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 "http://${HOST}:${PORT}/" 2>/dev/null || echo 000)
+if ! [[ "$live_code" =~ ^[2345][0-9]{2}$ ]]; then
+  echo "[WARN] http://${HOST}:${PORT}/ yanit vermedi (code=${live_code}) — nginx ayakta mi?"
   echo "       Ornek: sudo systemctl status nginx"
   echo "       Devam ediliyor (tester REFUSED olabilir)"
 fi
@@ -76,11 +87,20 @@ replay_nginx_tail() {
   [[ -s "$tmp" ]] || { rm -f "$tmp" "$replay_rules"; return 1; }
   grep -v '^BLOCK_COUNTRIES=' "$RULES" > "$replay_rules" 2>/dev/null || cp "$RULES" "$replay_rules"
   echo "[INFO] nginx tail replay ($NGINX_LOG, $(wc -l < "$tmp") satir, CRS)"
-  REPLAY_JSON=$("$LG" "$tmp" --no-tui --json --rules "$replay_rules" --no-db 2>/dev/null || true)
+  local replay_err
+  replay_err=$(mktemp)
+  REPLAY_JSON=$("$LG" "$tmp" --no-tui --json --rules "$replay_rules" --no-db --no-webhook 2>"$replay_err" || true)
+  if [[ -z "$REPLAY_JSON" || "$REPLAY_JSON" != *"alerts_total"* ]]; then
+    if grep -qE 'Parola hatali|ERISIM|password' "$replay_err" 2>/dev/null; then
+      echo "[WARN] replay parola/KDF — sudo bash scripts/nginx_attack_test.sh" >&2
+    elif [[ -s "$replay_err" ]]; then
+      head -3 "$replay_err" >&2
+    fi
+  fi
   echo "$REPLAY_JSON" | head -c 400
   echo ""
   REPLAY_ALERTS=$(echo "$REPLAY_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(d.get('alerts_total',0))" 2>/dev/null || echo 0)
-  rm -f "$tmp" "$replay_rules"
+  rm -f "$tmp" "$replay_rules" "$replay_err"
   sleep 1
   return 0
 }
@@ -109,18 +129,19 @@ metrics_alerts = float(sys.argv[3] or 0)
 replay_alerts = int(sys.argv[4] or 0)
 bb = (before.get('db') or {}).get('bans_active', 0)
 ab = (after.get('db') or {}).get('bans_active', 0)
+ba = (before.get('db') or {}).get('alerts_total', 0)
+db_alerts = (after.get('db') or {}).get('alerts_total', 0)
 bp = after.get('ban_pipeline') or {}
 ipc = after.get('ipc', '?')
-db_alerts = (after.get('db') or {}).get('alerts_total', 0)
-print(f'ipc={ipc} metrics_alerts={metrics_alerts} db_alerts={db_alerts} replay_alerts={replay_alerts}')
+print(f'ipc={ipc} metrics_alerts={metrics_alerts} db_alerts={ba}->{db_alerts} replay_alerts={replay_alerts}')
 print(f'bans_active: {bb} -> {ab}')
 print(f'ban_pipeline ipc={bp.get(\"ipc\",0)} ipset={bp.get(\"ipset\",0)} failed={bp.get(\"failed\",0)}')
-ok = (ab > bb) or bp.get('ipc',0) > 0 or bp.get('ipset',0) > 0 or replay_alerts > 0
+ok = (ab > bb) or bp.get('ipc',0) > 0 or bp.get('ipset',0) > 0 or replay_alerts > 0 or db_alerts > ba
 if not ok:
     print('[WARN] alarm/ban kaniti yok — log_guardian format + CRS + nginx snippet kontrol edin')
     sys.exit(2)
-if replay_alerts > 0 and ab == bb:
-    print('[OK] SQLi alarm tespiti (localhost whitelist — ban beklenmez)')
+if (replay_alerts > 0 or db_alerts > ba) and ab == bb:
+    print('[OK] SQLi alarm ingest (localhost whitelist — ban beklenmez)')
 else:
     print('[OK] ban/alarm hatti tetiklendi')
 " "$BEFORE" "$AFTER" "$METRICS_ALERTS" "$REPLAY_ALERTS"

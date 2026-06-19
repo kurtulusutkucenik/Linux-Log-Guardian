@@ -34,6 +34,25 @@ grep -q 'K8S_OPERATOR_TOKEN' k8s-operator/main.go || fail "k8s operator token yo
 grep -q 'create_production_env' install.sh || fail "install env uretimi yok"
 test -f deploy/Caddyfile || fail "deploy/Caddyfile yok"
 test -f scripts/soak_test.sh || fail "soak_test.sh yok"
+test -f scripts/firewall_api_bind.sh || fail "firewall_api_bind.sh yok"
+grep -q 'lg_firewall_api_bind_install' scripts/firewall_api_bind.sh || fail "firewall api bind helper yok"
+grep -q 'firewall_api_bind.sh' scripts/laptop_harden.sh || fail "laptop_harden firewall fallback yok"
+grep -q 'fail-closed' api_server.c || fail "api fail-closed yok"
+grep -q 'api_check_read_auth' api_server.c || fail "api read auth yok"
+grep -q 'ban_rate_ok' api_server.c || fail "api ban rate limit yok"
+grep -q 'consult_ip_rate_ok' api_server.c || fail "api consult per-ip limit yok"
+grep -q 'TRUST_XFF' parser.c || fail "parser TRUST_XFF yok"
+grep -q 'URL scheme/host denied' threat_feed.c || fail "threat feed URL sandbox yok"
+grep -q 'THREAT_FEED_STATS_JSON' threat_feed.c || fail "threat feed stats persist yok"
+grep -q 'threat_last_applied' metrics.h || fail "threat feed applied metrik yok"
+grep -q 'api_auth_fail_total' metrics.h || fail "api auth fail metrik yok"
+grep -q 'wasm_plugin_path_allowed' wasm_runtime.c || fail "wasm plugin path guard yok"
+grep -q 'consume_fuel_set' wasm_runtime.c || fail "wasm fuel limit yok"
+if grep -q 'popen(' firewall.c ebpf_daemon.c telegram_bot.c 2>/dev/null; then
+  fail "popen kaldi (firewall/daemon/telegram)"
+fi
+test -x scripts/ensure_ipv6_ipset.sh || fail "ensure_ipv6_ipset.sh yok"
+test -x scripts/ipv6_ban_e2e.sh || fail "ipv6_ban_e2e.sh yok"
 test -f docker-compose.prod.yml || fail "docker-compose.prod.yml yok"
 grep -q 'User=log-guardian' install.sh || fail "log-guardian user yok"
 grep -q 'Type=simple' install.sh || fail "analyzer Type=simple yok"
@@ -43,7 +62,18 @@ if grep -q 'sk_guardian_fleet_test_token_123' rules.conf; then
   fail "rules.conf hala test fleet token iceriyor"
 fi
 
-make -s log-guardian log-guardian-daemon 2>/dev/null || make -s log-guardian log-guardian-daemon
+if [[ "${LG_SKIP_BUILD:-0}" == "1" ]]; then
+  [[ -x ./log-guardian ]] || fail "log-guardian yok — make veya LG_SKIP_BUILD=0"
+  echo "[OK] derleme atlandi (LG_SKIP_BUILD=1)"
+  if [[ -x ./tests/parser_xff_test ]]; then
+    ./tests/parser_xff_test || fail "parser_xff_test"
+  else
+    make -s xff-test 2>/dev/null || fail "parser_xff_test (tests/parser_xff_test yok)"
+  fi
+else
+  make -s log-guardian log-guardian-daemon 2>/dev/null || make -s log-guardian log-guardian-daemon
+  make -s xff-test 2>/dev/null || fail "parser_xff_test"
+fi
 
 python3 - <<'PY'
 import json, subprocess, os

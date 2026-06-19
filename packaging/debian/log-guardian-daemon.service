@@ -1,0 +1,35 @@
+[Unit]
+Description=Linux Log Guardian — eBPF/XDP Ayricalikli Daemon
+After=network.target
+Documentation=https://github.com/kurtulusutkucenik/loganalyzer
+StartLimitInterval=60s
+StartLimitBurst=5
+
+[Service]
+Type=notify
+EnvironmentFile=-/etc/log-guardian/env
+ExecStart=/usr/local/bin/log-guardian-daemon \
+    --iface __IFACE__ \
+    --obj /etc/log-guardian/xdp_filter.o
+WorkingDirectory=/etc/log-guardian
+User=root
+AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
+NoNewPrivileges=yes
+WatchdogSec=60
+NotifyAccess=main
+LimitNOFILE=65536
+LimitMEMLOCK=infinity
+RuntimeDirectory=log-guardian
+RuntimeDirectoryMode=0750
+RuntimeDirectoryGroup=log-guardian
+Restart=on-failure
+RestartSec=3
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/sys/fs/bpf /run/log-guardian
+ExecStartPost=+/bin/bash -c 'G=$(getent group log-guardian | cut -d: -f3); [ -n "$G" ] && chown root:$G /run/log-guardian /run/log-guardian/ipc.sock 2>/dev/null; chmod 0750 /run/log-guardian 2>/dev/null; chmod 0660 /run/log-guardian/ipc.sock 2>/dev/null; true'
+
+[Install]
+WantedBy=multi-user.target

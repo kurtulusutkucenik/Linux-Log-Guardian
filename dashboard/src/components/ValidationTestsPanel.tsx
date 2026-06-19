@@ -10,17 +10,17 @@ import {
   FileDown,
   Search,
   Trophy,
+  AlertTriangle,
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import type { ValidationTestResult } from "@/lib/validationTests";
-import { proofPdfApiUrl } from "@/lib/pdfLocale";
 
 type Payload = {
   available: boolean;
   tests: ValidationTestResult[];
-  summary?: { total: number; passed: number; failed: number; pending: number };
+  summary?: { total: number; passed: number; failed: number; warned?: number; pending: number };
   hint?: string | null;
 };
 
@@ -41,6 +41,14 @@ function StatusBadge({ status }: { status: ValidationTestResult["status"] }) {
       <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-rose-500/15 text-rose-400 border border-rose-500/30">
         <XCircle className="w-3 h-3" />
         {t("testStatusFail")}
+      </span>
+    );
+  }
+  if (status === "warn") {
+    return (
+      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold uppercase tracking-wide bg-amber-500/15 text-amber-400 border border-amber-500/30">
+        <AlertTriangle className="w-3 h-3" />
+        {t("testStatusWarn")}
       </span>
     );
   }
@@ -136,6 +144,7 @@ function SummaryHero({
 const FILTER_TABS: { id: FilterStatus; countKey: keyof NonNullable<Payload["summary"]> }[] = [
   { id: "all", countKey: "total" },
   { id: "pass", countKey: "passed" },
+  { id: "warn", countKey: "warned" },
   { id: "fail", countKey: "failed" },
   { id: "pending", countKey: "pending" },
 ];
@@ -181,12 +190,17 @@ export function ValidationTestsPanel({
 
   const visible = compact ? filtered.slice(0, 4) : filtered;
   const allPassed =
-    summary && summary.total > 0 && summary.passed === summary.total && summary.failed === 0;
+    summary &&
+    summary.total > 0 &&
+    summary.passed === summary.total &&
+    summary.failed === 0 &&
+    (summary.warned ?? 0) === 0;
 
   const filterLabel = (id: FilterStatus) => {
     if (id === "all") return t("testsFilterAll");
     if (id === "pass") return t("testsFilterPass");
     if (id === "fail") return t("testsFilterFail");
+    if (id === "warn") return t("testsFilterWarn");
     return t("testsFilterPending");
   };
 
@@ -205,6 +219,9 @@ export function ValidationTestsPanel({
             <div className="flex items-center gap-2 text-xs font-mono text-white/50 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
               <span>{summary.total} {t("testsTotalLabel")}</span>
               <span className="text-emerald-400">{summary.passed} ✓</span>
+              {(summary.warned ?? 0) > 0 && (
+                <span className="text-amber-400">{summary.warned} ⚠</span>
+              )}
               {summary.failed > 0 && <span className="text-rose-400">{summary.failed} ✗</span>}
               {summary.pending > 0 && <span className="text-amber-400">{summary.pending} …</span>}
             </div>
@@ -218,15 +235,15 @@ export function ValidationTestsPanel({
               <ChevronRight className="w-3 h-3" />
             </Link>
           )}
-          <a
-            href={proofPdfApiUrl(false)}
+          <Link
+            href="/competitive-proof"
             target="_blank"
             rel="noopener noreferrer"
             className="text-xs text-white/50 hover:text-primary inline-flex items-center gap-1 border border-white/10 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors"
           >
             <FileDown className="w-3 h-3" />
             {t("testsDownloadPdf")}
-          </a>
+          </Link>
         </div>
       </div>
 

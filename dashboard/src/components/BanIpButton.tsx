@@ -30,6 +30,7 @@ export function BanIpButton({
   const { t } = useLanguage();
   const [busy, setBusy] = useState(false);
   const [flashErr, setFlashErr] = useState(false);
+  const [errMsg, setErrMsg] = useState("");
 
   const showUnban = variant === "unban" || (variant === "ban" && banned);
   const showBannedBadge = variant === "ban" && banned && !busy;
@@ -38,36 +39,39 @@ export function BanIpButton({
     if (busy || !ip) return;
     setBusy(true);
     setFlashErr(false);
-    const action = showUnban ? "UNBAN_IP" : "BAN_IP";
+    setErrMsg("");
+    const action = showUnban ? "unban" : "ban";
     try {
       const res = await axios.post(
-        "/api/fleet/commands",
-        {
-          commandType: action,
-          payload: ip,
-          reason,
-        },
+        "/api/guardian/ban",
+        { ip, action, reason },
         { withCredentials: true },
       );
-      const ib = res.data?.immediateBan as
-        | { ok?: boolean; message?: string }
-        | undefined;
-      const ok = ib?.ok ?? res.data?.success;
+      const ok = res.data?.success === true;
       const msg =
-        ib?.message ||
+        (typeof res.data?.message === "string" && res.data.message) ||
         (ok
           ? showUnban
             ? t("unbanSuccess")
             : t("banSuccess")
-          : t("banQueuedOnly"));
-      if (!ok) setFlashErr(true);
-      onDone?.(!!ok, msg);
+          : t("banFailed"));
+      if (!ok) {
+        setFlashErr(true);
+        setErrMsg(msg);
+      }
+      onDone?.(ok, msg);
       if (ok) onRefresh?.();
-      if (!ok) setTimeout(() => setFlashErr(false), 4000);
-    } catch {
+      if (!ok) setTimeout(() => { setFlashErr(false); setErrMsg(""); }, 8000);
+    } catch (err: unknown) {
       setFlashErr(true);
-      onDone?.(false, t("banFailed"));
-      setTimeout(() => setFlashErr(false), 4000);
+      let msg = t("banFailed");
+      if (axios.isAxiosError(err)) {
+        const d = err.response?.data as { error?: string; message?: string } | undefined;
+        msg = d?.error || d?.message || msg;
+      }
+      setErrMsg(msg);
+      onDone?.(false, msg);
+      setTimeout(() => { setFlashErr(false); setErrMsg(""); }, 8000);
     } finally {
       setBusy(false);
     }
@@ -104,28 +108,35 @@ export function BanIpButton({
       : t("executeBan");
 
   return (
-    <button
-      type="button"
-      onClick={run}
-      disabled={busy || !ip}
-      title={ip}
-      className={
-        className ||
-        `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
-          showUnban
-            ? "bg-slate-700 text-white hover:bg-slate-600"
-            : flashErr
-              ? "bg-amber-600 text-white"
-              : "bg-red-600 text-white hover:bg-red-500"
-        }`
-      }
-    >
-      {busy ? (
-        <Loader2 className="w-3.5 h-3.5 animate-spin" />
-      ) : (
-        <ShieldBan className="w-3.5 h-3.5" />
+    <span className="inline-flex flex-col items-end gap-1">
+      <button
+        type="button"
+        onClick={run}
+        disabled={busy || !ip}
+        title={errMsg || ip}
+        className={
+          className ||
+          `inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors disabled:opacity-50 ${
+            showUnban
+              ? "bg-slate-700 text-white hover:bg-slate-600"
+              : flashErr
+                ? "bg-amber-600 text-white"
+                : "bg-red-600 text-white hover:bg-red-500"
+          }`
+        }
+      >
+        {busy ? (
+          <Loader2 className="w-3.5 h-3.5 animate-spin" />
+        ) : (
+          <ShieldBan className="w-3.5 h-3.5" />
+        )}
+        {label}
+      </button>
+      {errMsg && (
+        <span className="text-[10px] text-amber-300 max-w-[14rem] text-right leading-tight">
+          {errMsg}
+        </span>
       )}
-      {label}
-    </button>
+    </span>
   );
 }

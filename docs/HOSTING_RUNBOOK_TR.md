@@ -22,8 +22,8 @@
 
 ```bash
 git clone https://github.com/kurtulusutkucenik/loganalyzer.git
-cd loganalyzer
-sudo NGINX_AUTO_LOG_FORMAT=1 NGINX_ENFORCE_LOG_FORMAT=1 bash install.sh
+cd loganalyzer   # ürün: Linux Log Guardian; binary: log-guardian
+sudo bash install.sh
 sudo log-guardian --health
 ```
 
@@ -68,7 +68,7 @@ Detay: [EDGE_PROTECTION.md](EDGE_PROTECTION.md)
 
 | Anahtar | Öneri | Açıklama |
 |---------|-------|----------|
-| `INCIDENT_MIN_LOG_HITS` | `3` | Tek SQLi yerine 3 log alarmı sonra incident |
+| `INCIDENT_MIN_LOG_HITS` | `3` (prod) | Aynı IP'de kaç log alarmından sonra `INC-xxx` açılır |
 | `AUTO_BAN_MIN_RISK` | `60`–`75` | Agresif ban vs FP dengesi |
 | `BRUTE_FORCE_ERR` | `5` | Login 401/403 eşiği |
 | `DDOS_RPS` | `200`–`400` | Tek IP flood |
@@ -77,6 +77,33 @@ Detay: [EDGE_PROTECTION.md](EDGE_PROTECTION.md)
 | `FP_TRUST_DAYS` | `30` | Güvenilir IP EMA süresi |
 
 **İlk hafta beklentisi:** `FP_LEARN=1` açıkken `trusted_ips` sıfırdan başlar; 30 gün / ~100 temiz örnekten sonra false alarm düşer. Dashboard → FP panelinde görünür.
+
+**FP ısınma (staging):**
+```bash
+bash scripts/fp_learn_warmup.sh
+sudo bash scripts/install_fp_trust_prod.sh
+sudo systemctl restart log-guardian
+```
+Warmup overlay WAF kapalı (`rules.conf` ham replay alarm üretir). Çıktı: `data/fp-trust-warmup.lst` → prod `/etc/log-guardian/data/fp-trust.lst`.
+
+### `INCIDENT_MIN_LOG_HITS` prod tuning
+
+| Ortam | Öneri | Ne zaman |
+|-------|-------|----------|
+| **Varsayılan hosting** | `3` | SQLi + brute-force; tek satır alarm gürültüsünü filtreler |
+| **Yüksek trafik / API** | `4`–`5` | Çok sayıda 4xx/scan; incident flood riski |
+| **Düşük trafik / pilot** | `2` | Hızlı kanıt; `live_attack_harness.sh` ile doğrula |
+| **Sadece eBPF korelasyon** | `1` | Log alarmı tek başına yeterli değilse (nadir) |
+
+**Doğrulama:**
+
+```bash
+grep INCIDENT_MIN_LOG_HITS /etc/log-guardian/rules.conf
+bash scripts/incident_e2e.sh
+curl -s http://127.0.0.1:9091/metrics | grep incident
+```
+
+**Belirtiler:** Çok erken `INC-xxx` → değeri **yükselt**; saldırı görünüyor ama incident yok → **düşür** veya `AUTO_BAN_MIN_RISK` kontrol et. `INCIDENT_WINDOW_SEC=600` ile birlikte düşünün — pencere içinde eşik kadar alarm gerekir.
 
 ---
 
@@ -139,7 +166,7 @@ Grafana: `bash scripts/grafana_provision.sh` → `$tenant` değişkeni.
 | Ban yok, alarm var | `AUTO_BAN_MIN_RISK` yüksek | `rules.conf` düşür veya incident eşiği |
 | `REFUSED=0` canlı testte | nginx :80 kapalı | `systemctl start nginx` |
 | XDP OFF | Laptop / Wi‑Fi NIC | Normal; ipset fallback çalışır |
-| `trusted_ips: 0` | FP henüz ısınmadı | Bekle veya `FP_LEARN=0` geçici |
+| `trusted_ips: 0` | FP henüz ısınmadı | `bash scripts/fp_learn_warmup.sh` (staging) veya 30 gün bekle |
 
 ---
 

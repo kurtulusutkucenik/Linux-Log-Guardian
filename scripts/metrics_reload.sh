@@ -12,7 +12,21 @@ echo "=== metrics_reload ==="
 
 if [[ "${SKIP_INSTALL:-0}" != "1" ]]; then
   echo "── [1/3] Derleme"
-  make -j"$(nproc 2>/dev/null || echo 2)" log-guardian log-guardian-daemon 2>/dev/null || make -j"$(nproc 2>/dev/null || echo 2)"
+  _mklog="$(mktemp)"
+  if ! make -j"$(nproc 2>/dev/null || echo 2)" log-guardian log-guardian-daemon >"$_mklog" 2>&1; then
+    if grep -q 'Operation not permitted' "$_mklog"; then
+      echo "[metrics_reload] Izin hatasi — fix_laptop_build calistiriliyor" >&2
+      cat "$_mklog" >&2
+      rm -f "$_mklog"
+      bash "$ROOT/scripts/fix_laptop_build.sh"
+    else
+      cat "$_mklog" >&2
+      rm -f "$_mklog"
+      fail "derleme basarisiz"
+    fi
+  else
+    rm -f "$_mklog"
+  fi
 
   echo "── [2/3] Kurulum (/usr/local/bin — systemd bu yolu kullanir)"
   if [[ "$(id -u)" -eq 0 ]]; then

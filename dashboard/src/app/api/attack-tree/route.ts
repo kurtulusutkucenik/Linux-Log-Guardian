@@ -5,6 +5,7 @@ import { readFile } from 'fs/promises';
 import path from 'path';
 import os from 'os';
 import { treeToGraph, treesToGraph, type AttackTree } from '@/lib/lineageGraph';
+import { guardianApiAuthHeaders } from '@/lib/guardianApiAuth';
 
 export const dynamic = 'force-dynamic';
 
@@ -39,6 +40,7 @@ async function fetchFromAnalyzerApi(): Promise<AttackTreeNode[] | null> {
     const res = await fetch(`${base}/api/v1/attack-tree`, {
       cache: 'no-store',
       signal: AbortSignal.timeout(2000),
+      headers: guardianApiAuthHeaders(),
     });
     if (!res.ok) return null;
     const data = await res.json();

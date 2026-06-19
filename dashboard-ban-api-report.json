@@ -1,0 +1,19 @@
+{
+  "date": "2026-06-11T16:42:58Z",
+  "pass": true,
+  "test_ip": "203.0.113.248",
+  "host_api": {
+    "ok": true,
+    "url": "http://127.0.0.1:8090"
+  },
+  "relay_api": {
+    "ok": true,
+    "url": "http://127.0.0.1:18090"
+  },
+  "docker_api": {
+    "ok": true,
+    "container": "log-guardian-dashboard"
+  },
+  "ban_path": "ipc-xdp",
+  "fail_reason": ""
+}

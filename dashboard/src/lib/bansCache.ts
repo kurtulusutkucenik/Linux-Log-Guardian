@@ -8,6 +8,7 @@ export function bansCacheKey(opts: FetchBannedOpts): string {
     c: opts.countOnly ? 1 : 0,
     l: opts.limit ?? 0,
     o: opts.offset ?? 0,
+    s: opts.search?.trim().toLowerCase() ?? "",
   });
 }
 
@@ -23,4 +24,9 @@ export function setCachedBans(key: string, data: BannedIpsResult): void {
     const oldest = [...store.entries()].sort((a, b) => a[1].ts - b[1].ts)[0];
     if (oldest) store.delete(oldest[0]);
   }
+}
+
+/** Ban/unban sonrasi tum sayfa ve badge cache'ini sifirla */
+export function invalidateAllBansCache(): void {
+  store.clear();
 }

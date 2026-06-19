@@ -3,10 +3,7 @@
  * sys_enter_write uprobe — nginx/node/php worker comm filtresi.
  * Ilk 8 byte GET/POST/HEAD/PUT ile basliyorsa ringbuf olay sayaci.
  */
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
+#include "bpf_compat.h"
 
 #define L7_COMM_LEN 16
 #define L7_SAMPLE   8

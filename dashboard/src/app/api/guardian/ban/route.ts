@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { executeGuardianBan, IPV4_RE } from "@/lib/guardianBanExec";
+import { invalidateAllBansCache } from "@/lib/bansCache";
 
 export const dynamic = "force-dynamic";
 
@@ -19,10 +20,22 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Invalid IPv4" }, { status: 400 });
     }
 
+    if (!process.env.GUARDIAN_API_TOKEN?.trim()) {
+      return NextResponse.json(
+        {
+          error:
+            "GUARDIAN_API_TOKEN eksik — host: bash scripts/sync_dashboard_api_token.sh",
+        },
+        { status: 503 },
+      );
+    }
+
     const result = await executeGuardianBan({ ip, action, reason });
     if (!result.ok) {
-      return NextResponse.json({ error: result.message, ...result }, { status: 502 });
+      return NextResponse.json({ success: false, error: result.message, ...result }, { status: 502 });
     }
+
+    invalidateAllBansCache();
 
     return NextResponse.json({
       success: true,

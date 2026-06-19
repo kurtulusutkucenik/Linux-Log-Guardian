@@ -47,8 +47,6 @@ export WEBHOOK_DRY_RUN=0
 export WEBHOOK_TELEGRAM_API_BASE="${BASE}/telegram"
 export LOGANALYZER_TELEGRAM_TOKEN="dev:token"
 export LOGANALYZER_TELEGRAM_CHAT_ID="-1001"
-export LOGANALYZER_DISCORD_WEBHOOK_URL="${BASE}/discord"
-export LOGANALYZER_SLACK_WEBHOOK_URL="${BASE}/slack"
 export LOGANALYZER_GENERIC_WEBHOOK_URL="${BASE}/generic"
 
 RULES="$CACHE/webhook_dev.conf"
@@ -84,7 +82,7 @@ for k in alert ban trap; do
 done
 
 LINES=$(wc -l < "$LOG" | tr -d ' ')
-[[ "$LINES" -ge 9 ]] || fail "mock POST sayisi dusuk ($LINES, beklenen >=9)"
+[[ "$LINES" -ge 6 ]] || fail "mock POST sayisi dusuk ($LINES, beklenen >=6)"
 
 echo "[OK] webhook_dev — $LINES POST alindi"
 echo "--- son kayitlar ---"

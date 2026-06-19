@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live] =
+  const [crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, webhookRoute] =
     await Promise.all([
       readJson("crs-parity-report.json"),
       readJson("fp-report.json"),
@@ -61,6 +61,8 @@ export async function GET(req: NextRequest) {
       readJson("bench-vs-modsec.json"),
       readJson("bench-ban-latency.json"),
       readJson("guardian-status.json"),
+      readJson("dashboard-ban-api-report.json"),
+      readJson("webhook-route-proof-report.json"),
     ]);
 
   const reports: TestReports = {
@@ -83,17 +85,20 @@ export async function GET(req: NextRequest) {
     bench: bench as TestReports["bench"],
     ban: ban as TestReports["ban"],
     live: live as TestReports["live"],
+    dashboardBanApi: dashboardBanApi as TestReports["dashboardBanApi"],
+    webhookRoute: webhookRoute as TestReports["webhookRoute"],
   };
 
   const tests = evaluateValidationTests(reports, locale);
   const passed = tests.filter((t) => t.status === "pass").length;
   const failed = tests.filter((t) => t.status === "fail").length;
+  const warned = tests.filter((t) => t.status === "warn").length;
   const pending = tests.filter((t) => t.status === "pending").length;
 
   return NextResponse.json({
     available: tests.length > 0,
     tests,
-    summary: { total: tests.length, passed, failed, pending },
+    summary: { total: tests.length, passed, failed, warned, pending },
     hint:
       tests.length === 0
         ? "Run: bash scripts/competitive_suite.sh && bash scripts/soak_test.sh"

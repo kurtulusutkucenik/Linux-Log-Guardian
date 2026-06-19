@@ -8,28 +8,40 @@ Uzun sure calisma + saglik izleme. Kurulum sonrasi veya release oncesi calistiri
 SOAK_SHORT=1 bash scripts/soak_test.sh
 ```
 
-## Tam (72 saat)
+## Laptop (VPS yok)
+
+Once 1 saat, sonra 72 saat. Uyku kapali olmali.
 
 ```bash
-# Onceden: systemd servisleri ayakta
-sudo systemctl start log-guardian-daemon log-guardian
+# On kontrol + komutlar
+bash scripts/laptop_soak_72h.sh
 
-bash scripts/soak_start.sh
+# 1 saat deneme
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start
+tail -f soak-72h.log
+
+# 72 saat (1 saat OK ise)
+bash scripts/laptop_soak_72h.sh --start
 ```
 
-Arka planda (eski yontem):
+Durdur: `kill "$(cat .cache/soak-72h.pid)"`
+
+Detay: [LAPTOP_OPS.md](LAPTOP_OPS.md)
+
+## Tam (72 saat) — VPS / sunucu
 
 ```bash
-nohup bash scripts/soak_test.sh > soak.log 2>&1 &
-echo $! > soak.pid   # dikkat: bazi shell'lerde PID yanlis olabilir — soak_start.sh tercih edin
-tail -f soak.log
+sudo systemctl start log-guardian-daemon log-guardian
+bash scripts/soak_start.sh
+# veya laptop scripti (aynı soak_test.sh motoru):
+bash scripts/laptop_soak_72h.sh --start
 ```
 
 Izleme:
 
 ```bash
 bash scripts/soak_status.sh
-tail -f soak.log
+tail -f soak-72h.log
 wc -l soak-report.jsonl
 ```
 
@@ -58,6 +70,7 @@ Basari: `pass: true`, `failures: 0`.
 | `SOAK_DURATION` | 259200 | Toplam saniye (72h) |
 | `SOAK_INTERVAL` | 300 | Ornekleme araligi |
 | `SOAK_SHORT` | 0 | 1 = 5 dk / 30s |
+| `SOAK_1H` | 0 | 1 = 1 saat / 60s (`laptop_soak_72h.sh`) |
 | `SOAK_METRICS_PORT` | 9091 | Prometheus port |
 | `LOGANALYZER_PASSWORD` | — | `--health` icin |
 

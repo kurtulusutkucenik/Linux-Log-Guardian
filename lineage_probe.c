@@ -8,10 +8,7 @@
  * Olaylar ring buffer üzerinden userspace'e (ebpf_daemon.c) iletilir.
  * Linux >= 5.8 gerektirir (ring buffer + cgroup helpers).
  */
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
+#include "bpf_compat.h"
 
 /* ── Olay Tipleri (userspace ile senkron) ───────────────────────── */
 #define LINEAGE_OPENAT  0
@@ -63,7 +60,8 @@ static __always_inline void fill_event_base(struct lineage_event *e,
     e->ts_ns = bpf_ktime_get_ns();
     bpf_get_current_comm(e->comm, sizeof(e->comm));
 
-    /* ppid: task_struct.real_parent.tgid */
+    /* ppid: CO-RE task_struct; fallback'te 0 */
+#ifdef VMLINUX_LOADED
     struct task_struct *task = (struct task_struct *)bpf_get_current_task();
     struct task_struct *parent = NULL;
     bpf_core_read(&parent, sizeof(parent), &task->real_parent);
@@ -72,6 +70,9 @@ static __always_inline void fill_event_base(struct lineage_event *e,
         bpf_core_read(&ppid, sizeof(ppid), &parent->tgid);
         e->ppid = ppid;
     }
+#else
+    e->ppid = 0;
+#endif
 }
 
 /* ── tracepoint: sys_enter_openat ───────────────────────────────── */

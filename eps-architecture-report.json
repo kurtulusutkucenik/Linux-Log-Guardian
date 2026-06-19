@@ -1,0 +1,28 @@
+{
+  "date": "2026-06-09T21:26:12.947872+00:00",
+  "mode": "eps_architecture_honest",
+  "bench_corpus": "corpus/bench_corpus.access",
+  "lines": 1500,
+  "bench_mixed_min": 1500,
+  "log_guardian": {
+    "eps": 6250,
+    "latency_us_per_line": 160.0,
+    "architecture": "single-pass log tail + WAF + ban pipeline"
+  },
+  "crs_regex_replay": {
+    "eps": 21974,
+    "latency_us_per_line": 45.51,
+    "architecture": "offline @rx regex replay (nginx inline ModSec degil)"
+  },
+  "comparison": {
+    "same_log_corpus": true,
+    "guardian_over_crs_eps_ratio": 0.2844,
+    "crs_latency_over_guardian": 0.28
+  },
+  "positioning": {
+    "tr": "EPS farki mimari \u2014 Log Guardian log\u2192WAF\u2192ban; CRS replay hiz referansi. Yarismiyoruz.",
+    "en": "EPS gap is architectural \u2014 log-WAF-ban vs regex replay reference. Not a speed race."
+  },
+  "pass": true,
+  "note": "docs/BENCHMARK.md \u2014 referans only"
+}

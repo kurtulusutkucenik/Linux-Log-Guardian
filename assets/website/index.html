@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="tr" translate="no">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Linux Log Guardian — Türk yapımı açık kaynak nginx WAF. log → ban ~15 dk." />
+  <meta name="google" content="notranslate" />
+  <meta name="lg-integrity-i18n" content="sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo" />
+  <meta name="lg-integrity-css" content="sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+" />
+  <meta name="referrer" content="no-referrer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Linux Log Guardian" />
+  <meta property="og:description" content="Open-source nginx WAF from Turkey. nginx log → OWASP CRS → kernel ban in ~15 min." />
+  <meta property="og:locale" content="tr_TR" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:title" content="Linux Log Guardian" />
+  <meta name="twitter:description" content="Open-source nginx WAF from Turkey. log → ban in ~15 min." />
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo'; script-src-attr 'none'; style-src 'self' 'sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <link rel="stylesheet" href="./site.css" id="lg-site-css" integrity="sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+" />
+  <link rel="icon" href="favicon.ico" sizes="48x48" />
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
+</head>
+<body>
+  <a class="skip-link" href="#main">İçeriğe atla</a>
+  <header class="hero">
+    <nav class="topbar" aria-label="Language">
+      <button type="button" class="lang-btn active" data-lang="tr" aria-pressed="true">TR</button>
+      <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      <button type="button" class="lang-btn" data-lang="de" aria-pressed="false">DE</button>
+      <button type="button" class="lang-btn" data-lang="fr" aria-pressed="false">FR</button>
+      <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
+      <button type="button" class="lang-btn" data-lang="pt" aria-pressed="false">PT</button>
+      <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">RU</button>
+      <button type="button" class="lang-btn" data-lang="ar" aria-pressed="false">AR</button>
+      <button type="button" class="lang-btn" data-lang="zh" aria-pressed="false">中文</button>
+    </nav>
+    <img src="logo.png" alt="Linux Log Guardian" class="logo" width="140" height="140" decoding="async" draggable="false" />
+    <h1 data-i18n="hero.title">Linux Log Guardian</h1>
+    <p class="tag" data-i18n="hero.tag">nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted</p>
+    <div class="badges">
+      <span class="badge badge-accent" data-i18n="hero.badge_os">🇹🇷 Türk yapımı</span>
+      <span class="badge" data-i18n="hero.badge_mit">Açık kaynak · MIT</span>
+      <span class="badge" data-i18n="hero.badge_core">Core ~15 dk kurulum</span>
+    </div>
+    <div class="cta">
+      <a class="btn btn-primary" href="#kurulum" data-i18n="hero.cta_install">15 dk kurulum</a>
+      <a class="btn btn-secondary" href="#dashboard" data-i18n="hero.cta_dashboard">Dashboard (kurulum sonrası)</a>
+      <a class="btn btn-secondary" href="#kanit" data-i18n="hero.cta_evidence">Kanıt paketi</a>
+      <a class="btn btn-secondary" href="#iletisim" data-i18n="hero.cta_contact">İletişim</a>
+    </div>
+  </header>
+
+  <main id="main">
+    <section id="hakkimizda">
+      <h2 data-i18n="about.title">Hakkında — Linux Log Guardian</h2>
+      <div class="callout callout-info" data-i18n="site.purpose"><strong>Bu web sitesi halka açık tanıtım ve indirme sayfasıdır.</strong> Statik içerik sunar: proje tanıtımı, kurulum rehberi, kanıt paketi ve iletişim. Log Guardian yazılımı burada çalışmaz — kendi Linux sunucunuza kurarsınız.</div>
+      <div class="prose" data-i18n="about.body"><p><strong>Linux Log Guardian</strong>, Türkiye'de geliştirilen, tamamen <strong>açık kaynak (MIT)</strong> bir self-hosted güvenlik yazılımıdır.</p></div>
+    </section>
+
+    <section>
+      <h2 data-i18n="flow.title">Tek zincir: logdan kernel bana</h2>
+      <div class="flow">
+        <div class="flow-step"><strong>1</strong><span data-i18n="flow.s1">nginx access log</span></div>
+        <div class="flow-step"><strong>2</strong><span data-i18n="flow.s2">Parser + CRS/WAF</span></div>
+        <div class="flow-step"><strong>3</strong><span data-i18n="flow.s3">Ban pipeline</span></div>
+        <div class="flow-step"><strong>4</strong><span data-i18n="flow.s4">ipset / kernel</span></div>
+        <div class="flow-step"><strong>5</strong><span data-i18n="flow.s5">Metrik + dashboard</span></div>
+      </div>
+      <p class="prose muted-sm" data-i18n="flow.note">XDR, Wasm marketplace ve LLM Copilot uzun vadeli opsiyonel katmanlardır — Core tek başına üretimde kullanılabilir.</p>
+    </section>
+
+    <section id="kurulum">
+      <h2 data-i18n="install.title">Kurulum rehberi (detaylı)</h2>
+      <div class="prose" data-i18n="install.intro"><p>Bu rehber Ubuntu/Debian üzerinde sıfırdan kurulum içindir.</p></div>
+
+      <h3 data-i18n="install.req_title">Gereksinimler</h3>
+      <div class="prose" data-i18n="install.req_body"><ul><li>Ubuntu 22.04 / 24.04 veya Debian 12 (amd64)</li><li>nginx + sudo</li></ul></div>
+
+      <ol class="steps">
+        <li>
+          <strong data-i18n="install.s1_title">Kaynak veya .deb</strong>
+          <div class="prose" data-i18n="install.s1_body"></div>
+          <pre data-i18n="install.block1">git clone &lt;repo&gt; log-guardian &amp;&amp; cd log-guardian
+make -j$(nproc)
+sudo bash install.sh</pre>
+        </li>
+        <li>
+          <strong data-i18n="install.s2_title">İlk çalıştırma ve API güvenliği</strong>
+          <div class="prose" data-i18n="install.s2_body"></div>
+          <pre data-i18n="install.block_api">sudo bash scripts/install_first_run.sh
+sudo bash scripts/ensure_api_security.sh
+bash scripts/sync_dashboard_api_token.sh</pre>
+        </li>
+        <li>
+          <strong data-i18n="install.s3_title">Nginx log formatı</strong>
+          <div class="prose" data-i18n="install.s3_body"></div>
+          <pre data-i18n="install.block_nginx"># examples/nginx-log-guardian.conf → site config
+STRICT=1 bash scripts/check_nginx_log_format.sh
+sudo nginx -t &amp;&amp; sudo systemctl reload nginx</pre>
+        </li>
+        <li>
+          <strong data-i18n="install.s4_title">Doğrulama</strong>
+          <div class="prose" data-i18n="install.s4_body"></div>
+          <pre data-i18n="install.block_verify">sudo log-guardian --health
+sudo log-guardian --status
+bash scripts/post_install_verify.sh
+curl -s http://127.0.0.1:9091/metrics | head</pre>
+        </li>
+        <li>
+          <strong data-i18n="install.s5_title">VirtualBox / XDP yok (laptop &amp; VM)</strong>
+          <div class="prose" data-i18n="install.s5_body"></div>
+          <pre data-i18n="install.block2">sudo bash install.sh --no-xdp
+sudo bash scripts/install_first_run.sh
+# servis FAIL ise:
+sudo bash scripts/repair_no_xdp_stack.sh</pre>
+        </li>
+      </ol>
+
+      <div class="highlight prose" data-i18n="install.tip"></div>
+    </section>
+
+    <section id="dashboard">
+      <h2 data-i18n="dashboard.title">Dashboard — kurulum sonrası (opsiyonel Pro)</h2>
+      <div class="callout callout-warn" data-i18n="dashboard.where"><strong>Önemli:</strong> Dashboard bu tanıtım sitesinde çalışmaz. <code>localhost:8443</code> kendi Linux makinenizdedir.</div>
+      <div class="prose" data-i18n="dashboard.body"></div>
+
+      <h3 data-i18n="dashboard.access_title">Kim, hangi şartla erişir?</h3>
+      <table class="access-table">
+        <tr><td data-i18n="dashboard.access_row1_label">Site ziyaretçisi</td><td data-i18n="dashboard.access_row1">Bu sayfayı okur, indirir — <strong>8443 açmaz</strong>.</td></tr>
+        <tr><td data-i18n="dashboard.access_row2_label">Kuran kişi</td><td data-i18n="dashboard.access_row2">Kendi Ubuntu/Debian sunucusunda kurulum + <code>dashboard_stack.sh</code> sonrası <strong>kendi makinesinde</strong> <code>https://localhost:8443</code>.</td></tr>
+        <tr><td data-i18n="dashboard.access_row3_label">Uzak VPS</td><td data-i18n="dashboard.access_row3">Aynı sunucuda SSH ile veya firewall açıksa <code>https://SUNUCU_IP:8443</code> — önce <code>laptop_harden.sh</code>.</td></tr>
+      </table>
+
+      <h3 data-i18n="dashboard.req_title">Dashboard için ek gereksinim</h3>
+      <div class="prose" data-i18n="dashboard.req_body"></div>
+
+      <h3 data-i18n="dashboard.start_title">Kendi sunucunda başlat</h3>
+      <pre data-i18n="dashboard.start"># Kurulumu yaptığın makinede (bu web sitesinde değil):
+bash scripts/dashboard_stack.sh
+# Aynı makinede tarayıcı:
+#   https://localhost:8443
+# Giriş: admin / .env içindeki DASHBOARD_ADMIN_PASSWORD</pre>
+
+      <div class="prose" data-i18n="dashboard.features"></div>
+      <div class="highlight prose" data-i18n="dashboard.optional"></div>
+
+      <h3 data-i18n="dashboard.preview_title">Arayüz önizlemesi</h3>
+      <p class="prose muted-sm" data-i18n="dashboard.preview_note"></p>
+      <div class="shot-grid">
+        <figure class="shot">
+          <a class="shot-link" href="screenshots/dashboard-fleet.png" target="_blank" rel="noopener noreferrer">
+            <img src="screenshots/dashboard-fleet.png" alt="Filo paneli" data-i18n-alt="dashboard.cap1" loading="lazy" width="960" height="540" />
+          </a>
+          <figcaption data-i18n="dashboard.cap1">Filo — agent durumu ve son alarmlar</figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-link" href="screenshots/dashboard-tests.png" target="_blank" rel="noopener noreferrer">
+            <img src="screenshots/dashboard-tests.png" alt="Test paneli" data-i18n-alt="dashboard.cap2" loading="lazy" width="960" height="540" />
+          </a>
+          <figcaption data-i18n="dashboard.cap2">Test paneli — phase100, bench, soak</figcaption>
+        </figure>
+        <figure class="shot">
+          <a class="shot-link" href="screenshots/dashboard-grafana.png" target="_blank" rel="noopener noreferrer">
+            <img src="screenshots/dashboard-grafana.png" alt="Grafana metrikleri" data-i18n-alt="dashboard.cap3" loading="lazy" width="960" height="540" />
+          </a>
+          <figcaption data-i18n="dashboard.cap3">Grafana + Prometheus metrikleri</figcaption>
+        </figure>
+      </div>
+      <p class="muted-note" data-i18n="dashboard.note"></p>
+    </section>
+
+    <section class="warn">
+      <h2 data-i18n="warn.title">⚠️ İnternete açmadan önce</h2>
+      <p data-i18n="warn.p1">Laptop/deneme: demo parola <code>DegistirBeni!123</code> bilinçli olarak açıktır.</p>
+      <p data-i18n="warn.p2">Public VPS: <code>sudo env LG_NEW_PASSWORD='…' bash scripts/laptop_harden.sh</code></p>
+      <p data-i18n="warn.p3">Profiller: <code>docs/SECURITY_PROFILES.md</code></p>
+    </section>
+
+    <section>
+      <h2 data-i18n="layers.title">Katmanlar</h2>
+      <table>
+        <tr><th data-i18n="layers.core">Core</th><td data-i18n="layers.core_desc">log → WAF → ipset ban (~15 dk)</td></tr>
+        <tr><th data-i18n="layers.pro">Pro</th><td data-i18n="layers.pro_desc">eBPF daemon, dashboard, Grafana, fleet</td></tr>
+        <tr><th data-i18n="layers.opt">Opsiyonel</th><td data-i18n="layers.opt_desc">XDR, Wasm marketplace, LLM Copilot</td></tr>
+      </table>
+      <p class="prose muted-sm" data-i18n="layers.note"></p>
+    </section>
+
+    <section id="indir">
+      <h2 data-i18n="download.title">İndir (.deb paketi)</h2>
+      <div class="prose" data-i18n="download.intro"></div>
+      <pre data-i18n="download.block">bash scripts/build_deb.sh
+# → dist/log-guardian_*.deb
+bash scripts/test_deb_local.sh</pre>
+    </section>
+
+    <section id="kanit">
+      <h2 data-i18n="evidence.title">Kanıt paketi</h2>
+      <p data-i18n="evidence.gate">Laptop kapısı: <code>bash scripts/laptop_sprint_gate.sh</code></p>
+      <ul class="evidence">
+        <li><a href="evidence/competitive-proof.pdf" rel="noopener noreferrer" type="application/pdf">competitive-proof.pdf</a></li>
+        <li><a href="evidence/competitive-proof.json" rel="noopener noreferrer" download type="application/json">competitive-proof.json</a></li>
+        <li><a href="evidence/bench-vs-modsec.json" rel="noopener noreferrer" download type="application/json">bench-vs-modsec.json</a></li>
+        <li><a href="evidence/fp-report.json" rel="noopener noreferrer" download type="application/json">fp-report.json</a></li>
+        <li><a href="evidence/bench-ban-latency.json" rel="noopener noreferrer" download type="application/json">bench-ban-latency.json</a></li>
+        <li><a href="evidence/soak-report.json" rel="noopener noreferrer" download type="application/json">soak-report.json</a></li>
+        <li><a href="evidence/SOAK_SUMMARY.md" rel="noopener noreferrer" download type="text/markdown">SOAK_SUMMARY.md</a></li>
+      </ul>
+      <p class="sync-note" data-i18n="evidence.sync">
+        Güncelle: <code>bash scripts/sync_evidence_pack.sh</code>
+      </p>
+    </section>
+
+    <section>
+      <h2 data-i18n="laptop.title">Laptop doğrulama matrisi</h2>
+      <div class="prose" data-i18n="laptop.intro"></div>
+      <pre data-i18n="laptop.block">SKIP_PHASE100=1 bash scripts/laptop_sprint_gate.sh
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start
+SKIP_WEBHOOK=1 bash scripts/demo_3min.sh</pre>
+    </section>
+
+    <section id="iletisim">
+      <h2 data-i18n="contact.title">İletişim &amp; katkı</h2>
+      <div class="prose" data-i18n="contact.body"></div>
+      <div class="contact-box">
+        <span data-i18n="contact.email_label">E-posta:</span><br />
+        <a href="mailto:kurtulusutkucenikcontact@gmail.com">kurtulusutkucenikcontact@gmail.com</a>
+      </div>
+    </section>
+  </main>
+
+  <footer data-i18n="footer">Linux Log Guardian · Türk yapımı · MIT · açık kaynak</footer>
+
+  <script src="./i18n.js" defer integrity="sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo" crossorigin="anonymous"></script>
+</body>
+</html>

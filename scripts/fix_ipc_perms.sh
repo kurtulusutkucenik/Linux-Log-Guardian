@@ -59,3 +59,7 @@ if [[ -n "$INVOKER" && "$INVOKER" != root ]]; then
     echo "[fix_ipc_perms] $INVOKER log-guardian grubuna eklendi — newgrp log-guardian veya oturumu yenileyin"
   fi
 fi
+
+if [[ -x "$ROOT/scripts/fix_rules_conf_perms.sh" ]]; then
+  bash "$ROOT/scripts/fix_rules_conf_perms.sh" 2>/dev/null || true
+fi

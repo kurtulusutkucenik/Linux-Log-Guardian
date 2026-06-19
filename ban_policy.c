@@ -1,6 +1,7 @@
 /* ban_policy.c — AUTO_BAN_MIN_RISK + audit jsonl */
 #define _GNU_SOURCE
 #include "ban_policy.h"
+#include "fp_trust.h"
 #include "incident_engine.h"
 #include <stdio.h>
 #include <string.h>
@@ -88,6 +89,42 @@ int ban_policy_should_auto_ban(const char *ip, const Alert *alert,
             strncpy(out->decision, "force_crit", sizeof(out->decision) - 1);
         }
         return 1;
+    }
+
+    /* WAF CRIT (SchemaViolation vb.): risk esigini beklemeden ban */
+    if (alert && alert->level == ALERT_CRIT && alert->message[0] &&
+        strstr(alert->message, "WAF ALARM")) {
+        if (out) {
+            out->risk_score = risk;
+            out->allow_ban = 1;
+            strncpy(out->decision, "force_waf", sizeof(out->decision) - 1);
+        }
+        return 1;
+    }
+
+    /* APT senkron / dagitik kume CRIT: al_risk 45 kalir, ban kacmasin */
+    if (alert && alert->level == ALERT_CRIT && alert->message[0]) {
+        const char *m = alert->message;
+        if (strstr(m, "SENKRON APT") || strstr(m, "APT KUME") ||
+            strstr(m, "DAGITIK APT")) {
+            if (out) {
+                out->risk_score = risk;
+                out->allow_ban = 1;
+                strncpy(out->decision, "force_apt", sizeof(out->decision) - 1);
+            }
+            return 1;
+        }
+    }
+
+    /* FP ogrenme: tam guvenilir IP — force_* disinda otomatik ban atlama */
+    if (ip && fp_trust_is_trusted(ip)) {
+        if (out) {
+            out->risk_score = risk;
+            out->allow_ban = 0;
+            strncpy(out->decision, "skip_fp_trust",
+                    sizeof(out->decision) - 1);
+        }
+        return 0;
     }
 
     int allow = (risk >= g_min_risk) ? 1 : 0;

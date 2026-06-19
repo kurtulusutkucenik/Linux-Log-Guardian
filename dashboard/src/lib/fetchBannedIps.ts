@@ -13,6 +13,8 @@ export type FetchBannedOpts = {
   countOnly?: boolean;
   limit?: number;
   offset?: number;
+  /** Tum ipset uzerinde sunucu tarafli filtre (sayfa bagimsiz) */
+  search?: string;
 };
 
 export type BannedIpsResult = {
@@ -51,24 +53,34 @@ function sliceBans(ips: string[], offset: number, limit: number): BanEntry[] {
   return ips.slice(offset, offset + limit).map((ip) => ({ ip }));
 }
 
+function filterIpsBySearch(ips: string[], search?: string): string[] {
+  const q = search?.trim().toLowerCase();
+  if (!q) return ips;
+  return ips.filter((ip) => ip.toLowerCase().includes(q));
+}
+
 function packResult(
   ips: string[],
   total: number,
   source: string,
   opts: FetchBannedOpts,
 ): BannedIpsResult {
-  const truncated = total > ips.length || (total > (opts.limit ?? ips.length) + (opts.offset ?? 0));
+  const filtered = filterIpsBySearch(ips, opts.search);
+  const listTotal = opts.search?.trim() ? filtered.length : total;
+  const truncated =
+    !opts.search?.trim() &&
+    (total > ips.length || total > (opts.limit ?? ips.length) + (opts.offset ?? 0));
   if (opts.countOnly) {
-    return { count: total, source, bans: [], truncated: total > 0 };
+    return { count: listTotal, source, bans: [], truncated: listTotal > 0 };
   }
   const offset = Math.max(0, opts.offset ?? 0);
   const limit = clampLimit(opts.limit ?? 50);
-  const pageIps = ips.slice(offset, offset + limit);
+  const pageIps = filtered.slice(offset, offset + limit);
   return {
-    count: total,
+    count: listTotal,
     source,
     bans: pageIps.map((ip) => ({ ip })),
-    truncated: total > offset + pageIps.length,
+    truncated: listTotal > offset + pageIps.length,
     limit,
     offset,
   };
@@ -122,9 +134,13 @@ export async function fetchBannedIps(opts: FetchBannedOpts = {}): Promise<Banned
       if (opts.limit != null) q.set("limit", String(opts.limit));
       if (opts.offset != null) q.set("offset", String(opts.offset));
       const qs = q.toString();
+      const headers: HeadersInit = {};
+      const tok = process.env.GUARDIAN_API_TOKEN?.trim();
+      if (tok) headers.Authorization = `Bearer ${tok}`;
       const res = await fetch(`${apiBase}/api/v1/bans${qs ? `?${qs}` : ""}`, {
         cache: "no-store",
         signal: AbortSignal.timeout(8000),
+        headers,
       });
       if (res.ok) {
         const data = (await res.json()) as BannedIpsFile & {

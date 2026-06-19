@@ -4,6 +4,7 @@ import {
   GRAFANA_SOC_TS_PANELS,
   GRAFANA_STAT_PANELS,
   GRAFANA_TABLE_METRICS,
+  GRAFANA_TELEGRAM_STAT_PANELS,
   GRAFANA_TS_PANELS,
   tenantExpr,
 } from "@/lib/grafanaPanels";
@@ -31,6 +32,7 @@ function guardianMetricsUrl(): string {
 async function liveGuardianStats(): Promise<{
   stats: Record<string, number>;
   socStats: Record<string, number>;
+  telegramStats: Record<string, number>;
   alerts_total?: number;
   reachable: boolean;
   hint?: string;
@@ -55,6 +57,9 @@ async function liveGuardianStats(): Promise<{
         xdp: snap.xdp_active,
         unique_ips: snap.unique_ips,
         ringbuf: 0,
+        alerts: snap.alerts_total,
+        http_4xx: snap.http_4xx,
+        http_5xx: snap.http_5xx,
       },
       socStats: {
         ja3_clusters: snap.ja3_clusters_active,
@@ -63,6 +68,12 @@ async function liveGuardianStats(): Promise<{
         fp_trusted: snap.fp_trusted_ips,
         bp_ipset: snap.ban_pipeline_ipset,
         bp_failed: snap.ban_pipeline_failed,
+      },
+      telegramStats: {
+        tg_ack: snap.telegram_ack_24h,
+        tg_unacked: snap.telegram_unacked_24h,
+        quiet_hours: snap.webhook_quiet_hours,
+        quiet_active: snap.webhook_quiet_active,
       },
       alerts_total: snap.alerts_total,
     };
@@ -103,6 +114,7 @@ export async function GET(req: NextRequest) {
         hint: live.hint,
         stats: live.stats,
         socStats: live.socStats,
+        telegramStats: live.telegramStats,
         sparklines: {},
         timeseries: {},
         table: [
@@ -123,6 +135,7 @@ export async function GET(req: NextRequest) {
       hint: "Prometheus yok — bash scripts/dashboard_stack.sh  (log-guardian :9091 acik mi?)",
       stats: {},
       socStats: {},
+      telegramStats: {},
       sparklines: {},
       timeseries: {},
       table: [],
@@ -132,6 +145,7 @@ export async function GET(req: NextRequest) {
 
   const stats: Record<string, number> = {};
   const socStats: Record<string, number> = {};
+  const telegramStats: Record<string, number> = {};
   const sparklines: Record<string, { t: string; v: number }[]> = {};
 
   const sparkStep = rangeSparkStep(rangeSec);
@@ -157,6 +171,18 @@ export async function GET(req: NextRequest) {
         promRange(q, rangeSec, sparkStep),
       ]);
       socStats[p.id] = instant ?? 0;
+      sparklines[p.id] = spark.map((s) => ({ t: s.label, v: s.v }));
+    }),
+  );
+
+  await Promise.all(
+    GRAFANA_TELEGRAM_STAT_PANELS.map(async (p) => {
+      const q = tenantExpr(p.expr, tenant);
+      const [instant, spark] = await Promise.all([
+        promInstant(q),
+        promRange(q, rangeSec, sparkStep),
+      ]);
+      telegramStats[p.id] = instant ?? 0;
       sparklines[p.id] = spark.map((s) => ({ t: s.label, v: s.v }));
     }),
   );
@@ -190,6 +216,7 @@ export async function GET(req: NextRequest) {
     ts: Date.now(),
     stats,
     socStats,
+    telegramStats,
     sparklines,
     timeseries,
     table,

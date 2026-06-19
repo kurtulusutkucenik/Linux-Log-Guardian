@@ -3,8 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "bash ../scripts/dashboard_dev_sync_env.sh && next dev --webpack -H 0.0.0.0 -p ${DASHBOARD_DEV_PORT:-3001}",
     "dev:stop": "bash scripts/dev-stop.sh",
+    "stack": "bash scripts/dashboard_stack.sh",
+    "grafana": "bash scripts/grafana_stack.sh",
     "build": "next build --webpack",
     "start": "next start",
     "lint": "eslint",

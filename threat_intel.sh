@@ -102,7 +102,9 @@ ipset_ensure_v4() {
 
 ipset_entry_count() {
     local n
-    n=$(ipset list log_analyzer_block_v4 2>/dev/null | grep -cE '^[0-9]' || true)
+    n=$(set +o pipefail
+        ipset list log_analyzer_block_v4 2>/dev/null \
+        | awk '/^Number of entries:/ {print $4; exit}' 2>/dev/null || true)
     echo "${n:-0}"
 }
 

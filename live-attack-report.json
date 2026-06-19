@@ -1,8 +1,8 @@
 {
-  "date": "2026-06-08T19:48:54.206902+00:00",
+  "date": "2026-06-15T19:27:26.159817+00:00",
   "host": "127.0.0.1",
   "port": 80,
-  "nginx_up": true,
+  "nginx_up": false,
   "scenarios": [
     {
       "mode": "sqli",
@@ -12,7 +12,7 @@
       "sent": 40,
       "refused": 40,
       "timeout": 40,
-      "nginx_up": true,
+      "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
     },
@@ -24,7 +24,7 @@
       "sent": 50,
       "refused": 50,
       "timeout": 50,
-      "nginx_up": true,
+      "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
     },
@@ -36,7 +36,7 @@
       "sent": 134,
       "refused": 134,
       "timeout": 134,
-      "nginx_up": true,
+      "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
     },
@@ -45,10 +45,10 @@
       "duration_sec": 4,
       "threads": 3,
       "rps_per_thread": 50,
-      "sent": 297,
-      "refused": 297,
-      "timeout": 297,
-      "nginx_up": true,
+      "sent": 300,
+      "refused": 300,
+      "timeout": 300,
+      "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
     },
@@ -60,18 +60,40 @@
       "sent": 1,
       "refused": 1,
       "timeout": 1,
-      "nginx_up": true,
+      "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
     }
   ],
+  "ban_proof": {
+    "ip": "203.0.113.77",
+    "alerts": 1,
+    "bans_active_before": 26,
+    "bans_active_after": 26,
+    "ban_pipeline": {
+      "ipc": 0,
+      "xdp": 0,
+      "ipset": 0,
+      "failed": 0
+    },
+    "ipset_hit": true,
+    "waf_pass": true,
+    "kernel_pass": true,
+    "pass": true,
+    "mode": "rfc5737_replay"
+  },
   "summary": {
-    "sent_total": 522,
-    "refused_total": 522,
+    "sent_total": 525,
+    "refused_total": 525,
     "replay_alerts": 0,
-    "ban_evidence": false,
-    "bans_active_before": 7,
-    "bans_active_after": 7,
+    "ban_evidence": true,
+    "ban_evidence_waf": true,
+    "ban_evidence_kernel": true,
+    "ban_evidence_live": false,
+    "ban_evidence_replay_waf": true,
+    "ban_evidence_replay_kernel": true,
+    "bans_active_before": 26,
+    "bans_active_after": 26,
     "metrics_alerts": 0.0,
     "ipc": "ok",
     "ban_pipeline": {
@@ -82,5 +104,5 @@
     }
   },
   "pass": true,
-  "note": "127.0.0.1 whitelist'te ban atlanabilir \u2014 sent>0 + replay_alerts yeterli"
+  "note": "ban_proof kernel (203.0.113.77) \u2014 ipset/DB"
 }

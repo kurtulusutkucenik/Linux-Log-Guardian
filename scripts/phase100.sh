@@ -61,6 +61,11 @@ run 5 scripts/phase5_e2e.sh
 
 echo ""
 echo "========== Rekabet kapisi (Faz 6) =========="
+if [[ -r /etc/log-guardian/webhook.env ]] && grep -qE 'LOGANALYZER_TELEGRAM_TOKEN|TELEGRAM' /etc/log-guardian/webhook.env 2>/dev/null; then
+  echo "[phase100] UYARI: Canli Telegram acik — competitive_suite saldiri replay → WAF bildirimi gelebilir"
+  echo "         Gecici susturma: sudo mv /etc/log-guardian/webhook.env /etc/log-guardian/webhook.env.off"
+  echo "         Sonra: sudo systemctl restart log-guardian && test bitince geri al"
+fi
 if bash scripts/competitive_suite.sh; then
   echo ">> Faz 6 (competitive): 100%"
 else

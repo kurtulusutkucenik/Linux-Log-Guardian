@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # Laptop yerel stack — health + opsiyonel Grafana (soak'a dokunmaz)
+# Tam dashboard+Grafana: bash scripts/dashboard_stack.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -19,9 +20,10 @@ Kullanim: bash scripts/dev_stack.sh [--grafana] [--dashboard] [--all]
 
   (varsayilan) health + ops_smoke
   --grafana    Grafana + Prometheus + provision
-  --dashboard  TLS dashboard (tls_proxy_up)
+  --dashboard  TLS dashboard (laptop_jwt_setup + tls_proxy)
   --all        hepsi
 
+Onerilen: bash scripts/dashboard_stack.sh (Grafana + JWT + TLS)
 Not: Calisan soak testine dokunulmaz.
 EOF
       exit 0
@@ -33,8 +35,7 @@ echo "=== dev_stack ==="
 bash "$ROOT/scripts/ops_smoke.sh"
 
 if [[ "$WITH_DASHBOARD" -eq 1 ]]; then
-  export JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
-  bash "$ROOT/scripts/tls_proxy_up.sh"
+  bash "$ROOT/scripts/laptop_jwt_setup.sh"
   bash "$ROOT/scripts/tls_proxy_test.sh"
 fi
 

@@ -1,6 +1,6 @@
 # Fleet agent “Online” gorunurlugu
 
-Dashboard `/fleet` sayfasinda agent’in **Online** olmasi icin telemetry akisi gerekir.
+Dashboard **Filo** ana sayfasi (`/`) ve agent listesinde **Online** gorunmesi icin telemetry akisi gerekir. Eski `/fleet` URL ana sayfaya yonlenir; komut dagitimi: `/fleet/dispatch`.
 
 ## 1. Dashboard
 

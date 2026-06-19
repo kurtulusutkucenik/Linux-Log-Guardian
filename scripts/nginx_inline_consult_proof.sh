@@ -6,41 +6,33 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
 
 REPORT="${NGINX_CONSULT_REPORT:-nginx-inline-consult-report.json}"
 
 fail() { echo "[nginx_inline_consult] FAIL: $*" >&2; exit 1; }
 
-read_api_port() {
-  local f="$1"
-  if [[ -f "$f" ]]; then
-    local p
-    p=$(grep -E '^API_PORT=' "$f" 2>/dev/null | tail -1 | cut -d= -f2 | tr -d ' \r')
-    if [[ -n "$p" && "$p" =~ ^[0-9]+$ ]]; then
-      echo "$p"
-      return 0
-    fi
-  fi
-  return 1
-}
-
 echo "=== nginx_inline_consult_proof ==="
 
-[[ -x ./log-guardian ]] || make -s -j"$(nproc 2>/dev/null || echo 2)" log-guardian
+ensure_lg_build_tree "$ROOT"
+[[ -x ./log-guardian ]] || make -s -j1 log-guardian
 
-API_PORT="${GUARDIAN_API_PORT:-}"
-if [[ -z "$API_PORT" ]]; then
-  API_PORT=$(read_api_port /etc/log-guardian/rules.conf 2>/dev/null || true)
-fi
-if [[ -z "$API_PORT" ]]; then
-  API_PORT=$(read_api_port "$ROOT/rules.conf" 2>/dev/null || true)
-fi
-API_PORT="${API_PORT:-8090}"
+API_PORT="$(read_lg_api_port)"
 BASE="http://127.0.0.1:${API_PORT}"
+
+API_TOK=$(read_lg_api_token 2>/dev/null || true)
+API_AUTH=()
+if [[ -n "$API_TOK" ]]; then
+  mapfile -t API_AUTH < <(lg_api_auth_curl)
+else
+  echo "[WARN] API_TOKEN yok — sudo bash scripts/ensure_api_security.sh" >&2
+fi
 
 api_up=0
 for _ in 1 2 3 4 5 6 7 8; do
-  if curl -sf --max-time 2 "${BASE}/api/v1/metrics" >/dev/null 2>&1; then
+  if [[ ${#API_AUTH[@]} -gt 0 ]] && \
+     curl -sf --max-time 2 "${API_AUTH[@]}" "${BASE}/api/v1/metrics" >/dev/null 2>&1; then
     api_up=1
     break
   fi
@@ -63,6 +55,7 @@ consult() {
   local path="$1"
   local ua="${2:-Mozilla/5.0}"
   curl -s -o /dev/null -w "%{http_code}" --max-time 3 -G "${BASE}/api/v1/consult" \
+    "${API_AUTH[@]}" \
     --data-urlencode "method=GET" \
     --data-urlencode "path=${path}" \
     --data-urlencode "ua=${ua}" \

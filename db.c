@@ -167,6 +167,10 @@ int db_init(const char *path) {
         g_db = NULL;
         return -1;
     }
+    (void)exec_sql_migrate_col(
+        "ALTER TABLE telegram_acks ADD COLUMN operator_id TEXT;");
+    (void)exec_sql_migrate_col(
+        "ALTER TABLE telegram_acks ADD COLUMN operator_name TEXT;");
 
     g_db_ready = 1;
     g_db_writer_running = 1;
@@ -411,29 +415,70 @@ void db_log_ban_event(const char *ip, const char *action,
     db_log_ban_event_ex(ip, action, reason, ts, -1.0, NULL);
 }
 
-static int telegram_ack_insert(sqlite3 *db, const char *chat_id,
-                               const char *ack_key, const char *incident_id)
+static void telegram_acks_migrate_conn(sqlite3 *db)
 {
-    if (!db || !chat_id || !chat_id[0] || !ack_key || !ack_key[0])
-        return -1;
-
+    if (!db)
+        return;
     char *err = NULL;
     if (sqlite3_exec(db,
             "CREATE TABLE IF NOT EXISTS telegram_acks ("
             "id INTEGER PRIMARY KEY AUTOINCREMENT,"
             "ts INTEGER NOT NULL, chat_id TEXT NOT NULL,"
             "ack_key TEXT NOT NULL, incident_id TEXT);",
-            NULL, NULL, &err) != SQLITE_OK) {
-        if (err) {
-            sqlite3_free(err);
-        }
-        return -1;
+            NULL, NULL, &err) != SQLITE_OK && err) {
+        sqlite3_free(err);
+        err = NULL;
     }
+    if (sqlite3_exec(db,
+            "ALTER TABLE telegram_acks ADD COLUMN operator_id TEXT;",
+            NULL, NULL, &err) != SQLITE_OK && err) {
+        sqlite3_free(err);
+        err = NULL;
+    }
+    if (sqlite3_exec(db,
+            "ALTER TABLE telegram_acks ADD COLUMN operator_name TEXT;",
+            NULL, NULL, &err) != SQLITE_OK && err)
+        sqlite3_free(err);
+}
+
+static int telegram_ack_operator_exists(sqlite3 *db, const char *ack_key,
+                                        const char *operator_id)
+{
+    if (!db || !ack_key || !ack_key[0] || !operator_id || !operator_id[0])
+        return 0;
 
     sqlite3_stmt *stmt = NULL;
     const char *sql =
-        "INSERT INTO telegram_acks (ts,chat_id,ack_key,incident_id) "
-        "VALUES (?,?,?,?);";
+        "SELECT 1 FROM telegram_acks WHERE ack_key = ? AND operator_id = ? "
+        "LIMIT 1;";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+        return 0;
+    sqlite3_bind_text(stmt, 1, ack_key, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, operator_id, -1, SQLITE_STATIC);
+    int found = (sqlite3_step(stmt) == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+static int telegram_ack_insert(sqlite3 *db, const char *chat_id,
+                                 const char *ack_key, const char *incident_id,
+                                 const char *operator_id,
+                                 const char *operator_name)
+{
+    if (!db || !chat_id || !chat_id[0] || !ack_key || !ack_key[0])
+        return -1;
+
+    telegram_acks_migrate_conn(db);
+
+    const char *op_id = (operator_id && operator_id[0]) ? operator_id : chat_id;
+    if (telegram_ack_operator_exists(db, ack_key, op_id))
+        return 1;
+
+    sqlite3_stmt *stmt = NULL;
+    const char *sql =
+        "INSERT INTO telegram_acks "
+        "(ts,chat_id,ack_key,incident_id,operator_id,operator_name) "
+        "VALUES (?,?,?,?,?,?);";
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
         return -1;
 
@@ -444,6 +489,11 @@ static int telegram_ack_insert(sqlite3 *db, const char *chat_id,
         sqlite3_bind_text(stmt, 4, incident_id, -1, SQLITE_TRANSIENT);
     else
         sqlite3_bind_null(stmt, 4);
+    sqlite3_bind_text(stmt, 5, op_id, -1, SQLITE_TRANSIENT);
+    if (operator_name && operator_name[0])
+        sqlite3_bind_text(stmt, 6, operator_name, -1, SQLITE_TRANSIENT);
+    else
+        sqlite3_bind_null(stmt, 6);
     int rc = (sqlite3_step(stmt) == SQLITE_DONE) ? 0 : -1;
     sqlite3_finalize(stmt);
     return rc;
@@ -459,12 +509,21 @@ void db_log_telegram_ack(const char *chat_id, const char *ack_key,
         pthread_mutex_unlock(&g_db_mutex);
         return;
     }
-    (void)telegram_ack_insert(g_db, chat_id, ack_key, incident_id);
+    (void)telegram_ack_insert(g_db, chat_id, ack_key, incident_id, NULL, NULL);
     pthread_mutex_unlock(&g_db_mutex);
 }
 
 int db_log_telegram_ack_path(const char *db_path, const char *chat_id,
                              const char *ack_key, const char *incident_id)
+{
+    return db_telegram_ack_register_path(db_path, chat_id, ack_key, incident_id,
+                                         NULL, NULL);
+}
+
+int db_telegram_ack_register_path(const char *db_path, const char *chat_id,
+                                  const char *ack_key, const char *incident_id,
+                                  const char *operator_id,
+                                  const char *operator_name)
 {
     if (!db_path || !db_path[0])
         return -1;
@@ -476,9 +535,472 @@ int db_log_telegram_ack_path(const char *db_path, const char *chat_id,
         return -1;
     }
 
-    int rc = telegram_ack_insert(db, chat_id, ack_key, incident_id);
+    int rc = telegram_ack_insert(db, chat_id, ack_key, incident_id,
+                                 operator_id, operator_name);
     sqlite3_close(db);
     return rc;
+}
+
+int db_telegram_ack_names_path(const char *db_path, const char *ack_key,
+                               char *buf, size_t cap)
+{
+    if (!db_path || !db_path[0] || !ack_key || !ack_key[0] || !buf || cap < 2)
+        return -1;
+    buf[0] = '\0';
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        return -1;
+    }
+    telegram_acks_migrate_conn(db);
+
+    const char *inc = (strncmp(ack_key, "INC-", 4) == 0) ? ack_key : "";
+    sqlite3_stmt *stmt = NULL;
+    const char *sql =
+        "SELECT DISTINCT COALESCE(NULLIF(operator_name,''), chat_id) "
+        "FROM telegram_acks WHERE ack_key = ? "
+        "OR (? != '' AND incident_id = ?) ORDER BY ts ASC LIMIT 12;";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK) {
+        sqlite3_close(db);
+        return -1;
+    }
+    sqlite3_bind_text(stmt, 1, ack_key, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, inc, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, inc, -1, SQLITE_STATIC);
+
+    size_t pos = 0;
+    int n = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        const char *name = (const char *)sqlite3_column_text(stmt, 0);
+        if (!name || !name[0])
+            continue;
+        if (n > 0 && pos + 2 < cap) {
+            buf[pos++] = ',';
+            buf[pos++] = ' ';
+            buf[pos] = '\0';
+        }
+        size_t len = strlen(name);
+        if (pos + len >= cap)
+            break;
+        memcpy(buf + pos, name, len);
+        pos += len;
+        buf[pos] = '\0';
+        n++;
+    }
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return n > 0 ? 0 : -1;
+}
+
+int db_telegram_ack_count_path(const char *db_path, time_t since_ts, long *out)
+{
+    if (!db_path || !db_path[0] || !out)
+        return -1;
+    *out = 0;
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        return -1;
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db,
+            "SELECT COUNT(*) FROM telegram_acks WHERE ts >= ?;",
+            -1, &stmt, NULL) != SQLITE_OK) {
+        sqlite3_close(db);
+        return -1;
+    }
+    sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        *out = (long)sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    sqlite3_close(db);
+    return 0;
+}
+
+static const char ack_exists_sql[] =
+        "SELECT 1 FROM telegram_acks t WHERE "
+        "t.ack_key = ? OR t.ack_key = ? "
+        "OR (? != '' AND t.incident_id = ?) LIMIT 1;";
+
+static int db_row_acked(sqlite3 *db, const char *incident_id, const char *ip)
+{
+    if (!db || !ip || !ip[0])
+        return 0;
+    const char *inc = (incident_id && incident_id[0]) ? incident_id : "";
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, ack_exists_sql, -1, &stmt, NULL) != SQLITE_OK)
+        return 0;
+
+    const char *key = inc[0] ? inc : ip;
+    sqlite3_bind_text(stmt, 1, key, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, ip, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, inc, -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, inc, -1, SQLITE_STATIC);
+
+    int found = (sqlite3_step(stmt) == SQLITE_ROW);
+    sqlite3_finalize(stmt);
+    return found;
+}
+
+int db_unacked_count_path(const char *db_path, time_t since_ts, long *out)
+{
+    if (!db_path || !db_path[0] || !out)
+        return -1;
+    *out = 0;
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        return -1;
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    const char *alert_sql =
+        "SELECT COALESCE(incident_id,''), ip FROM alerts "
+        "WHERE level >= 2 AND ts >= ? ORDER BY id DESC LIMIT 64;";
+    if (sqlite3_prepare_v2(db, alert_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *inc = (const char *)sqlite3_column_text(stmt, 0);
+            const char *ip = (const char *)sqlite3_column_text(stmt, 1);
+            if (!ip || !ip[0])
+                continue;
+            if (!db_row_acked(db, inc ? inc : "", ip))
+                (*out)++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *ban_sql =
+        "SELECT ip FROM ban_events "
+        "WHERE UPPER(action) = 'BAN' AND ts >= ? ORDER BY id DESC LIMIT 32;";
+    if (sqlite3_prepare_v2(db, ban_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            const char *ip = (const char *)sqlite3_column_text(stmt, 0);
+            if (!ip || !ip[0])
+                continue;
+            if (!db_row_acked(db, "", ip))
+                (*out)++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(db);
+    return 0;
+}
+
+static const char *level_short(int level)
+{
+    switch (level) {
+    case 3: return "CRIT";
+    case 2: return "WARN";
+    default: return "ALRT";
+    }
+}
+
+int db_unacked_format_path(const char *db_path, time_t since_ts,
+                           char *buf, size_t cap)
+{
+    if (!db_path || !db_path[0] || !buf || cap < 32)
+        return -1;
+    buf[0] = '\0';
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        snprintf(buf, cap, "events.db okunamadi.");
+        return -1;
+    }
+
+    size_t pos = 0;
+    int lines = 0;
+
+    sqlite3_stmt *stmt = NULL;
+    const char *alert_sql =
+        "SELECT ts, ip, level, message, COALESCE(incident_id,'') "
+        "FROM alerts WHERE level >= 2 AND ts >= ? "
+        "ORDER BY id DESC LIMIT 64;";
+    if (sqlite3_prepare_v2(db, alert_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+        while (sqlite3_step(stmt) == SQLITE_ROW && lines < DB_UNACKED_MAX) {
+            const char *ip = (const char *)sqlite3_column_text(stmt, 1);
+            const char *inc = (const char *)sqlite3_column_text(stmt, 4);
+            if (!ip || !ip[0])
+                continue;
+            if (db_row_acked(db, inc ? inc : "", ip))
+                continue;
+
+            time_t ts = (time_t)sqlite3_column_int64(stmt, 0);
+            int level = sqlite3_column_int(stmt, 2);
+            const char *msg = (const char *)sqlite3_column_text(stmt, 3);
+
+            struct tm *tm_info = localtime(&ts);
+            char tsbuf[16] = "?";
+            if (tm_info)
+                strftime(tsbuf, sizeof(tsbuf), "%d.%m %H:%M", tm_info);
+
+            char msg_short[40] = "";
+            if (msg) {
+                strncpy(msg_short, msg, sizeof(msg_short) - 1);
+                for (char *s = msg_short; *s; s++) {
+                    if (*s == '\n' || *s == '\r') {
+                        *s = ' ';
+                        break;
+                    }
+                }
+            }
+
+            pos += (size_t)snprintf(buf + pos, cap - pos,
+                                    "%s <code>%s</code> %s",
+                                    level_short(level), ip, tsbuf);
+            if (msg_short[0])
+                pos += (size_t)snprintf(buf + pos, cap - pos, " · %s",
+                                        msg_short);
+            if (inc && inc[0])
+                pos += (size_t)snprintf(buf + pos, cap - pos,
+                                        " · <code>%s</code>", inc);
+            if (pos + 2 < cap) {
+                buf[pos++] = '\n';
+                buf[pos] = '\0';
+            }
+            lines++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    const char *ban_sql =
+        "SELECT ts, ip, reason FROM ban_events "
+        "WHERE UPPER(action) = 'BAN' AND ts >= ? "
+        "ORDER BY id DESC LIMIT 32;";
+    if (sqlite3_prepare_v2(db, ban_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+        while (sqlite3_step(stmt) == SQLITE_ROW && lines < DB_UNACKED_MAX) {
+            const char *ip = (const char *)sqlite3_column_text(stmt, 1);
+            if (!ip || !ip[0])
+                continue;
+            if (db_row_acked(db, "", ip))
+                continue;
+
+            time_t ts = (time_t)sqlite3_column_int64(stmt, 0);
+            const char *rsn = (const char *)sqlite3_column_text(stmt, 2);
+
+            struct tm *tm_info = localtime(&ts);
+            char tsbuf[16] = "?";
+            if (tm_info)
+                strftime(tsbuf, sizeof(tsbuf), "%d.%m %H:%M", tm_info);
+
+            char rsn_short[36] = "";
+            if (rsn) {
+                strncpy(rsn_short, rsn, sizeof(rsn_short) - 1);
+                for (char *s = rsn_short; *s; s++) {
+                    if (*s == '\n' || *s == '\r') {
+                        *s = ' ';
+                        break;
+                    }
+                }
+            }
+
+            pos += (size_t)snprintf(buf + pos, cap - pos,
+                                    "BAN <code>%s</code> %s", ip, tsbuf);
+            if (rsn_short[0])
+                pos += (size_t)snprintf(buf + pos, cap - pos, " · %s",
+                                        rsn_short);
+            if (pos + 2 < cap) {
+                buf[pos++] = '\n';
+                buf[pos] = '\0';
+            }
+            lines++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(db);
+    if (lines == 0)
+        snprintf(buf, cap, "Son 24 saatte onay bekleyen yok.");
+    return lines;
+}
+
+int db_incident_format_path(const char *db_path, const char *incident_id,
+                            char *buf, size_t cap)
+{
+    if (!db_path || !db_path[0] || !incident_id || !incident_id[0]
+        || !buf || cap < 64)
+        return -1;
+    buf[0] = '\0';
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        snprintf(buf, cap, "events.db okunamadi.");
+        return -1;
+    }
+
+    size_t pos = 0;
+    pos += (size_t)snprintf(buf + pos, cap - pos,
+                            "<code>%s</code>\n", incident_id);
+
+    char primary_ip[46] = "";
+    int alert_n = 0;
+
+    sqlite3_stmt *stmt = NULL;
+    const char *alert_sql =
+        "SELECT ts, ip, level, message FROM alerts "
+        "WHERE incident_id = ? ORDER BY id DESC LIMIT 8;";
+    if (sqlite3_prepare_v2(db, alert_sql, -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, incident_id, -1, SQLITE_STATIC);
+        while (sqlite3_step(stmt) == SQLITE_ROW && pos + 64 < cap) {
+            time_t ts = (time_t)sqlite3_column_int64(stmt, 0);
+            const char *ip = (const char *)sqlite3_column_text(stmt, 1);
+            int level = sqlite3_column_int(stmt, 2);
+            const char *msg = (const char *)sqlite3_column_text(stmt, 3);
+            if (ip && ip[0] && !primary_ip[0]) {
+                strncpy(primary_ip, ip, sizeof(primary_ip) - 1);
+            }
+
+            struct tm *tm_info = localtime(&ts);
+            char tsbuf[16] = "?";
+            if (tm_info)
+                strftime(tsbuf, sizeof(tsbuf), "%d.%m %H:%M", tm_info);
+
+            char msg_short[48] = "";
+            if (msg) {
+                strncpy(msg_short, msg, sizeof(msg_short) - 1);
+                for (char *s = msg_short; *s; s++) {
+                    if (*s == '\n' || *s == '\r') {
+                        *s = ' ';
+                        break;
+                    }
+                }
+            }
+
+            pos += (size_t)snprintf(buf + pos, cap - pos,
+                                    "• %s <code>%s</code> %s · %s\n",
+                                    level_short(level),
+                                    ip ? ip : "?",
+                                    tsbuf, msg_short[0] ? msg_short : "-");
+            alert_n++;
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    if (alert_n == 0) {
+        sqlite3_close(db);
+        snprintf(buf, cap, "<code>%s</code> bulunamadi.", incident_id);
+        return -1;
+    }
+
+    if (primary_ip[0]) {
+        const char *ban_sql =
+            "SELECT ts, reason FROM ban_events "
+            "WHERE ip = ? AND UPPER(action) = 'BAN' "
+            "ORDER BY id DESC LIMIT 3;";
+        if (sqlite3_prepare_v2(db, ban_sql, -1, &stmt, NULL) == SQLITE_OK) {
+            sqlite3_bind_text(stmt, 1, primary_ip, -1, SQLITE_STATIC);
+            int ban_n = 0;
+            while (sqlite3_step(stmt) == SQLITE_ROW && pos + 64 < cap) {
+                time_t ts = (time_t)sqlite3_column_int64(stmt, 0);
+                const char *rsn = (const char *)sqlite3_column_text(stmt, 1);
+                struct tm *tm_info = localtime(&ts);
+                char tsbuf[16] = "?";
+                if (tm_info)
+                    strftime(tsbuf, sizeof(tsbuf), "%d.%m %H:%M", tm_info);
+                if (ban_n == 0)
+                    pos += (size_t)snprintf(buf + pos, cap - pos, "\nBan:\n");
+                pos += (size_t)snprintf(buf + pos, cap - pos,
+                                        "• <code>%s</code> %s · %s\n",
+                                        primary_ip, tsbuf,
+                                        rsn ? rsn : "-");
+                ban_n++;
+            }
+            sqlite3_finalize(stmt);
+        }
+    }
+
+    if (db_row_acked(db, incident_id, primary_ip[0] ? primary_ip : "")) {
+        pos += (size_t)snprintf(buf + pos, cap - pos, "\n✅ Onaylandi");
+    } else {
+        pos += (size_t)snprintf(buf + pos, cap - pos,
+                                "\n⏳ Onay bekliyor");
+    }
+
+    sqlite3_close(db);
+    return alert_n;
+}
+
+static int db_count_since(sqlite3 *db, const char *sql, time_t since_ts, long *out)
+{
+    if (!db || !sql || !out)
+        return -1;
+    *out = 0;
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, NULL) != SQLITE_OK)
+        return -1;
+    sqlite3_bind_int64(stmt, 1, (sqlite3_int64)since_ts);
+    if (sqlite3_step(stmt) == SQLITE_ROW)
+        *out = (long)sqlite3_column_int64(stmt, 0);
+    sqlite3_finalize(stmt);
+    return 0;
+}
+
+int db_daily_summary_path(const char *db_path, time_t since_ts, DbDailySummary *out)
+{
+    if (!db_path || !db_path[0] || !out)
+        return -1;
+    memset(out, 0, sizeof(*out));
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        return -1;
+    }
+
+    (void)db_count_since(db, "SELECT COUNT(*) FROM alerts WHERE ts >= ?;",
+                         since_ts, &out->alerts_total);
+    (void)db_count_since(db,
+                         "SELECT COUNT(*) FROM alerts WHERE ts >= ? AND level >= 3;",
+                         since_ts, &out->alerts_crit);
+    (void)db_count_since(db,
+                         "SELECT COUNT(*) FROM alerts WHERE ts >= ? AND level = 2;",
+                         since_ts, &out->alerts_warn);
+    (void)db_count_since(db,
+                         "SELECT COUNT(*) FROM alerts WHERE ts >= ? AND level = 1;",
+                         since_ts, &out->alerts_info);
+    (void)db_count_since(db,
+                         "SELECT COUNT(*) FROM ban_events WHERE ts >= ? "
+                         "AND UPPER(action) = 'BAN';",
+                         since_ts, &out->bans_new);
+    (void)db_count_since(db,
+                         "SELECT COUNT(*) FROM alerts WHERE ts >= ? "
+                         "AND message LIKE 'TUZAK%';",
+                         since_ts, &out->traps);
+    (void)db_telegram_ack_count_path(db_path, since_ts, &out->acks);
+    (void)db_unacked_count_path(db_path, since_ts, &out->unacked);
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db,
+            "SELECT COUNT(*) FROM ban_events b "
+            "INNER JOIN ("
+            "  SELECT ip, MAX(id) AS max_id FROM ban_events GROUP BY ip"
+            ") latest ON b.id = latest.max_id "
+            "WHERE UPPER(b.action) = 'BAN';", -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            out->bans_active = (long)sqlite3_column_int64(stmt, 0);
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(db);
+    return 0;
 }
 
 void db_log_ban_event_ex(const char *ip, const char *action,

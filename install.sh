@@ -8,6 +8,7 @@
 #   sudo bash install.sh --uninstall  # Kaldir
 #   sudo bash install.sh --update     # Guncelle (git pull + yeniden derle)
 #   NGINX_ENFORCE_STRICT=1 sudo bash install.sh  # log_guardian yoksa kurulum FAIL
+#   NGINX_ENFORCE_LOG_FORMAT=0 sudo bash install.sh  # nginx format otomatik fix atla
 #
 # GitHub'dan tek satirla:
 #   curl -fsSL https://raw.githubusercontent.com/kurtulusutkucenik/loganalyzer/main/install.sh | sudo bash
@@ -281,8 +282,38 @@ patch_rules_conf_prod_keys() {
     else
         sed -i "s/^IFACE=.*/IFACE=$IFACE/" "$dest" 2>/dev/null || true
     fi
-    chmod 600 "$dest" 2>/dev/null || true
-    ok "rules.conf prod anahtarlari guncellendi (DB_PATH, TTL, IFACE)."
+    if grep -q '^API_PORT=' "$dest" 2>/dev/null; then
+        sed -i 's/^API_PORT=.*/API_PORT=8090/' "$dest" 2>/dev/null || true
+    else
+        echo 'API_PORT=8090' >> "$dest"
+    fi
+    if grep -q '^THREAT_INTEL_PROD=' "$dest" 2>/dev/null; then
+        sed -i 's/^THREAT_INTEL_PROD=.*/THREAT_INTEL_PROD=1/' "$dest" 2>/dev/null || true
+    else
+        echo 'THREAT_INTEL_PROD=1' >> "$dest"
+    fi
+    if grep -q '^API_BIND=' "$dest" 2>/dev/null; then
+        sed -i 's/^API_BIND=.*/API_BIND=127.0.0.1/' "$dest" 2>/dev/null || true
+    else
+        echo 'API_BIND=127.0.0.1' >> "$dest"
+    fi
+    if ! grep -qE '^API_TOKEN=.+' "$dest" 2>/dev/null; then
+        if command -v openssl >/dev/null 2>&1; then
+            echo "API_TOKEN=$(openssl rand -hex 32)" >> "$dest"
+        fi
+    fi
+    if grep -q '^FP_LEARN=' "$dest" 2>/dev/null; then
+        sed -i 's/^FP_LEARN=.*/FP_LEARN=1/' "$dest" 2>/dev/null || true
+    else
+        echo 'FP_LEARN=1' >> "$dest"
+    fi
+    if grep -q '^FP_TRUST_DAYS=' "$dest" 2>/dev/null; then
+        sed -i 's/^FP_TRUST_DAYS=.*/FP_TRUST_DAYS=30/' "$dest" 2>/dev/null || true
+    else
+        echo 'FP_TRUST_DAYS=30' >> "$dest"
+    fi
+    fix_conf_permissions
+    ok "rules.conf prod anahtarlari guncellendi (DB_PATH, TTL, IFACE, API_PORT, API_BIND, API_TOKEN, FP_LEARN, FP_TRUST_DAYS, THREAT_INTEL_PROD)."
 }
 
 install_nginx_snippets() {
@@ -292,6 +323,14 @@ install_nginx_snippets() {
     install -m 644 "$REPO_DIR/examples/nginx/snippets/log-guardian-server.conf" /etc/nginx/snippets/
     if [[ -f "$REPO_DIR/examples/nginx/snippets/log-guardian-inline-consult.conf" ]]; then
         install -m 644 "$REPO_DIR/examples/nginx/snippets/log-guardian-inline-consult.conf" /etc/nginx/snippets/
+        local api_tok
+        api_tok=$(grep -E '^API_TOKEN=' "$CONF_DIR/rules.conf" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+        if [[ -n "$api_tok" ]]; then
+            sed -i "s|__LG_API_TOKEN__|${api_tok}|g" /etc/nginx/snippets/log-guardian-inline-consult.conf 2>/dev/null || true
+        fi
+    fi
+    if [[ -f "$REPO_DIR/examples/nginx/snippets/log-guardian-inline-server.conf" ]]; then
+        install -m 644 "$REPO_DIR/examples/nginx/snippets/log-guardian-inline-server.conf" /etc/nginx/snippets/
     fi
     if [[ -f "$REPO_DIR/examples/nginx/snippets/log-guardian-tls-443.conf" ]]; then
         install -m 644 "$REPO_DIR/examples/nginx/snippets/log-guardian-tls-443.conf" /etc/nginx/snippets/
@@ -413,7 +452,7 @@ install_nginx_log_guardian_snippet() {
     local snippet_src="$REPO_DIR/examples/nginx/snippets/log-guardian.conf"
     local snippet_dst="/etc/nginx/snippets/log-guardian.conf"
     [[ -f "$snippet_src" ]] || return 0
-    if [[ -w /etc/nginx/snippets 2>/dev/null || "$(id -u)" -eq 0 ]]; then
+    if [[ "$(id -u)" -eq 0 ]] || [[ -w /etc/nginx/snippets ]]; then
         install -d /etc/nginx/snippets
         if [[ ! -f "$snippet_dst" ]]; then
             install -m 644 "$snippet_src" "$snippet_dst"
@@ -425,33 +464,11 @@ install_nginx_log_guardian_snippet() {
 }
 
 enforce_nginx_log_guardian_format() {
-    command -v nginx >/dev/null 2>&1 || {
-        info "nginx yok — log_guardian enforce atlandi."
-        return 0
-    }
-    local enforce="${NGINX_ENFORCE_LOG_FORMAT:-1}"
-    [[ "$enforce" == "1" ]] || return 0
+    bash "$REPO_DIR/scripts/enforce_nginx_log_format.sh"
+}
 
-    if bash "$REPO_DIR/scripts/check_nginx_log_format.sh" 2>/dev/null; then
-        ok "nginx log_guardian format tam (\$request_body dahil)"
-        return 0
-    fi
-
-    if [[ "$(id -u)" -ne 0 ]]; then
-        warn "log_guardian eksik — root ile otomatik kurulum icin: sudo bash scripts/fix_nginx_log_format.sh"
-        return 1
-    fi
-
-    warn "log_guardian eksik — otomatik duzeltme deneniyor..."
-    if bash "$REPO_DIR/scripts/fix_nginx_log_format.sh"; then
-        ok "nginx log_guardian otomatik kuruldu"
-        return 0
-    fi
-
-    warn "log_guardian otomatik kurulum basarisiz"
-    warn "  manuel: sudo bash scripts/fix_nginx_log_format.sh"
-    warn "  rehber: docs/QUICKSTART_NGINX.md bolum 2"
-    return 1
+enforce_nginx_inline_consult() {
+    bash "$REPO_DIR/scripts/enforce_nginx_inline_consult.sh"
 }
 
 install_legal_notices() {
@@ -479,6 +496,13 @@ fix_conf_permissions() {
     touch "$CONF_DIR/events.db" 2>/dev/null || true
     chown root:log-guardian "$CONF_DIR/events.db" 2>/dev/null || true
     chmod 660 "$CONF_DIR/events.db" 2>/dev/null || true
+    mkdir -p "$CONF_DIR/data"
+    chown root:log-guardian "$CONF_DIR/data" 2>/dev/null || true
+    chmod 2770 "$CONF_DIR/data"
+    if [[ -f "$CONF_DIR/data/fp-trust.lst" ]]; then
+        chown log-guardian:log-guardian "$CONF_DIR/data/fp-trust.lst" 2>/dev/null || true
+        chmod 660 "$CONF_DIR/data/fp-trust.lst" 2>/dev/null || true
+    fi
     ok "Config izinleri: log-guardian grubu okuyabilir ($CONF_DIR)"
 }
 
@@ -544,7 +568,12 @@ EOF
 }
 
 # ── Systemd Servisleri ───────────────────────────────────────────────
+ensure_ipset_state_dir() {
+    install -d -m 0755 /var/lib/ipset
+}
+
 create_daemon_service() {
+    ensure_ipset_state_dir
     local service="$UNIT_DIR/log-guardian-daemon.service"
     cat > "$service" <<EOF
 [Unit]
@@ -577,7 +606,7 @@ RestartSec=3
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/sys/fs/bpf
+ReadWritePaths=/sys/fs/bpf /run/log-guardian /var/lib/ipset
 
 [Install]
 WantedBy=multi-user.target
@@ -604,7 +633,9 @@ Environment=LD_LIBRARY_PATH=$PREFIX/lib/log-guardian
 ExecStart=$PREFIX/bin/log-guardian $NGINX_LOG \\
     --rules $CONF_DIR/rules.conf \\
     --db $CONF_DIR/events.db \\
+    --password-file $CONF_DIR/service.password \\
     --follow --no-tui
+WorkingDirectory=$CONF_DIR
 User=log-guardian
 Group=log-guardian
 SupplementaryGroups=adm
@@ -624,7 +655,18 @@ ReadWritePaths=$CONF_DIR /var/log/nginx
 WantedBy=multi-user.target
 EOF
     chmod 644 "$service"
-    ok "log-guardian.service oluşturuldu."
+install -d "$UNIT_DIR/log-guardian.service.d"
+install -m 644 "$REPO_DIR/deploy/log-guardian.service.d/20-readwrite.conf" \
+    "$UNIT_DIR/log-guardian.service.d/20-readwrite.conf" 2>/dev/null \
+    || cat > "$UNIT_DIR/log-guardian.service.d/20-readwrite.conf" <<'DROPIN'
+[Service]
+ReadWritePaths=/etc/log-guardian /var/log/nginx /var/lib/log-guardian
+DROPIN
+if [[ -f "$REPO_DIR/deploy/log-guardian.service.d/30-password-file.conf" ]]; then
+    install -m 644 "$REPO_DIR/deploy/log-guardian.service.d/30-password-file.conf" \
+        "$UNIT_DIR/log-guardian.service.d/30-password-file.conf"
+fi
+    ok "log-guardian.service oluşturuldu (+ service.d drop-in)."
 }
 
 create_threat_intel_timer() {
@@ -733,35 +775,39 @@ enforce_nginx_log_guardian_format && NGINX_FORMAT_OK=1 || true
 
 if command -v systemctl &>/dev/null; then
     step "Systemd Servisleri Kaydediliyor"
-    if [[ "$XDP_MODE" != "iptables" ]]; then
-        create_daemon_service
-    fi
+    # IPC + ban hattı daemon'da; --no-xdp/iptables modunda da gerekli (XDP OFF, ipset aktif)
+    create_daemon_service
     create_analyzer_service
     create_threat_intel_timer
     systemctl daemon-reload
     systemctl enable log-guardian-threatintel.timer
-    if [[ "$XDP_MODE" != "iptables" ]]; then
-        systemctl enable log-guardian-daemon.service
-    fi
+    systemctl enable log-guardian-daemon.service
     systemctl enable log-guardian.service
     systemctl start log-guardian-threatintel.timer 2>/dev/null || true
-    if [[ "$XDP_MODE" != "iptables" ]]; then
-        systemctl start log-guardian-daemon.service 2>/dev/null || \
-            warn "Daemon baslatilamadi (root/iface?)"
-        sleep 2
-    fi
+    systemctl start log-guardian-daemon.service 2>/dev/null || \
+        warn "Daemon baslatilamadi (root/iface?)"
+    sleep 2
     systemctl start log-guardian.service 2>/dev/null || \
         warn "Analyzer baslatilamadi — nginx log yolu ve izinleri kontrol edin."
     ok "Systemd servisleri etkinlestirildi ve baslatildi."
 fi
 
+NGINX_INLINE_OK=0
+if command -v nginx >/dev/null 2>&1; then
+    enforce_nginx_inline_consult && NGINX_INLINE_OK=1 || true
+fi
+
+if [[ "$(id -u)" -eq 0 ]]; then
+    bash "$REPO_DIR/scripts/enable_threat_intel_prod.sh" 2>/dev/null && THREAT_INTEL_OK=1 || THREAT_INTEL_OK=0
+else
+    THREAT_INTEL_OK=0
+fi
+
 step "Kurulum Sonrasi Saglik Kontrolu"
 if command -v "$PREFIX/bin/log-guardian" &>/dev/null; then
-    if [[ "$XDP_MODE" != "iptables" ]]; then
-        systemctl start log-guardian-daemon 2>/dev/null || warn "Daemon baslatilamadi (root/iface?)"
-        sleep 3
-        bash "$REPO_DIR/scripts/repair_active_bans_json.sh" 2>/dev/null || true
-    fi
+    systemctl start log-guardian-daemon 2>/dev/null || warn "Daemon baslatilamadi (root/iface?)"
+    sleep 3
+    bash "$REPO_DIR/scripts/repair_active_bans_json.sh" 2>/dev/null || true
     systemctl start log-guardian 2>/dev/null || true
     if LG_BIN="$PREFIX/bin/log-guardian" RULES="${CONF_DIR}/rules.conf" \
        bash "$REPO_DIR/scripts/ops_health.sh"; then
@@ -783,13 +829,15 @@ echo -e "  Ağ Arayüzü   : ${CYAN}${IFACE}${NC}"
 echo -e "  XDP Modu     : ${CYAN}${XDP_MODE}${NC}"
 echo -e "  Konfig Dizini: ${CYAN}${CONF_DIR}${NC}"
 echo ""
-[[ "$XDP_MODE" != "iptables" ]] && \
-echo -e "  eBPF Daemon başlat  : ${CYAN}systemctl start log-guardian-daemon${NC}"
+echo -e "  eBPF Daemon başlat  : ${CYAN}systemctl start log-guardian-daemon${NC} (XDP=${XDP_MODE})"
 echo -e "  Analyzer başlat     : ${CYAN}systemctl start log-guardian${NC}"
 echo -e "  Metrikler           : ${CYAN}curl http://127.0.0.1:9091/metrics${NC}"
 echo -e "  Nginx log           : ${CYAN}${NGINX_LOG}${NC}"
 echo -e "  Kural dosyası       : ${CYAN}${CONF_DIR}/rules.conf${NC}"
 echo -e "  Operasyon rehberi   : ${CYAN}docs/OPERATIONS.md${NC}"
+echo -e "  Laptop ops          : ${CYAN}docs/LAPTOP_OPS.md${NC}"
+echo -e "  Ilk calistirma      : ${CYAN}sudo bash scripts/install_first_run.sh${NC}  (docs/QUICKSTART_15MIN.md)"
+echo -e "  API guvenligi       : ${CYAN}sudo bash scripts/ensure_api_security.sh${NC}"
 echo -e "  Pilot checklist     : ${CYAN}docs/PILOT_SETUP.md${NC}"
 echo -e "  7/24 dogrulama      : ${CYAN}bash scripts/ops_smoke.sh${NC}"
 echo -e "  JA3 TLS :443        : ${CYAN}sudo bash scripts/nginx_tls_local_setup.sh${NC}  sonra: bash scripts/t2_tls_proof.sh"
@@ -800,6 +848,16 @@ if [[ "${NGINX_FORMAT_OK:-0}" -ne 1 ]] && command -v nginx >/dev/null 2>&1; then
     warn "nginx log_guardian format EKSIK — POST SQLi gorunmez; WAF recall duser."
     warn "  sudo bash scripts/fix_nginx_log_format.sh"
     warn "  dogrula: STRICT=1 bash scripts/check_nginx_log_format.sh"
+fi
+if [[ "${NGINX_INLINE_OK:-0}" -ne 1 ]] && command -v nginx >/dev/null 2>&1; then
+    warn "nginx inline consult EKSIK — auth_request oncesi WAF kapali."
+    warn "  sudo bash scripts/fix_nginx_inline_consult.sh"
+    warn "  kanit: bash scripts/nginx_hybrid_proof.sh"
+fi
+if [[ "${THREAT_INTEL_OK:-0}" -ne 1 ]]; then
+    warn "threat intel prod EKSIK — timer/TTL/ipset sync kontrol edin."
+    warn "  sudo bash scripts/enable_threat_intel_prod.sh"
+    warn "  kanit: sudo bash scripts/threat_intel_prod_proof.sh"
 fi
 if [[ "${NGINX_FORMAT_OK:-0}" -ne 1 ]] && command -v nginx >/dev/null 2>&1 && [[ "${NGINX_ENFORCE_STRICT:-0}" == "1" ]]; then
     error "NGINX_ENFORCE_STRICT=1 — kurulum log_guardian olmadan tamamlanamaz"

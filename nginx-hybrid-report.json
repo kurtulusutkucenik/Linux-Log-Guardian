@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-15T19:28:11.599873+00:00",
+  "mode": "inline+log hybrid",
+  "checks": {
+    "log_guardian_format": true,
+    "inline_consult_nginx": true,
+    "api_consult": true,
+    "edge_reachable": true,
+    "edge_sqli_blocked": {
+      "http_code": 403,
+      "expect": 403
+    },
+    "edge_benign": {
+      "http_code": 404,
+      "expect": "200|404"
+    },
+    "log_replay_alerts": 1,
+    "log_ingest": true
+  },
+  "pass": true,
+  "note": "prod default: auth_request + log_guardian access_log"
+}

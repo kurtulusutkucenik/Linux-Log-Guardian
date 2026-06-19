@@ -1,0 +1,23 @@
+{
+  "ts": "2026-06-15T18:08:44.214383+00:00",
+  "pass": true,
+  "mode": "both",
+  "firehol": {
+    "prod_marker": true,
+    "timer_active": true,
+    "ipset_entries": 24663,
+    "live": true,
+    "sync_attempted": true
+  },
+  "api_feed": {
+    "env_file": true,
+    "enabled": true,
+    "sources": "abuseipdb",
+    "abuseipdb_key": true,
+    "otx_key": true,
+    "last_sync_applied": 5000,
+    "last_sync_failed": 0,
+    "live": true
+  },
+  "notes": "pass=ipset>=50 veya API sync>0; timer tek basina live sayilmaz"
+}

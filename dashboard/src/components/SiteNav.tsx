@@ -10,8 +10,13 @@ export function SiteNav() {
   const pathname = usePathname();
   const { locale, setLocale, t } = useLanguage();
 
-  const linkClass = (href: string) =>
-    `nav-link ${pathname === href ? "nav-link-active" : ""}`;
+  const linkClass = (href: string) => {
+    const active =
+      href === "/"
+        ? pathname === "/" || pathname === "/fleet"
+        : pathname === href || pathname.startsWith(`${href}/`);
+    return `nav-link ${active ? "nav-link-active" : ""}`;
+  };
 
   if (pathname === "/login" || pathname === "/competitive-proof") return null;
 

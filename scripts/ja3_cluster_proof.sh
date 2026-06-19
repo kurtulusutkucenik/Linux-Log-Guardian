@@ -68,7 +68,7 @@ with tempfile.NamedTemporaryFile(mode="w", suffix=".access", delete=False) as tf
     sub_path = Path(tf.name)
 
 proc = subprocess.run(
-    [str(lg), str(sub_path), "--no-tui", "--json", "--no-ban", "--no-db", "--rules", str(tmp_rules)],
+    [str(lg), str(sub_path), "--no-tui", "--json", "--no-ban", "--no-webhook", "--no-db", "--rules", str(tmp_rules)],
     capture_output=True, text=True, env=env, cwd=str(ROOT), timeout=120,
 )
 combined = proc.stdout + proc.stderr

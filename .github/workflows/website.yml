@@ -1,0 +1,55 @@
+name: Website Gate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "assets/website/**"
+      - "scripts/website_*"
+      - "scripts/i18n_all_locales.json"
+      - "scripts/sync_evidence_pack.sh"
+      - "scripts/preview_website.sh"
+      - "wrangler.toml"
+      - ".github/workflows/website.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "assets/website/**"
+      - "scripts/website_*"
+      - "scripts/i18n_all_locales.json"
+      - "scripts/sync_evidence_pack.sh"
+      - "scripts/preview_website.sh"
+      - "wrangler.toml"
+      - ".github/workflows/website.yml"
+
+jobs:
+  website:
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Deploy gate (build + pack + audit)
+        run: bash scripts/website_deploy_gate.sh
+
+      - name: HTTP smoke (domain olmadan)
+        run: bash scripts/website_smoke.sh
+
+      - name: Playwright kurulum
+        run: |
+          pip install playwright
+          playwright install chromium --with-deps
+
+      - name: Browser i18n smoke
+        run: bash scripts/website_i18n_browser_smoke.sh
+
+      - name: Cloudflare Pages output dogrulama
+        run: |
+          test -f wrangler.toml
+          grep -q 'pages_build_output_dir = "assets/website-deploy"' wrangler.toml
+          test ! -f assets/website-deploy/csp.txt
+          test ! -f assets/website-deploy/publish.allowlist
+          test -f assets/website-deploy/404.html

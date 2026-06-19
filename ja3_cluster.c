@@ -1,13 +1,16 @@
 /* ja3_cluster.c — Dagitik saldiri: ayni UA/JA3 → ban_pipeline toplu ban */
 #define _GNU_SOURCE
 #include "ja3_cluster.h"
+#include "auth.h"
 #include "ban_pipeline.h"
 #include "fp_trust.h"
 #include "logger.h"
+#include "webhook.h"
 extern int g_output_json;
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <stdatomic.h>
 
 #define JA3_CLUSTER_BUCKETS   256
@@ -93,6 +96,8 @@ static int bucket_add_ip(Ja3ClusterBucket *b, const char *ip)
 
 static int flush_cluster_bans(Ja3ClusterBucket *b)
 {
+    if (!g_allow_ban)
+        return 0;
     if (b->banned || b->ip_count < g_min_ips)
         return 0;
 
@@ -105,8 +110,11 @@ static int flush_cluster_bans(Ja3ClusterBucket *b)
         if (fp_trust_is_trusted(b->ips[i]))
             continue;
         BanPath path;
-        if (ban_pipeline_ban(b->ips[i], reason, &path) == 0)
+        if (ban_pipeline_ban(b->ips[i], reason, &path) == 0) {
             ok++;
+            time_t now = time(NULL);
+            webhook_send_ban(b->ips[i], now, reason, 80.0, "ja3_cluster");
+        }
     }
 
     b->banned = 1;

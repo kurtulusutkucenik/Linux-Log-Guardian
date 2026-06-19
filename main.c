@@ -51,6 +51,7 @@
 #include "rules_fleet.h"
 #include "endpoint_baseline.h"
 #include "geoip_feed.h"
+#include "geoip_lookup.h"
 #include "falco_host_rules.h"
 #include "fp_trust.h"
 #include "ban_policy.h"
@@ -109,6 +110,7 @@ static int  g_multi_tenant_db = 0;
 int g_db_enabled = 1;
 static int g_db_cli_off = 0;
 static int g_ban_cli_off = 0;
+static int g_webhook_cli_off = 0;
 static int g_ban_ttl_sec = 600;
 static int g_intel_ban_db_ttl_days = 30;
 int g_auth_max_attempts = 3;
@@ -116,6 +118,7 @@ int g_drop_privs = 0;
 static int g_metrics_port   = 9091;  /* Prometheus endpoint portu (0=devre disi) */
 static int g_api_port       = API_DEFAULT_PORT;
 static char g_api_bind[64]  = "127.0.0.1";
+static char g_api_token[128] = "";
 static int g_xdp_map_v4_sz  = 0;     /* 0 = varsayilan (65536) */
 static int g_xdp_map_v6_sz  = 0;     /* 0 = varsayilan (16384) */
 
@@ -156,6 +159,7 @@ int g_ipc_fd = -1;  /* -1 = daemon modu değil, direkt XDP */
 #define MAX_WHITELIST_IPS 256
 static char g_whitelist_ips[MAX_WHITELIST_IPS][IP_STR_LEN];
 static size_t g_whitelist_count = 0;
+static pthread_mutex_t g_whitelist_mutex = PTHREAD_MUTEX_INITIALIZER;
 
 static char g_crs_rules_path[512] = "rules/crs-bundle.rules";
 static char g_falco_host_rules_path[512] = "";
@@ -198,6 +202,10 @@ static _Atomic long g_cnt_5xx    = 0;
 static void restore_kbd(void);
 
 static void atexit_cleanup(void) {
+    if (g_ipc_fd >= 0) {
+        daemon_ipc_close(g_ipc_fd);
+        g_ipc_fd = -1;
+    }
     webhook_shutdown();
     if (g_use_tui) {
         restore_kbd();
@@ -313,21 +321,70 @@ static int is_whitelisted_ip(const char *ip) {
     return 0;
 }
 
+static int lg_add_whitelist_ip(const char *ip)
+{
+    if (!ip || !is_valid_ip(ip))
+        return -1;
+    pthread_mutex_lock(&g_whitelist_mutex);
+    if (is_whitelisted_ip(ip)) {
+        pthread_mutex_unlock(&g_whitelist_mutex);
+        return 0;
+    }
+    if (g_whitelist_count >= MAX_WHITELIST_IPS) {
+        pthread_mutex_unlock(&g_whitelist_mutex);
+        return -1;
+    }
+    strncpy(g_whitelist_ips[g_whitelist_count], ip, IP_STR_LEN - 1);
+    g_whitelist_ips[g_whitelist_count][IP_STR_LEN - 1] = '\0';
+    g_whitelist_count++;
+    pthread_mutex_unlock(&g_whitelist_mutex);
+    fprintf(stderr, "[WHITELIST] runtime eklendi: %s\n", ip);
+    return 0;
+}
+
+static void fp_trust_promote_whitelist_cb(const char *ip)
+{
+    if (ip && ip[0])
+        (void)lg_add_whitelist_ip(ip);
+}
+
 static void load_rules_file(const char *path);
 static void resolve_path_from_rules(const char *rules_path, char *inout, size_t inout_sz);
 static void operator_load_rules(void);
-static int is_operator_cli(int argc, char **argv)
+static int is_known_operator_cmd(const char *cmd)
 {
-    if (argc < 2) return 0;
-    const char *cmd = argv[1];
     return strcmp(cmd, "--health") == 0 || strcmp(cmd, "--status") == 0 ||
            strcmp(cmd, "ban") == 0 || strcmp(cmd, "unban") == 0 ||
-           strcmp(cmd, "crs-stats") == 0 ||            strcmp(cmd, "lineage-stats") == 0 ||
+           strcmp(cmd, "crs-stats") == 0 || strcmp(cmd, "lineage-stats") == 0 ||
            strcmp(cmd, "incident-sim") == 0 ||
            strcmp(cmd, "threat-feed-sync") == 0 ||
            strcmp(cmd, "ban-db-prune") == 0 ||
            strcmp(cmd, "webhook-test") == 0 ||
+           strcmp(cmd, "webhook-metrics-reset") == 0 ||
+           strcmp(cmd, "daily-summary") == 0 ||
+           strcmp(cmd, "weekly-summary") == 0 ||
            strcmp(cmd, "schema-check") == 0;
+}
+
+/* --rules oncesi/sonrasi: log-guardian --rules FILE webhook-metrics-reset */
+static int operator_cmd_index(int argc, char **argv)
+{
+    for (int i = 1; i < argc; i++) {
+        if (strcmp(argv[i], "--rules") == 0 || strcmp(argv[i], "--db") == 0) {
+            i++;
+            continue;
+        }
+        if (is_known_operator_cmd(argv[i]))
+            return i;
+        if (argv[i][0] == '-')
+            continue;
+    }
+    return -1;
+}
+
+static int is_operator_cli(int argc, char **argv)
+{
+    return operator_cmd_index(argc, argv) >= 0;
 }
 
 static int whitelist_check_cb(const char *ip)
@@ -627,6 +684,74 @@ static void operator_apply_db_path(void)
     }
 }
 
+static void operator_load_threat_feed_env(void)
+{
+    const char *path = "/etc/log-guardian/threat-feed.env";
+    FILE *f;
+
+    if (access(path, R_OK) != 0)
+        return;
+    f = fopen(path, "r");
+    if (!f)
+        return;
+
+    char line[512];
+    while (fgets(line, sizeof(line), f)) {
+        char *p = line;
+        while (*p == ' ' || *p == '\t')
+            p++;
+        if (*p == '#' || *p == '\n')
+            continue;
+        char *nl = strchr(p, '\n');
+        if (nl)
+            *nl = '\0';
+        char *eq = strchr(p, '=');
+        if (!eq)
+            continue;
+        *eq = '\0';
+        char *key = p;
+        char *val = eq + 1;
+        while (*val == ' ' || *val == '\t')
+            val++;
+        if (!key[0] || !val[0])
+            continue;
+        if (strncmp(key, "THREAT_FEED_", 12) != 0 &&
+            strcmp(key, "ABUSEIPDB_API_KEY") != 0 &&
+            strcmp(key, "OTX_API_KEY") != 0)
+            continue;
+        if (getenv(key))
+            continue;
+        setenv(key, val, 0);
+    }
+    fclose(f);
+}
+
+static void threat_feed_apply_env_keys(void)
+{
+    if (!g_threat_config.api_key[0]) {
+        const char *k = getenv("THREAT_FEED_API_KEY");
+        if (!k || !*k)
+            k = getenv("ABUSEIPDB_API_KEY");
+        if (k && *k) {
+            size_t n = strlen(k);
+            if (n >= sizeof(g_threat_config.api_key))
+                n = sizeof(g_threat_config.api_key) - 1;
+            memcpy(g_threat_config.api_key, k, n);
+            g_threat_config.api_key[n] = '\0';
+        }
+    }
+    if (!g_threat_config.otx_api_key[0]) {
+        const char *k = getenv("OTX_API_KEY");
+        if (k && *k) {
+            size_t n = strlen(k);
+            if (n >= sizeof(g_threat_config.otx_api_key))
+                n = sizeof(g_threat_config.otx_api_key) - 1;
+            memcpy(g_threat_config.otx_api_key, k, n);
+            g_threat_config.otx_api_key[n] = '\0';
+        }
+    }
+}
+
 static void operator_load_webhook_env(void)
 {
     const char *path = "/etc/log-guardian/webhook.env";
@@ -661,10 +786,10 @@ static void operator_load_webhook_env(void)
         if (strncmp(key, "LOGANALYZER_", 12) != 0 &&
             strncmp(key, "WEBHOOK_", 8) != 0)
             continue;
-        /* WEBHOOK_DRY_RUN=1 webhook-test — dosyadaki 0 ile ezilmesin */
-        if (strcmp(key, "WEBHOOK_DRY_RUN") == 0 && getenv("WEBHOOK_DRY_RUN"))
+        /* Ortamda zaten set edilmisse (dry-run test, override) dosyayi ezme */
+        if (getenv(key))
             continue;
-        setenv(key, val, 1);
+        setenv(key, val, 0);
     }
     fclose(f);
 }
@@ -672,6 +797,7 @@ static void operator_load_webhook_env(void)
 static void operator_load_rules(void)
 {
     operator_load_webhook_env();
+    operator_load_threat_feed_env();
     const char *rules = operator_rules_path();
     if (access(rules, F_OK) == 0)
         load_rules_file(rules);
@@ -772,12 +898,33 @@ static int cmd_ban_db_prune(int argc, char **argv)
     return 0;
 }
 
+static int cmd_webhook_metrics_reset(int argc, char **argv)
+{
+    int fail_only = 1;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--all") == 0)
+            fail_only = 0;
+    }
+    operator_load_rules();
+    webhook_metrics_reset(fail_only);
+    long sent = 0, fail = 0, drops = 0;
+    webhook_metrics_snapshot(&sent, &fail, &drops, NULL);
+    printf("{\"reset\":true,\"fail_only\":%s,\"sent\":%ld,\"fail\":%ld,\"drops\":%ld,"
+           "\"store\":\"%s\"}\n",
+           fail_only ? "true" : "false", sent, fail, drops,
+           getenv("LOGANALYZER_WEBHOOK_METRICS_FILE") ?:
+               "/var/lib/log-guardian/webhook.metrics");
+    return 0;
+}
+
 static int cmd_webhook_test(int argc, char **argv)
 {
     const char *kind = "alert";
     for (int i = 2; i < argc; i++) {
         if (argv[i][0] == '-') continue;
-        if (strcmp(argv[i], "alert") == 0 || strcmp(argv[i], "ban") == 0 ||
+        if (strcmp(argv[i], "alert") == 0 || strcmp(argv[i], "crit") == 0 ||
+            strcmp(argv[i], "crit-chain") == 0 ||
+            strcmp(argv[i], "ban") == 0 ||
             strcmp(argv[i], "trap") == 0 || strcmp(argv[i], "batch") == 0)
             kind = argv[i];
     }
@@ -787,19 +934,20 @@ static int cmd_webhook_test(int argc, char **argv)
         fprintf(stderr,
                 "[ERR] WEBHOOK_ENABLED=0 (/etc/log-guardian/rules.conf)\n"
                 "      Hizli test: WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=1 \\\n"
-                "        LOGANALYZER_DISCORD_WEBHOOK_URL=https://discord.com/api/webhooks/FAKE/FAKE \\\n"
+                "        LOGANALYZER_TELEGRAM_TOKEN=FAKE:TOKEN \\\n"
+                "        LOGANALYZER_TELEGRAM_CHAT_ID=-1001 \\\n"
                 "        ./log-guardian webhook-test %s\n"
                 "      veya: bash scripts/webhook_dev.sh\n", kind);
         return 1;
     }
     if (webhook_destinations_configured() < 1) {
-        fprintf(stderr, "[ERR] webhook kanali yok (TELEGRAM/DISCORD/SLACK/GENERIC)\n");
+        fprintf(stderr, "[ERR] webhook kanali yok (TELEGRAM veya GENERIC)\n");
         return 1;
     }
     webhook_init();
     if (webhook_send_test(kind) != 0) {
         webhook_shutdown();
-        fprintf(stderr, "[ERR] gecersiz tur: %s (alert|ban|trap|batch)\n", kind);
+        fprintf(stderr, "[ERR] gecersiz tur: %s (alert|crit|ban|trap|batch)\n", kind);
         return 1;
     }
     if (strcmp(kind, "batch") == 0)
@@ -815,6 +963,64 @@ static int cmd_webhook_test(int argc, char **argv)
            webhook_is_dry_run() ? "true" : "false",
            webhook_destinations_configured(),
            st.ok, st.fail);
+    return 0;
+}
+
+static int cmd_daily_summary(int argc, char **argv)
+{
+    int force = 0;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--force") == 0)
+            force = 1;
+    }
+
+    operator_load_rules();
+    if (!g_webhook.enabled) {
+        fprintf(stderr, "[ERR] WEBHOOK_ENABLED=0\n");
+        return 1;
+    }
+    if (webhook_destinations_configured() < 1) {
+        fprintf(stderr, "[ERR] webhook kanali yok\n");
+        return 1;
+    }
+    webhook_init();
+    int rc = webhook_send_daily_summary(g_db_path, force);
+    webhook_shutdown();
+    if (rc != 0) {
+        fprintf(stderr, "[ERR] gunluk ozet gonderilemedi\n");
+        return 1;
+    }
+    printf("{\"ok\":true,\"daily_summary\":true,\"force\":%s}\n",
+           force ? "true" : "false");
+    return 0;
+}
+
+static int cmd_weekly_summary(int argc, char **argv)
+{
+    int force = 0;
+    for (int i = 2; i < argc; i++) {
+        if (strcmp(argv[i], "--force") == 0)
+            force = 1;
+    }
+
+    operator_load_rules();
+    if (!g_webhook.enabled) {
+        fprintf(stderr, "[ERR] WEBHOOK_ENABLED=0\n");
+        return 1;
+    }
+    if (webhook_destinations_configured() < 1) {
+        fprintf(stderr, "[ERR] webhook kanali yok\n");
+        return 1;
+    }
+    webhook_init();
+    int rc = webhook_send_weekly_summary(g_db_path, force);
+    webhook_shutdown();
+    if (rc != 0) {
+        fprintf(stderr, "[ERR] haftalik ozet gonderilemedi\n");
+        return 1;
+    }
+    printf("{\"ok\":true,\"weekly_summary\":true,\"force\":%s}\n",
+           force ? "true" : "false");
     return 0;
 }
 
@@ -1127,6 +1333,14 @@ static void lg_telegram_ops_status(char *buf, size_t cap) {
     long ws = 0, wf = 0, wd = 0, qd = 0;
     webhook_metrics_snapshot(&ws, &wf, &wd, &qd);
 
+    long ack_24h = 0;
+    long unacked_24h = 0;
+    if (g_db_path && g_db_path[0]) {
+        time_t since = time(NULL) - 86400;
+        (void)db_telegram_ack_count_path(g_db_path, since, &ack_24h);
+        (void)db_unacked_count_path(g_db_path, since, &unacked_24h);
+    }
+
     double eps = g_stats.eps;
     long alerts = (long)atomic_load(&g_atomic_alerts);
     long lines = (long)atomic_load(&g_atomic_lines);
@@ -1146,13 +1360,73 @@ static void lg_telegram_ops_status(char *buf, size_t cap) {
         }
     }
 
+    char quiet_line[40] = "OFF";
+    if (webhook_quiet_hours_enabled()) {
+        snprintf(quiet_line, sizeof(quiet_line), "%s (%s)",
+                 webhook_quiet_hours_active() ? "ACTIVE" : "off",
+                 webhook_quiet_hours_spec());
+    }
+
+    char topics_line[64] = "";
+    webhook_telegram_topics_line(topics_line, sizeof(topics_line));
+    char topics_fmt[72] = "";
+    if (topics_line[0])
+        snprintf(topics_fmt, sizeof(topics_fmt), "%s\n", topics_line);
+
+    char rich_fmt[48] = "";
+    if (webhook_telegram_rich_card_enabled()) {
+        const char *db = webhook_dashboard_base_url();
+        if (db && db[0])
+            snprintf(rich_fmt, sizeof(rich_fmt), "Rich: ON (%s)\n", db);
+        else
+            snprintf(rich_fmt, sizeof(rich_fmt), "Rich: ON\n");
+    }
+
+    char geo_fmt[24] = "";
+    if (webhook_telegram_geoip_enabled())
+        snprintf(geo_fmt, sizeof(geo_fmt), "GeoIP: ON\n");
+
+    char pin_fmt[24] = "";
+    if (webhook_telegram_pin_crit_enabled())
+        snprintf(pin_fmt, sizeof(pin_fmt), "Pin CRIT: ON\n");
+
+    char preview_fmt[28] = "";
+    if (webhook_telegram_disable_preview_enabled())
+        snprintf(preview_fmt, sizeof(preview_fmt), "Preview: OFF\n");
+
+    char chain_fmt[40] = "";
+    if (webhook_telegram_reply_chain_enabled())
+        snprintf(chain_fmt, sizeof(chain_fmt), "Reply chain: ON (%ds)\n",
+                 g_webhook.telegram_reply_chain_sec);
+
+    char mirror_fmt[32] = "";
+    if (webhook_telegram_mirror_warn_enabled())
+        snprintf(mirror_fmt, sizeof(mirror_fmt),
+                 "Mirror WARN: ON (#%d)\n", g_webhook.telegram_topic_warn);
+
+    const char *bot_mode = "OFF";
+    if (g_webhook.telegram_bot_enabled) {
+        bot_mode = webhook_telegram_webhook_enabled() ? "WEBHOOK" : "POLL";
+    }
+
     snprintf(buf, cap,
              "EPS: %.2f\n"
              "Alerts: %ld | Lines: %ld\n"
              "Ban OK: %ld | Fail: %ld\n"
              "Route: %s | batch: %ds\n"
              "Telegram CRIT×%d WARN×%d\n"
+             "%s"
+             "%s"
+             "%s"
+             "%s"
+             "%s"
+             "%s"
+             "%s"
+             "Quiet: %s\n"
+             "Daily: %s\n"
+             "Weekly: %s\n"
              "Webhook sent: %ld | fail: %ld\n"
+             "Ack (24h): %ld | Unacked: %ld\n"
              "Queue depth: %ld | drops: %ld\n"
              "Bot: %s | targets: %d",
              eps, alerts, lines, ban_ok, ban_fail,
@@ -1160,21 +1434,56 @@ static void lg_telegram_ops_status(char *buf, size_t cap) {
              g_webhook.telegram_batch_sec,
              g_webhook.telegram_chat_crit_count,
              g_webhook.telegram_chat_warn_count,
-             ws, wf, qd, wd,
-             g_webhook.telegram_bot_enabled ? "ON" : "OFF",
+             topics_fmt,
+             rich_fmt,
+             geo_fmt,
+             pin_fmt,
+             preview_fmt,
+             chain_fmt,
+             mirror_fmt,
+             quiet_line,
+             webhook_daily_summary_enabled() ? webhook_daily_summary_spec() : "OFF",
+             webhook_weekly_summary_enabled() ? webhook_weekly_summary_spec() : "OFF",
+             ws, wf, ack_24h, unacked_24h, qd, wd,
+             bot_mode,
              webhook_telegram_target_count());
 }
 
-static void lg_telegram_ack(const char *chat_id, const char *ack_key)
+static int lg_telegram_ack(const char *chat_id, const char *ack_key,
+                           const char *operator_id, const char *operator_name)
 {
     if (!chat_id || !ack_key || !ack_key[0])
-        return;
+        return -1;
     const char *inc = (strncmp(ack_key, "INC-", 4) == 0) ? ack_key : NULL;
-    if (g_db_path && g_db_path[0] &&
-        db_log_telegram_ack_path(g_db_path, chat_id, ack_key, inc) == 0)
-        return;
-    if (g_db_enabled)
+    if (g_db_path && g_db_path[0])
+        return db_telegram_ack_register_path(
+            g_db_path, chat_id, ack_key, inc, operator_id, operator_name);
+    if (g_db_enabled) {
         db_log_telegram_ack(chat_id, ack_key, inc);
+        return 0;
+    }
+    return -1;
+}
+
+static void lg_telegram_inline(const char *chat_id, const char *verb,
+                               const char *arg)
+{
+    (void)chat_id;
+    if (!verb || !arg || !arg[0] || !is_valid_ip(arg))
+        return;
+
+    if (strcmp(verb, "mute") == 0) {
+        webhook_operator_mute_ip(arg, 0);
+        fprintf(stderr, "[TELEGRAM] inline sessiz: %s (%ds)\n",
+                arg, webhook_operator_mute_sec());
+    } else if (strcmp(verb, "wl") == 0) {
+        (void)lg_add_whitelist_ip(arg);
+    } else if (strcmp(verb, "ub") == 0) {
+        if (unban_ip(arg) == 0)
+            fprintf(stderr, "[TELEGRAM] inline unban: %s\n", arg);
+        else
+            fprintf(stderr, "[TELEGRAM] inline unban basarisiz: %s\n", arg);
+    }
 }
 
 static const char *alert_level_tag(int level)
@@ -1234,9 +1543,39 @@ static void lg_telegram_last(char *buf, size_t cap)
     }
 }
 
+static void lg_telegram_unacked(char *buf, size_t cap)
+{
+    if (!buf || cap == 0)
+        return;
+    if (!g_db_path || !g_db_path[0]) {
+        snprintf(buf, cap, "DB yolu yok.");
+        return;
+    }
+    time_t since = time(NULL) - 86400;
+    (void)db_unacked_format_path(g_db_path, since, buf, cap);
+}
+
+static void lg_telegram_incident(const char *incident_id, char *buf, size_t cap)
+{
+    if (!buf || cap == 0)
+        return;
+    if (!incident_id || !incident_id[0]) {
+        snprintf(buf, cap, "Incident ID gerekli.");
+        return;
+    }
+    if (!g_db_path || !g_db_path[0]) {
+        snprintf(buf, cap, "DB yolu yok.");
+        return;
+    }
+    (void)db_incident_format_path(g_db_path, incident_id, buf, cap);
+}
+
 static void load_rules_file(const char *path) {
     FILE *fp = fopen(path, "r");
     if (!fp) return;
+
+    parser_clear_proxy_cidrs();
+    parser_set_trust_xff(0);
 
     int low_slow_req = 0, brute_err = 0, ddos_rps = 0, slow_ms = 0;
     int sqli_score = 0, slow_hit_cnt = 0, cooldown = 0;
@@ -1246,6 +1585,7 @@ static void load_rules_file(const char *path) {
     double adapt_alpha = 0.15, adapt_warn = 3.0, adapt_ban = 5.0;
     int adapt_warmup = ADAPTIVE_WARMUP_SAMPLES;
     int fp_learn = 0, fp_trust_days = 30, fp_min_samples = 100;
+    int fp_auto_whitelist = 0;
     int ja3_cluster_en = 0, ja3_cluster_min = 3;
     char fp_store_path[512] = "data/fp-trust.lst";
     int auto_ban_policy = 1;
@@ -1344,18 +1684,6 @@ static void load_rules_file(const char *path) {
         else if (strcmp(key, "TELEGRAM_CHAT_WARN") == 0) {
             webhook_set_telegram_chat_warn_csv(val);
         }
-        else if (strcmp(key, "DISCORD_WEBHOOK_URL") == 0) {
-            size_t n = strlen(val);
-            if (n >= sizeof(g_webhook.discord_url)) n = sizeof(g_webhook.discord_url) - 1;
-            memcpy(g_webhook.discord_url, val, n);
-            g_webhook.discord_url[n] = '\0';
-        }
-        else if (strcmp(key, "SLACK_WEBHOOK_URL") == 0) {
-            size_t n = strlen(val);
-            if (n >= sizeof(g_webhook.slack_url)) n = sizeof(g_webhook.slack_url) - 1;
-            memcpy(g_webhook.slack_url, val, n);
-            g_webhook.slack_url[n] = '\0';
-        }
         else if (strcmp(key, "GENERIC_WEBHOOK_URL") == 0) {
             size_t n = strlen(val);
             if (n >= sizeof(g_webhook.generic_url)) n = sizeof(g_webhook.generic_url) - 1;
@@ -1365,6 +1693,8 @@ static void load_rules_file(const char *path) {
         else if (strcmp(key, "WEBHOOK_ENABLED")     == 0 && is_number) g_webhook.enabled      = (int)parsed;
         else if (strcmp(key, "WEBHOOK_MIN_LEVEL")   == 0 && is_number) g_webhook.min_level    = (int)parsed;
         else if (strcmp(key, "WEBHOOK_COOLDOWN_SEC")== 0 && is_number) g_webhook.cooldown_sec = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_OPERATOR_MUTE_SEC") == 0 && is_number)
+            g_webhook.operator_mute_sec = (int)parsed;
         else if (strcmp(key, "WEBHOOK_ASYNC")       == 0 && is_number) g_webhook.async_enabled = (int)parsed;
         else if (strcmp(key, "WEBHOOK_SILENT_INFO")  == 0 && is_number) g_webhook.silent_info   = (int)parsed;
         else if (strcmp(key, "WEBHOOK_TELEGRAM_BOT") == 0 && is_number)
@@ -1373,6 +1703,59 @@ static void load_rules_file(const char *path) {
             g_webhook.telegram_route_by_level = (int)parsed;
         else if (strcmp(key, "WEBHOOK_TELEGRAM_BATCH_SEC") == 0 && is_number)
             g_webhook.telegram_batch_sec = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_QUIET_HOURS") == 0)
+            webhook_set_quiet_hours(val);
+        else if (strcmp(key, "WEBHOOK_DAILY_SUMMARY") == 0)
+            webhook_set_daily_summary(val);
+        else if (strcmp(key, "WEBHOOK_WEEKLY_SUMMARY") == 0)
+            webhook_set_weekly_summary(val);
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_ALERT_FMT") == 0) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_webhook.telegram_alert_fmt))
+                n = sizeof(g_webhook.telegram_alert_fmt) - 1;
+            memcpy(g_webhook.telegram_alert_fmt, val, n);
+            g_webhook.telegram_alert_fmt[n] = '\0';
+        }
+        else if ((strcmp(key, "TELEGRAM_TOPIC_WAF") == 0 ||
+                  strcmp(key, "WEBHOOK_TELEGRAM_TOPIC_WAF") == 0) &&
+                 is_number && parsed > 0)
+            g_webhook.telegram_topic_waf = (int)parsed;
+        else if ((strcmp(key, "TELEGRAM_TOPIC_BAN") == 0 ||
+                  strcmp(key, "WEBHOOK_TELEGRAM_TOPIC_BAN") == 0) &&
+                 is_number && parsed > 0)
+            g_webhook.telegram_topic_ban = (int)parsed;
+        else if ((strcmp(key, "TELEGRAM_TOPIC_TRAP") == 0 ||
+                  strcmp(key, "WEBHOOK_TELEGRAM_TOPIC_TRAP") == 0) &&
+                 is_number && parsed > 0)
+            g_webhook.telegram_topic_trap = (int)parsed;
+        else if ((strcmp(key, "TELEGRAM_TOPIC_WARN") == 0 ||
+                  strcmp(key, "WEBHOOK_TELEGRAM_TOPIC_WARN") == 0) &&
+                 is_number && parsed > 0) {
+            g_webhook.telegram_topic_warn = (int)parsed;
+            g_webhook.telegram_mirror_warn = 1;
+        }
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_MIRROR_WARN") == 0 && is_number)
+            g_webhook.telegram_mirror_warn = (int)parsed;
+        else if (strcmp(key, "DASHBOARD_BASE_URL") == 0)
+            webhook_set_dashboard_base_url(val);
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_CARD_PHOTO_URL") == 0)
+            webhook_set_telegram_card_photo_url(val);
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_RICH_CARD") == 0 && is_number)
+            g_webhook.telegram_rich_card = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_DISABLE_PREVIEW") == 0 && is_number)
+            g_webhook.telegram_disable_preview = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_REPLY_CHAIN") == 0 && is_number)
+            g_webhook.telegram_reply_chain = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_REPLY_CHAIN_SEC") == 0 && is_number)
+            g_webhook.telegram_reply_chain_sec = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_GEOIP") == 0 && is_number)
+            g_webhook.telegram_geoip = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_PIN_CRIT") == 0 && is_number)
+            g_webhook.telegram_pin_crit = (int)parsed;
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_WEBHOOK_URL") == 0)
+            webhook_set_telegram_webhook_url(val);
+        else if (strcmp(key, "WEBHOOK_TELEGRAM_WEBHOOK_SECRET") == 0)
+            webhook_set_telegram_webhook_secret(val);
         else if (strcmp(key, "TRAP_FILE") == 0) {
             add_trap_file(val);
         }
@@ -1387,6 +1770,11 @@ static void load_rules_file(const char *path) {
                 fprintf(stderr, "[RULES] Gecersiz WHITELIST_IP satir %d: %s\n", ln, val);
             }
         }
+        else if (strcmp(key, "TRUST_XFF") == 0 && is_number)
+            parser_set_trust_xff((int)parsed != 0);
+        else if (strcmp(key, "TRUST_PROXY_CIDRS") == 0 ||
+                 strcmp(key, "TRUST_PROXY_CIDR") == 0)
+            parser_add_proxy_cidr(val);
         else if (strcmp(key, "WATCH_DIR") == 0) {
             size_t n = strlen(val);
             if (n >= PATH_MAX) n = PATH_MAX - 1;
@@ -1404,6 +1792,12 @@ static void load_rules_file(const char *path) {
             if (n >= sizeof(g_api_bind)) n = sizeof(g_api_bind) - 1;
             memcpy(g_api_bind, val, n);
             g_api_bind[n] = '\0';
+        }
+        else if (strcmp(key, "API_TOKEN") == 0 && val[0]) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_api_token)) n = sizeof(g_api_token) - 1;
+            memcpy(g_api_token, val, n);
+            g_api_token[n] = '\0';
         }
         else if (strcmp(key, "XDP_MAP_V4_SIZE") == 0 && is_number && parsed > 0)
             g_xdp_map_v4_sz = (int)parsed;
@@ -1621,6 +2015,8 @@ static void load_rules_file(const char *path) {
             memcpy(fp_store_path, val, n);
             fp_store_path[n] = '\0';
         }
+        else if (strcmp(key, "FP_TRUST_AUTO_WHITELIST") == 0 && is_number)
+            fp_auto_whitelist = (int)parsed != 0;
         else if (strcmp(key, "AUTO_BAN") == 0 && is_number)
             auto_ban_policy = (int)parsed != 0;
         else if (strcmp(key, "AUTO_BAN_MIN_RISK") == 0) {
@@ -1696,9 +2092,15 @@ static void load_rules_file(const char *path) {
                             waf_xss, waf_scan, waf_shell);
     anomaly_load_adaptive_config(adapt_en, adapt_alpha, adapt_warn, adapt_ban,
                                  adapt_warmup);
+    resolve_path_from_rules(path, fp_store_path, sizeof(fp_store_path));
+    resolve_path_from_rules(path, ban_audit_path, sizeof(ban_audit_path));
     fp_trust_config(fp_learn, fp_trust_days, fp_min_samples, fp_store_path);
     fp_trust_set_tenant(g_tenant_id);
     fp_trust_init();
+    if (fp_learn && fp_auto_whitelist)
+        fp_trust_register_promote_fn(fp_trust_promote_whitelist_cb);
+    else
+        fp_trust_register_promote_fn(NULL);
     ban_policy_init();
     {
         const TenantIsolationInfo *ti = tenant_policy_info();
@@ -1708,7 +2110,12 @@ static void load_rules_file(const char *path) {
                 ban_audit_path[sizeof(ban_audit_path) - 1] = '\0';
             }
             if (ti->fp_store_path[0]) {
-                fp_trust_config(fp_learn, fp_trust_days, fp_min_samples, ti->fp_store_path);
+                char tenant_fp[512];
+                strncpy(tenant_fp, ti->fp_store_path, sizeof(tenant_fp) - 1);
+                tenant_fp[sizeof(tenant_fp) - 1] = '\0';
+                resolve_path_from_rules(path, tenant_fp, sizeof(tenant_fp));
+                fp_trust_config(fp_learn, fp_trust_days, fp_min_samples, tenant_fp);
+                fp_trust_init();
             }
             if (ti->threat_audit_path[0]) {
                 strncpy(g_threat_config.audit_path, ti->threat_audit_path,
@@ -1744,20 +2151,6 @@ static void load_rules_file(const char *path) {
     const char *env_chat_warn = getenv("LOGANALYZER_TELEGRAM_CHAT_WARN");
     if (env_chat_warn && *env_chat_warn)
         webhook_set_telegram_chat_warn_csv(env_chat_warn);
-    const char *env_discord = getenv("LOGANALYZER_DISCORD_WEBHOOK_URL");
-    if (env_discord && *env_discord) {
-        size_t n = strlen(env_discord);
-        if (n >= sizeof(g_webhook.discord_url)) n = sizeof(g_webhook.discord_url) - 1;
-        memcpy(g_webhook.discord_url, env_discord, n);
-        g_webhook.discord_url[n] = '\0';
-    }
-    const char *env_slack = getenv("LOGANALYZER_SLACK_WEBHOOK_URL");
-    if (env_slack && *env_slack) {
-        size_t n = strlen(env_slack);
-        if (n >= sizeof(g_webhook.slack_url)) n = sizeof(g_webhook.slack_url) - 1;
-        memcpy(g_webhook.slack_url, env_slack, n);
-        g_webhook.slack_url[n] = '\0';
-    }
     const char *env_generic = getenv("LOGANALYZER_GENERIC_WEBHOOK_URL");
     if (env_generic && *env_generic) {
         size_t n = strlen(env_generic);
@@ -1806,10 +2199,114 @@ static void load_rules_file(const char *path) {
             if (end != env_batch && v >= 0 && v <= 300)
                 g_webhook.telegram_batch_sec = (int)v;
         }
+        const char *env_quiet = getenv("WEBHOOK_QUIET_HOURS");
+        if (env_quiet && env_quiet[0])
+            webhook_set_quiet_hours(env_quiet);
+        const char *env_daily = getenv("WEBHOOK_DAILY_SUMMARY");
+        if (env_daily && env_daily[0])
+            webhook_set_daily_summary(env_daily);
+        const char *env_weekly = getenv("WEBHOOK_WEEKLY_SUMMARY");
+        if (env_weekly && env_weekly[0])
+            webhook_set_weekly_summary(env_weekly);
+        const char *env_fmt = getenv("WEBHOOK_TELEGRAM_ALERT_FMT");
+        if (env_fmt && env_fmt[0]) {
+            size_t n = strlen(env_fmt);
+            if (n >= sizeof(g_webhook.telegram_alert_fmt))
+                n = sizeof(g_webhook.telegram_alert_fmt) - 1;
+            memcpy(g_webhook.telegram_alert_fmt, env_fmt, n);
+            g_webhook.telegram_alert_fmt[n] = '\0';
+        }
+        {
+            int tw = g_webhook.telegram_topic_waf;
+            int tb = g_webhook.telegram_topic_ban;
+            int tt = g_webhook.telegram_topic_trap;
+            int twn = g_webhook.telegram_topic_warn;
+            const char *env_tw = getenv("WEBHOOK_TELEGRAM_TOPIC_WAF");
+            const char *env_tb = getenv("WEBHOOK_TELEGRAM_TOPIC_BAN");
+            const char *env_tt = getenv("WEBHOOK_TELEGRAM_TOPIC_TRAP");
+            const char *env_twn = getenv("WEBHOOK_TELEGRAM_TOPIC_WARN");
+            if (env_tw && env_tw[0]) {
+                char *end = NULL;
+                long v = strtol(env_tw, &end, 10);
+                if (end != env_tw && v > 0)
+                    tw = (int)v;
+            }
+            if (env_tb && env_tb[0]) {
+                char *end = NULL;
+                long v = strtol(env_tb, &end, 10);
+                if (end != env_tb && v > 0)
+                    tb = (int)v;
+            }
+            if (env_tt && env_tt[0]) {
+                char *end = NULL;
+                long v = strtol(env_tt, &end, 10);
+                if (end != env_tt && v > 0)
+                    tt = (int)v;
+            }
+            if (env_twn && env_twn[0]) {
+                char *end = NULL;
+                long v = strtol(env_twn, &end, 10);
+                if (end != env_twn && v > 0)
+                    twn = (int)v;
+            }
+            webhook_set_telegram_topics(tw, tb, tt, twn);
+            const char *env_mw = getenv("WEBHOOK_TELEGRAM_MIRROR_WARN");
+            if (env_mw && env_mw[0])
+                g_webhook.telegram_mirror_warn =
+                    (env_mw[0] == '1' || env_mw[0] == 'y' || env_mw[0] == 'Y') ? 1 : 0;
+            else if (g_webhook.telegram_topic_warn > 0)
+                g_webhook.telegram_mirror_warn = 1;
+        }
+        const char *env_dash = getenv("WEBHOOK_DASHBOARD_BASE_URL");
+        if (!env_dash || !env_dash[0])
+            env_dash = getenv("DASHBOARD_BASE_URL");
+        if (env_dash && env_dash[0])
+            webhook_set_dashboard_base_url(env_dash);
+        const char *env_photo = getenv("WEBHOOK_TELEGRAM_CARD_PHOTO_URL");
+        if (env_photo && env_photo[0])
+            webhook_set_telegram_card_photo_url(env_photo);
+        const char *env_rich = getenv("WEBHOOK_TELEGRAM_RICH_CARD");
+        if (env_rich && env_rich[0])
+            g_webhook.telegram_rich_card =
+                (env_rich[0] == '1' || env_rich[0] == 'y' || env_rich[0] == 'Y') ? 1 : 0;
+        const char *env_prev = getenv("WEBHOOK_TELEGRAM_DISABLE_PREVIEW");
+        if (env_prev && env_prev[0])
+            g_webhook.telegram_disable_preview =
+                (env_prev[0] == '1' || env_prev[0] == 'y' || env_prev[0] == 'Y') ? 1 : 0;
+        const char *env_chain = getenv("WEBHOOK_TELEGRAM_REPLY_CHAIN");
+        if (env_chain && env_chain[0])
+            g_webhook.telegram_reply_chain =
+                (env_chain[0] == '1' || env_chain[0] == 'y' || env_chain[0] == 'Y') ? 1 : 0;
+        const char *env_chain_sec = getenv("WEBHOOK_TELEGRAM_REPLY_CHAIN_SEC");
+        if (env_chain_sec && env_chain_sec[0]) {
+            long v = strtol(env_chain_sec, NULL, 10);
+            if (v >= 60 && v < 86400 * 30)
+                g_webhook.telegram_reply_chain_sec = (int)v;
+        }
+        const char *env_geo = getenv("WEBHOOK_TELEGRAM_GEOIP");
+        if (env_geo && env_geo[0])
+            g_webhook.telegram_geoip =
+                (env_geo[0] == '1' || env_geo[0] == 'y' || env_geo[0] == 'Y') ? 1 : 0;
+        const char *env_pin = getenv("WEBHOOK_TELEGRAM_PIN_CRIT");
+        if (env_pin && env_pin[0])
+            g_webhook.telegram_pin_crit =
+                (env_pin[0] == '1' || env_pin[0] == 'y' || env_pin[0] == 'Y') ? 1 : 0;
+        geoip_lookup_set_enabled(g_webhook.telegram_geoip);
+        const char *env_twh = getenv("WEBHOOK_TELEGRAM_WEBHOOK_URL");
+        if (env_twh && env_twh[0])
+            webhook_set_telegram_webhook_url(env_twh);
+        const char *env_tws = getenv("WEBHOOK_TELEGRAM_WEBHOOK_SECRET");
+        if (env_tws && env_tws[0])
+            webhook_set_telegram_webhook_secret(env_tws);
     }
     if (g_webhook.cooldown_sec < 1) g_webhook.cooldown_sec = 1;
     if (g_webhook.min_level < 1) g_webhook.min_level = 1;
     if (g_webhook.min_level > 3) g_webhook.min_level = 3;
+
+    threat_feed_apply_env_keys();
+    if (g_threat_config.audit_path[0])
+        resolve_path_from_rules(path, g_threat_config.audit_path,
+                                sizeof(g_threat_config.audit_path));
 
     anomaly_set_thresholds(low_slow_req, brute_err, ddos_rps, slow_ms,
                            sqli_score, slow_hit_cnt, cooldown);
@@ -2063,7 +2560,10 @@ static void usage(const char *prog) {
             "    %s crs-stats                   PCRE/CRS yukleme istatistigi\n"
             "    %s lineage-stats [--demo] [--path FILE]  Attack tree ozeti\n"
             "    %s ban-db-prune [--db FILE] [--all]  threat-intel DB kirp\n"
-            "    %s webhook-test [alert|ban|trap]  Bildirim kanalina test mesaji\n\n"
+            "    %s webhook-test [alert|crit|crit-chain|ban|trap]  Bildirim testi\n"
+            "    %s webhook-metrics-reset [--all]  webhook.metrics sifirla (varsayilan: fail)\n"
+            "    %s daily-summary [--force]  Gunluk ozet Telegram DM (operator)\n"
+            "    %s weekly-summary [--force] Haftalik ozet Telegram DM (operator)\n\n"
             "  EriSim:\n"
             "    rules.conf: ACCESS_PASSWORD_KDF=pbkdf2$iter$salt_hex$hash_hex\n"
             "    Legacy: ACCESS_PASSWORD_HASH=<sha256-hex>\n"
@@ -2072,7 +2572,7 @@ static void usage(const char *prog) {
             "  Tuzak:\n"
             "    rules.conf: TRAP_FILE=password.txt (tekrar edilebilir)\n"
             "    rules.conf: CRS_RULES=rules/crs-core.rules  (OWASP CRS cekirdek)\n\n",
-            prog, prog, prog, prog, prog, prog, prog);
+            prog, prog, prog, prog, prog, prog, prog, prog, prog, prog);
 }
 
 /* maybe_drop_privileges moved to auth.c */
@@ -2221,6 +2721,17 @@ static void *worker_loop(void *arg) {
                 atomic_fetch_add(&g_atomic_errors, 1);
                 continue;
             }
+            {
+                char ip_chk[IP_STR_LEN];
+                size_t ip_n = entry.ip.len;
+                if (ip_n >= sizeof(ip_chk)) ip_n = sizeof(ip_chk) - 1;
+                memcpy(ip_chk, entry.ip.ptr, ip_n);
+                ip_chk[ip_n] = '\0';
+                if (!is_valid_ip(ip_chk)) {
+                    atomic_fetch_add(&g_atomic_errors, 1);
+                    continue;
+                }
+            }
             atomic_fetch_add(&g_atomic_lines, 1);
             atomic_fetch_add(&g_atomic_bytes, (long)line_len);
             lines_processed++;
@@ -2314,14 +2825,6 @@ static void *worker_loop(void *arg) {
 
             Alert alert;
             if (anomaly_check(rec, &entry, &alert)) {
-                if (entry.user_agent.ptr && entry.user_agent.len > 0) {
-                    char fp[72];
-                    ja3_cluster_fingerprint_ua(entry.user_agent.ptr,
-                                             entry.user_agent.len,
-                                             fp, sizeof(fp));
-                    if (fp[0])
-                        ja3_cluster_track(rec->ip, fp, entry.ts);
-                }
                 if (g_db_enabled) db_log_alert(&alert, rec);
                 webhook_send_alert(&alert);
                 /* JSON formatinda logla (SIEM icin) - HMAC imzali */
@@ -2352,6 +2855,7 @@ static void *worker_loop(void *arg) {
                         int effective_ttl = siem_update(rec, &alert, g_ban_ttl_sec);
                         const char *ban_reason = alert.message[0]
                             ? alert.message : "auto-alert";
+                        int already_blocked = ip_is_blocked(rec->ip);
                         if (ban_ip_with_reason(rec->ip, ban_reason) == 0) {
                             atomic_fetch_add(&g_atomic_ban_success, 1);
                             time_t now = time(NULL);
@@ -2365,8 +2869,10 @@ static void *worker_loop(void *arg) {
                                 tui_push_ban(&g_stats, rec->ip, now);
                             }
                             send_desktop_notification(rec->ip);
-                            webhook_send_ban(rec->ip, now, ban_reason,
-                                             pol.risk_score, pol.decision);
+                            if (!already_blocked) {
+                                webhook_send_ban(rec->ip, now, ban_reason,
+                                                 pol.risk_score, pol.decision);
+                            }
                             ban_policy_audit(rec->ip, &alert, &pol, 1);
                             if (g_db_enabled) {
                                 db_log_ban_event_ex(rec->ip, "BAN", ban_reason, now,
@@ -2382,6 +2888,15 @@ static void *worker_loop(void *arg) {
                     }
                     pthread_mutex_unlock(&g_tui_mutex);
                     }
+                }
+                /* JA3 cluster ban'dan sonra: force_waf #ban webhook onceligi */
+                if (entry.user_agent.ptr && entry.user_agent.len > 0) {
+                    char fp[72];
+                    ja3_cluster_fingerprint_ua(entry.user_agent.ptr,
+                                             entry.user_agent.len,
+                                             fp, sizeof(fp));
+                    if (fp[0])
+                        ja3_cluster_track(rec->ip, fp, entry.ts);
                 }
             }
         }
@@ -2475,27 +2990,35 @@ int main(int argc, char *argv[]) {
     }
 
     if (argc >= 2 && is_operator_cli(argc, argv)) {
-        if (strcmp(argv[1], "--health") == 0)
+        int oi = operator_cmd_index(argc, argv);
+        const char *op = argv[oi];
+        if (strcmp(op, "--health") == 0)
             return cmd_health_check();
-        if (strcmp(argv[1], "--status") == 0)
+        if (strcmp(op, "--status") == 0)
             return cmd_status_dump();
-        if (strcmp(argv[1], "ban-db-prune") == 0)
+        if (strcmp(op, "ban-db-prune") == 0)
             return cmd_ban_db_prune(argc, argv);
-        if (strcmp(argv[1], "webhook-test") == 0)
+        if (strcmp(op, "webhook-test") == 0)
             return cmd_webhook_test(argc, argv);
-        if (argc >= 3 && strcmp(argv[1], "ban") == 0)
+        if (strcmp(op, "webhook-metrics-reset") == 0)
+            return cmd_webhook_metrics_reset(argc, argv);
+        if (strcmp(op, "daily-summary") == 0)
+            return cmd_daily_summary(argc, argv);
+        if (strcmp(op, "weekly-summary") == 0)
+            return cmd_weekly_summary(argc, argv);
+        if (oi + 1 < argc && strcmp(op, "ban") == 0)
             return cmd_operator_ban(argc, argv);
-        if (argc >= 3 && strcmp(argv[1], "unban") == 0)
+        if (oi + 1 < argc && strcmp(op, "unban") == 0)
             return cmd_operator_unban(argc, argv);
-        if (strcmp(argv[1], "crs-stats") == 0)
+        if (strcmp(op, "crs-stats") == 0)
             return cmd_crs_stats();
-        if (strcmp(argv[1], "lineage-stats") == 0)
+        if (strcmp(op, "lineage-stats") == 0)
             return cmd_lineage_stats(argc, argv);
-        if (strcmp(argv[1], "incident-sim") == 0)
+        if (strcmp(op, "incident-sim") == 0)
             return cmd_incident_sim();
-        if (strcmp(argv[1], "schema-check") == 0)
+        if (strcmp(op, "schema-check") == 0)
             return cmd_schema_check(argc, argv);
-        if (strcmp(argv[1], "threat-feed-sync") == 0)
+        if (strcmp(op, "threat-feed-sync") == 0)
             return cmd_threat_feed_sync();
     }
 
@@ -2513,11 +3036,19 @@ int main(int argc, char *argv[]) {
     apt_graph_init();
     incident_engine_init();
     covert_ch_init();
+    ipc_auth_load_env_file("/etc/log-guardian/env");
     ipc_auth_init();
 
-    int global_ipc = daemon_ipc_connect();
-    if (global_ipc >= 0)
-        anomaly_set_ipc_fd(global_ipc);
+    {
+        const char *skip_ipc = getenv("LOG_GUARDIAN_SKIP_IPC");
+        if (!skip_ipc || strcmp(skip_ipc, "1") != 0) {
+            int global_ipc = daemon_ipc_connect();
+            if (global_ipc >= 0) {
+                g_ipc_fd = global_ipc;
+                anomaly_set_ipc_fd(global_ipc);
+            }
+        }
+    }
 
     void *libsystemd = dlopen("libsystemd.so.0", RTLD_NOW | RTLD_NODELETE);
     if (libsystemd) {
@@ -2537,7 +3068,10 @@ int main(int argc, char *argv[]) {
     for (int i = 1; i < argc; i++) {
         if (strcmp(argv[i], "--no-tui") == 0)   g_use_tui   = 0;
         else if (strcmp(argv[i], "--no-ban")     == 0) { g_allow_ban = 0; g_ban_cli_off = 1; }
-        else if (strcmp(argv[i], "--no-webhook") == 0) g_webhook.enabled = 0;
+        else if (strcmp(argv[i], "--no-webhook") == 0) {
+            g_webhook.enabled = 0;
+            g_webhook_cli_off = 1;
+        }
         else if (strcmp(argv[i], "--json") == 0) {
             g_output_json = 1;
             g_use_tui = 0; /* JSON ciktisi: no-tui */
@@ -2646,6 +3180,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         operator_load_webhook_env();
+        operator_load_threat_feed_env();
         load_rules_file(g_rules_path);
         pcre_engine_set_quiet(g_output_json);
         pcre_engine_init(g_rules_path);
@@ -2698,6 +3233,7 @@ int main(int argc, char *argv[]) {
     if (g_db_cli_off)  g_db_enabled = 0;
     else if (g_db_path_cli) g_db_enabled = 1;  /* --db, test_rules DB_ENABLED=0 olsa bile */
     if (g_ban_cli_off) g_allow_ban = 0;
+    if (g_webhook_cli_off) g_webhook.enabled = 0;
 
     if (enforce_startup_auth() != 0) {
         return 1;
@@ -2733,8 +3269,12 @@ int main(int argc, char *argv[]) {
     atexit(atexit_cleanup);
 
     telegram_bot_set_ops_status(lg_telegram_ops_status);
+    telegram_bot_set_ack_db_path(g_db_path);
     telegram_bot_set_ack_hook(lg_telegram_ack);
+    telegram_bot_set_inline_hook(lg_telegram_inline);
     telegram_bot_set_last_hook(lg_telegram_last);
+    telegram_bot_set_unacked_hook(lg_telegram_unacked);
+    telegram_bot_set_incident_hook(lg_telegram_incident);
     webhook_init();
     telegram_bot_start();
 
@@ -2783,6 +3323,13 @@ int main(int argc, char *argv[]) {
     /* Prometheus /metrics endpoint */
     if (g_metrics_port > 0 && !g_output_json) {
         metrics_server_start(g_metrics_port);
+        {
+            FpTrustStats fpts;
+            fp_trust_get_stats(&fpts);
+            metrics_refresh_fp_trust((long)fpts.trusted_ips, (long)fpts.partial_ips,
+                                     fpts.enabled ? 1L : 0L,
+                                     (long)fpts.suppressed_total);
+        }
     }
 
     if (!g_output_json) fprintf(stderr, "[BASLAT] Bellek havuzu: %zu MB rezerve ediliyor...\n", pool_mb);
@@ -2818,7 +3365,13 @@ int main(int argc, char *argv[]) {
     /* REST API ve Fleet sync yalnizca interaktif/TUI modunda */
     if (!g_output_json) {
         setenv("GUARDIAN_API_BIND", g_api_bind, 1);
+        if (g_api_token[0])
+            setenv("GUARDIAN_API_TOKEN", g_api_token, 1);
+        else
+            unsetenv("GUARDIAN_API_TOKEN");
         api_server_start((uint16_t)g_api_port);
+        if (telegram_bot_webhook_mode())
+            (void)telegram_bot_register_webhook();
         agent_sync_init();
     }
     
@@ -3284,6 +3837,8 @@ int main(int argc, char *argv[]) {
                     threat_feed_get_stats(&tf);
                     msnap.threat_last_sync_ts  = (long)tf.last_sync_ts;
                     msnap.threat_total_iocs    = (long)tf.total_iocs;
+                    msnap.threat_last_applied  = (long)tf.last_applied;
+                    msnap.threat_last_failed   = (long)tf.last_failed;
                     msnap.threat_feed_enabled  = g_threat_config.enabled ? 1L : 0L;
                 }
                 {
@@ -3312,7 +3867,33 @@ int main(int argc, char *argv[]) {
                                          &msnap.webhook_queue_drops, &msnap.webhook_queue_depth);
                 webhook_config_metrics(&msnap.webhook_telegram_route,
                                        &msnap.webhook_telegram_batch_sec);
+                msnap.webhook_quiet_enabled = webhook_quiet_hours_enabled() ? 1L : 0L;
+                msnap.webhook_quiet_active  = webhook_quiet_hours_active() ? 1L : 0L;
+                {
+                    ApiServerStats apis;
+                    api_server_get_stats(&apis);
+                    msnap.api_requests_total     = (long)apis.requests_total;
+                    msnap.api_auth_fail_total    = (long)apis.auth_fail_total;
+                    msnap.api_rate_limited_total = (long)apis.rate_limited_total;
+                }
+                if (g_db_path && g_db_path[0]) {
+                    time_t since = time(NULL) - 86400;
+                    (void)db_telegram_ack_count_path(g_db_path, since,
+                                                     &msnap.telegram_ack_24h);
+                    (void)db_unacked_count_path(g_db_path, since,
+                                                &msnap.telegram_unacked_24h);
+                }
                 metrics_update(&msnap);
+            }
+
+            /* Gunluk / haftalik ozet */
+            {
+                static time_t last_summary_tick = 0;
+                if (t_now.tv_sec - last_summary_tick >= 60) {
+                    last_summary_tick = t_now.tv_sec;
+                    webhook_daily_summary_tick(g_db_path);
+                    webhook_weekly_summary_tick(g_db_path);
+                }
             }
 
             /* Self-monitoring: havuz doluluk alarmı */

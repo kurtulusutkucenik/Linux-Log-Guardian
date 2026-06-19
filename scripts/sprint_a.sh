@@ -33,7 +33,10 @@ step() { echo ""; echo "▶ $*"; echo "─────────────�
 
 # ── 1. Derleme ─────────────────────────────────────────────────────────────
 step "1/6 Derleme"
-make -j"$(nproc 2>/dev/null || echo 2)" log-guardian log-guardian-daemon 2>/dev/null || make -j"$(nproc 2>/dev/null || echo 2)" log-guardian
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+ensure_lg_build_tree "$ROOT"
+make -j1 log-guardian log-guardian-daemon 2>/dev/null || make -j1 log-guardian
 
 # ── 2. Competitive suite ───────────────────────────────────────────────────
 if [[ "$SKIP_SUITE" != "1" ]]; then

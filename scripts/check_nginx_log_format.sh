@@ -12,14 +12,12 @@ command -v nginx >/dev/null 2>&1 || {
   exit 0
 }
 
-# nginx -T root gerektirir — sudo ile dene
-nginx_t=""
-if [[ "$(id -u)" -eq 0 ]]; then
-  nginx_t=$(nginx -T 2>/dev/null || true)
-else
-  nginx_t=$(sudo nginx -T 2>/dev/null || nginx -T 2>/dev/null || true)
-fi
-[[ -n "$nginx_t" ]] || fail "nginx -T alinamadi — sudo bash scripts/check_nginx_log_format.sh"
+LIB="$ROOT/scripts/lib/nginx_config_dump.sh"
+[[ -f "$LIB" ]] || LIB="$(dirname "$ROOT")/scripts/lib/nginx_config_dump.sh"
+# shellcheck source=scripts/lib/nginx_config_dump.sh
+source "$LIB"
+nginx_t=$(nginx_config_text)
+[[ -n "$nginx_t" ]] || fail "nginx yapilandirma okunamadi — sudo bash scripts/check_nginx_log_format.sh"
 
 has_format=0 has_access=0 has_body=0
 echo "$nginx_t" | grep -qE 'log_format[[:space:]]+log_guardian' && has_format=1

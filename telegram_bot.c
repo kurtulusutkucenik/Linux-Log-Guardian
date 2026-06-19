@@ -1,5 +1,7 @@
 #include "telegram_bot.h"
 #include "webhook.h"
+#include "db.h"
+#include "firewall.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +12,11 @@
 
 static TelegramOpsStatusFn g_ops_status = NULL;
 static TelegramAckFn         g_ack_hook = NULL;
+static char                  g_ack_db_path[512] = "";
+static TelegramInlineFn      g_inline_hook = NULL;
 static TelegramLastFn        g_last_hook = NULL;
+static TelegramUnackedFn     g_unacked_hook = NULL;
+static TelegramIncidentFn    g_incident_hook = NULL;
 static pthread_t           g_poll_thread;
 static int                 g_poll_running = 0;
 static int                 g_poll_stop = 0;
@@ -28,28 +34,102 @@ void telegram_bot_set_ack_hook(TelegramAckFn fn) {
     g_ack_hook = fn;
 }
 
+void telegram_bot_set_ack_db_path(const char *path) {
+    g_ack_db_path[0] = '\0';
+    if (path && path[0])
+        strncpy(g_ack_db_path, path, sizeof(g_ack_db_path) - 1);
+}
+
+void telegram_bot_set_inline_hook(TelegramInlineFn fn) {
+    g_inline_hook = fn;
+}
+
 void telegram_bot_set_last_hook(TelegramLastFn fn) {
     g_last_hook = fn;
 }
 
+void telegram_bot_set_unacked_hook(TelegramUnackedFn fn) {
+    g_unacked_hook = fn;
+}
+
+void telegram_bot_set_incident_hook(TelegramIncidentFn fn) {
+    g_incident_hook = fn;
+}
+
 void telegram_bot_build_ack_markup(const char *incident_or_ip,
                                    char *out, size_t cap) {
-    if (!out || cap < 32) return;
-    char cb[56] = "ack";
-    if (incident_or_ip && incident_or_ip[0]) {
-        snprintf(cb, sizeof(cb), "ack:%.48s", incident_or_ip);
-    }
-    char esc[128];
+    telegram_bot_build_alert_markup(incident_or_ip, NULL, NULL, out, cap);
+}
+
+static void json_escape_cb(const char *src, char *dst, size_t cap)
+{
     size_t j = 0;
-    for (const char *s = cb; *s && j + 2 < sizeof(esc); s++) {
-        if (*s == '"' || *s == '\\') esc[j++] = '\\';
-        esc[j++] = *s;
+    for (; src && *src && j + 2 < cap; src++) {
+        if (*src == '"' || *src == '\\')
+            dst[j++] = '\\';
+        dst[j++] = *src;
     }
-    esc[j] = '\0';
-    snprintf(out, cap,
-             "{\"inline_keyboard\":[[{\"text\":\"✅ Gördüm\","
-             "\"callback_data\":\"%s\"}]]}",
-             esc);
+    dst[j] = '\0';
+}
+
+void telegram_bot_build_alert_markup(const char *ack_key, const char *ip,
+                                     const char *dashboard_url,
+                                     char *out, size_t cap)
+{
+    if (!out || cap < 32)
+        return;
+
+    char ack_cb[56] = "ack";
+    if (ack_key && ack_key[0])
+        snprintf(ack_cb, sizeof(ack_cb), "ack:%.48s", ack_key);
+    char ack_esc[128];
+    json_escape_cb(ack_cb, ack_esc, sizeof(ack_esc));
+
+    char url_esc[512] = "";
+    int have_url = 0;
+    if (dashboard_url && dashboard_url[0] &&
+        webhook_telegram_rich_card_enabled()) {
+        json_escape_cb(dashboard_url, url_esc, sizeof(url_esc));
+        have_url = url_esc[0] ? 1 : 0;
+    }
+
+    if (!ip || !ip[0]) {
+        if (have_url) {
+            snprintf(out, cap,
+                     "{\"inline_keyboard\":[[{\"text\":\"\\u2705 G\\u00f6rd\\u00fcm\","
+                     "\"callback_data\":\"%s\"}],"
+                     "[{\"text\":\"\\ud83d\\udcca Dashboard\",\"url\":\"%s\"}]]}",
+                     ack_esc, url_esc);
+        } else {
+            snprintf(out, cap,
+                     "{\"inline_keyboard\":[[{\"text\":\"\\u2705 G\\u00f6rd\\u00fcm\","
+                     "\"callback_data\":\"%s\"}]]}",
+                     ack_esc);
+        }
+        return;
+    }
+
+    char ip_esc[64];
+    json_escape_cb(ip, ip_esc, sizeof(ip_esc));
+    if (have_url) {
+        snprintf(out, cap,
+                 "{\"inline_keyboard\":["
+                 "[{\"text\":\"\\u2705 G\\u00f6rd\\u00fcm\",\"callback_data\":\"%s\"},"
+                  "{\"text\":\"\\u2022 Sessiz\",\"callback_data\":\"mute:%s\"}],"
+                 "[{\"text\":\"\\u2b50 WL\",\"callback_data\":\"wl:%s\"},"
+                  "{\"text\":\"\\u2022 Unban\",\"callback_data\":\"ub:%s\"}],"
+                 "[{\"text\":\"\\ud83d\\udcca Dashboard\",\"url\":\"%s\"}]]}",
+                 ack_esc, ip_esc, ip_esc, ip_esc, url_esc);
+    } else {
+        snprintf(out, cap,
+                 "{\"inline_keyboard\":["
+                 "[{\"text\":\"\\u2705 G\\u00f6rd\\u00fcm\",\"callback_data\":\"%s\"},"
+                  "{\"text\":\"\\u2022 Sessiz\",\"callback_data\":\"mute:%s\"}],"
+                 "[{\"text\":\"\\u2b50 WL\",\"callback_data\":\"wl:%s\"},"
+                  "{\"text\":\"\\u2022 Unban\",\"callback_data\":\"ub:%s\"}]"
+                 "]}",
+                 ack_esc, ip_esc, ip_esc, ip_esc);
+    }
 }
 
 static const char *api_base(void) {
@@ -128,7 +208,14 @@ static void send_text(const char *chat_id, const char *text_html) {
         if (*s == '"' || *s == '\\') body[pos++] = '\\';
         body[pos++] = *s;
     }
-    snprintf(body + pos, sizeof(body) - pos, "\",\"parse_mode\":\"HTML\"}");
+    pos += (size_t)snprintf(body + pos, sizeof(body) - pos, "\",\"parse_mode\":\"HTML\"");
+    if (webhook_telegram_disable_preview_enabled()) {
+        pos += (size_t)snprintf(body + pos, sizeof(body) - pos,
+                                ",\"disable_web_page_preview\":true");
+    }
+    if (pos + 2 < sizeof(body))
+        body[pos++] = '}';
+    body[pos] = '\0';
     (void)tg_post_json("sendMessage", body, NULL);
 }
 
@@ -152,24 +239,47 @@ static void handle_command(const char *chat_id, const char *text) {
 
     if (strncmp(text, "/bans", 5) == 0) {
         char msg[1200] = "<b>Son banlar (ipset)</b>\n<code>";
-        FILE *f = popen("ipset list block 2>/dev/null | grep -E '^[0-9]' | head -8", "r");
-        if (f) {
-            char line[64];
-            int n = 0;
-            while (fgets(line, sizeof(line), f) && n < 8) {
-                size_t len = strlen(line);
-                while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
-                    line[--len] = '\0';
-                if (len > 0) {
-                    strncat(msg, line, sizeof(msg) - strlen(msg) - 2);
-                    strncat(msg, "\n", sizeof(msg) - strlen(msg) - 1);
-                    n++;
+        int n = 0;
+        FILE *jf = fopen("/run/log-guardian/active_bans.json", "r");
+        if (jf) {
+            char buf[2048];
+            size_t nr = fread(buf, 1, sizeof(buf) - 1, jf);
+            fclose(jf);
+            buf[nr] = '\0';
+            const char *p = strstr(buf, "\"ips\":[");
+            if (p) {
+                p += 7;
+                while (*p && n < 8) {
+                    while (*p == ' ' || *p == '\n') p++;
+                    if (*p == ']') break;
+                    if (*p == '"') {
+                        p++;
+                        char ip[64] = {0};
+                        int i = 0;
+                        while (*p && *p != '"' && i < 63)
+                            ip[i++] = *p++;
+                        if (ip[0]) {
+                            strncat(msg, ip, sizeof(msg) - strlen(msg) - 2);
+                            strncat(msg, "\n", sizeof(msg) - strlen(msg) - 1);
+                            n++;
+                        }
+                    }
+                    while (*p && *p != ',' && *p != ']') p++;
+                    if (*p == ',') p++;
                 }
             }
-            pclose(f);
         }
-        if (strstr(msg, "<code>") && msg[strlen(msg) - 1] == '\n')
-            msg[strlen(msg) - 1] = '\0';
+        if (n == 0) {
+            char ips[8][64];
+            int got = ipset_list_v4_members(ips, 8, NULL);
+            for (int i = 0; i < got && i < 8; i++) {
+                strncat(msg, ips[i], sizeof(msg) - strlen(msg) - 2);
+                strncat(msg, "\n", sizeof(msg) - strlen(msg) - 1);
+                n++;
+            }
+        }
+        if (n == 0)
+            strncat(msg, "(bos)", sizeof(msg) - strlen(msg) - 1);
         strncat(msg, "</code>", sizeof(msg) - strlen(msg) - 1);
         send_text(chat_id, msg);
         return;
@@ -194,6 +304,50 @@ static void handle_command(const char *chat_id, const char *text) {
         return;
     }
 
+    if (strncmp(text, "/unacked", 8) == 0) {
+        char msg[1600] = "<b>Onay bekleyen (24h)</b>\n";
+        if (g_unacked_hook) {
+            char body[1400];
+            body[0] = '\0';
+            g_unacked_hook(body, sizeof(body));
+            strncat(msg, body, sizeof(msg) - strlen(msg) - 1);
+        } else {
+            strncat(msg, "Veri kaynagi yok.", sizeof(msg) - strlen(msg) - 1);
+        }
+        send_text(chat_id, msg);
+        return;
+    }
+
+    if (strncmp(text, "/incident", 9) == 0) {
+        const char *arg = text + 9;
+        while (*arg == ' ')
+            arg++;
+        if (!arg[0]) {
+            send_text(chat_id,
+                       "<b>/incident</b>\n"
+                       "Kullanim: <code>/incident INC-xxxxxxxx-xxxx</code>");
+            return;
+        }
+        char inc[32];
+        size_t n = 0;
+        while (arg[n] && arg[n] != ' ' && n + 1 < sizeof(inc)) {
+            inc[n] = arg[n];
+            n++;
+        }
+        inc[n] = '\0';
+        char msg[1600] = "<b>Incident</b>\n";
+        if (g_incident_hook) {
+            char body[1400];
+            body[0] = '\0';
+            g_incident_hook(inc, body, sizeof(body));
+            strncat(msg, body, sizeof(msg) - strlen(msg) - 1);
+        } else {
+            strncat(msg, "Veri kaynagi yok.", sizeof(msg) - strlen(msg) - 1);
+        }
+        send_text(chat_id, msg);
+        return;
+    }
+
     if (strncmp(text, "/start", 6) == 0 || strncmp(text, "/help", 5) == 0) {
         send_text(chat_id,
                    "<b>Log Guardian Bot</b>\n\n"
@@ -201,39 +355,245 @@ static void handle_command(const char *chat_id, const char *text) {
                    "/status — EPS, ban, webhook (Prometheus + route)\n"
                    "/bans — ipset block listesi\n"
                    "/last — son alarmlar (events.db)\n"
+                   "/unacked — onay bekleyen alarmlar (24h)\n"
+                   "/incident INC-… — tek incident ozeti\n"
                    "/ping — sağlık kontrolü\n\n"
-                   "<b>Kanal:</b> sadece alarm akışı + <b>Gördüm</b> butonu.\n"
+                   "<b>Inline (alarm mesaji):</b>\n"
+                   "Gordum · Sessiz (1s) · WL · Unban\n\n"
+                   "<b>Kanal:</b> sadece alarm akışı + inline butonlar.\n"
                    "Onay için alarm mesajındaki butona basın.");
     }
 }
 
-static void handle_callback(const char *cb_id, const char *chat_id,
-                            const char *data, long msg_id) {
-    if (!chat_allowed(chat_id)) return;
-
-    char ack_key[64];
-    ack_key[0] = '\0';
-    if (data && strncmp(data, "ack:", 4) == 0) {
-        strncpy(ack_key, data + 4, sizeof(ack_key) - 1);
-    } else if (data && data[0]) {
-        strncpy(ack_key, data, sizeof(ack_key) - 1);
-    }
-
-    if (g_ack_hook && ack_key[0])
-        g_ack_hook(chat_id, ack_key);
-
+static void answer_callback(const char *cb_id, const char *toast)
+{
     char body[512];
     snprintf(body, sizeof(body),
-             "{\"callback_query_id\":\"%s\",\"text\":\"Kaydedildi\"}",
-             cb_id);
+             "{\"callback_query_id\":\"%s\","
+             "\"text\":\"%s\",\"show_alert\":false}",
+             cb_id, toast ? toast : "OK");
     (void)tg_post_json("answerCallbackQuery", body, NULL);
+}
 
-    if (msg_id > 0) {
-        snprintf(body, sizeof(body),
-                 "{\"chat_id\":\"%s\",\"message_id\":%ld,"
-                 "\"text\":\"✅ Onaylandı — Log Guardian\",\"parse_mode\":\"HTML\"}",
-                 chat_id, msg_id);
-        (void)tg_post_json("editMessageText", body, NULL);
+static void clear_inline_markup(const char *chat_id, long msg_id)
+{
+    if (msg_id <= 0)
+        return;
+    char body[256];
+    snprintf(body, sizeof(body),
+             "{\"chat_id\":\"%s\",\"message_id\":%ld,"
+             "\"reply_markup\":{\"inline_keyboard\":[]}}",
+             chat_id, msg_id);
+    (void)tg_post_json("editMessageReplyMarkup", body, NULL);
+}
+
+static void json_unescape_value(const char *src, char *dst, size_t cap)
+{
+    if (!dst || cap < 2) {
+        return;
+    }
+    dst[0] = '\0';
+    if (!src)
+        return;
+    size_t j = 0;
+    for (; *src && j + 1 < cap; src++) {
+        if (*src == '\\' && src[1]) {
+            src++;
+            if (*src == 'n') {
+                dst[j++] = '\n';
+                continue;
+            }
+            if (*src == 'r') {
+                dst[j++] = '\r';
+                continue;
+            }
+            if (*src == 't') {
+                dst[j++] = '\t';
+                continue;
+            }
+            if (*src == '"') {
+                dst[j++] = '"';
+                continue;
+            }
+            if (*src == '\\') {
+                dst[j++] = '\\';
+                continue;
+            }
+        }
+        dst[j++] = *src;
+    }
+    dst[j] = '\0';
+}
+
+static int json_extract_string(const char *blob, const char *key,
+                               char *out, size_t cap)
+{
+    if (!blob || !key || !out || cap < 2)
+        return 0;
+    char needle[48];
+    snprintf(needle, sizeof(needle), "\"%s\":\"", key);
+    const char *p = strstr(blob, needle);
+    if (!p)
+        return 0;
+    p += strlen(needle);
+    char raw[2048];
+    size_t n = 0;
+    for (; *p && n + 1 < sizeof(raw); p++) {
+        if (*p == '\\' && p[1]) {
+            raw[n++] = *p++;
+            raw[n++] = *p;
+            continue;
+        }
+        if (*p == '"')
+            break;
+        raw[n++] = *p;
+    }
+    raw[n] = '\0';
+    json_unescape_value(raw, out, cap);
+    return out[0] ? 1 : 0;
+}
+
+static int json_extract_long(const char *blob, const char *key, long *out)
+{
+    if (!blob || !key || !out)
+        return 0;
+    char needle[48];
+    snprintf(needle, sizeof(needle), "\"%s\":", key);
+    const char *p = strstr(blob, needle);
+    if (!p)
+        return 0;
+    p += strlen(needle);
+    while (*p == ' ')
+        p++;
+    *out = strtol(p, NULL, 10);
+    return 1;
+}
+
+static void strip_ack_footer(char *text)
+{
+    if (!text || !text[0])
+        return;
+    const char *mark = "\n\n\xe2\x9c\x85";
+    char *p = strstr(text, mark);
+    if (!p)
+        return;
+    *p = '\0';
+    size_t n = strlen(text);
+    while (n > 0 && (text[n - 1] == '\n' || text[n - 1] == ' '))
+        text[--n] = '\0';
+}
+
+static void edit_message_text(const char *chat_id, long msg_id,
+                              const char *text_html)
+{
+    if (!chat_id || !chat_id[0] || msg_id <= 0 || !text_html || !text_html[0])
+        return;
+
+    char body[4500];
+    size_t pos = 0;
+    body[pos++] = '{';
+    pos += (size_t)snprintf(body + pos, sizeof(body) - pos, "\"chat_id\":\"");
+    for (const char *s = chat_id; *s && pos + 2 < sizeof(body); s++) {
+        if (*s == '"' || *s == '\\')
+            body[pos++] = '\\';
+        body[pos++] = *s;
+    }
+    pos += (size_t)snprintf(body + pos, sizeof(body) - pos,
+                            "\",\"message_id\":%ld,\"text\":\"", msg_id);
+    for (const char *s = text_html; *s && pos + 2 < sizeof(body); s++) {
+        if (*s == '"' || *s == '\\')
+            body[pos++] = '\\';
+        body[pos++] = *s;
+    }
+    snprintf(body + pos, sizeof(body) - pos, "\",\"parse_mode\":\"HTML\"}");
+    (void)tg_post_json("editMessageText", body, NULL);
+}
+
+static void refresh_ack_footer(const char *chat_id, long msg_id,
+                             const char *msg_text, const char *ack_key)
+{
+    if (!g_ack_db_path[0] || !ack_key || !ack_key[0] ||
+        !msg_text || !msg_text[0])
+        return;
+
+    char names[256];
+    if (db_telegram_ack_names_path(g_ack_db_path, ack_key,
+                                   names, sizeof(names)) != 0 ||
+        !names[0])
+        return;
+
+    char base[2048];
+    strncpy(base, msg_text, sizeof(base) - 1);
+    base[sizeof(base) - 1] = '\0';
+    strip_ack_footer(base);
+
+    char html[2400];
+    snprintf(html, sizeof(html),
+             "%s\n\n\xe2\x9c\x85 <b>G\xc3\xb6rd\xc3\xbc:</b> %s",
+             base, names);
+    edit_message_text(chat_id, msg_id, html);
+}
+
+static void handle_callback(const char *cb_id, const char *chat_id,
+                            const char *data, long msg_id,
+                            const char *msg_text,
+                            const char *operator_id,
+                            const char *operator_name) {
+    if (!chat_allowed(chat_id) || !data || !data[0])
+        return;
+
+    if (strncmp(data, "ack:", 4) == 0 || strcmp(data, "ack") == 0) {
+        char ack_key[64];
+        ack_key[0] = '\0';
+        if (strncmp(data, "ack:", 4) == 0)
+            strncpy(ack_key, data + 4, sizeof(ack_key) - 1);
+        if (!ack_key[0])
+            return;
+
+        int rc = -1;
+        if (g_ack_hook)
+            rc = g_ack_hook(chat_id, ack_key, operator_id, operator_name);
+        else if (g_ack_db_path[0])
+            rc = db_telegram_ack_register_path(
+                g_ack_db_path, chat_id, ack_key,
+                (strncmp(ack_key, "INC-", 4) == 0) ? ack_key : NULL,
+                operator_id, operator_name);
+
+        if (rc == 1) {
+            answer_callback(cb_id, "Zaten onayladiniz");
+            return;
+        }
+        if (rc != 0) {
+            answer_callback(cb_id, "Onay kaydedilemedi");
+            return;
+        }
+
+        answer_callback(cb_id, "\u2705 Onaylandi");
+        refresh_ack_footer(chat_id, msg_id, msg_text, ack_key);
+        return;
+    }
+
+    const char *verb = NULL;
+    const char *arg = NULL;
+    const char *toast = "OK";
+    if (strncmp(data, "mute:", 5) == 0) {
+        verb = "mute";
+        arg = data + 5;
+        toast = "Sessiz mod aktif";
+    } else if (strncmp(data, "wl:", 3) == 0) {
+        verb = "wl";
+        arg = data + 3;
+        toast = "Whitelist eklendi";
+    } else if (strncmp(data, "ub:", 3) == 0) {
+        verb = "ub";
+        arg = data + 3;
+        toast = "Unban gonderildi";
+    }
+
+    if (verb && arg && arg[0] && g_inline_hook) {
+        g_inline_hook(chat_id, verb, arg);
+        answer_callback(cb_id, toast);
+        clear_inline_markup(chat_id, msg_id);
     }
 }
 
@@ -279,7 +639,7 @@ static void process_update(const char *json) {
             cb_id[n++] = *cid;
         cb_id[n] = '\0';
 
-        char payload[64];
+        char payload[96];
         data += 8;
         n = 0;
         for (; *data && *data != '"' && n + 1 < sizeof(payload); data++)
@@ -291,9 +651,109 @@ static void process_update(const char *json) {
         snprintf(chat_id, sizeof(chat_id), "%ld", ch);
         long msg_id = mid ? strtol(mid + 13, NULL, 10) : 0;
 
-        if (strncmp(payload, "ack:", 4) == 0)
-            handle_callback(cb_id, chat_id, payload, msg_id);
+        char operator_id[32] = "";
+        char operator_name[64] = "Operator";
+        const char *from = strstr(cb, "\"from\"");
+        if (from) {
+            long uid = 0;
+            if (json_extract_long(from, "id", &uid) && uid > 0)
+                snprintf(operator_id, sizeof(operator_id), "%ld", uid);
+            char first[48] = "";
+            char user[48] = "";
+            if (json_extract_string(from, "first_name", first, sizeof(first)))
+                strncpy(operator_name, first, sizeof(operator_name) - 1);
+            else if (json_extract_string(from, "username", user, sizeof(user)))
+                strncpy(operator_name, user, sizeof(operator_name) - 1);
+        }
+
+        char msg_text[2048] = "";
+        const char *msg_blob = strstr(cb, "\"message\"");
+        if (msg_blob)
+            (void)json_extract_string(msg_blob, "text", msg_text,
+                                      sizeof(msg_text));
+
+        handle_callback(cb_id, chat_id, payload, msg_id, msg_text,
+                        operator_id[0] ? operator_id : NULL,
+                        operator_name);
     }
+}
+
+void telegram_bot_handle_update(const char *json)
+{
+    process_update(json);
+}
+
+int telegram_bot_webhook_mode(void)
+{
+    return webhook_telegram_webhook_enabled() ? 1 : 0;
+}
+
+int telegram_bot_webhook_secret_ok(const char *header_value)
+{
+    const char *want = webhook_telegram_webhook_secret();
+    if (!want || !want[0])
+        return 1;
+    if (!header_value)
+        return 0;
+    return strcmp(header_value, want) == 0;
+}
+
+static void json_escape_str(const char *src, char *dst, size_t cap)
+{
+    size_t j = 0;
+    for (; src && *src && j + 2 < cap; src++) {
+        if (*src == '"' || *src == '\\')
+            dst[j++] = '\\';
+        dst[j++] = *src;
+    }
+    dst[j] = '\0';
+}
+
+int telegram_bot_register_webhook(void)
+{
+    if (!telegram_bot_enabled() || !g_webhook.token[0])
+        return -1;
+    if (!webhook_telegram_webhook_enabled())
+        return -1;
+
+    char url_e[640];
+    char sec_e[160];
+    json_escape_str(webhook_telegram_webhook_url(), url_e, sizeof(url_e));
+
+    char body[1024];
+    if (webhook_telegram_webhook_secret()[0]) {
+        json_escape_str(webhook_telegram_webhook_secret(), sec_e, sizeof(sec_e));
+        snprintf(body, sizeof(body),
+                 "{\"url\":\"%s\",\"secret_token\":\"%s\","
+                 "\"allowed_updates\":[\"message\",\"callback_query\"],"
+                 "\"drop_pending_updates\":false}",
+                 url_e, sec_e);
+    } else {
+        snprintf(body, sizeof(body),
+                 "{\"url\":\"%s\","
+                 "\"allowed_updates\":[\"message\",\"callback_query\"],"
+                 "\"drop_pending_updates\":false}",
+                 url_e);
+    }
+
+    char *resp = NULL;
+    int rc = tg_post_json("setWebhook", body, &resp);
+    if (rc != 0) {
+        fprintf(stderr, "[TELEGRAM_BOT] setWebhook FAIL\n");
+        free(resp);
+        return -1;
+    }
+    fprintf(stderr, "[TELEGRAM_BOT] setWebhook OK: %s\n",
+            webhook_telegram_webhook_url());
+    free(resp);
+    return 0;
+}
+
+void telegram_bot_unregister_webhook(void)
+{
+    if (!g_webhook.token[0])
+        return;
+    (void)tg_post_json("deleteWebhook", "{}", NULL);
 }
 
 static void *poll_loop(void *arg) {
@@ -349,16 +809,30 @@ void telegram_bot_start(void) {
     if (!telegram_bot_enabled() || !g_webhook.token[0]) return;
     if (g_poll_running) return;
     g_poll_stop = 0;
+
+    if (telegram_bot_webhook_mode()) {
+        g_poll_running = 1;
+        fprintf(stderr,
+                "[TELEGRAM_BOT] webhook modu (long-poll kapali) — "
+                "setWebhook API baslatildiktan sonra\n");
+        return;
+    }
+
     if (pthread_create(&g_poll_thread, NULL, poll_loop, NULL) != 0) {
         fprintf(stderr, "[TELEGRAM_BOT] poll thread baslatilamadi\n");
         return;
     }
     g_poll_running = 1;
-    fprintf(stderr, "[TELEGRAM_BOT] komut dinleyici acik (/status /bans /ping)\n");
+    fprintf(stderr,
+            "[TELEGRAM_BOT] long-poll acik (/status /bans /last /unacked /incident)\n");
 }
 
 void telegram_bot_stop(void) {
     if (!g_poll_running) return;
+    if (telegram_bot_webhook_mode()) {
+        g_poll_running = 0;
+        return;
+    }
     g_poll_stop = 1;
     pthread_join(g_poll_thread, NULL);
     g_poll_running = 0;

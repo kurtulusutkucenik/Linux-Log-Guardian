@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 # 72 saat soak — arka planda baslat (dogru PID ile)
+# Laptop oncelik: bash scripts/laptop_soak_72h.sh --start  (SOAK_1H=1 ile 1 saat)
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"

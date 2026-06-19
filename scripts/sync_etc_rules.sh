@@ -11,9 +11,14 @@ if [[ "$(id -u)" -ne 0 ]]; then
   exit 1
 fi
 
-install -d "${ETC}/rules"
+install -d "${ETC}/rules" "${ETC}/examples"
 install -m 644 "$ROOT/rules/crs-bundle.rules" "${ETC}/rules/crs-bundle.rules"
 install -m 644 "$ROOT/rules/crs-core.rules" "${ETC}/rules/crs-core.rules" 2>/dev/null || true
+for schema in openapi-mini.json openapi-v2.json; do
+  if [[ -f "$ROOT/examples/$schema" ]]; then
+    install -m 644 "$ROOT/examples/$schema" "${ETC}/examples/$schema"
+  fi
+done
 
 [[ -f "$CONF" ]] || install -m 600 "$ROOT/rules.conf" "$CONF"
 
@@ -25,5 +30,5 @@ if ! grep -q "or\[\\\\s\\\\\+" "$CONF" 2>/dev/null; then
   echo "[sync_etc_rules] OR SQLi REGEX eklendi"
 fi
 
-echo "[OK] sync_etc_rules -> ${ETC}/rules/crs-bundle.rules"
+echo "[OK] sync_etc_rules -> ${ETC}/rules/crs-bundle.rules + ${ETC}/examples/openapi-*.json"
 echo "     sudo systemctl restart log-guardian"

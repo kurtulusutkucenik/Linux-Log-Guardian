@@ -1,0 +1,12 @@
+Package: log-guardian
+Version: @VERSION@
+Section: net
+Priority: optional
+Architecture: amd64
+Depends: ipset, libbpf1, libcurl4, libpcre2-8-0, libsqlite3-0, libssl3, libelf1, libz1, liburing2, adduser
+Recommends: nginx, iptables | nftables
+Maintainer: Linux Log Guardian <community@log-guardian.local>
+Description: Linux Log Guardian — nginx log WAF and kernel ban
+ Core: nginx access log ingest, WAF rules, OpenAPI schema firewall,
+ automatic ipset ban pipeline. Includes log-guardian analyzer and
+ log-guardian-daemon (eBPF/XDP optional).

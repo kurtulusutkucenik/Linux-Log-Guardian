@@ -24,7 +24,11 @@ if [[ ! -f "$CONF" ]]; then
 fi
 
 ensure_kv "API_PORT" "8090" "$CONF"
-ensure_kv "API_BIND" "0.0.0.0" "$CONF"
+ensure_kv "API_BIND" "127.0.0.1" "$CONF"
+if ! grep -qE '^API_TOKEN=.+' "$CONF" 2>/dev/null; then
+  echo "API_TOKEN=$(openssl rand -hex 32)" >> "$CONF"
+fi
+API_TOK=$(grep -E '^API_TOKEN=' "$CONF" | tail -1 | cut -d= -f2-)
 
 echo "[1] Binary kurulumu..."
 make -C "$ROOT" -s install
@@ -72,7 +76,8 @@ if ! ss -tln | grep -q ':8090 '; then
 fi
 
 echo "[5] Ban API testi..."
-out=$(curl -s -X POST "http://127.0.0.1:8090/api/v1/ban?ip=203.0.113.55&reason=dashboard-setup-test")
+out=$(curl -s -X POST -H "Authorization: Bearer ${API_TOK}" \
+  "http://127.0.0.1:8090/api/v1/ban?ip=203.0.113.55&reason=dashboard-setup-test")
 echo "$out"
 echo "$out" | grep -q '"success":true' || { echo "[FAIL] ban API" >&2; exit 1; }
 
@@ -81,9 +86,21 @@ bans_out=$(curl -s "http://127.0.0.1:8090/api/v1/bans")
 echo "$bans_out"
 echo "$bans_out" | grep -q '"ips"' || { echo "[FAIL] bans list API" >&2; exit 1; }
 
-curl -s -X POST "http://127.0.0.1:8090/api/v1/unban?ip=203.0.113.55&reason=setup-cleanup" >/dev/null || true
+curl -s -X POST -H "Authorization: Bearer ${API_TOK}" \
+  "http://127.0.0.1:8090/api/v1/unban?ip=203.0.113.55&reason=setup-cleanup" >/dev/null || true
+
+echo "[7] Ban API relay (18090) + smoke..."
+docker compose -f "$ROOT/docker-compose.prod.yml" up -d ban-api-relay 2>/dev/null || true
+sleep 1
+if bash "$ROOT/scripts/dashboard_ban_smoke.sh"; then
+  bash "$ROOT/scripts/sync_dashboard_data.sh" 2>/dev/null || true
+else
+  echo "[WARN] dashboard_ban_smoke FAIL — relay veya token kontrol edin" >&2
+fi
 
 echo ""
 echo "[OK] Dashboard ban API hazir."
-echo "  Giriş: https://localhost:8443  admin / admin123"
-echo "  Docker: cd \"$ROOT\" && docker compose -f docker-compose.prod.yml up -d dashboard"
+echo "  Giriş: https://localhost:8443  admin / (.env DASHBOARD_ADMIN_PASSWORD veya ChangeMeOnFirstLogin!)"
+echo "  Docker: export GUARDIAN_API_TOKEN=\$(grep '^API_TOKEN=' $CONF | cut -d= -f2-)"
+echo "          cd \"$ROOT\" && docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard"
+echo "          (ban/unban relay: host:18090 -> 127.0.0.1:8090)"

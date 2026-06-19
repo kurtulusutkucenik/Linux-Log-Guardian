@@ -44,11 +44,13 @@ echo "  log=$NGINX_LOG  metrics=$METRICS_URL  inject=$INJECT_LINES"
 LINES_BEFORE=$(metric_val loganalyzer_lines_total)
 EPS_BEFORE=$(metric_val loganalyzer_eps)
 ALERTS_BEFORE=$(metric_val loganalyzer_alerts_total)
+PARSE_BEFORE=$(metric_val loganalyzer_parse_errors_total)
 
-TS=$(date +"%d/%b/%Y:%H:%M:%S %z")
+# nginx log_guardian: ... "ua" "xff" "request_body" — LC_TIME=C (Ingilizce ay: Jun)
+TS=$(LC_TIME=C date +"%d/%b/%Y:%H:%M:%S %z")
 TMP=$(mktemp)
 for ((i = 1; i <= INJECT_LINES; i++)); do
-  printf '%s - - [%s] "GET /lg-eps-smoke-%d HTTP/1.1" 200 64 "-" "LogGuardian-EPS-Smoke"\n' \
+  printf '%s - - [%s] "GET /lg-eps-smoke-%d HTTP/1.1" 200 64 "-" "LogGuardian-EPS-Smoke" "-" "-"\n' \
     "$TEST_IP" "$TS" "$i" >>"$TMP"
 done
 cat "$TMP" >>"$NGINX_LOG"
@@ -66,7 +68,14 @@ echo "  lines: $LINES_BEFORE -> $LINES_AFTER (delta=$LINES_DELTA)"
 echo "  eps:   $EPS_BEFORE -> $EPS_AFTER"
 echo "  alerts: $ALERTS_BEFORE -> $ALERTS_AFTER"
 
-[[ "$LINES_DELTA" -ge 1 ]] || fail "lines_total artmadi — servis log tail ediyor mu? (journalctl -u log-guardian -n 20)"
+PARSE_AFTER=$(metric_val loganalyzer_parse_errors_total)
+if [[ "$LINES_DELTA" -lt 1 ]]; then
+  PARSE_DELTA=$((PARSE_AFTER - PARSE_BEFORE))
+  if [[ "$PARSE_DELTA" -ge 1 ]]; then
+    fail "lines_total artmadi ama parse_errors +$PARSE_DELTA — log_guardian formati gerekli (xff + request_body) ve LC_TIME=C ay adi; check: bash scripts/check_nginx_log_format.sh"
+  fi
+  fail "lines_total artmadi — servis log tail ediyor mu? (journalctl -u log-guardian -n 20)"
+fi
 
 if awk -v e="$EPS_AFTER" 'BEGIN { exit (e > 0) ? 0 : 1 }'; then
   ok "EPS>0 ($EPS_AFTER) — Telegram /status EPS satiri da dolmali"

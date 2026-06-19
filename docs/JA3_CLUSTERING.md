@@ -22,9 +22,11 @@ sudo bash scripts/ja3_cluster_ban_live.sh
 bash scripts/sync_dashboard_data.sh
 ```
 
-Her koşuda benzersiz IP bloğu (`45.33.${octet}.1–5`) ve benzersiz UA kullanılır — tekrar koşulabilir.
+Her koşuda benzersiz RFC5737 IP bloğu (`203.0.113.${octet}+`) ve benzersiz UA kullanılır — tekrar koşulabilir (prod ipset/IPC uyumu).
 
 Prometheus: `loganalyzer_ja3_clusters_active`, `loganalyzer_ja3_cluster_bans_total`.
+
+**Telegram:** Canlı test ~10 mesaj: 5× `#waf` SQLi + 1× `#waf` APT + 4× `#ban` (CRIT batch dışı; IP başına kanal). ipset doğrulama: `sudo ipset list log_analyzer_block_v4 | head -3` (sudo olmadan `Operation not permitted` normal).
 
 ## Hızlı çalıştırma
 

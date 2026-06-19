@@ -35,6 +35,12 @@ export type LiveMetricsSnapshot = {
   fp_trusted_ips: number;
   ban_pipeline_ipset: number;
   ban_pipeline_failed: number;
+  telegram_ack_24h: number;
+  telegram_unacked_24h: number;
+  webhook_quiet_hours: number;
+  webhook_quiet_active: number;
+  http_4xx: number;
+  http_5xx: number;
   reachable: boolean;
   ts: number;
 };
@@ -60,6 +66,14 @@ export function parseGuardianMetrics(body: string): LiveMetricsSnapshot {
     fp_trusted_ips: num("loganalyzer_fp_trusted_ips"),
     ban_pipeline_ipset: num("loganalyzer_ban_pipeline_ipset"),
     ban_pipeline_failed: num("loganalyzer_ban_pipeline_failed"),
+    telegram_ack_24h: num("loganalyzer_telegram_ack_24h"),
+    telegram_unacked_24h: num("loganalyzer_telegram_unacked_24h"),
+    webhook_quiet_hours: num("loganalyzer_webhook_quiet_hours"),
+    webhook_quiet_active: num("loganalyzer_webhook_quiet_active"),
+    http_4xx:
+      parsePrometheusGauge(body, "loganalyzer_http_status_total", "code", "4xx") ?? 0,
+    http_5xx:
+      parsePrometheusGauge(body, "loganalyzer_http_status_total", "code", "5xx") ?? 0,
     reachable: body.includes("loganalyzer_eps"),
     ts: Date.now(),
   };

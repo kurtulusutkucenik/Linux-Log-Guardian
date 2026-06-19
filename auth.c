@@ -95,10 +95,6 @@ int enforce_startup_auth(void) {
     }
 
     const char *env_pw = getenv("LOGANALYZER_PASSWORD");
-    if (env_pw && *env_pw && g_password_file_path[0] != '\0') {
-        fprintf(stderr, "[ERISIM] Hem LOGANALYZER_PASSWORD hem --password-file birlikte kullanilamaz.\n");
-        return -1;
-    }
 
     for (int attempt = 1; attempt <= g_auth_max_attempts; attempt++) {
         char entered[128] = {0};

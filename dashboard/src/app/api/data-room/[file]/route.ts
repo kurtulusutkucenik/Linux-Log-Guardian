@@ -38,17 +38,6 @@ export async function GET(
 ) {
   const { file } = await ctx.params;
 
-  if (file === "competitive-proof.pdf") {
-    const accept = req.headers.get("accept") || "";
-    const wantsHtml =
-      accept.includes("text/html") &&
-      !accept.includes("application/pdf") &&
-      req.nextUrl.searchParams.get("raw") !== "1";
-    if (wantsHtml) {
-      return NextResponse.redirect(new URL("/competitive-proof", req.nextUrl));
-    }
-  }
-
   const contentType = ALLOWED[file];
   if (!contentType) {
     return NextResponse.json({ error: "not allowed" }, { status: 404 });

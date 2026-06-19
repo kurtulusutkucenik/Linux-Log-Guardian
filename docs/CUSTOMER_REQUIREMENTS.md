@@ -46,7 +46,7 @@ make -j$(nproc)
 |---------|-----------|---------|
 | **Ollama + `llama3.2:3b`** | Doğal dil Copilot istenirse | Yerel LLM; API key yok → `docs/COPILOT_LLM.md` |
 | **Wasmtime + native plugin** | Marketplace / hot-plug WAF | Dosya adı stub’ı değil, gerçek `.wasm` → `docs/BUILD_WASM.md` |
-| **Telegram / Discord / Slack** | Alarm fan-out | `docs/WEBHOOK_SETUP.md`, `WEBHOOK_DRY_RUN=1` test |
+| **Telegram** | Alarm bildirimi | `docs/WEBHOOK_SETUP.md`, `WEBHOOK_DRY_RUN=1` test |
 | **Grafana** | SOC görselleştirme | `docs/GRAFANA_SETUP.md`, `scripts/grafana_provision.sh` |
 | **AbuseIPDB / OTX** | Threat feed | `rules.conf` threat feed blokları |
 

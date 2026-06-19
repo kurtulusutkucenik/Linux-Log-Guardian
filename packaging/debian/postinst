@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+case "${1:-}" in
+  configure)
+    if [ -x /usr/local/share/log-guardian/scripts/deb_post_install.sh ]; then
+      bash /usr/local/share/log-guardian/scripts/deb_post_install.sh || true
+    fi
+    ;;
+esac
+
+exit 0

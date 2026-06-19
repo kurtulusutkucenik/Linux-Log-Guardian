@@ -5,18 +5,57 @@
 > **Gerçek DDoS / volumetrik saldırı:** Log Guardian tek başına yetmez — önce CDN + nginx rate limit.  
 > Bkz. [EDGE_PROTECTION.md](EDGE_PROTECTION.md) · Savunma katmanları: [ATTACK_DEFENSE.md](ATTACK_DEFENSE.md)
 
+## Ilk kurulum guvenlik
+
+Log Guardian **self-hosted** güvenlik yazılımıdır.
+
+**Laptop / deneme:** Demo parola `DegistirBeni!123` repoda kalır — değiştirmek zorunlu değil.  
+**İnternete açık sunucu:** Aynı gün parola + API + JWT sertleştirin.
+
+| # | Ne | Laptop | İnternet sunucusu |
+|---|-----|--------|-------------------|
+| 1 | Analyzer parolası | Demo OK | `sudo bash scripts/laptop_harden.sh` |
+| 2 | API `:8090` | `ensure_api_security` | Aynı + firewall |
+| 3 | Dashboard JWT | `laptop_jwt_setup.sh` | Güçlü `DASHBOARD_ADMIN_PASSWORD` |
+| 4 | Webhook token | `.env.webhook.local` (gitignore) | `/etc/log-guardian/webhook.env` chmod 600 |
+| 5 | Telegram | POLL yeterli | WEBHOOK + HTTPS — [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
+
+```bash
+# Laptop — API (parolaya dokunmaz):
+sudo bash scripts/ensure_api_security.sh
+bash scripts/sync_dashboard_api_token.sh
+bash scripts/laptop_jwt_setup.sh
+bash scripts/laptop_harden_check.sh
+
+# İnternet sunucusu — tam sertleştirme:
+sudo env LG_NEW_PASSWORD='KENDI_GUCLU_PAROLAN' bash scripts/laptop_harden.sh
+bash scripts/laptop_harden_check.sh
+```
+
+**Not:** `LG_NEW_PASSWORD='x' sudo bash ...` çalışmaz — `sudo env` veya `--password` kullanın.
+
+Dashboard (tek komut):
+
+```bash
+bash scripts/dashboard_stack.sh
+# Giriş: https://localhost:8443 — admin / .env DASHBOARD_ADMIN_PASSWORD veya ChangeMeOnFirstLogin!
+```
+
+Tam matris: [LAPTOP_OPS.md](LAPTOP_OPS.md) · [SECURITY.md](../SECURITY.md) · [OPERATIONS.md](OPERATIONS.md)
+
 ## 1. Kurulum (5 dk)
 
 ```bash
 git clone https://github.com/kurtulusutkucenik/loganalyzer.git
-cd loganalyzer
-sudo NGINX_AUTO_LOG_FORMAT=1 bash install.sh
+cd loganalyzer   # ürün adı: Linux Log Guardian; binary: log-guardian
+sudo bash install.sh
+sudo bash scripts/ensure_api_security.sh
 ```
 
-Kurulum sonunda `log_format log_guardian` uyarısı çıkarsa:
+Kurulum `log_guardian` formatını otomatik uygular (`fix_nginx_log_format.sh`). Manuel kontrol:
 
 ```bash
-bash scripts/check_nginx_log_format.sh
+STRICT=1 bash scripts/check_nginx_log_format.sh
 ```
 
 Kurulum sonunda:
@@ -79,6 +118,24 @@ sudo systemctl status log-guardian-daemon log-guardian
 - `LOG_PATH=/var/log/nginx/access.log`
 - `METRICS_PORT=9091`
 - `BAN_TTL_SEC=600`
+
+## 3b. Threat intel (opsiyonel, internet gerekir)
+
+Core ban hattı internet olmadan çalışır. Dış tehdit listeleri için **çıkış interneti** lazım (Wi‑Fi / ethernet fark etmez).
+
+| Katman | API key | Komut |
+|--------|---------|-------|
+| Firehol + GeoIP | Hayır | `sudo bash scripts/install_threat_intel_stack.sh` (~1–4 dk ilk sefer) |
+| AbuseIPDB / OTX | Evet (ücretsiz hesap) | `sudo nano /etc/log-guardian/threat-feed.env` sonra `sudo bash scripts/install_threat_feed_live.sh` (~30 sn–2 dk) |
+
+Laptop: Firehol yeterli — key boş bırakılabilir. `threat-feed.env` dosyasını **`bash` ile çalıştırmayın**; `sudo nano` ile düzenleyin.
+
+```bash
+bash scripts/threat_intel_status.sh
+bash scripts/threat_feed_live_proof.sh
+```
+
+Tam rehber: [THREAT_INTEL_SETUP.md](THREAT_INTEL_SETUP.md)
 
 ## 4. Doğrulama (5 dk)
 

@@ -1,28 +1,40 @@
 #define _GNU_SOURCE
 #include "ipc_auth.h"
+#include "crypto_utils.h"
 #include <grp.h>
 #include <pwd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-static uint32_t g_ipc_token_hash;
+static uint64_t g_ipc_token_digest;
 static int      g_ipc_token_loaded;
 
-static uint32_t fnv1a32(const char *s)
+static uint64_t digest_ipc_token(const char *tok)
 {
-    uint32_t h = 2166136261u;
-    while (s && *s) {
-        h ^= (unsigned char)*s++;
-        h *= 16777619u;
-    }
-    return h;
+    Sha256Ctx ctx;
+    uint8_t   hash[32];
+    uint64_t  d = 0;
+
+    if (!tok || !tok[0])
+        return 0;
+    sha256_init(&ctx);
+    sha256_update(&ctx, (const uint8_t *)tok, strlen(tok));
+    sha256_final(&ctx, hash);
+    memcpy(&d, hash, sizeof(d));
+    return d;
+}
+
+static int digest_equals(uint64_t a, uint64_t b)
+{
+    uint64_t diff = a ^ b;
+    return diff == 0 && a != 0;
 }
 
 void ipc_auth_init(void)
 {
     const char *tok = getenv("LOG_GUARDIAN_IPC_TOKEN");
-    g_ipc_token_hash = (tok && tok[0]) ? fnv1a32(tok) : 0;
+    g_ipc_token_digest = (tok && tok[0]) ? digest_ipc_token(tok) : 0;
     g_ipc_token_loaded = 1;
 }
 
@@ -55,11 +67,11 @@ void ipc_auth_load_env_file(const char *path)
     g_ipc_token_loaded = 0;
 }
 
-uint32_t ipc_auth_token_for_message(void)
+uint64_t ipc_auth_token_for_message(void)
 {
     if (!g_ipc_token_loaded)
         ipc_auth_init();
-    return g_ipc_token_hash;
+    return g_ipc_token_digest;
 }
 
 int ipc_auth_required(void)
@@ -69,14 +81,16 @@ int ipc_auth_required(void)
     const char *prod = getenv("LOG_GUARDIAN_PROD");
     if (prod && (prod[0] == '1' || prod[0] == 'y' || prod[0] == 'Y'))
         return 1;
-    return g_ipc_token_hash != 0;
+    return g_ipc_token_digest != 0;
 }
 
-int ipc_auth_validate_message(uint32_t token)
+int ipc_auth_validate_message(uint64_t token)
 {
     if (!ipc_auth_required())
         return 1;
-    return token != 0 && token == g_ipc_token_hash;
+    if (!g_ipc_token_loaded)
+        ipc_auth_init();
+    return digest_equals(token, g_ipc_token_digest);
 }
 
 int ipc_auth_peer_allowed(uid_t uid, gid_t gid)
@@ -108,7 +122,7 @@ int ipc_auth_peer_allowed(uid_t uid, gid_t gid)
     return 0;
 }
 
-int ipc_auth_shutdown_allowed(uid_t uid, uint32_t token)
+int ipc_auth_shutdown_allowed(uid_t uid, uint64_t token)
 {
     return uid == 0 && ipc_auth_validate_message(token);
 }

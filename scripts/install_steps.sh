@@ -47,6 +47,20 @@ case "$STEP" in
     test -x "$ROOT/log-guardian" || fail "Once adim 2: bash scripts/install_steps.sh 2-build"
     cd "$ROOT"
     bash "$ROOT/install.sh" --install-only
+    if command -v nginx >/dev/null 2>&1; then
+      if STRICT_EXIT=1 bash "$ROOT/scripts/enforce_nginx_log_format.sh"; then
+        ok "nginx log_guardian format (STRICT)"
+      else
+        fail "log_guardian format kurulamadi — docs/QUICKSTART_NGINX.md bolum 2"
+      fi
+      systemctl restart log-guardian 2>/dev/null || true
+      sleep 2
+      if STRICT_EXIT=1 bash "$ROOT/scripts/enforce_nginx_inline_consult.sh"; then
+        ok "nginx inline consult (STRICT)"
+      else
+        fail "inline consult kurulamadi — sudo bash scripts/fix_nginx_inline_consult.sh"
+      fi
+    fi
     ok "Adim 3 tamam"
     ;;
   4-health)
@@ -88,11 +102,10 @@ export LD_LIBRARY_PATH='${LG_LIB}:\${LD_LIBRARY_PATH:-}'
     ;;
   5-dashboard)
     echo -e "${BOLD}=== Adim 5: TLS Dashboard ===${NC}"
-    export JWT_SECRET="${JWT_SECRET:-$(openssl rand -hex 32)}"
     export DOMAIN="${DOMAIN:-localhost}"
     export HTTP_PORT="${HTTP_PORT:-8080}"
     export HTTPS_PORT="${HTTPS_PORT:-8443}"
-    bash "$ROOT/scripts/tls_proxy_up.sh"
+    bash "$ROOT/scripts/laptop_jwt_setup.sh"
     bash "$ROOT/scripts/tls_proxy_test.sh"
     ok "Adim 5 tamam: https://${DOMAIN}:${HTTPS_PORT}"
     ;;
@@ -119,7 +132,8 @@ Log Guardian — adim adim kurulum (Mint/Ubuntu/Debian)
   bash scripts/install_steps.sh 6-soak          # kisa soak (daemon ayaktayken)
   bash scripts/install_steps.sh 7-grafana       # Grafana + Prometheus (Docker)
 
-  bash scripts/dev_stack.sh --all               # laptop: health + dashboard + grafana
+  bash scripts/dashboard_stack.sh                 # laptop: grafana + JWT + TLS dashboard
+  bash scripts/dev_stack.sh --all                 # alternatif: health + dashboard + grafana
   sudo bash scripts/sync_local_install.sh       # repo binary → /usr/local
 
 Tek komut (hepsi):  sudo bash install.sh

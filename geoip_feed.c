@@ -67,9 +67,6 @@ static void *geoip_thread(void *arg)
 
 void geoip_feed_init(void)
 {
-    const char *local = "./threat_intel.sh";
-    if (access(local, X_OK) == 0)
-        strncpy(g_script_path, local, sizeof(g_script_path) - 1);
     if (!rules_has_block_countries()) return;
     if (g_running) return;
     g_running = 1;

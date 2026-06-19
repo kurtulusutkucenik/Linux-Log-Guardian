@@ -84,7 +84,14 @@ rules/marketplace/*/.signature
 crs-parity-report.json
 wasm-status.json
 compliance-report.json
+assets/website-deploy/
+assets/website-deploy.manifest.json
 compliance-report.pdf
 competitive-proof.json
 competitive-proof.pdf
 .venv-compliance/
+.venv-website-smoke/
+dist/
+scripts/__pycache__/
+test_write.tmp*
+.wrangler/

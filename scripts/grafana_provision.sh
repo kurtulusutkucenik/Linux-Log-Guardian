@@ -33,14 +33,14 @@ if ! api_ok; then
   exit 0
 fi
 
-PROM_URL="${PROMETHEUS_URL:-http://172.17.0.1:9090}"
+PROM_URL="${PROMETHEUS_URL:-http://host.docker.internal:9090}"
 echo "[grafana_provision] Prometheus datasource (${DS_NAME}) → ${PROM_URL}..."
 ds_payload=$(python3 -c "
 import json, os
 print(json.dumps({
   'name': os.environ.get('DS_NAME', 'Prometheus'),
   'type': 'prometheus',
-  'url': os.environ.get('PROM_URL', 'http://172.17.0.1:9090'),
+  'url': os.environ.get('PROM_URL', 'http://host.docker.internal:9090'),
   'access': 'proxy',
   'isDefault': True,
   'jsonData': {'httpMethod': 'POST'},
@@ -84,6 +84,19 @@ if python3 scripts/grafana_alerts_provision.py; then
   echo "[OK] alert rules provisioned"
 else
   echo "[WARN] alert otomatik import basarisiz — manuel: Grafana → Alerting → Import → grafana-alerts.json"
+fi
+
+echo "[grafana_provision] Telegram contact (#30 — opsiyonel)..."
+if [[ -f "$ROOT/.env.grafana.telegram.local" ]]; then
+  set -a
+  # shellcheck disable=SC1090
+  source "$ROOT/.env.grafana.telegram.local"
+  set +a
+fi
+if python3 "$ROOT/scripts/grafana_contact_provision.py"; then
+  :
+else
+  echo "[WARN] contact point — bash scripts/grafana_telegram_contact.sh --from-webhook-warn --test"
 fi
 
 echo "[OK] grafana_provision tamam"

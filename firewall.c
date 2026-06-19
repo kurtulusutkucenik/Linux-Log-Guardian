@@ -40,6 +40,89 @@ int is_ipv6_addr(const char *ip) {
     return strchr(ip, ':') != NULL;
 }
 
+/* ── CIDR matching (IPv4 + basit IPv6 ::1/128) ─────────────── */
+
+static int ipv4_to_host32(const char *ip, uint32_t *host_out)
+{
+    struct in_addr a;
+    if (inet_pton(AF_INET, ip, &a) != 1)
+        return -1;
+    *host_out = ntohl(a.s_addr);
+    return 0;
+}
+
+int ip_matches_cidr(const char *ip, const char *cidr)
+{
+    if (!ip || !cidr || !*ip || !*cidr)
+        return 0;
+
+    char buf[80];
+    size_t n = strlen(cidr);
+    if (n >= sizeof(buf))
+        n = sizeof(buf) - 1;
+    memcpy(buf, cidr, n);
+    buf[n] = '\0';
+
+    char *slash = strchr(buf, '/');
+    int plen = 32;
+    if (slash) {
+        *slash = '\0';
+        plen = atoi(slash + 1);
+        if (plen < 0 || plen > 32)
+            return 0;
+    }
+
+    if (strcmp(buf, "::1") == 0 && strcmp(ip, "::1") == 0)
+        return (plen >= 128 || plen == 0);
+
+    uint32_t addr, net;
+    if (ipv4_to_host32(ip, &addr) != 0 || ipv4_to_host32(buf, &net) != 0)
+        return 0;
+
+    uint32_t mask = (plen == 0) ? 0u : (0xFFFFFFFFu << (32 - plen));
+    return (addr & mask) == (net & mask);
+}
+
+int ip_matches_cidr_list(const char *ip, const char cidrs[][64], int count)
+{
+    if (!ip || !cidrs || count <= 0)
+        return 0;
+    for (int i = 0; i < count; i++) {
+        if (cidrs[i][0] && ip_matches_cidr(ip, cidrs[i]))
+            return 1;
+    }
+    return 0;
+}
+
+int ipc_clamp_v4_prefix(uint8_t prefix)
+{
+    if (prefix == 0)
+        return 32;
+    if (prefix > 32)
+        return 32;
+    return (int)prefix;
+}
+
+int ipc_validate_ban_ipv4(const char *ip, uint8_t *prefix_io)
+{
+    if (!ip || !is_valid_ip(ip) || is_ipv6_addr(ip))
+        return -1;
+    struct in_addr a;
+    if (inet_pton(AF_INET, ip, &a) != 1)
+        return -1;
+    if (prefix_io)
+        *prefix_io = (uint8_t)ipc_clamp_v4_prefix(*prefix_io);
+    return 0;
+}
+
+int ipc_validate_ban_ipv6(const char *ip)
+{
+    if (!ip || !is_valid_ip(ip) || !is_ipv6_addr(ip))
+        return -1;
+    struct in6_addr a;
+    return inet_pton(AF_INET6, ip, &a) == 1 ? 0 : -1;
+}
+
 const char *ipset_name_for_ip(const char *ip) {
     return is_ipv6_addr(ip) ? g_ipset_v6 : g_ipset_v4;
 }
@@ -74,6 +157,91 @@ static const char *resolve_bin(const char *name, const char *fallback)
 
 static const char *ipset_bin(void) { return resolve_bin("ipset", "/sbin/ipset"); }
 
+static int run_ipset_destroy(const char *set_name)
+{
+    pid_t pid = fork();
+    if (pid < 0) return -1;
+    if (pid == 0) {
+        child_suppress_stderr();
+        char *const argv_exec[] = {
+            (char *)ipset_bin(), "destroy", (char *)set_name, NULL
+        };
+        char *const envp[] = { NULL };
+        execve(ipset_bin(), argv_exec, envp);
+        _exit(127);
+    }
+    int status = 0;
+    waitpid(pid, &status, 0);
+    return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
+}
+
+/* threat_intel.sh hash:net kullanir; eski hash:ip seti create -exist ile kalir ve add FAIL olur */
+static int ipset_read_type(const char *set_name, char *typ, size_t typ_sz)
+{
+    int pipefd[2];
+    if (pipe(pipefd) < 0)
+        return -1;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return -1;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        child_suppress_stderr();
+        char *const argv_exec[] = {
+            (char *)ipset_bin(), "list", (char *)set_name, NULL
+        };
+        char *const envp[] = { NULL };
+        execve(ipset_bin(), argv_exec, envp);
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    typ[0] = '\0';
+    char line[256];
+    ssize_t total = 0;
+    while (total < (ssize_t)(sizeof(line) - 1)) {
+        ssize_t r = read(pipefd[0], line + total, sizeof(line) - 1 - (size_t)total);
+        if (r <= 0)
+            break;
+        total += r;
+    }
+    close(pipefd[0]);
+    int status = 0;
+    waitpid(pid, &status, 0);
+    if (total <= 0 || !WIFEXITED(status) || WEXITSTATUS(status) != 0)
+        return -1;
+    line[total] = '\0';
+
+    const char *pfx = "Type: ";
+    char *hit = strstr(line, pfx);
+    if (!hit)
+        return -1;
+    hit += strlen(pfx);
+    char *nl = strchr(hit, '\n');
+    size_t n = nl ? (size_t)(nl - hit) : strlen(hit);
+    if (n >= typ_sz)
+        n = typ_sz - 1;
+    memcpy(typ, hit, n);
+    typ[n] = '\0';
+    while (n > 0 && (typ[n - 1] == '\r' || typ[n - 1] == ' '))
+        typ[--n] = '\0';
+    return 0;
+}
+
+static int ipset_family_type_ok(const char *set_name, const char *want_type)
+{
+    char typ[48] = {0};
+    if (ipset_read_type(set_name, typ, sizeof(typ)) != 0)
+        return 0;
+    return strcmp(typ, want_type) == 0;
+}
+
 int run_ipset_create(const char *set_name, const char *family) {
     pid_t pid = fork();
     if (pid < 0) return -1;
@@ -81,10 +249,10 @@ int run_ipset_create(const char *set_name, const char *family) {
         child_suppress_stderr();
         char *const argv_exec[] = {
             (char *)ipset_bin(), "create", (char *)set_name,
-            "hash:ip", "family", (char *)family, "-exist", NULL
+            "hash:net", "family", (char *)family, "maxelem", "65536", "-exist", NULL
         };
         char *const envp[] = { NULL };
-        execve("/sbin/ipset", argv_exec, envp);
+        execve(ipset_bin(), argv_exec, envp);
         _exit(127);
     }
     int status = 0;
@@ -116,6 +284,12 @@ int ensure_fw_rule(const char *bin, const char *set_name) {
     return run_fw_rule(bin, "-I", set_name);
 }
 
+static void strip_fw_rules(const char *bin, const char *set_name)
+{
+    while (run_fw_rule(bin, "-D", set_name) == 0)
+        ;
+}
+
 int run_ipset_ip(const char *op, const char *set_name, const char *ip) {
     pid_t pid = fork();
     if (pid < 0) return -1;
@@ -125,7 +299,7 @@ int run_ipset_ip(const char *op, const char *set_name, const char *ip) {
             (char *)ipset_bin(), (char *)op, (char *)set_name, (char *)ip, "-exist", NULL
         };
         char *const envp[] = { NULL };
-        execve("/sbin/ipset", argv_exec, envp);
+        execve(ipset_bin(), argv_exec, envp);
         _exit(127);
     }
     int status = 0;
@@ -133,9 +307,81 @@ int run_ipset_ip(const char *op, const char *set_name, const char *ip) {
     return WIFEXITED(status) ? WEXITSTATUS(status) : -1;
 }
 
+int ipset_list_v4_members(char ips[][64], int max_ips, int *total_in_set)
+{
+    if (total_in_set)
+        *total_in_set = 0;
+    if (!ips || max_ips <= 0)
+        return 0;
+
+    int pipefd[2];
+    if (pipe(pipefd) < 0)
+        return -1;
+
+    pid_t pid = fork();
+    if (pid < 0) {
+        close(pipefd[0]);
+        close(pipefd[1]);
+        return -1;
+    }
+    if (pid == 0) {
+        close(pipefd[0]);
+        dup2(pipefd[1], STDOUT_FILENO);
+        close(pipefd[1]);
+        child_suppress_stderr();
+        char *const argv_exec[] = {
+            (char *)ipset_bin(), "list", (char *)g_ipset_v4, "-o", "plain", NULL
+        };
+        char *const envp[] = { NULL };
+        execve(ipset_bin(), argv_exec, envp);
+        _exit(127);
+    }
+
+    close(pipefd[1]);
+    int written = 0;
+    int total = 0;
+    char line[256];
+    FILE *fp = fdopen(pipefd[0], "r");
+    if (!fp) {
+        close(pipefd[0]);
+        waitpid(pid, NULL, 0);
+        return -1;
+    }
+    while (fgets(line, sizeof(line), fp)) {
+        char ip[64] = {0};
+        if (sscanf(line, "%63s", ip) != 1)
+            continue;
+        if (strchr(ip, '.') == NULL)
+            continue;
+        total++;
+        if (written < max_ips) {
+            strncpy(ips[written], ip, 63);
+            ips[written][63] = '\0';
+            written++;
+        }
+    }
+    fclose(fp);
+    waitpid(pid, NULL, 0);
+    if (total_in_set)
+        *total_in_set = total;
+    return written;
+}
+
 /* ── High-level API ──────────────────────────────────────────── */
 
 int ensure_ipset_ready(void) {
+    if (!ipset_family_type_ok(g_ipset_v4, "hash:net")) {
+        if (!g_output_json)
+            fprintf(stderr,
+                    "[IPSET] %s uyumsuz/eksik — hash:net olarak yeniden olusturuluyor\n",
+                    g_ipset_v4);
+        strip_fw_rules("/sbin/iptables", g_ipset_v4);
+        run_ipset_destroy(g_ipset_v4);
+    }
+    if (!ipset_family_type_ok(g_ipset_v6, "hash:net")) {
+        strip_fw_rules("/sbin/ip6tables", g_ipset_v6);
+        run_ipset_destroy(g_ipset_v6);
+    }
     int rc_v4 = run_ipset_create(g_ipset_v4, "inet");
     int rc_v6 = run_ipset_create(g_ipset_v6, "inet6");
     int fw4   = ensure_fw_rule("/sbin/iptables",  g_ipset_v4);
@@ -154,6 +400,7 @@ int ensure_ipset_ready(void) {
 int ban_ip(const char *ip) { (void)ip; return -1; }
 int ban_ip_with_reason(const char *ip, const char *reason) { (void)ip; (void)reason; return -1; }
 int unban_ip(const char *ip) { (void)ip; return -1; }
+int ip_is_blocked(const char *ip) { (void)ip; return 0; }
 #else
 int ban_ip(const char *ip)
 {
@@ -170,6 +417,13 @@ int ban_ip_with_reason(const char *ip, const char *reason)
 int unban_ip(const char *ip)
 {
     return ban_pipeline_unban(ip);
+}
+
+int ip_is_blocked(const char *ip)
+{
+    if (!ip || !is_valid_ip(ip))
+        return 0;
+    return run_ipset_ip("test", ipset_name_for_ip(ip), ip) == 0;
 }
 #endif
 

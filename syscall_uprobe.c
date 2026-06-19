@@ -13,10 +13,7 @@
  * Desteklenen kernel: >= 5.8 (ring buffer + cgroup helpers gerektirir)
  */
 
-#include "vmlinux.h"
-#include <bpf/bpf_helpers.h>
-#include <bpf/bpf_tracing.h>
-#include <bpf/bpf_core_read.h>
+#include "bpf_compat.h"
 
 /* ── Sabitler ─────────────────────────────────────────────────────────────── */
 #define MAX_WATCHED_CGROUPS  64    /* İzlenen konteyner cgroup sayısı üst sınırı */

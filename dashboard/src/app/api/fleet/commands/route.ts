@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { executeGuardianBan } from '@/lib/guardianBanExec';
+import { invalidateAllBansCache } from '@/lib/bansCache';
 
 export const dynamic = 'force-dynamic';
 
@@ -106,6 +107,7 @@ export async function POST(request: Request) {
         reason,
       });
       if (immediateBan.ok) {
+        invalidateAllBansCache();
         await prisma.agentCommand.update({
           where: { id: command.id },
           data: { executed: true, status: 'completed' },
@@ -113,14 +115,18 @@ export async function POST(request: Request) {
       }
     }
 
+    const executedNow =
+      immediateBan != null &&
+      (commandType === 'BAN_IP' || commandType === 'UNBAN_IP');
+
     return NextResponse.json({
-      success: true,
+      success: executedNow ? immediateBan!.ok : true,
       command,
       immediateBan,
       message: immediateBan?.ok
         ? immediateBan.message
         : immediateBan
-          ? `${commandType} kuyruğa alındı (anında ban: ${immediateBan.message})`
+          ? immediateBan.message
           : `${commandType} kuyruğa alındı`,
     });
   } catch (error) {

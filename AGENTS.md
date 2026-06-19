@@ -14,7 +14,7 @@
 | **Pro** | eBPF daemon, dashboard, Grafana, fleet | `ebpf_daemon.c`, `xdp_filter.c`, `dashboard/`, `grafana-*.json` |
 | **Opsiyonel** | XDR, Wasm, LLM Copilot | `attack_tree.c`, `lineage_probe.c`, `wasm_runtime.c`, `dashboard/src` copilot |
 
-Enterprise roadmap ([docs/Log_Guardian_Enterprise_Roadmap.md](docs/Log_Guardian_Enterprise_Roadmap.md)) **uzun vadeli vizyon**dur; güncel müşteri girişi [docs/QUICKSTART_NGINX.md](docs/QUICKSTART_NGINX.md) (15 dk).
+Enterprise roadmap ([docs/Log_Guardian_Enterprise_Roadmap.md](docs/Log_Guardian_Enterprise_Roadmap.md)) **uzun vadeli vizyon**dur; güncel müşteri girişi [docs/QUICKSTART_NGINX.md](docs/QUICKSTART_NGINX.md) (15 dk). Laptop operasyon: [docs/LAPTOP_OPS.md](docs/LAPTOP_OPS.md).
 
 ## Modül haritası (`graphify-out/graph.json`)
 
@@ -66,7 +66,7 @@ Görev bazlı okuma — tüm repoyu tarama:
 1. **Ham `graphify-out/graph.json` (~50K satır) context'e eklemeyin.**
 2. Soru modüle özgüyse yukarıdaki dosya listesinden 3–8 dosya okuyun.
 3. Değişiklik tespiti: `graphify-out/manifest.json` veya `graphify-out/cache/stat-index.json` hash'leri.
-4. Operatör akışı: `docs/QUICKSTART_NGINX.md` + `docs/CUSTOMER_REQUIREMENTS.md` yeterli.
+4. Operatör akışı: `docs/LAPTOP_OPS.md` + `docs/QUICKSTART_NGINX.md` + `docs/CUSTOMER_REQUIREMENTS.md`.
 5. Grafana işi: sadece `grafana-dashboard.json`, `grafana-alerts.json`, `metrics.c`, `scripts/grafana_provision.sh`.
 6. Kapsam / sprint takibi: `docs/SCOPE_COVERAGE.md` (tüm tier + faz checklist).
 
@@ -75,6 +75,8 @@ Görev bazlı okuma — tüm repoyu tarama:
 ```bash
 make -j$(nproc)
 ./log-guardian --health
+sudo bash scripts/ensure_api_security.sh   # API (demo parola kalir)
+bash scripts/local_security_audit.sh
 bash scripts/phase100.sh          # tüm faz kapıları
 bash scripts/grafana_provision.sh
 bash scripts/local_proof_refresh.sh  # yerel kanıt PDF/ZIP (GitHub push ayrı)

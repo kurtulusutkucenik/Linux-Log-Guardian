@@ -16,6 +16,8 @@ if [[ -z "$IFACE" ]] && [[ -f "$UNIT" ]]; then
 fi
 IFACE="${IFACE:-wlo1}"
 
+install -d -m 0755 /var/lib/ipset
+
 mkdir -p "$DROPIN_DIR"
 
 cat > "$UNIT" <<EOF
@@ -49,7 +51,7 @@ RestartSec=3
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
-ReadWritePaths=/sys/fs/bpf /run/log-guardian
+ReadWritePaths=/sys/fs/bpf /run/log-guardian /var/lib/ipset
 
 [Install]
 WantedBy=multi-user.target

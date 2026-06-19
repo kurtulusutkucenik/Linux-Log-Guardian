@@ -1,0 +1,32 @@
+[Unit]
+Description=Linux Log Guardian — L7 Analiz & WAF Motoru
+After=network.target log-guardian-daemon.service
+Requires=log-guardian-daemon.service
+Documentation=https://github.com/kurtulusutkucenik/loganalyzer
+StartLimitInterval=60s
+StartLimitBurst=5
+
+[Service]
+Type=simple
+EnvironmentFile=-/etc/log-guardian/env
+Environment=LD_LIBRARY_PATH=/usr/local/lib/log-guardian
+ExecStart=/usr/local/bin/log-guardian /var/log/nginx/access.log \
+    --rules /etc/log-guardian/rules.conf \
+    --db /etc/log-guardian/events.db \
+    --password-file /etc/log-guardian/service.password \
+    --follow --no-tui
+User=log-guardian
+Group=log-guardian
+SupplementaryGroups=adm
+NoNewPrivileges=yes
+WatchdogSec=30
+LimitNOFILE=65536
+Restart=on-failure
+RestartSec=3
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+ReadWritePaths=/etc/log-guardian /var/log/nginx /var/lib/log-guardian
+
+[Install]
+WantedBy=multi-user.target

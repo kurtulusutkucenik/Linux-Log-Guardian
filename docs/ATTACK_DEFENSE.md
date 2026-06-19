@@ -60,7 +60,7 @@ bash scripts/bench_vs_modsec.sh
 ### Kurulum: log format zorunlu
 
 ```bash
-sudo NGINX_AUTO_LOG_FORMAT=1 bash install.sh
+sudo bash install.sh
 # veya manuel:
 sudo cp examples/nginx/snippets/log-guardian.conf /etc/nginx/snippets/
 # http {}: include /etc/nginx/snippets/log-guardian.conf;
@@ -119,7 +119,8 @@ Snippet: `examples/nginx/snippets/log-guardian-inline-consult.conf` — `auth_re
 | T2 | OWASP/CRS test corpus | ✅ `owasp_corpus_proof.sh` |
 | T2 | Threat intel sync metrik | ✅ `threat_intel_sync_proof.sh` |
 | T2 | nginx log_guardian enforce | ✅ `install.sh` + `fix_nginx_log_format.sh` |
-| T3 | VPS eth0 + kernel-XDP + 72h soak | ⬜ VPS |
+| T3 | VPS eth0 + kernel-XDP | ⬜ VPS (XDP laptop’ta kapalı) |
+| — | Laptop 72h soak | ✅ `laptop_soak_72h.sh` (Wi‑Fi/kablo) |
 | — | Laptop dev gate (VPS/webhook yok) | ✅ `laptop_dev_gate.sh` |
 | — | TR hosting runbook | ✅ `HOSTING_RUNBOOK_TR.md` |
 | — | OpenAPI strict prod rehberi | ✅ `OPENAPI_STRICT_PROD.md` |

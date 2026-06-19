@@ -34,7 +34,11 @@ echo "Tam ornek: examples/nginx/log-guardian-inline-site.conf"
 echo "Snippet:   examples/nginx/snippets/log-guardian-inline-consult.conf"
 echo ""
 
-echo "── API consult kanit"
-bash "$ROOT/scripts/nginx_inline_consult_proof.sh"
+if [[ "$(id -u)" -eq 0 ]]; then
+  bash "$ROOT/scripts/fix_nginx_inline_consult.sh" 2>/dev/null || true
+fi
+
+echo "── hibrit kanit (inline + log)"
+bash "$ROOT/scripts/nginx_hybrid_proof.sh"
 echo ""
-echo "[OK] inline consult quickstart tamam — dashboard /tests nginx-consult karti"
+echo "[OK] inline consult quickstart tamam — dashboard /tests nginx-consult + hybrid karti"

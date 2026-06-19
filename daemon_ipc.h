@@ -37,8 +37,7 @@ typedef struct __attribute__((packed)) {
     uint8_t  prefix;        /* Prefix uzunluğu 0=host         */
     char     ip[46];        /* IP string, null-sonlu          */
     uint8_t  prob;          /* Tarpit Olasılığı (0-100)       */
-    uint8_t  _pad[3];       /* hizalama                       */
-    uint32_t auth_token;    /* fnv1a32(LOG_GUARDIAN_IPC_TOKEN)*/
+    uint64_t auth_token;    /* SHA256(LOG_GUARDIAN_IPC_TOKEN)[0:8] */
     /* RCE_ALERT alanları (diğer komutlarda sıfır) */
     uint32_t pid;           /* Shell spawn eden PID           */
     char     cmdline[64];   /* execve argv[0] + argv[1]       */

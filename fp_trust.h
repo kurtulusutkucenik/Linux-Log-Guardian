@@ -13,6 +13,10 @@ void fp_trust_config(int enabled, int trust_days, int min_samples,
                      const char *store_path);
 void fp_trust_set_tenant(const char *tenant_id);
 
+/** FP_TRUST_AUTO_WHITELIST=1: tam guvene ulasan IP icin (opsiyonel) */
+typedef void (*fp_trust_promote_fn)(const char *ip);
+void fp_trust_register_promote_fn(fp_trust_promote_fn fn);
+
 /* Her log satirinda cagir (temiz trafik EMA'si) */
 void fp_trust_observe(const char *ip, const LogEntry *e);
 

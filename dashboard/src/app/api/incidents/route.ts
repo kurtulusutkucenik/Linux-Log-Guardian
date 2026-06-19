@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
+import { guardianApiAuthHeaders } from "@/lib/guardianApiAuth";
 
 export const dynamic = "force-dynamic";
 
@@ -38,6 +39,7 @@ export async function GET(request: Request) {
     const res = await fetch(url, {
       cache: "no-store",
       signal: AbortSignal.timeout(3000),
+      headers: guardianApiAuthHeaders(),
     });
     if (res.ok) {
       const data = await res.json();

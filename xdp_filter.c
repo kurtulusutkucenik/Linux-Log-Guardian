@@ -10,11 +10,13 @@
  * Gereksinim: Linux >= 5.2 (BTF), libbpf >= 0.8, clang >= 12
  */
 
-/* CO-RE: vmlinux.h yoksa veya içeriksizse geleneksel başlıkları kullan */
+/* CO-RE: gecerli vmlinux.h yoksa geleneksel basliklari kullan */
 #ifdef __BPF_TRACING__
 # if __has_include("vmlinux.h") && !defined(BPF_NO_VMLINUX)
 #  include "vmlinux.h"
-#  define VMLINUX_LOADED 1
+#  ifdef __VMLINUX_H__
+#   define VMLINUX_LOADED 1
+#  endif
 # endif
 #endif
 

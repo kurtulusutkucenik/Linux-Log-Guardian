@@ -87,6 +87,7 @@ def threshold_rule(
     annotations: dict,
     labels: dict,
 ) -> dict:
+    """Prometheus (A) -> reduce last (B) -> threshold (C) — Grafana unified alerting zorunlulugu."""
     return {
         "uid": uid,
         "title": title,
@@ -103,13 +104,25 @@ def threshold_rule(
                 },
             },
             {
+                "refId": "B",
+                "relativeTimeRange": {"from": 0, "to": 0},
+                "datasourceUid": "__expr__",
+                "model": {
+                    "type": "reduce",
+                    "refId": "B",
+                    "expression": "A",
+                    "reducer": "last",
+                    "settings": {"mode": "dropNN", "replaceNN": False},
+                },
+            },
+            {
                 "refId": "C",
                 "relativeTimeRange": {"from": 0, "to": 0},
                 "datasourceUid": "__expr__",
                 "model": {
                     "type": "threshold",
                     "refId": "C",
-                    "expression": "A",
+                    "expression": "B",
                     "conditions": [
                         {
                             "evaluator": {"params": [threshold], "type": cmp},
@@ -121,7 +134,7 @@ def threshold_rule(
                 },
             },
         ],
-        "noDataState": "NoData",
+        "noDataState": "OK",
         "execErrState": "Alerting",
         "for": for_duration,
         "annotations": annotations,
@@ -129,6 +142,36 @@ def threshold_rule(
         "ruleGroup": group,
         "folderUID": folder_uid,
     }
+
+
+def parse_rule_expr(raw_expr: str, uid: str) -> tuple[str, float, str]:
+    """Prometheus ifadesi -> (temiz expr, esik, karsilastirma)."""
+    expr = raw_expr.strip()
+    # Bool carpim / karsilastirma: 1=alarm, 0=normal → esik > 0
+    if (
+        " and " in expr
+        or " == " in expr
+        or "> bool" in expr
+        or "< bool" in expr
+        or " == bool" in expr
+    ):
+        return expr, 0.0, "gt"
+
+    if ">" in expr:
+        base, tail = expr.rsplit(">", 1)
+        try:
+            return base.strip(), float(tail.strip()), "gt"
+        except ValueError:
+            pass
+
+    if "<" in expr:
+        base, tail = expr.rsplit("<", 1)
+        try:
+            return base.strip(), float(tail.strip()), "lt"
+        except ValueError:
+            pass
+
+    return expr, 1.0, "gt"
 
 
 def rules_from_template(alerts_path: Path, folder_uid: str, ds_uid: str) -> list[dict]:
@@ -144,31 +187,22 @@ def rules_from_template(alerts_path: Path, folder_uid: str, ds_uid: str) -> list
             uid = rule.get("uid") or rule.get("title", "rule").lower().replace(" ", "-")
             title = rule.get("title") or uid
             expr = ""
-            threshold = 1.0
-            cmp = "lt"
             for item in rule.get("data") or []:
                 model = item.get("model") or {}
                 if model.get("expr"):
                     expr = model["expr"]
-                    if ">" in expr:
-                        cmp = "gt"
-                        parts = expr.split(">")
-                        if len(parts) > 1:
-                            try:
-                                threshold = float(parts[-1].strip())
-                            except ValueError:
-                                threshold = 50.0
             if not expr:
                 continue
+            base_expr, threshold, cmp = parse_rule_expr(expr, uid)
             built.append(
                 threshold_rule(
                     uid=uid,
                     title=title,
-                    expr=expr.split(">")[0].strip() if ">" in expr else expr,
+                    expr=base_expr,
                     folder_uid=folder_uid,
                     ds_uid=ds_uid,
                     group=group_name,
-                    threshold=threshold if ">" in expr else 10.0,
+                    threshold=threshold,
                     cmp=cmp,
                     for_duration=rule.get("for") or "5m",
                     annotations=rule.get("annotations") or {},

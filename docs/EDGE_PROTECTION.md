@@ -27,6 +27,14 @@ Log Guardian **tek sunucu WAF**; L3/L4 DDoS icin edge sart.
 3. Origin'e sablon: `deploy/cloudflare-origin.conf`
 4. `rules.conf`: saldiri IP'leri gercek istemciden gelir (`$remote_addr` CF sonrasi duzgun)
 
+**Log Guardian XFF politikasi:**
+
+| Kurulum | `rules.conf` |
+|---------|----------------|
+| Cloudflare + `real_ip_header CF-Connecting-IP` (onerilen) | `TRUST_XFF=0` (varsayilan) — nginx `$remote_addr` yeterli |
+| Yerel nginx reverse proxy (`proxy_pass`) | `TRUST_XFF=1` + `TRUST_PROXY_CIDRS=...` |
+| Sablon | `examples/rules/proxy-trust.conf` |
+
 ```bash
 sudo cp deploy/cloudflare-origin.conf /etc/nginx/conf.d/log-guardian-cloudflare.conf
 sudo nginx -t && sudo systemctl reload nginx

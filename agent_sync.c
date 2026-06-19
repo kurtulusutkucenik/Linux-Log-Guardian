@@ -6,6 +6,8 @@
 #include "schema_validator.h"
 #include "wasm_runtime.h"
 #include "rules_fleet.h"
+#include "firewall.h"
+#include "ban_pipeline.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -56,6 +58,43 @@ static void apply_curl_tls_for_url(CURL *curl, const char *url) {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }
+}
+
+static int fleet_path_allowed(const char *path)
+{
+    if (!path || !path[0] || strstr(path, "..") != NULL)
+        return 0;
+    if (strncmp(path, "/etc/log-guardian/", 18) == 0)
+        return 1;
+    if (path[0] != '/' && path[0] != '.')
+        return 1;
+    return 0;
+}
+
+static int fleet_ban_ip(const char *ip, char *detail, size_t detail_sz)
+{
+    if (!is_valid_ip(ip)) {
+        snprintf(detail, detail_sz, "invalid ip");
+        return -1;
+    }
+    if (ban_pipeline_ban(ip, "fleet", NULL) != 0) {
+        snprintf(detail, detail_sz, "ban pipeline failed");
+        return -1;
+    }
+    return 0;
+}
+
+static int fleet_unban_ip(const char *ip, char *detail, size_t detail_sz)
+{
+    if (!is_valid_ip(ip)) {
+        snprintf(detail, detail_sz, "invalid ip");
+        return -1;
+    }
+    if (ban_pipeline_unban(ip) != 0) {
+        snprintf(detail, detail_sz, "unban failed");
+        return -1;
+    }
+    return 0;
 }
 
 static void fleet_ack_command(const char *cmd_id, const char *status, const char *detail)
@@ -128,10 +167,8 @@ static void process_commands(const char *json) {
 
         if (strcmp(cmd_type, "BAN_IP") == 0) {
             log_rl(LOG_INFO, "[Fleet] BAN_IP: %s", payload);
-            if (daemon_ipc_ban_ipv4(payload) != 0) {
+            if (fleet_ban_ip(payload, ack_detail, sizeof(ack_detail)) != 0)
                 cmd_ok = 0;
-                snprintf(ack_detail, sizeof(ack_detail), "ipc ban failed");
-            }
 
         /* ── PUSH_WAF_RULE ─────────────────────────────────────────── */
         } else if (strcmp(cmd_type, "PUSH_WAF_RULE") == 0) {
@@ -153,11 +190,21 @@ static void process_commands(const char *json) {
 
         /* ── PUSH_THREAT_FEED ──────────────────────────────────────── */
         } else if (strcmp(cmd_type, "PUSH_THREAT_FEED") == 0) {
-            /* payload: "1.2.3.4 5.6.7.8 ..." boşlukla ayrılmış IP listesi */
             log_rl(LOG_INFO, "[Fleet] PUSH_THREAT_FEED: %zu IP alindi", strlen(payload));
-            char *tok = strtok(payload, " ,\t\n");
+            char ips[512];
+            strncpy(ips, payload, sizeof(ips) - 1);
+            ips[sizeof(ips) - 1] = '\0';
+            char *tok = strtok(ips, " ,\t\n");
             while (tok) {
-                daemon_ipc_ban_ipv4(tok);
+                if (!is_valid_ip(tok)) {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "invalid ip in feed");
+                    break;
+                }
+                if (ban_pipeline_ban(tok, "fleet-feed", NULL) != 0) {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "ban failed");
+                }
                 tok = strtok(NULL, " ,\t\n");
             }
 
@@ -172,33 +219,42 @@ static void process_commands(const char *json) {
 
         /* ── PUSH_SCHEMA ───────────────────────────────────────────── */
         } else if (strcmp(cmd_type, "PUSH_SCHEMA") == 0) {
-            /* payload: OpenAPI JSON dosya yolu (önceden SaaS tarafından indirilmiş) */
             log_rl(LOG_INFO, "[Fleet] PUSH_SCHEMA: %s", payload);
             if (strlen(payload) > 0) {
-                if (schema_load(payload) == 0)
+                if (!fleet_path_allowed(payload)) {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "path denied");
+                } else if (schema_load(payload) == 0)
                     log_rl(LOG_INFO, "[Fleet] Schema başarıyla yüklendi: %s", payload);
-                else
+                else {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "schema load failed");
                     log_rl(LOG_ERR, "[Fleet] Schema yüklenemedi: %s", payload);
+                }
             }
 
         /* ── PUSH_WASM_PLUGIN ──────────────────────────────────────── */
         } else if (strcmp(cmd_type, "PUSH_WASM_PLUGIN") == 0) {
-            /* payload: /etc/log-guardian/plugins/xxx.wasm yolu */
             log_rl(LOG_INFO, "[Fleet] PUSH_WASM_PLUGIN: %s", payload);
             if (strlen(payload) > 0) {
-                if (wasm_plugin_load(payload) == 0)
+                if (!fleet_path_allowed(payload) ||
+                    strstr(payload, "/plugins/") == NULL) {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "wasm path denied");
+                } else if (wasm_plugin_load(payload) == 0)
                     log_rl(LOG_INFO, "[Fleet] Wasm plugin yüklendi: %s", payload);
-                else
+                else {
+                    cmd_ok = 0;
+                    snprintf(ack_detail, sizeof(ack_detail), "wasm load failed");
                     log_rl(LOG_ERR, "[Fleet] Wasm plugin yüklenemedi: %s", payload);
+                }
             }
 
         /* ── UNBAN_IP ─────────────────────────────────────────────── */
         } else if (strcmp(cmd_type, "UNBAN_IP") == 0) {
             log_rl(LOG_INFO, "[Fleet] UNBAN_IP: %s", payload);
-            if (daemon_ipc_unban_ipv4(payload) != 0) {
+            if (fleet_unban_ip(payload, ack_detail, sizeof(ack_detail)) != 0)
                 cmd_ok = 0;
-                snprintf(ack_detail, sizeof(ack_detail), "ipc unban failed");
-            }
         } else {
             cmd_ok = 0;
             snprintf(ack_detail, sizeof(ack_detail), "unknown command");

@@ -11,6 +11,18 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  const pathname = request.nextUrl.pathname;
+
+  /* Grafana alert Source/Silence linkleri yanlislikla :3000 gelirse → :3002 */
+  if (pathname.startsWith('/alerting')) {
+    const grafanaBase =
+      process.env.GRAFANA_EXTERNAL_URL ||
+      process.env.NEXT_PUBLIC_GRAFANA_EMBED_URL?.split('/d/')[0] ||
+      'http://127.0.0.1:3002';
+    const dest = `${grafanaBase}${pathname}${request.nextUrl.search}`;
+    return NextResponse.redirect(dest);
+  }
+
   const token = request.cookies.get('auth_token')?.value;
 
   const isLoginPage = request.nextUrl.pathname === '/login';
@@ -21,16 +33,13 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === '/api/fleet/commands/ack';
   const isDataRoomApi = request.nextUrl.pathname.startsWith('/api/data-room/');
   const isPublicPage = request.nextUrl.pathname === '/competitive-proof';
+  /* telemetry: JWT degil Bearer API key — route handler dogrular */
   const isPublicApi =
     request.nextUrl.pathname === '/api/auth/login' ||
     request.nextUrl.pathname === '/api/telemetry' ||
     request.nextUrl.pathname === '/api/tier' ||
-    request.nextUrl.pathname === '/api/metrics/live' ||
-    request.nextUrl.pathname === '/api/metrics/grafana' ||
     isDataRoomApi ||
     isAgentBearerApi;
-
-  const pathname = request.nextUrl.pathname;
 
   function tierBlocked(required: 'pro' | 'enterprise') {
     if (required === 'enterprise' && !tierAtLeast('enterprise')) {

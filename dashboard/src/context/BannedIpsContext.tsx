@@ -40,7 +40,7 @@ export function BannedIpsProvider({
   const refresh = useCallback(async () => {
     try {
       const res = await axios.get("/api/bans", {
-        params: { count_only: 1 },
+        params: { count_only: 1, bust: Date.now() },
         headers: { "Cache-Control": "no-cache" },
       });
       setTotalCount(res.data.count ?? 0);
@@ -87,7 +87,7 @@ export function useBanPreview(limit = 15) {
     setRefreshing(true);
     try {
       const res = await axios.get("/api/bans", {
-        params: { limit, offset: 0 },
+        params: { limit, offset: 0, bust: Date.now() },
       });
       setBans(res.data.bans || []);
       setTruncated(Boolean(res.data.truncated));

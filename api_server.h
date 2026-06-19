@@ -18,3 +18,11 @@ int api_server_start(uint16_t port);
 
 /* Signals the API server thread to stop and cleans up resources. */
 void api_server_stop(void);
+
+typedef struct {
+    uint64_t requests_total;
+    uint64_t auth_fail_total;
+    uint64_t rate_limited_total;
+} ApiServerStats;
+
+void api_server_get_stats(ApiServerStats *out);

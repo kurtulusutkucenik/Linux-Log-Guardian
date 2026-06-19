@@ -20,8 +20,8 @@ static _Atomic uint64_t     g_stat_skip_wl = 0;
 static _Atomic uint64_t     g_stat_fail    = 0;
 static _Atomic uint64_t     g_stat_unban   = 0;
 
-#define BAN_IPC_RETRIES 3
-#define BAN_IPC_RETRY_US 5000
+#define BAN_IPC_RETRIES 5
+#define BAN_IPC_RETRY_US 8000
 
 void ban_pipeline_set_whitelist_fn(BanWhitelistFn fn)
 {
@@ -125,20 +125,10 @@ int ban_pipeline_unban(const char *ip)
     if (!ip || !is_valid_ip(ip)) return -1;
 
     if (daemon_ipc_ping() == 0) {
-        int rc = is_ipv6_addr(ip) ? daemon_ipc_unban_ipv6(ip)
-                                  : daemon_ipc_unban_ipv4(ip);
-        if (rc == 0) {
-            atomic_fetch_add(&g_stat_unban, 1);
-            return 0;
-        }
-    }
-
-    if (xdp_loader_active()) {
-        int rc = is_ipv6_addr(ip) ? xdp_unban_ipv6(ip) : xdp_unban_ipv4(ip);
-        if (rc == 0) {
-            atomic_fetch_add(&g_stat_unban, 1);
-            return 0;
-        }
+        (void)(is_ipv6_addr(ip) ? daemon_ipc_unban_ipv6(ip)
+                               : daemon_ipc_unban_ipv4(ip));
+    } else if (xdp_loader_active()) {
+        (void)(is_ipv6_addr(ip) ? xdp_unban_ipv6(ip) : xdp_unban_ipv4(ip));
     }
 
     const char *set_name = ipset_name_for_ip(ip);

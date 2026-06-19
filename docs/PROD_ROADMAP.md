@@ -35,4 +35,4 @@ Tek komut doğrulama: `bash scripts/prod_stack_e2e.sh`
 - Dashboard: scrypt sifre, JWT zorunlu (prod), login rate limit, `next build` standalone
 - TLS: `docker-compose.prod.yml` + Caddy — `docs/TLS_PRODUCTION.md`
 - Soak: `bash scripts/soak_test.sh` (72h) — `docs/SOAK_TEST.md`
-- Test: `bash scripts/security_hardening_test.sh`
+- Test: `bash scripts/security_hardening_test.sh` · `bash scripts/local_security_audit.sh` · `bash scripts/docs_consistency_check.sh`

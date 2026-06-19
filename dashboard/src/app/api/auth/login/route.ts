@@ -1,9 +1,46 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '@/lib/db';
-import { SignJWT } from 'jose';
-import { getJwtSecret } from '@/lib/authSecrets';
-import { verifyPassword } from '@/lib/password';
+import {
+  authenticateUser,
+  authCookieSecure,
+  signAuthToken,
+} from '@/lib/loginAuth';
 import { checkLoginRateLimit, loginRateLimitKey } from '@/lib/loginRateLimit';
+import { requestUrl } from '@/lib/requestOrigin';
+
+async function readCredentials(request: Request): Promise<{
+  username: string;
+  password: string;
+  browserForm: boolean;
+}> {
+  const contentType = request.headers.get('content-type') || '';
+  if (contentType.includes('application/json')) {
+    const body = await request.json();
+    return {
+      username: String(body?.username || ''),
+      password: String(body?.password || ''),
+      browserForm: false,
+    };
+  }
+
+  const form = await request.formData();
+  return {
+    username: String(form.get('username') || ''),
+    password: String(form.get('password') || ''),
+    browserForm: true,
+  };
+}
+
+function setAuthCookie(response: NextResponse, token: string) {
+  response.cookies.set({
+    name: 'auth_token',
+    value: token,
+    httpOnly: true,
+    secure: authCookieSecure(),
+    sameSite: 'lax',
+    path: '/',
+    maxAge: 60 * 60 * 24,
+  });
+}
 
 export async function POST(request: Request) {
   try {
@@ -16,41 +53,26 @@ export async function POST(request: Request) {
       );
     }
 
-    const { username, password } = await request.json();
-    if (!username || !password) {
-      return NextResponse.json({ error: 'Missing credentials' }, { status: 400 });
-    }
+    const { username, password, browserForm } = await readCredentials(request);
+    const user = await authenticateUser(username, password);
 
-    const user = await prisma.user.findUnique({
-      where: { username },
-    });
-
-    if (!user || !verifyPassword(password, user.passwordHash)) {
+    if (!user) {
+      if (browserForm) {
+        return NextResponse.redirect(requestUrl(request, '/login?error=invalid'));
+      }
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
     }
 
-    const token = await new SignJWT({
-      userId: user.id,
-      username: user.username,
-      tenantId: user.tenantId,
-      isAdmin: user.isAdmin,
-    })
-      .setProtectedHeader({ alg: 'HS256' })
-      .setExpirationTime('24h')
-      .sign(getJwtSecret());
+    const token = await signAuthToken(user);
+
+    if (browserForm) {
+      const response = NextResponse.redirect(requestUrl(request, '/'));
+      setAuthCookie(response, token);
+      return response;
+    }
 
     const response = NextResponse.json({ success: true, redirect: '/' });
-
-    response.cookies.set({
-      name: 'auth_token',
-      value: token,
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'strict',
-      path: '/',
-      maxAge: 60 * 60 * 24,
-    });
-
+    setAuthCookie(response, token);
     return response;
   } catch (error) {
     console.error('Login error:', error);

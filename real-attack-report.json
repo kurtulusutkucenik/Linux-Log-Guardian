@@ -1,11 +1,11 @@
 {
-  "date": "2026-06-08T19:47:52.245287+00:00",
+  "date": "2026-06-19T10:37:15.247345+00:00",
   "corpus": "corpus/real_attack_corpus.access",
   "manifest": "corpus/real_attack_manifest.json",
   "lines_total": 1000,
-  "alerts_total": 1010,
-  "attack_recall_pct": 101.0,
-  "category_avg_recall_pct": 100.6,
+  "alerts_total": 1000,
+  "attack_recall_pct": 100.0,
+  "category_avg_recall_pct": 100.0,
   "target_recall_pct": 85.0,
   "categories": {
     "api_abuse": {
@@ -76,8 +76,8 @@
     },
     "scanner": {
       "lines": 98,
-      "alerts": 107,
-      "recall_pct": 109.2,
+      "alerts": 98,
+      "recall_pct": 100.0,
       "pass": true
     },
     "sqli": {
@@ -100,8 +100,8 @@
     },
     "tr_scan": {
       "lines": 36,
-      "alerts": 37,
-      "recall_pct": 102.8,
+      "alerts": 36,
+      "recall_pct": 100.0,
       "pass": true
     },
     "webshell": {
@@ -130,14 +130,19 @@
     "host": "127.0.0.1",
     "port": 80,
     "pass": true,
-    "nginx_up": true,
+    "nginx_up": false,
     "summary": {
-      "sent_total": 522,
-      "refused_total": 522,
+      "sent_total": 525,
+      "refused_total": 525,
       "replay_alerts": 0,
-      "ban_evidence": false,
-      "bans_active_before": 7,
-      "bans_active_after": 7,
+      "ban_evidence": true,
+      "ban_evidence_waf": true,
+      "ban_evidence_kernel": true,
+      "ban_evidence_live": false,
+      "ban_evidence_replay_waf": true,
+      "ban_evidence_replay_kernel": true,
+      "bans_active_before": 26,
+      "bans_active_after": 26,
       "metrics_alerts": 0.0,
       "ipc": "ok",
       "ban_pipeline": {
@@ -156,7 +161,7 @@
         "sent": 40,
         "refused": 40,
         "timeout": 40,
-        "nginx_up": true,
+        "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
       },
@@ -168,7 +173,7 @@
         "sent": 50,
         "refused": 50,
         "timeout": 50,
-        "nginx_up": true,
+        "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
       },
@@ -180,7 +185,7 @@
         "sent": 134,
         "refused": 134,
         "timeout": 134,
-        "nginx_up": true,
+        "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
       },
@@ -189,10 +194,10 @@
         "duration_sec": 4,
         "threads": 3,
         "rps_per_thread": 50,
-        "sent": 297,
-        "refused": 297,
-        "timeout": 297,
-        "nginx_up": true,
+        "sent": 300,
+        "refused": 300,
+        "timeout": 300,
+        "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
       },
@@ -204,12 +209,12 @@
         "sent": 1,
         "refused": 1,
         "timeout": 1,
-        "nginx_up": true,
+        "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
       }
     ],
-    "date": "2026-06-08T19:48:54.206902+00:00"
+    "date": "2026-06-15T19:27:26.159817+00:00"
   },
-  "updated": "2026-06-08T19:48:54.237456+00:00"
+  "updated": "2026-06-19T10:37:15.266748+00:00"
 }

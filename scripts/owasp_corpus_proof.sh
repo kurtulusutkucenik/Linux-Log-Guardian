@@ -5,11 +5,17 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+ensure_sudo_lg_replay "$0" "$@"
+load_lg_replay_password
+export REAL_ATTACK_SKIP_CATEGORIES="${REAL_ATTACK_SKIP_CATEGORIES:-1}"
 
 echo "=== owasp_corpus_proof ==="
 python3 scripts/generate_owasp_corpus.py
 REAL_ATTACK_CORPUS="$ROOT/corpus/owasp_crs_test.access" \
 REAL_ATTACK_MANIFEST="$ROOT/corpus/owasp_crs_manifest.json" \
+REAL_ATTACK_SKIP_CATEGORIES="$REAL_ATTACK_SKIP_CATEGORIES" \
 python3 scripts/real_attack_replay.py -o owasp-corpus-report.json || REPLAY_EXIT=$?
 REPLAY_EXIT="${REPLAY_EXIT:-0}"
 

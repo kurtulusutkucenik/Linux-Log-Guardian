@@ -14,6 +14,10 @@
 #include <curl/curl.h>
 #include <ctype.h>
 #include <stdatomic.h>
+#include <grp.h>
+#include <sys/stat.h>
+
+#define THREAT_FEED_STATS_JSON "/etc/log-guardian/threat_feed_stats.json"
 
 extern int g_allow_ban;
 extern int g_operator_quiet;
@@ -40,6 +44,8 @@ static atomic_llong g_last_sync_ts = 0;
 static pthread_mutex_t g_err_mu = PTHREAD_MUTEX_INITIALIZER;
 static char g_last_error[128] = "";
 
+#define TF_HTTP_MAX_BYTES   (8 * 1024 * 1024)
+
 struct MemoryStruct {
     char *memory;
     size_t size;
@@ -49,6 +55,8 @@ static size_t WriteMemoryCallback(void *contents, size_t size, size_t nmemb, voi
 {
     size_t realsize = size * nmemb;
     struct MemoryStruct *mem = (struct MemoryStruct *)userp;
+    if (mem->size + realsize > TF_HTTP_MAX_BYTES)
+        return 0;
     char *ptr = realloc(mem->memory, mem->size + realsize + 1);
     if (!ptr) return 0;
     mem->memory = ptr;
@@ -109,7 +117,7 @@ static void audit_ioc(const char *ip, const char *provider, const char *path_str
 static void apply_ioc(const char *ip, const char *provider, uint64_t *applied,
                       uint64_t *skip_wl, uint64_t *failed)
 {
-    if (!ip || !ip[0] || !looks_like_ipv4(ip)) return;
+    if (!ip || !ip[0] || !is_valid_ip(ip)) return;
 
     if (!g_allow_ban) {
         (*applied)++;
@@ -255,8 +263,40 @@ static void parse_plain_ips(const char *data, uint64_t *applied,
     }
 }
 
+static int threat_feed_local_file_allowed(const char *path)
+{
+    if (!path || !path[0])
+        return 0;
+    if (strncmp(path, "/etc/log-guardian/data/", 23) == 0)
+        return 1;
+    if (strncmp(path, "data/", 5) == 0 && strstr(path, "..") == NULL)
+        return 1;
+    return 0;
+}
+
+static int threat_feed_url_allowed(const char *url)
+{
+    if (!url || !url[0])
+        return 0;
+    if (strncmp(url, "https://", 8) == 0)
+        return 1;
+    if (strncmp(url, "http://127.0.0.1", 16) == 0)
+        return 1;
+    if (strncmp(url, "http://localhost", 16) == 0)
+        return 1;
+    if (strncmp(url, "file://", 7) == 0) {
+        const char *local = url + 7;
+        return threat_feed_local_file_allowed(local);
+    }
+    return 0;
+}
+
 static int read_local_file(const char *path, struct MemoryStruct *chunk)
 {
+    if (!threat_feed_local_file_allowed(path)) {
+        set_last_error("local file path denied");
+        return -1;
+    }
     FILE *fp = fopen(path, "rb");
     if (!fp) {
         char err[160];
@@ -287,6 +327,11 @@ static const char *file_url_path(const char *url)
 static int http_fetch(const char *url, struct curl_slist *headers,
                       struct MemoryStruct *chunk, const char *provider)
 {
+    if (!threat_feed_url_allowed(url)) {
+        set_last_error("URL scheme/host denied");
+        return -1;
+    }
+
     const char *local = file_url_path(url);
     if (local) {
         chunk->memory = NULL;
@@ -305,8 +350,13 @@ static int http_fetch(const char *url, struct curl_slist *headers,
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, WriteMemoryCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, chunk);
     curl_easy_setopt(curl, CURLOPT_USERAGENT, "LogGuardian/2.0");
-    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+    curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 0L);
     curl_easy_setopt(curl, CURLOPT_TIMEOUT, 60L);
+    curl_easy_setopt(curl, CURLOPT_MAXFILESIZE, (long)TF_HTTP_MAX_BYTES);
+#if defined(CURLOPT_PROTOCOLS) && defined(CURLPROTO_HTTPS)
+    curl_easy_setopt(curl, CURLOPT_PROTOCOLS, CURLPROTO_HTTPS | CURLPROTO_HTTP);
+    curl_easy_setopt(curl, CURLOPT_REDIR_PROTOCOLS, CURLPROTO_HTTPS);
+#endif
     if (headers)
         curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
     CURLcode res = curl_easy_perform(curl);
@@ -424,6 +474,151 @@ unsigned threat_feed_sources_mask(void)
     return mask;
 }
 
+static int threat_feed_read_persisted(ThreatFeedStats *out);
+
+static void threat_feed_persist_stats(void)
+{
+    ThreatFeedStats st;
+    memset(&st, 0, sizeof(st));
+    st.total_iocs = (uint64_t)atomic_load(&g_total_iocs);
+    st.last_applied = (uint64_t)atomic_load(&g_last_applied);
+    st.last_skipped_whitelist = (uint64_t)atomic_load(&g_last_skip_wl);
+    st.last_failed = (uint64_t)atomic_load(&g_last_failed);
+    st.last_sync_ts = (time_t)atomic_load(&g_last_sync_ts);
+    pthread_mutex_lock(&g_err_mu);
+    snprintf(st.last_error, sizeof(st.last_error), "%s", g_last_error);
+    pthread_mutex_unlock(&g_err_mu);
+
+    ThreatFeedStats prev;
+    if (threat_feed_read_persisted(&prev) == 0) {
+        if (st.last_applied == 0 && prev.last_applied > 0) {
+            st.last_applied = prev.last_applied;
+            st.last_skipped_whitelist = prev.last_skipped_whitelist;
+            st.last_failed = prev.last_failed;
+        }
+        if (st.total_iocs < prev.total_iocs)
+            st.total_iocs = prev.total_iocs;
+        if (!st.last_error[0] && prev.last_error[0])
+            snprintf(st.last_error, sizeof(st.last_error), "%s", prev.last_error);
+    }
+
+    FILE *fp = fopen(THREAT_FEED_STATS_JSON ".tmp", "w");
+    if (!fp)
+        return;
+    fprintf(fp,
+            "{\"last_sync_ts\":%ld,\"last_applied\":%lu,"
+            "\"last_skipped_whitelist\":%lu,\"last_failed\":%lu,"
+            "\"total_iocs\":%lu,\"last_error\":\"",
+            (long)st.last_sync_ts,
+            (unsigned long)st.last_applied,
+            (unsigned long)st.last_skipped_whitelist,
+            (unsigned long)st.last_failed,
+            (unsigned long)st.total_iocs);
+    for (const char *p = st.last_error; p && *p; p++) {
+        if (*p == '"' || *p == '\\')
+            fputc('\\', fp);
+        fputc((unsigned char)*p, fp);
+    }
+    fputs("\"}\n", fp);
+    fclose(fp);
+    rename(THREAT_FEED_STATS_JSON ".tmp", THREAT_FEED_STATS_JSON);
+    chmod(THREAT_FEED_STATS_JSON, 0660);
+    const char *grp_name = getenv("LOG_GUARDIAN_IPC_GROUP");
+    if (!grp_name || !grp_name[0])
+        grp_name = "log-guardian";
+    struct group *gr = getgrnam(grp_name);
+    if (gr)
+        chown(THREAT_FEED_STATS_JSON, 0, gr->gr_gid);
+}
+
+static uint64_t json_uint64(const char *json, const char *key)
+{
+    char pat[48];
+    snprintf(pat, sizeof(pat), "\"%s\":", key);
+    const char *p = strstr(json, pat);
+    if (!p)
+        return 0;
+    p += strlen(pat);
+    return strtoull(p, NULL, 10);
+}
+
+static void threat_feed_parse_json_buf(const char *buf, ThreatFeedStats *out)
+{
+    if (!buf || !out)
+        return;
+    out->last_sync_ts = (time_t)json_uint64(buf, "last_sync_ts");
+    out->last_applied = json_uint64(buf, "last_applied");
+    out->last_skipped_whitelist = json_uint64(buf, "last_skipped_whitelist");
+    out->last_failed = json_uint64(buf, "last_failed");
+    out->total_iocs = json_uint64(buf, "total_iocs");
+    out->last_error[0] = '\0';
+    const char *ek = "\"last_error\":\"";
+    const char *p = strstr(buf, ek);
+    if (!p)
+        return;
+    p += strlen(ek);
+    size_t o = 0;
+    for (size_t i = 0; p[i] && o + 1 < sizeof(out->last_error); ) {
+        if (p[i] == '\\' && p[i + 1]) {
+            out->last_error[o++] = p[i + 1];
+            i += 2;
+        } else if (p[i] == '"') {
+            break;
+        } else {
+            out->last_error[o++] = p[i++];
+        }
+    }
+    out->last_error[o] = '\0';
+}
+
+static int threat_feed_read_persisted(ThreatFeedStats *out)
+{
+    if (!out)
+        return -1;
+    FILE *fp = fopen(THREAT_FEED_STATS_JSON, "r");
+    if (!fp)
+        return -1;
+    char buf[512];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, fp);
+    fclose(fp);
+    if (n == 0)
+        return -1;
+    buf[n] = '\0';
+    memset(out, 0, sizeof(*out));
+    threat_feed_parse_json_buf(buf, out);
+    return 0;
+}
+
+static void threat_feed_merge_persisted(ThreatFeedStats *out)
+{
+    if (!out)
+        return;
+    ThreatFeedStats file;
+    if (threat_feed_read_persisted(&file) != 0)
+        return;
+
+    if (file.total_iocs > out->total_iocs)
+        out->total_iocs = file.total_iocs;
+
+    if (file.last_sync_ts > out->last_sync_ts) {
+        out->last_sync_ts = file.last_sync_ts;
+        out->last_applied = file.last_applied;
+        out->last_skipped_whitelist = file.last_skipped_whitelist;
+        out->last_failed = file.last_failed;
+        if (file.last_error[0])
+            snprintf(out->last_error, sizeof(out->last_error), "%s", file.last_error);
+        return;
+    }
+
+    if (out->last_applied == 0 && file.last_applied > 0) {
+        out->last_applied = file.last_applied;
+        out->last_skipped_whitelist = file.last_skipped_whitelist;
+        out->last_failed = file.last_failed;
+        if (!out->last_error[0] && file.last_error[0])
+            snprintf(out->last_error, sizeof(out->last_error), "%s", file.last_error);
+    }
+}
+
 static void feed_cycle(void)
 {
     unsigned mask = threat_feed_sources_mask();
@@ -449,6 +644,7 @@ static void feed_cycle(void)
     if (applied > 0)
         fprintf(stderr, "[THREAT-FEED] %lu IoC uygulandi (skip_wl=%lu fail=%lu).\n",
                 (unsigned long)applied, (unsigned long)skip_wl, (unsigned long)failed);
+    threat_feed_persist_stats();
 }
 
 static void *feed_thread_func(void *arg)
@@ -539,6 +735,7 @@ void threat_feed_get_stats(ThreatFeedStats *out)
     pthread_mutex_lock(&g_err_mu);
     snprintf(out->last_error, sizeof(out->last_error), "%s", g_last_error);
     pthread_mutex_unlock(&g_err_mu);
+    threat_feed_merge_persisted(out);
 }
 
 int threat_feed_run_once(void)

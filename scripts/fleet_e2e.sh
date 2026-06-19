@@ -10,10 +10,17 @@ AGENT_ID="${FLEET_AGENT_ID:-e2e-agent-01}"
 
 seed_dashboard_db() {
   local db_dir="$1"
+  local admin_pass="${DASHBOARD_ADMIN_PASSWORD:-}"
+  if [[ -f "$ROOT/.env" ]]; then
+    # shellcheck disable=SC1090
+    set -a && source "$ROOT/.env" && set +a
+    admin_pass="${DASHBOARD_ADMIN_PASSWORD:-$admin_pass}"
+  fi
   if [[ -d "$db_dir/prisma" ]]; then
-    (cd "$db_dir" && DASHBOARD_SEED=1 DASHBOARD_FLEET_API_KEY="$API_KEY" \
-      npx prisma db push --skip-generate 2>/dev/null; \
-      DASHBOARD_SEED=1 DASHBOARD_FLEET_API_KEY="$API_KEY" node prisma/seed.mjs) || true
+    local -a seed_env=(DASHBOARD_SEED=1 "DASHBOARD_FLEET_API_KEY=$API_KEY")
+    [[ -n "$admin_pass" ]] && seed_env+=("DASHBOARD_ADMIN_PASSWORD=$admin_pass")
+    (cd "$db_dir" && env "${seed_env[@]}" npx prisma db push --skip-generate 2>/dev/null) || true
+    (cd "$db_dir" && env "${seed_env[@]}" node prisma/seed.mjs) || true
   fi
 }
 

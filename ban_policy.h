@@ -10,7 +10,7 @@ typedef struct {
     double risk_score;
     double min_risk;
     int    allow_ban;
-    char   decision[24]; /* ban | skip_risk | policy_off | force_crit */
+    char   decision[24]; /* ban | skip_risk | skip_fp_trust | policy_off | force_crit */
 } BanPolicyVerdict;
 
 void ban_policy_init(void);

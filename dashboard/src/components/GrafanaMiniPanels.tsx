@@ -30,6 +30,7 @@ type Payload = {
   rangeSec?: number;
   stats?: Record<string, number>;
   socStats?: Record<string, number>;
+  telegramStats?: Record<string, number>;
   sparklines?: Record<string, Spark[]>;
   timeseries?: Record<string, TsRow[]>;
   table?: { metric: string; value: number }[];
@@ -50,6 +51,10 @@ const STAT_COLORS: Record<string, string> = {
   fp_trusted: "#34d399",
   bp_ipset: "#16a34a",
   bp_failed: "#f87171",
+  tg_ack: "#5794f2",
+  tg_unacked: "#be123c",
+  quiet_hours: "#34d399",
+  quiet_active: "#a78bfa",
 };
 
 const CORE_STATS: { id: string; labelKey: MessageKey }[] = [
@@ -75,6 +80,13 @@ const SOC_STATS: { id: string; labelKey: MessageKey }[] = [
   { id: "bp_failed", labelKey: "grafanaSocBpFailed" },
 ];
 
+const TELEGRAM_STATS: { id: string; labelKey: MessageKey }[] = [
+  { id: "tg_ack", labelKey: "grafanaTelegramAck" },
+  { id: "tg_unacked", labelKey: "grafanaTelegramUnacked" },
+  { id: "quiet_hours", labelKey: "grafanaQuietHours" },
+  { id: "quiet_active", labelKey: "grafanaQuietActive" },
+];
+
 const tooltipStyle = {
   background: "#0f1419",
   border: "1px solid rgba(255,255,255,0.1)",
@@ -82,18 +94,109 @@ const tooltipStyle = {
   fontSize: 11,
 };
 
+const LIVE_MAX = 36;
+
+type LiveHist = {
+  eps_ts: TsRow[];
+  http_status: TsRow[];
+  alert_rate: TsRow[];
+  ban_rate: TsRow[];
+  parse_rate: TsRow[];
+  ban_pipeline_rate: TsRow[];
+  sparks: Record<string, Spark[]>;
+};
+
+function emptyLiveHist(): LiveHist {
+  return {
+    eps_ts: [],
+    http_status: [],
+    alert_rate: [],
+    ban_rate: [],
+    parse_rate: [],
+    ban_pipeline_rate: [],
+    sparks: {},
+  };
+}
+
+function appendLiveHist(
+  hist: LiveHist,
+  stats: Record<string, number>,
+): LiveHist {
+  const t = new Date().toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit",
+    second: "2-digit",
+  });
+  const pushTs = (arr: TsRow[], row: TsRow) =>
+    [...arr, row].length > LIVE_MAX ? [...arr, row].slice(-LIVE_MAX) : [...arr, row];
+  const pushSpark = (id: string, v: number) => {
+    const prev = hist.sparks[id] ?? [];
+    const next = [...prev, { t, v }].slice(-LIVE_MAX);
+    return next;
+  };
+  const sparks = { ...hist.sparks };
+  for (const [id, v] of Object.entries(stats)) {
+    if (typeof v === "number" && Number.isFinite(v)) {
+      sparks[id] = pushSpark(id, v);
+    }
+  }
+  return {
+    eps_ts: pushTs(hist.eps_ts, { t, eps: stats.eps ?? 0 }),
+    http_status: pushTs(hist.http_status, {
+      t,
+      "4xx": stats.http_4xx ?? 0,
+      "5xx": stats.http_5xx ?? 0,
+    }),
+    alert_rate: pushTs(hist.alert_rate, { t, alerts_s: stats.alerts ?? 0 }),
+    ban_rate: pushTs(hist.ban_rate, {
+      t,
+      success: stats.ban_ok ?? 0,
+      fail: stats.ban_fail ?? 0,
+    }),
+    parse_rate: pushTs(hist.parse_rate, { t, parse_s: stats.parse_err ?? 0 }),
+    ban_pipeline_rate: pushTs(hist.ban_pipeline_rate, {
+      t,
+      ipc: 0,
+      xdp: stats.xdp ?? 0,
+      ipset: stats.bp_ipset ?? 0,
+      ja3: stats.ja3_clusters ?? 0,
+    }),
+    sparks,
+  };
+}
+
+function liveHistTimeseries(h: LiveHist): Record<string, TsRow[]> {
+  return {
+    eps_ts: h.eps_ts,
+    http_status: h.http_status,
+    alert_rate: h.alert_rate,
+    ban_rate: h.ban_rate,
+    parse_rate: h.parse_rate,
+    ban_pipeline_rate: h.ban_pipeline_rate,
+  };
+}
+
+function needsLiveHistory(body: Payload): boolean {
+  if (!body.reachable) return false;
+  if (body.source === "guardian-direct") return true;
+  const ts = body.timeseries ?? {};
+  return !ts.eps_ts?.length;
+}
+
 function MiniStat({
   title,
   value,
   spark,
   color,
   alert,
+  valueClassName,
 }: {
   title: string;
   value: string;
   spark: Spark[];
   color: string;
   alert?: boolean;
+  valueClassName?: string;
 }) {
   return (
     <div
@@ -102,7 +205,11 @@ function MiniStat({
       }`}
     >
       <p className="text-[10px] uppercase tracking-wider text-white/40 truncate">{title}</p>
-      <p className={`text-lg font-bold font-mono mt-0.5 ${alert ? "text-red-300" : "text-white"}`}>
+      <p
+        className={`text-lg font-bold font-mono mt-0.5 ${
+          valueClassName ?? (alert ? "text-red-300" : "text-white")
+        }`}
+      >
         {value}
       </p>
       {spark.length > 1 && (
@@ -179,7 +286,21 @@ function MiniTs({
 function fmtStat(id: string, v: number): string {
   if (id === "eps") return v.toFixed(1);
   if (id === "xdp") return v >= 1 ? "ON" : "OFF";
+  if (id === "quiet_hours") return v >= 1 ? "ON" : "OFF";
+  if (id === "quiet_active") return v >= 1 ? "ACTIVE" : "no";
   return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
+}
+
+function telegramValueClass(id: string, v: number): string {
+  if (id === "tg_ack") return "text-blue-400";
+  if (id === "tg_unacked") {
+    if (v >= 20) return "text-red-400";
+    if (v >= 5) return "text-amber-300";
+    return "text-green-400";
+  }
+  if (id === "quiet_hours") return v >= 1 ? "text-amber-300" : "text-green-400";
+  if (id === "quiet_active") return v >= 1 ? "text-purple-300" : "text-green-400";
+  return "text-white";
 }
 
 export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
@@ -188,6 +309,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
   const [rangeSec, setRangeSec] = useState(3600);
   const [loading, setLoading] = useState(false);
   const reqGen = useRef(0);
+  const liveHistRef = useRef<LiveHist>(emptyLiveHist());
 
   const fetchMetrics = useCallback(
     async (range: number) => {
@@ -211,7 +333,21 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           });
           return;
         }
-        setData({ ...body, rangeSec: body.rangeSec ?? range });
+        const merged = { ...body, rangeSec: body.rangeSec ?? range };
+        if (needsLiveHistory(merged) && merged.stats) {
+          const soc = merged.socStats ?? {};
+          liveHistRef.current = appendLiveHist(liveHistRef.current, {
+            ...merged.stats,
+            bp_ipset: soc.bp_ipset,
+            ja3_clusters: soc.ja3_clusters,
+          });
+          merged.timeseries = liveHistTimeseries(liveHistRef.current);
+          merged.sparklines = { ...liveHistRef.current.sparks };
+          merged.hint =
+            merged.hint ||
+            "Canli :9091 — grafikler tarayicida birikiyor (12sn). Gecmis: bash scripts/dashboard_stack.sh";
+        }
+        setData(merged);
       } catch {
         if (gen === reqGen.current) setData({ reachable: false, rangeSec: range });
       } finally {
@@ -222,6 +358,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
   );
 
   useEffect(() => {
+    liveHistRef.current = emptyLiveHist();
     void fetchMetrics(rangeSec);
   }, [rangeSec, tenant, fetchMetrics]);
 
@@ -233,6 +370,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
 
   const stats = data?.stats ?? {};
   const socStats = data?.socStats ?? {};
+  const telegramStats = data?.telegramStats ?? {};
   const sparks = chartsReady ? (data?.sparklines ?? {}) : {};
   const ts = chartsReady ? (data?.timeseries ?? {}) : {};
 
@@ -385,6 +523,29 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           colors={["#be123c"]}
           height={100}
         />
+      </div>
+
+      {/* Telegram operator — Ack row */}
+      <div className="pt-2 border-t border-white/10">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3">
+          {t("grafanaTelegramSection")}
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+          {TELEGRAM_STATS.map(({ id, labelKey }) => {
+            const v = telegramStats[id] ?? 0;
+            return (
+              <MiniStat
+                key={id}
+                title={t(labelKey)}
+                value={fmtStat(id, v)}
+                spark={sparks[id] ?? []}
+                color={STAT_COLORS[id] ?? "#5794f2"}
+                alert={id === "tg_unacked" && v >= 20}
+                valueClassName={telegramValueClass(id, v)}
+              />
+            );
+          })}
+        </div>
       </div>
 
       {/* SOC row — threat / FP / ban pipeline / JA3 */}

@@ -1,0 +1,6 @@
+# Cloudflare Pages — domain baglandiginda bu dosya build yolunu kilitler.
+# Dashboard: Build command = bash scripts/website_deploy_gate.sh
+#            Build output  = assets/website-deploy (wrangler ile ayni)
+name = "linux-log-guardian-website"
+compatibility_date = "2024-09-23"
+pages_build_output_dir = "assets/website-deploy"

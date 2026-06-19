@@ -160,20 +160,18 @@ sudo systemctl restart log-guardian-daemon log-guardian
 bash scripts/install_steps.sh 4-health
 
 # 5: Pro dashboard (TLS, Docker)
-export JWT_SECRET=$(openssl rand -hex 32)
-bash scripts/install_steps.sh 5-dashboard
-# veya: bash scripts/dashboard_prod_smoke.sh && bash scripts/tls_proxy_up.sh
+bash scripts/laptop_jwt_setup.sh
+# veya tam stack: bash scripts/dashboard_stack.sh
 
 # 6: Soak (servisler ayaktayken)
 SOAK_SHORT=1 bash scripts/install_steps.sh 6-soak   # 5 dk hızlı
-bash scripts/soak_start.sh                          # arka planda (SOAK_DURATION ile)
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start   # 1 saat
+# bash scripts/laptop_soak_72h.sh --start           # 72 saat
 
-# 7: Grafana (Docker)
-bash scripts/install_steps.sh 7-grafana
-# veya: bash scripts/dev_stack.sh --grafana
+# 7: Grafana (Docker) — dashboard_stack.sh icinde
+bash scripts/dashboard_stack.sh
 
-# Laptop tek komut (soak'a dokunmaz)
-bash scripts/dev_stack.sh --all
+# Laptop operasyon matrisi: docs/LAPTOP_OPS.md
 sudo bash scripts/sync_local_install.sh             # repo binary → /usr/local
 ```
 
@@ -209,6 +207,10 @@ curl -fsSL https://raw.githubusercontent.com/kurtulusutkucenik/loganalyzer/main/
 | BTF Desteği | Opsiyonel | Var (`/sys/kernel/btf/vmlinux`) |
 | RAM | 512 MB | 2 GB+ |
 | CPU | 1 çekirdek | 4+ çekirdek |
+| **İnternet (çıkış)** | Core için gerekmez | Threat feed, webhook, Docker pull için **gerekir** |
+| **Ağ arayüzü** | ipset yeterli | VPS `eth0` → XDP; laptop Wi‑Fi → ipset fallback |
+
+Threat intel kurulum süreleri ve API key: [THREAT_INTEL_SETUP.md](THREAT_INTEL_SETUP.md)
 
 ### 📦 Gerekli Bağımlılıklar (İndirilmesi Gerekenler)
 
@@ -413,31 +415,22 @@ cd /kurulum/dizini && make check-deps
 
 ---
 
-## 🔐 Şifre Ayarlama & Güvenlik (Zorunlu)
+## 🔐 Şifre & güvenlik
 
-Proje varsayılan erişim şifresi ile yapılandırılmıştır:
-- **Varsayılan Erişim Şifresi:** `DegistirBeni!123`
+- **Demo parola (repo):** `DegistirBeni!123` — laptop/deneme için bilerek açık; değiştirmek zorunlu değil.
+- **İnternete açık sunucu:** parolayı değiştirin.
 
-Sisteminizin güvenliği için ilk kurulumdan sonra bu şifreyi **mutlaka** kendi belirleyeceğiniz güçlü bir şifre ile değiştirmelisiniz.
+```bash
+# Laptop — API + JWT (parolaya dokunmaz):
+sudo bash scripts/ensure_api_security.sh
+bash scripts/laptop_jwt_setup.sh
 
-### Şifre Değiştirme Adımları:
+# İnternet sunucusu — tam sertleştirme:
+sudo env LG_NEW_PASSWORD='KENDI_PAROLAN' bash scripts/laptop_harden.sh
+bash scripts/laptop_harden_check.sh
+```
 
-1. Kendi şifreniz için güvenli bir PBKDF2 (100.000 iterasyonlu SHA-256) hash'i üretmek için terminalde şu Python komutunu çalıştırın:
-   ```bash
-   python3 -c "
-   import hashlib, os
-   s = os.urandom(16)
-   pwd = input('Yeni Şifreniz: ').encode()
-   h = hashlib.pbkdf2_hmac('sha256', pwd, s, 100000)
-   print('\nACCESS_PASSWORD_KDF=pbkdf2$100000$' + s.hex() + '$' + h.hex())
-   "
-   ```
-2. Üretilen `ACCESS_PASSWORD_KDF=...` satırını kopyalayın.
-3. `/etc/log-guardian/rules.conf` dosyasını açıp mevcut satırla değiştirin.
-4. Değişikliklerin aktif olması için servisi yeniden başlatın veya hot-reload tetikleyin:
-   ```bash
-   sudo systemctl restart log-guardian
-   ```
+Tam matris: [LAPTOP_OPS.md](LAPTOP_OPS.md) · [SECURITY.md](../SECURITY.md)
 
 ---
 
@@ -447,7 +440,7 @@ Kendi sunucunuza sahte saldırılar düzenleyerek WAF ve Anomali sistemini test 
 
 ```bash
 # Kaynak koda gidin
-cd loganalyzer
+cd loganalyzer   # ürün: Linux Log Guardian
 
 # Hem SQLi hem de yavaş-bruteforce (low-and-slow) testi başlatır
 make security-test

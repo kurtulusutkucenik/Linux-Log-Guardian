@@ -57,6 +57,16 @@ void metrics_update(const MetricsSnapshot *snap) {
     pthread_mutex_unlock(&g_snap_lock);
 }
 
+void metrics_refresh_fp_trust(long trusted, long partial, long enabled, long suppressed)
+{
+    pthread_mutex_lock(&g_snap_lock);
+    g_snap.fp_trusted_ips      = trusted;
+    g_snap.fp_partial_ips      = partial;
+    g_snap.fp_learn_enabled    = enabled;
+    g_snap.fp_suppressed_total = suppressed;
+    pthread_mutex_unlock(&g_snap_lock);
+}
+
 static void write_all(int fd, const char *buf, size_t len) {
     while (len > 0) {
         ssize_t n = write(fd, buf, len);
@@ -136,6 +146,12 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         "# HELP loganalyzer_threat_total_iocs Threat feed IOC sayisi\n"
         "# TYPE loganalyzer_threat_total_iocs gauge\n"
         "loganalyzer_threat_total_iocs{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_threat_last_applied Son sync'te uygulanan IOC\n"
+        "# TYPE loganalyzer_threat_last_applied gauge\n"
+        "loganalyzer_threat_last_applied{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_threat_last_failed Son sync'te basarisiz IOC\n"
+        "# TYPE loganalyzer_threat_last_failed gauge\n"
+        "loganalyzer_threat_last_failed{tenant_id=\"%s\"} %ld\n"
         "# HELP loganalyzer_threat_feed_enabled Threat feed acik (1=evet)\n"
         "# TYPE loganalyzer_threat_feed_enabled gauge\n"
         "loganalyzer_threat_feed_enabled{tenant_id=\"%s\"} %ld\n"
@@ -186,7 +202,28 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         "loganalyzer_webhook_telegram_route{tenant_id=\"%s\"} %ld\n"
         "# HELP loganalyzer_webhook_telegram_batch_sec WARN/INFO ozet penceresi (0=kapali)\n"
         "# TYPE loganalyzer_webhook_telegram_batch_sec gauge\n"
-        "loganalyzer_webhook_telegram_batch_sec{tenant_id=\"%s\"} %ld\n",
+        "loganalyzer_webhook_telegram_batch_sec{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_telegram_ack_24h Telegram inline onay (son 24s)\n"
+        "# TYPE loganalyzer_telegram_ack_24h gauge\n"
+        "loganalyzer_telegram_ack_24h{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_telegram_unacked_24h Onay bekleyen alarm/ban (24s)\n"
+        "# TYPE loganalyzer_telegram_unacked_24h gauge\n"
+        "loganalyzer_telegram_unacked_24h{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_webhook_quiet_hours Sessiz saat ayari (1=acik)\n"
+        "# TYPE loganalyzer_webhook_quiet_hours gauge\n"
+        "loganalyzer_webhook_quiet_hours{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_webhook_quiet_active Sessiz saat penceresi aktif\n"
+        "# TYPE loganalyzer_webhook_quiet_active gauge\n"
+        "loganalyzer_webhook_quiet_active{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_api_requests_total REST API istek sayisi\n"
+        "# TYPE loganalyzer_api_requests_total counter\n"
+        "loganalyzer_api_requests_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_api_auth_fail_total API 403 yetkisiz istek\n"
+        "# TYPE loganalyzer_api_auth_fail_total counter\n"
+        "loganalyzer_api_auth_fail_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_api_rate_limited_total API 429 rate limit\n"
+        "# TYPE loganalyzer_api_rate_limited_total counter\n"
+        "loganalyzer_api_rate_limited_total{tenant_id=\"%s\"} %ld\n",
         g_tenant_label, s->total_lines,
         g_tenant_label, s->parse_errors,
         g_tenant_label, s->total_bytes,
@@ -214,6 +251,8 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         g_tenant_label, s->honey_traps,
         g_tenant_label, s->threat_last_sync_ts,
         g_tenant_label, s->threat_total_iocs,
+        g_tenant_label, s->threat_last_applied,
+        g_tenant_label, s->threat_last_failed,
         g_tenant_label, s->threat_feed_enabled,
         g_tenant_label, s->fp_trusted_ips,
         g_tenant_label, s->fp_partial_ips,
@@ -230,7 +269,14 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         g_tenant_label, s->webhook_queue_drops,
         g_tenant_label, s->webhook_queue_depth,
         g_tenant_label, s->webhook_telegram_route,
-        g_tenant_label, s->webhook_telegram_batch_sec);
+        g_tenant_label, s->webhook_telegram_batch_sec,
+        g_tenant_label, s->telegram_ack_24h,
+        g_tenant_label, s->telegram_unacked_24h,
+        g_tenant_label, s->webhook_quiet_enabled,
+        g_tenant_label, s->webhook_quiet_active,
+        g_tenant_label, s->api_requests_total,
+        g_tenant_label, s->api_auth_fail_total,
+        g_tenant_label, s->api_rate_limited_total);
 }
 
 static void handle_client(int cfd) {
@@ -254,6 +300,8 @@ static void handle_client(int cfd) {
         webhook_metrics_snapshot(&s.webhook_sent, &s.webhook_fail,
                                  &s.webhook_queue_drops, &s.webhook_queue_depth);
         webhook_config_metrics(&s.webhook_telegram_route, &s.webhook_telegram_batch_sec);
+        s.webhook_quiet_enabled = webhook_quiet_hours_enabled() ? 1L : 0L;
+        s.webhook_quiet_active  = webhook_quiet_hours_active() ? 1L : 0L;
 
         blen = metrics_format_prometheus(body, sizeof(body), &s);
     } else {
@@ -302,6 +350,8 @@ static void metrics_build_response(MetricsCtx *ctx) {
         webhook_metrics_snapshot(&s.webhook_sent, &s.webhook_fail,
                                  &s.webhook_queue_drops, &s.webhook_queue_depth);
         webhook_config_metrics(&s.webhook_telegram_route, &s.webhook_telegram_batch_sec);
+        s.webhook_quiet_enabled = webhook_quiet_hours_enabled() ? 1L : 0L;
+        s.webhook_quiet_active  = webhook_quiet_hours_active() ? 1L : 0L;
 
         ctx->blen = metrics_format_prometheus(ctx->body, sizeof(ctx->body), &s);
     } else {

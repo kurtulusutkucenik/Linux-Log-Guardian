@@ -13,10 +13,13 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
+ETC_ENV = Path("/etc/log-guardian/env")
+ETC_RULES = Path("/etc/log-guardian/rules.conf")
 CORPUS = Path(os.environ.get("REAL_ATTACK_CORPUS", ROOT / "corpus" / "real_attack_corpus.access"))
 MANIFEST = Path(os.environ.get("REAL_ATTACK_MANIFEST", ROOT / "corpus" / "real_attack_manifest.json"))
 TARGET_RECALL = float(os.environ.get("REAL_ATTACK_MIN_RECALL", "85"))
 REPLAY_TIMEOUT = int(os.environ.get("REAL_ATTACK_REPLAY_TIMEOUT", "0"))
+SKIP_CATEGORIES = os.environ.get("REAL_ATTACK_SKIP_CATEGORIES", "0") == "1"
 
 
 def lg_bin() -> Path:
@@ -26,14 +29,32 @@ def lg_bin() -> Path:
     raise FileNotFoundError("log-guardian binary yok — make log-guardian")
 
 
+def replay_env() -> dict:
+    """Parola: ortam > /etc/log-guardian/env (okunabilirse) > demo."""
+    env = os.environ.copy()
+    if env.get("LOGANALYZER_PASSWORD", "").strip():
+        return env
+    env.pop("LOGANALYZER_PASSWORD", None)
+    pw = ""
+    if ETC_ENV.is_file() and os.access(ETC_ENV, os.R_OK):
+        for line in ETC_ENV.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = line.strip()
+            if line.startswith("LOGANALYZER_PASSWORD="):
+                pw = line.split("=", 1)[1].strip().strip('"').strip("'")
+                break
+    if not pw:
+        pw = "DegistirBeni!123"
+    env["LOGANALYZER_PASSWORD"] = pw
+    return env
+
+
 def rules_path() -> Path:
-    # Replay her zaman repo rules.conf — CRS yolu ve yazilabilir tmp dosya
+    # Prod KDF + parola /etc ile eslesmeli; yoksa repo rules.conf
+    if ETC_RULES.is_file() and os.access(ETC_RULES, os.R_OK):
+        return ETC_RULES
     local = ROOT / "rules.conf"
     if local.is_file():
         return local
-    installed = Path("/etc/log-guardian/rules.conf")
-    if installed.is_file():
-        return installed
     raise FileNotFoundError("rules.conf bulunamadi")
 
 
@@ -65,13 +86,13 @@ def parse_lg_stdout(stdout: str) -> dict:
 def replay_timeout_for(lines: int) -> int:
     if REPLAY_TIMEOUT > 0:
         return REPLAY_TIMEOUT
-    return max(120, min(900, lines // 4 + 60))
+    # 10K corpus: WASM init + CRS — 900s yetmez; ust sinir 1800
+    return max(120, min(1800, lines // 2 + 120))
 
 
 def replay_file(lg: Path, rules: Path, log_path: Path, timeout: int | None = None) -> dict:
-    env = os.environ.copy()
-    env.setdefault("LOGANALYZER_PASSWORD", "DegistirBeni!123")
-    # GeoIP satirlarini cikar; tmp rules rules.conf ile AYNI dizinde olmali (CRS yolu cozumu)
+    env = replay_env()
+    rules_base = rules.parent
     cache_dir = ROOT / ".cache"
     cache_dir.mkdir(parents=True, exist_ok=True)
     tmp_rules = cache_dir / "real_attack_replay.conf"
@@ -81,12 +102,14 @@ def replay_file(lg: Path, rules: Path, log_path: Path, timeout: int | None = Non
         for ln in text.splitlines():
             if ln.strip().startswith("BLOCK_COUNTRIES="):
                 continue
-            # CRS/OpenAPI yollarini repo kokune gore mutlak yap (tmp .cache/ altinda)
+            if ln.strip().startswith("WASM_ENABLED="):
+                stripped.append("WASM_ENABLED=0")
+                continue
             for key in ("CRS_RULES=", "OPENAPI_SCHEMA=", "FALCO_HOST_RULES=", "WASM_PLUGIN_DIR="):
                 if ln.strip().startswith(key):
                     val = ln.split("=", 1)[1].strip()
                     if val and not val.startswith("/"):
-                        ln = f"{key.split('=')[0]}={ROOT / val}"
+                        ln = f"{key.split('=')[0]}={rules_base / val}"
                     break
             stripped.append(ln)
         tmp_rules.write_text("\n".join(stripped) + "\n", encoding="utf-8")
@@ -100,6 +123,7 @@ def replay_file(lg: Path, rules: Path, log_path: Path, timeout: int | None = Non
                 "--no-tui",
                 "--json",
                 "--no-ban",
+                "--no-webhook",
                 "--no-db",
                 "--rules",
                 str(tmp_rules),
@@ -112,7 +136,13 @@ def replay_file(lg: Path, rules: Path, log_path: Path, timeout: int | None = Non
         )
         combined = (proc.stdout or "") + (proc.stderr or "")
         if proc.returncode != 0 and "{" not in combined:
-            raise RuntimeError(proc.stderr[:500] or f"exit {proc.returncode}")
+            hint = ""
+            if "Parola hatali" in combined or "ERISIM" in combined:
+                hint = (
+                    " — sudo bash scripts/corpus_10k_proof.sh "
+                    f"({ETC_ENV} + /etc/log-guardian/rules.conf KDF eslesmeli)"
+                )
+            raise RuntimeError((proc.stderr[:500] or f"exit {proc.returncode}") + hint)
         return parse_lg_stdout(combined)
     finally:
         tmp_rules.unlink(missing_ok=True)
@@ -136,28 +166,31 @@ def main() -> int:
     total_lines = int(full.get("total_lines", len(all_lines)))
 
     cat_results: dict[str, dict] = {}
-    for cat, info in manifest.get("categories", {}).items():
-        idxs = info.get("line_indices", [])
-        subset = [all_lines[i] for i in idxs if i < len(all_lines)]
-        if not subset:
-            continue
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".access", delete=False) as tf:
-            tf.write("\n".join(subset) + "\n")
-            tf.flush()
-            sub_path = Path(tf.name)
-        try:
-            rep = replay_file(lg, rules, sub_path)
-            alerts = int(rep.get("alerts_total", 0))
-            n = len(subset)
-            recall = round(100.0 * alerts / n, 1) if n else 0.0
-            cat_results[cat] = {
-                "lines": n,
-                "alerts": alerts,
-                "recall_pct": recall,
-                "pass": recall >= TARGET_RECALL,
-            }
-        finally:
-            sub_path.unlink(missing_ok=True)
+    if SKIP_CATEGORIES:
+        print("[real_attack_replay] REAL_ATTACK_SKIP_CATEGORIES=1 — kategori replay atlandi (hizli 10K)")
+    else:
+        for cat, info in manifest.get("categories", {}).items():
+            idxs = info.get("line_indices", [])
+            subset = [all_lines[i] for i in idxs if i < len(all_lines)]
+            if not subset:
+                continue
+            with tempfile.NamedTemporaryFile(mode="w", suffix=".access", delete=False) as tf:
+                tf.write("\n".join(subset) + "\n")
+                tf.flush()
+                sub_path = Path(tf.name)
+            try:
+                rep = replay_file(lg, rules, sub_path)
+                alerts = int(rep.get("alerts_total", 0))
+                n = len(subset)
+                recall = round(100.0 * alerts / n, 1) if n else 0.0
+                cat_results[cat] = {
+                    "lines": n,
+                    "alerts": alerts,
+                    "recall_pct": recall,
+                    "pass": recall >= TARGET_RECALL,
+                }
+            finally:
+                sub_path.unlink(missing_ok=True)
 
     parsed_lines = total_lines or len(all_lines)
     full_recall = round(100.0 * total_alerts / parsed_lines, 1) if parsed_lines else 0.0

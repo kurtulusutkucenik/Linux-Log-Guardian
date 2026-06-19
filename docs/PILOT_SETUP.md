@@ -32,7 +32,8 @@ ssh -i ~/.ssh/pilot.pem ubuntu@YOUR_VPS_IP
 sudo apt-get update -qq
 sudo apt-get install -y git build-essential ipset iptables nginx sqlite3 curl
 git clone https://github.com/kurtulusutkucenik/loganalyzer.git
-cd loganalyzer
+cd loganalyzer   # ürün: Linux Log Guardian
+sudo bash scripts/ensure_api_security.sh
 ```
 
 ### 3. Tek komut kurulum

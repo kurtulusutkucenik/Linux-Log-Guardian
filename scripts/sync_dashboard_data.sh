@@ -20,11 +20,12 @@ copy_if() {
 for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-status.json \
   crs-parity-report.json tenant-isolation-report.json competitive-proof.json compliance-report.json \
   soak-report.json competitive-proof.pdf real-attack-report.json live-attack-report.json ja3-cluster-report.json \
-  ja3-cluster-ban-live.json \
+  ja3-cluster-ban-live.json dashboard-ban-api-report.json webhook-route-proof-report.json \
   fp-cluster-trust-report.json \
   lineage-live-report.json \
-  nginx-inline-consult-report.json real-attack-report-10k.json \
-  owasp-corpus-report.json tr-hosting-corpus-report.json threat-intel-sync-report.json; do
+  nginx-inline-consult-report.json nginx-hybrid-report.json real-attack-report-10k.json \
+  owasp-corpus-report.json tr-hosting-corpus-report.json customer-corpus-report.json \
+  threat-intel-sync-report.json threat-intel-prod-report.json eps-architecture-report.json; do
   copy_if "$f"
 done
 
@@ -52,6 +53,10 @@ if [[ -f "$ROOT/bench-ban-latency.json" ]]; then
   cp -f "$ROOT/bench-ban-latency.json" "$DEST/bench-ban-latency.json"
   echo "[sync] bench-ban-latency.json"
 fi
+if [[ -f "$ROOT/ipv6-ban-e2e-report.json" ]]; then
+  cp -f "$ROOT/ipv6-ban-e2e-report.json" "$DEST/ipv6-ban-e2e-report.json"
+  echo "[sync] ipv6-ban-e2e-report.json"
+fi
 
 if [[ -f "$DEST/attack_tree.json" ]] && command -v curl >/dev/null 2>&1; then
   export DEST AGENT_ID TELEMETRY_URL TOKEN
@@ -71,11 +76,16 @@ print(json.dumps({
 }))
 PY
 )
-  code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$TELEMETRY_URL" \
-    -H "Authorization: Bearer $TOKEN" \
-    -H "Content-Type: application/json" \
-    -d "$payload" 2>/dev/null || echo "000")
-  echo "[sync] telemetry attack_tree push HTTP $code (agent=$AGENT_ID)"
+  if curl -sf -o /dev/null --max-time 2 "${TELEMETRY_URL%/api/telemetry}/api/health" 2>/dev/null \
+     || curl -sf -o /dev/null --max-time 2 "http://127.0.0.1:3000" 2>/dev/null; then
+    code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$TELEMETRY_URL" \
+      -H "Authorization: Bearer $TOKEN" \
+      -H "Content-Type: application/json" \
+      -d "$payload" 2>/dev/null || echo "000")
+    echo "[sync] telemetry attack_tree push HTTP $code (agent=$AGENT_ID)"
+  else
+    echo "[sync] telemetry SKIP — dashboard ayakta degil (docker compose -f docker-compose.prod.yml up -d dashboard)"
+  fi
 fi
 
 echo "[sync] OK — dashboard volume: $DEST"

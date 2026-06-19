@@ -4,7 +4,7 @@
 
 **İlgili belgeler:** [CUSTOMER_REQUIREMENTS.md](CUSTOMER_REQUIREMENTS.md) · [PROD_ROADMAP.md](PROD_ROADMAP.md) · [Log_Guardian_Enterprise_Roadmap.md](Log_Guardian_Enterprise_Roadmap.md) · [TEST_MATRIX.md](TEST_MATRIX.md)
 
-**Son güncelleme:** 2026-06-06
+**Son güncelleme:** 2026-06-09
 
 ---
 
@@ -105,8 +105,8 @@ flowchart TB
 | P7 | Dashboard (Next.js) | `dashboard/` | 🟡 | `cd dashboard && npm run dev` | Prod: TLS + JWT |
 | P8 | Fleet telemetry + komut | `agent_sync.c`, `/fleet` | 🟡 | `bash scripts/fleet_e2e.sh` | Dashboard + `SAAS_ENABLED=1` |
 | P9 | Grafana panelleri | `grafana-dashboard.json`, `grafana-alerts.json` | ✅ | `bash scripts/grafana_provision.sh` | `$tenant` label |
-| P10 | Webhook alarm | `webhook.c` | ⏭ | `WEBHOOK_DRY_RUN=1` test | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
-| P11 | Threat feed (AbuseIPDB/OTX) | `threat_feed.c` | ⏭ | `rules.conf` threat blokları | |
+| P10 | Webhook + Telegram ops | `webhook.c` | ✅ | laptop: tunnel setWebhook + `grafana_alert_e2e.sh` | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
+| P11 | Threat feed (AbuseIPDB/OTX) | `threat_feed.c` | ✅ | `bash scripts/threat_feed_live_proof.sh` | `--status` → `threat_feed_stats.json` |
 | P12 | K8s operator | `k8s-operator/main.go` | 🟡 | `helm install lg ./helm/log-guardian` | |
 | P13 | TLS prod stack | `docker-compose.prod.yml` | 🟡 | [TLS_PRODUCTION.md](TLS_PRODUCTION.md) | Caddy |
 
@@ -129,12 +129,12 @@ flowchart TB
 | # | Alan | Durum | Doğrulama | Hedef |
 |---|------|-------|-----------|-------|
 | Q1 | Faz 0–5 dosya + E2E gate | ✅ | `bash scripts/phase_gate.sh` | PASSED |
-| Q2 | Faz 0–6 tam paket | 🟡 | `bash scripts/phase100.sh` | Dashboard/fleet ortamına bağlı |
+| Q2 | Faz 0–6 tam paket | ✅ | `PHASE100_FAST=1 bash scripts/phase100.sh` | Tam: `phase100.sh` |
 | Q3 | False positive oranı | 🟡 | `bash scripts/fp_report.sh` | benign fp_rate < %5 |
 | Q4 | Throughput bench | ✅ | `bash scripts/bench_report.sh` | EPS + µs/satır |
 | Q5 | Competitive merge gate | 🟡 | `bash scripts/competitive_gate.sh` | CI blocker |
 | Q6 | Prod stack (Wasm+lineage+L7) | 🟡 | `bash scripts/prod_stack_e2e.sh` | Tek komut |
-| Q7 | Güvenlik sertleştirme | 🟡 | `bash scripts/security_hardening_test.sh` | IPC token, JWT |
+| Q7 | Güvenlik sertleştirme | ✅ | `bash scripts/security_hardening_test.sh` | IPC token, XFF, Wasm sandbox |
 | Q8 | BOLA/IDOR E2E | ✅ | `bash scripts/bola_idor_e2e.sh` | idor_score ≥ 80 |
 
 ---

@@ -1,0 +1,10 @@
+{
+  "pass": true,
+  "date": "2026-06-11T18:24:42.340152+00:00",
+  "test_ip": "2001:db8::dead:beef",
+  "ipset_v6": "log_analyzer_block_v6",
+  "ban_via": "api",
+  "ban_path": "ipc-xdp",
+  "api_skip_reason": null,
+  "note": "RFC 3849 doc prefix \u2014 laptop/VPS ipset+ip6tables"
+}

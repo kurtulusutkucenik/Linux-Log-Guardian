@@ -62,4 +62,9 @@ const char *find_newline_avx2(const char *ptr, const char *end);
 /* URL/path'ten sorgu (#, ?) kirp; nginx log path eslestirmesi icin */
 size_t url_path_only(const char *url, size_t url_len, char *out, size_t out_sz);
 
+/* XFF: varsayilan kapali; yalnizca guvenilir proxy IP'sinden gelen satirlarda ac */
+void parser_set_trust_xff(int enabled);
+void parser_clear_proxy_cidrs(void);
+int  parser_add_proxy_cidr(const char *cidr);
+
 #endif /* PARSER_H */

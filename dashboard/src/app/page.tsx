@@ -8,7 +8,6 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useLanguage } from "@/components/LanguageProvider";
-import { BannedIpsPanel } from "@/components/BannedIpsPanel";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 
 const FleetCharts = dynamic(
@@ -26,6 +25,14 @@ const OpsMetricsCharts = dynamic(
 const IncidentsPanel = dynamic(
   () => import("@/components/IncidentsPanel").then((m) => m.IncidentsPanel),
   { ssr: false },
+);
+const BannedIpsPanel = dynamic(
+  () => import("@/components/BannedIpsPanel").then((m) => m.BannedIpsPanel),
+  { ssr: false, loading: () => <div className="glass-panel h-40 animate-pulse" /> },
+);
+const AttackWorldMap = dynamic(
+  () => import("@/components/AttackWorldMap").then((m) => m.AttackWorldMap),
+  { ssr: false, loading: () => <div className="glass-panel h-64 animate-pulse" /> },
 );
 
 export interface AgentTelemetry {
@@ -410,6 +417,9 @@ export default function FleetDashboard() {
         </div>
       </div>
 
+      {/* ── Saldırı haritası ─────────────────────────────────────────── */}
+      <AttackWorldMap />
+
       {/* ── Doğrulama testleri ───────────────────────────────────────── */}
       <ValidationTestsPanel compact showHeaderLink />
 
@@ -432,10 +442,18 @@ export default function FleetDashboard() {
 
       {/* ── Active Fleet Command Panel ─────────────────────────────────── */}
       <div className="glass-panel p-5 border border-primary/20 bg-primary/5 flex flex-col gap-3">
-        <h2 className="text-lg font-semibold flex items-center gap-2 text-primary">
-          <Terminal className="w-5 h-5" />
-          {t("fleetCommand")}
-        </h2>
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2 className="text-lg font-semibold flex items-center gap-2 text-primary">
+            <Terminal className="w-5 h-5" />
+            {t("fleetCommand")}
+          </h2>
+          <a
+            href="/fleet/dispatch"
+            className="text-xs text-primary/80 hover:text-primary hover:underline"
+          >
+            {t("fleetDispatchLink")} →
+          </a>
+        </div>
         <div className="flex flex-col md:flex-row gap-4 items-center">
           <p className="text-sm text-white/70 flex-1">
             {t("fleetCommandDesc")} {t("banToastHint")}

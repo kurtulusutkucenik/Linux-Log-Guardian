@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Gercek nginx :80 saldiri harness — tester + ban_pipeline metrikleri
 #   bash scripts/live_attack_harness.sh
-#   ATTACK_HOST=203.0.113.77 bash scripts/live_attack_harness.sh  # dis IP ban testi
+#   BAN_PROOF=0 bash scripts/live_attack_harness.sh   # hizli, ban replay atla
+# Not: 127.0.0.1 whitelist'te canli ban beklenmez; RFC5737 replay ile ban kaniti uretilir.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -11,10 +12,13 @@ HOST="${ATTACK_HOST:-127.0.0.1}"
 PORT="${ATTACK_PORT:-80}"
 REPORT="${LIVE_ATTACK_REPORT:-live-attack-report.json}"
 DURATION="${LIVE_ATTACK_DURATION:-5}"
+BAN_PROOF="${BAN_PROOF:-1}"
+BAN_PROOF_IP="${BAN_PROOF_IP:-203.0.113.77}"
+BAN_PROOF_JSON="{}"
 
 LG="${LG_BIN:-}"
-[[ -z "$LG" && -x /usr/local/bin/log-guardian ]] && LG=/usr/local/bin/log-guardian
 [[ -z "$LG" && -x ./log-guardian ]] && LG=./log-guardian
+[[ -z "$LG" && -x /usr/local/bin/log-guardian ]] && LG=/usr/local/bin/log-guardian
 RULES="/etc/log-guardian/rules.conf"
 [[ -f "$RULES" ]] || RULES="rules.conf"
 
@@ -72,14 +76,11 @@ run_scenario() {
   out=$(mktemp)
   err=$(mktemp)
   echo "--- scenario: $mode threads=$threads rps=$rps ${dur}s ---" >&2
-  ./tester --mode "$mode" --host "$HOST" --port "$PORT" \
-    --threads "$threads" --rps "$rps" >"$out" 2>"$err" &
-  local tpid=$!
-  sleep "$dur"
-  kill -TERM "$tpid" 2>/dev/null || true
-  sleep 1
-  kill -KILL "$tpid" 2>/dev/null || true
-  wait "$tpid" 2>/dev/null || true
+  # tester recv() blokunda pthread_join takilabilir — timeout ile sure siniri
+  local budget=$((dur + 8))
+  timeout --signal=TERM --kill-after=3 "$budget" \
+    ./tester --mode "$mode" --host "$HOST" --port "$PORT" \
+    --threads "$threads" --rps "$rps" >"$out" 2>"$err" || true
   pkill -9 -f "./tester --mode ${mode} --host ${HOST}" 2>/dev/null || true
 
   sent=$(grep -oE '[0-9]+' <(grep -E 'Gonderilen:|Toplam istek' "$err" 2>/dev/null | tail -1) 2>/dev/null | head -1 || echo 0)
@@ -126,7 +127,92 @@ done
 AFTER=$("$LG" --status --quiet --rules "$RULES" 2>/dev/null || echo '{}')
 METRICS_ALERTS=$(curl -sf "http://127.0.0.1:9091/metrics" 2>/dev/null | grep -m1 '^loganalyzer_alerts_total ' | awk '{print $2}' || echo 0)
 
-python3 - "$REPORT" "$HOST" "$PORT" "$BEFORE" "$AFTER" "$METRICS_ALERTS" "$SCEN_TMP" "$NGINX_UP" <<'PY'
+if [[ "$BAN_PROOF" == "1" ]]; then
+  echo "--- ban_proof replay (${BAN_PROOF_IP}, whitelist disi) ---"
+  BP_LOG=$(mktemp)
+  BP_RULES=$(mktemp)
+  grep -v '^WHITELIST_IP=' "$RULES" >"$BP_RULES" 2>/dev/null || cp "$RULES" "$BP_RULES"
+  cat >"$BP_LOG" <<EOF
+${BAN_PROOF_IP} - - [09/Jun/2026:12:00:01 +0300] "GET /search?q=1%27+UNION+SELECT+null HTTP/1.1" 200 100 "-" "live_attack_ban_proof"
+${BAN_PROOF_IP} - - [09/Jun/2026:12:00:02 +0300] "GET /admin?id=1+OR+1%3D1 HTTP/1.1" 404 50 "-" "live_attack_ban_proof"
+${BAN_PROOF_IP} - - [09/Jun/2026:12:00:03 +0300] "GET /api?x=%3Cscript%3Ealert(1)%3C/script%3E HTTP/1.1" 403 80 "-" "live_attack_ban_proof"
+EOF
+  BP_BEFORE=$("$LG" --status --quiet --rules "$RULES" 2>/dev/null || echo '{}')
+  BP_EXTRA=()
+  if command -v ipset >/dev/null && ipset test log_analyzer_block_v4 "$BAN_PROOF_IP" &>/dev/null; then
+    BP_EXTRA+=(--no-webhook)
+    echo "[INFO] ${BAN_PROOF_IP} zaten ipset'te — ban webhook atlanir (ilk ban kaniti yeterli)"
+  fi
+  if sudo -n true 2>/dev/null; then
+    BP_REPLAY=$(sudo env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-}" \
+      "$LG" "$BP_LOG" --no-tui --json --rules "$BP_RULES" "${BP_EXTRA[@]}" 2>&1 || true)
+  elif [[ "$(id -u)" == "0" ]]; then
+    BP_REPLAY=$(env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-}" \
+      "$LG" "$BP_LOG" --no-tui --json --rules "$BP_RULES" "${BP_EXTRA[@]}" 2>&1 || true)
+  else
+    BP_REPLAY=$("$LG" "$BP_LOG" --no-tui --json --rules "$BP_RULES" "${BP_EXTRA[@]}" 2>&1 || true)
+  fi
+  sleep 2
+  BP_AFTER=$("$LG" --status --quiet --rules "$RULES" 2>/dev/null || echo '{}')
+  IPSET_HIT=0
+  if command -v ipset >/dev/null && ipset list log_analyzer_block_v4 &>/dev/null; then
+    if ipset test log_analyzer_block_v4 "$BAN_PROOF_IP" 2>/dev/null \
+       || sudo -n ipset test log_analyzer_block_v4 "$BAN_PROOF_IP" 2>/dev/null; then
+      IPSET_HIT=1
+    fi
+  fi
+  DB_BAN_HIT=0
+  DB_PATH="${LG_DB:-/etc/log-guardian/events.db}"
+  if [[ -f "$DB_PATH" ]] && command -v sqlite3 >/dev/null; then
+    last_act=$(sqlite3 "$DB_PATH" \
+      "SELECT action FROM ban_events WHERE ip='${BAN_PROOF_IP}' ORDER BY ts DESC LIMIT 1;" 2>/dev/null || true)
+    [[ "$last_act" == "BAN" ]] && DB_BAN_HIT=1
+  fi
+  BAN_PROOF_JSON=$(BP_BEFORE="$BP_BEFORE" BP_AFTER="$BP_AFTER" BP_REPLAY="$BP_REPLAY" \
+    BAN_PROOF_IP="$BAN_PROOF_IP" IPSET_HIT="$IPSET_HIT" DB_BAN_HIT="$DB_BAN_HIT" python3 <<'PY'
+import json, os, re
+def safe(s):
+    try:
+        return json.loads(s)
+    except json.JSONDecodeError:
+        return {}
+before = safe(os.environ.get("BP_BEFORE", "{}"))
+after = safe(os.environ.get("BP_AFTER", "{}"))
+raw = os.environ.get("BP_REPLAY", "")
+alerts = 0
+try:
+    alerts = int(json.loads(raw).get("alerts_total", 0))
+except (json.JSONDecodeError, TypeError, ValueError):
+    m = re.search(r'"alerts_total"\s*:\s*(\d+)', raw)
+    alerts = int(m.group(1)) if m else 0
+bb = (before.get("db") or {}).get("bans_active", 0)
+ab = (after.get("db") or {}).get("bans_active", 0)
+bp = after.get("ban_pipeline") or {}
+ipc_n = int(bp.get("ipc", 0) or 0)
+ipset_n = int(bp.get("ipset", 0) or 0)
+ipset_hit = os.environ.get("IPSET_HIT", "0") == "1"
+db_ban_hit = os.environ.get("DB_BAN_HIT", "0") == "1"
+kernel = (ab > bb) or ipset_hit or db_ban_hit
+waf = alerts > 0
+print(json.dumps({
+    "ip": os.environ.get("BAN_PROOF_IP", ""),
+    "alerts": alerts,
+    "bans_active_before": bb,
+    "bans_active_after": ab,
+    "ban_pipeline": bp,
+    "ipset_hit": ipset_hit,
+    "waf_pass": waf,
+    "kernel_pass": kernel,
+    "pass": waf or kernel,
+    "mode": "rfc5737_replay",
+}))
+PY
+)
+  rm -f "$BP_LOG" "$BP_RULES"
+  echo "$BAN_PROOF_JSON" | python3 -c "import json,sys; d=json.load(sys.stdin); print(f'[ban_proof] ip={d[\"ip\"]} waf={d[\"waf_pass\"]} kernel={d[\"kernel_pass\"]} ipset={d.get(\"ipset_hit\",False)}')"
+fi
+
+python3 - "$REPORT" "$HOST" "$PORT" "$BEFORE" "$AFTER" "$METRICS_ALERTS" "$SCEN_TMP" "$NGINX_UP" "$BAN_PROOF_JSON" <<'PY'
 import json, sys
 from datetime import datetime, timezone
 from pathlib import Path
@@ -144,6 +230,7 @@ after = safe_json(sys.argv[5])
 metrics_alerts = float(sys.argv[6] or 0)
 scen_path = Path(sys.argv[7])
 nginx_up = sys.argv[8] == "1"
+ban_proof = safe_json(sys.argv[9]) if len(sys.argv) > 9 else {}
 
 scenarios = []
 for line in scen_path.read_text(encoding="utf-8").splitlines():
@@ -159,11 +246,25 @@ ab = (after.get("db") or {}).get("bans_active", 0)
 bp = after.get("ban_pipeline") or {}
 ipc = after.get("ipc", "?")
 
-ban_evidence = (ab > bb) or bp.get("ipc", 0) > 0 or bp.get("ipset", 0) > 0
+live_ban = (ab > bb) or bp.get("ipc", 0) > 0 or bp.get("ipset", 0) > 0
 refused_total = sum(s.get("refused", 0) for s in scenarios)
 sent_total = sum(s.get("sent", 0) for s in scenarios)
 replay_any = any(s.get("replay_alerts", 0) for s in scenarios)
-live_pass = sent_total > 0 and (ban_evidence or refused_total > 0 or replay_any or any(s.get("pass") for s in scenarios))
+proof_waf = bool(ban_proof.get("waf_pass"))
+proof_kernel = bool(ban_proof.get("kernel_pass"))
+ban_evidence = live_ban or proof_kernel
+ban_evidence_waf = proof_waf or replay_any
+live_pass = sent_total > 0 and (
+    ban_evidence or ban_evidence_waf or refused_total > 0 or replay_any or any(s.get("pass") for s in scenarios)
+)
+
+note = "127.0.0.1 whitelist: canli kernel ban beklenmez"
+if proof_kernel:
+    note = f"ban_proof kernel ({ban_proof.get('ip', '?')}) — ipset/DB"
+elif proof_waf:
+    note = f"ban_proof WAF ({ban_proof.get('ip', '?')}) — CRS alarm; kernel icin daemon+sudo"
+elif live_ban:
+    note = "canli nginx ban_pipeline artisi"
 
 data = {
     "date": datetime.now(timezone.utc).isoformat(),
@@ -171,11 +272,17 @@ data = {
     "port": port,
     "nginx_up": nginx_up,
     "scenarios": scenarios,
+    "ban_proof": ban_proof if ban_proof else None,
     "summary": {
         "sent_total": sent_total,
         "refused_total": refused_total,
         "replay_alerts": int(replay_any),
         "ban_evidence": ban_evidence,
+        "ban_evidence_waf": ban_evidence_waf,
+        "ban_evidence_kernel": live_ban or proof_kernel,
+        "ban_evidence_live": live_ban,
+        "ban_evidence_replay_waf": proof_waf,
+        "ban_evidence_replay_kernel": proof_kernel,
         "bans_active_before": bb,
         "bans_active_after": ab,
         "metrics_alerts": metrics_alerts,
@@ -183,7 +290,7 @@ data = {
         "ban_pipeline": bp,
     },
     "pass": live_pass,
-    "note": "127.0.0.1 whitelist'te ban atlanabilir — sent>0 + replay_alerts yeterli",
+    "note": note,
 }
 report_path.write_text(json.dumps(data, indent=2) + "\n", encoding="utf-8")
 print(f"[live_attack_harness] -> {report_path} pass={live_pass} sent={sent_total} refused={refused_total}")

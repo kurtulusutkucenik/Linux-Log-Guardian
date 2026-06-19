@@ -92,17 +92,27 @@ SRCS = main.c parser.c anomaly.c db.c tui.c webhook.c telegram_bot.c \
        k8s_guard.c k8s_webhook.c tarpit_server.c mesh_intel.c agent_sync.c \
        siem_forwarder.c etcd_mesh.c \
        schema_validator.c attack_tree.c attack_tree_snapshot.c wasm_runtime.c daemon_stats.c mesh_backend.c incident_engine.c rules_fleet.c \
-       falco_host_rules.c endpoint_baseline.c geoip_feed.c tenant_db.c tenant_policy.c fp_trust.c ban_policy.c l7_telemetry.c
+       falco_host_rules.c endpoint_baseline.c geoip_feed.c geoip_lookup.c tenant_db.c tenant_policy.c fp_trust.c ban_policy.c l7_telemetry.c
 OBJS = $(SRCS:.c=.o)
 
 # ── eBPF daemon kaynak dosyaları (root prosesi) ──────────────────
-DAEMON_SRCS = ebpf_daemon.c daemon_ipc.c ipc_auth.c daemon_stats.c logger.c k8s_guard.c k8s_webhook.c attack_tree.c falco_host_rules.c firewall.c
+DAEMON_SRCS = ebpf_daemon.c daemon_ipc.c ipc_auth.c crypto_utils.c daemon_stats.c logger.c k8s_guard.c k8s_webhook.c attack_tree.c falco_host_rules.c firewall.c
 DAEMON_OBJS = $(DAEMON_SRCS:.c=.daemon.o)
 
 # ── CO-RE: vmlinux.h hedef makinenin BTF'inden üretilir ──────
 VMLINUX_H = vmlinux.h
 
 all: $(TARGET) $(DAEMON) $(TESTER) $(XDP_OBJ) $(UPROBE_OBJ) $(SYSCALL_OBJ) $(LINEAGE_OBJ) $(HTTP_L7_OBJ)
+
+.PHONY: binaries refresh-binaries upgrade-binaries
+# Ikili paket: degisen kaynaklara gore artimli derleme
+binaries: $(TARGET) $(DAEMON)
+	@echo "[OK] binaries: $(TARGET) + $(DAEMON)"
+
+# Prod upgrade: her iki binary zorla yeniden derlenir (upgrade_log_guardian_binary.sh)
+refresh-binaries upgrade-binaries:
+	$(MAKE) -B $(TARGET) $(DAEMON)
+	@echo "[OK] refresh-binaries: $(TARGET) + $(DAEMON)"
 
 # ── Ana analyzer binary ───────────────────────────────────────
 $(TARGET): $(OBJS)
@@ -122,71 +132,64 @@ $(TESTER): tester.c
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ tester.c
 
 # ── CO-RE: vmlinux.h — hedef çekirdek BTF'ini kullan ─────────
-# bpftool mevcut değilse boş başlık oluşturulur (fallback).
+# bpftool yoksa dosya uretilmez; bpf_compat.h geleneksel linux/*.h kullanir.
+BPF_CLANG  = clang
+BPF_CFLAGS = -O2 -g -target bpf -D__TARGET_ARCH_x86 \
+             -D__BPF_TRACING__ \
+             -I. \
+             -I/usr/include/bpf \
+             -idirafter /usr/include/x86_64-linux-gnu \
+             -idirafter /usr/include \
+             -include linux/types.h
+
 $(VMLINUX_H):
+	@if [ -f $@ ] && [ $$(wc -c < $@) -lt 4096 ]; then rm -f $@; fi
 	@if command -v bpftool >/dev/null 2>&1 && \
 	    [ -f /sys/kernel/btf/vmlinux ]; then \
 	    echo "[CORE] vmlinux.h uretiliyor..."; \
-	    bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@; \
-	    echo "[CORE] vmlinux.h hazir ($$(wc -l < $@) satir)."; \
+	    if bpftool btf dump file /sys/kernel/btf/vmlinux format c > $@.tmp 2>/dev/null \
+	       && [ $$(wc -c < $@.tmp) -gt 4096 ]; then \
+	      mv $@.tmp $@; \
+	      echo "[CORE] vmlinux.h hazir ($$(wc -l < $@) satir)."; \
+	    else \
+	      rm -f $@ $@.tmp; \
+	      echo "[CORE] vmlinux.h uretilemedi — geleneksel linux/*.h ile derlenecek."; \
+	    fi; \
+	elif [ -f $@ ]; then \
+	    echo "[CORE] vmlinux.h mevcut ($$(wc -l < $@) satir)."; \
 	else \
-	    echo "[CORE] bpftool/BTF mevcut degil, fallback baslik kullaniliyor."; \
-	    printf '/* vmlinux.h — CO-RE fallback: bpftool ile uretilmedi */\n' > $@; \
+	    echo "[CORE] bpftool/BTF yok — geleneksel linux/*.h ile derlenecek."; \
 	fi
 
 # ── XDP/eBPF kernel nesnesi (CO-RE) ──────────────────────────
 # vmlinux.h varsa kullan; yoksa geleneksel linux/*.h ile derle.
-$(XDP_OBJ): xdp_filter.c $(VMLINUX_H)
-	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
-	      -D__BPF_TRACING__ \
-	      -I. \
-	      -I/usr/include/bpf \
-	      -I/usr/include/x86_64-linux-gnu \
-	      -c xdp_filter.c -o $@
+$(XDP_OBJ): xdp_filter.c bpf_compat.h $(VMLINUX_H)
+	$(BPF_CLANG) $(BPF_CFLAGS) -c xdp_filter.c -o $@
 
 # ── eBPF uprobe nesnesi (TLS In-Memory Sensor) ────────────────────
 # tls_uprobe.c yalnizca __BPF_TRACING__ kapsaminda derlenir.
 # Linux >= 5.5 (uprobe + ring buffer) gerektirir.
-$(UPROBE_OBJ): tls_uprobe.c $(VMLINUX_H)
-	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
-	      -D__BPF_TRACING__ \
-	      -I. \
-	      -I/usr/include/bpf \
-	      -I/usr/include/x86_64-linux-gnu \
-	      -c tls_uprobe.c -o $@
+$(UPROBE_OBJ): tls_uprobe.c bpf_compat.h $(VMLINUX_H)
+	$(BPF_CLANG) $(BPF_CFLAGS) -c tls_uprobe.c -o $@
 
 # ── eBPF execve tracepoint nesnesi (Zero Trust RCE Sensor) ──────────
 # sys_enter_execve hook'u: web proseslerin shell spawn etmesini engeller.
 # Linux >= 5.8 (ring buffer + cgroup helpers) gerektirir.
-$(SYSCALL_OBJ): syscall_uprobe.c $(VMLINUX_H)
-	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
-	      -D__BPF_TRACING__ \
-	      -I. \
-	      -I/usr/include/bpf \
-	      -I/usr/include/x86_64-linux-gnu \
-	      -c syscall_uprobe.c -o $@
+$(SYSCALL_OBJ): syscall_uprobe.c bpf_compat.h $(VMLINUX_H)
+	$(BPF_CLANG) $(BPF_CFLAGS) -c syscall_uprobe.c -o $@
 
 # ── eBPF Lineage Probe (Process & Network Soyağacı — Feature 3) ──────
 # openat/execve/connect/write tracepoint'lari; Attack Tree olusturur.
 # Linux >= 5.8 (ring buffer) gerektirir.
-$(LINEAGE_OBJ): lineage_probe.c $(VMLINUX_H)
-	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
-	      -D__BPF_TRACING__ \
-	      -I. \
-	      -I/usr/include/bpf \
-	      -I/usr/include/x86_64-linux-gnu \
-	      -c lineage_probe.c -o $@
+$(LINEAGE_OBJ): lineage_probe.c bpf_compat.h $(VMLINUX_H)
+	$(BPF_CLANG) $(BPF_CFLAGS) -c lineage_probe.c -o $@
 
-$(HTTP_L7_OBJ): http_l7_probe.c $(VMLINUX_H)
-	clang -O2 -g -target bpf -D__TARGET_ARCH_x86 \
-	      -D__BPF_TRACING__ \
-	      -I. \
-	      -I/usr/include/bpf \
-	      -I/usr/include/x86_64-linux-gnu \
-	      -c http_l7_probe.c -o $@
+$(HTTP_L7_OBJ): http_l7_probe.c bpf_compat.h $(VMLINUX_H)
+	$(BPF_CLANG) $(BPF_CFLAGS) -c http_l7_probe.c -o $@
 
 
 # ── Genel .o kuralı ───────────────────────────────────────────
+daemon_ipc.o daemon_ipc.daemon.o: daemon_ipc.c daemon_ipc.h ipc_auth.h
 %.o: %.c
 	$(CC) $(CFLAGS) -c $< -o $@
 
@@ -199,35 +202,45 @@ clean:
 
 # ── Kurulum ──────────────────────────────────────────────────
 install: $(TARGET) $(DAEMON)
-	install -d $(DESTDIR)$(BINDIR)
-	install -m 755 $(TARGET) $(DESTDIR)$(BINDIR)/
-	install -m 755 $(DAEMON)  $(DESTDIR)$(BINDIR)/
-	@if [ -f $(TESTER) ]; then install -m 755 $(TESTER) $(DESTDIR)$(BINDIR)/; fi
+	install -d "$(DESTDIR)$(BINDIR)"
+	install -m 755 $(TARGET) "$(DESTDIR)$(BINDIR)/"
+	install -m 755 $(DAEMON)  "$(DESTDIR)$(BINDIR)/"
+	@if [ -f $(TESTER) ]; then install -m 755 $(TESTER) "$(DESTDIR)$(BINDIR)/"; fi
 
-	install -d $(DESTDIR)$(CONFDIR)
-	if [ ! -f $(DESTDIR)$(CONFDIR)/rules.conf ]; then \
-		install -m 600 rules.conf $(DESTDIR)$(CONFDIR)/; \
+	install -d "$(DESTDIR)$(CONFDIR)"
+	if [ ! -f "$(DESTDIR)$(CONFDIR)/rules.conf" ]; then \
+		install -m 640 rules.conf "$(DESTDIR)$(CONFDIR)/"; \
+		chown root:log-guardian "$(DESTDIR)$(CONFDIR)/rules.conf" 2>/dev/null || true; \
 	fi
-	install -d $(DESTDIR)$(CONFDIR)/rules
-	install -m 644 rules/crs-core.rules $(DESTDIR)$(CONFDIR)/rules/ 2>/dev/null || true
-	install -m 644 rules/crs-bundle.rules $(DESTDIR)$(CONFDIR)/rules/ 2>/dev/null || true
+	@if [ ! -f "$(DESTDIR)$(CONFDIR)/threat_feed_stats.json" ]; then \
+		printf '%s\n' '{"last_sync_ts":0,"last_applied":0,"last_skipped_whitelist":0,"last_failed":0,"total_iocs":0,"last_error":""}' \
+			> "$(DESTDIR)$(CONFDIR)/threat_feed_stats.json"; \
+		chmod 660 "$(DESTDIR)$(CONFDIR)/threat_feed_stats.json" 2>/dev/null || true; \
+		chown root:log-guardian "$(DESTDIR)$(CONFDIR)/threat_feed_stats.json" 2>/dev/null || true; \
+	fi
+	install -d "$(DESTDIR)$(CONFDIR)/rules"
+	install -m 644 rules/crs-core.rules "$(DESTDIR)$(CONFDIR)/rules/" 2>/dev/null || true
+	install -m 644 rules/crs-bundle.rules "$(DESTDIR)$(CONFDIR)/rules/" 2>/dev/null || true
 
-	@if [ -f $(XDP_OBJ) ]; then install -m 755 $(XDP_OBJ) $(DESTDIR)$(CONFDIR)/; fi
-	@if [ -f $(UPROBE_OBJ) ]; then install -m 755 $(UPROBE_OBJ) $(DESTDIR)$(CONFDIR)/; fi
-	@if [ -f $(SYSCALL_OBJ) ]; then install -m 755 $(SYSCALL_OBJ) $(DESTDIR)$(CONFDIR)/; fi
-	@if [ -f $(LINEAGE_OBJ) ]; then install -m 755 $(LINEAGE_OBJ) $(DESTDIR)$(CONFDIR)/; fi
-	@if [ -f $(HTTP_L7_OBJ) ]; then install -m 755 $(HTTP_L7_OBJ) $(DESTDIR)$(CONFDIR)/; fi
+	@if [ -f $(XDP_OBJ) ]; then install -m 755 $(XDP_OBJ) "$(DESTDIR)$(CONFDIR)/"; fi
+	@if [ -f $(UPROBE_OBJ) ]; then install -m 755 $(UPROBE_OBJ) "$(DESTDIR)$(CONFDIR)/"; fi
+	@if [ -f $(SYSCALL_OBJ) ]; then install -m 755 $(SYSCALL_OBJ) "$(DESTDIR)$(CONFDIR)/"; fi
+	@if [ -f $(LINEAGE_OBJ) ]; then install -m 755 $(LINEAGE_OBJ) "$(DESTDIR)$(CONFDIR)/"; fi
+	@if [ -f $(HTTP_L7_OBJ) ]; then install -m 755 $(HTTP_L7_OBJ) "$(DESTDIR)$(CONFDIR)/"; fi
 
 	@if [ "$(HAVE_WASM)" = "1" ] && [ -f "$(WASMTIME_ROOT)/lib/libwasmtime.so" ]; then \
 		install -d "$(DESTDIR)$(PREFIX)/lib/log-guardian"; \
 		install -m 755 "$(WASMTIME_ROOT)/lib/libwasmtime.so" "$(DESTDIR)$(PREFIX)/lib/log-guardian/"; \
 	fi
 
-	@echo ""
-	@echo "Kurulum tamamlandi."
-	@echo "Daemon baslatmak icin  : systemctl enable --now log-guardian-daemon"
-	@echo "Analyzer baslatmak icin: systemctl enable --now log-guardian"
-	@echo "Binary guncellediyseniz   : sudo systemctl restart log-guardian-daemon log-guardian"
+	@if [ -z "$(LG_QUIET_BUILD)" ]; then \
+		echo ""; \
+		echo "Kurulum tamamlandi."; \
+		echo "Daemon baslatmak icin  : systemctl enable --now log-guardian-daemon"; \
+		echo "Analyzer baslatmak icin: systemctl enable --now log-guardian"; \
+		echo "Binary guncellediyseniz   : sudo bash scripts/upgrade_log_guardian_binary.sh"; \
+		echo "Elle derleme (ikisi birden): make refresh-binaries"; \
+	fi
 
 # ── Derleme modları ───────────────────────────────────────────
 debug: CFLAGS += -g -O0 -DDEBUG
@@ -243,6 +256,18 @@ bench-report: all
 	@bash scripts/bench.sh
 
 # ── Güvenlik testi ───────────────────────────────────────────
+XFF_TEST = tests/parser_xff_test
+FIREWALL_XFF_OBJ = firewall.xff.o
+
+$(FIREWALL_XFF_OBJ): firewall.c
+	$(CC) $(CFLAGS) -DLOG_GUARDIAN_DAEMON -c firewall.c -o $@
+
+$(XFF_TEST): tests/parser_xff_test.c parser.o $(FIREWALL_XFF_OBJ)
+	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_xff_test.c parser.o $(FIREWALL_XFF_OBJ)
+
+xff-test: $(XFF_TEST)
+	@./$(XFF_TEST)
+
 security-test: $(TARGET) $(TESTER)
 	@echo "--- Security Testleri (Memory & Async Attack) ---"
 	@./tester --mode sqli          --host 127.0.0.1 --port 80 &
@@ -290,4 +315,4 @@ release: wasm-release
 	@echo "[release] log-guardian HAVE_WASM=1 hazir — tam kapı:"
 	@echo "  bash scripts/competitive_suite.sh"
 
-.PHONY: all clean install debug bench bench-run bench-report security-test intel-test check-deps fallback wasm-release release
+.PHONY: all clean install debug bench bench-run bench-report security-test xff-test intel-test check-deps fallback wasm-release release

@@ -95,3 +95,9 @@ if [[ -f "$ROOT/test_access.log" ]]; then
 fi
 
 echo "OK — ops_smoke"
+
+if command -v docker >/dev/null 2>&1; then
+  bash "$ROOT/scripts/laptop_observability_check.sh" 2>/dev/null \
+    && echo "[ops_smoke] observability OK" \
+    || echo "[ops_smoke] observability UYARI — bash scripts/dashboard_stack.sh" >&2
+fi

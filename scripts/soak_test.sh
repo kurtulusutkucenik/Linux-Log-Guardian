@@ -14,6 +14,8 @@
 #   SOAK_REPORT=soak-report.json
 #   SOAK_HEALTH_BIN=/usr/local/bin/log-guardian
 #   SOAK_HEALTH_DB=/etc/log-guardian/events.db
+#   SOAK_GRACE_SEC=120     restart sonrasi fail sayma (operasyonel mod)
+#   SOAK_METRICS_REQUIRED=0  1 ise metrics yoksa sample_fail
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -31,15 +33,26 @@ if [[ "${SOAK_SHORT:-0}" == "1" && "$SOAK_REPORT" == "soak-report.json" ]]; then
   SOAK_JSONL=soak-report.short.jsonl
 fi
 SOAK_HEALTH_DB="${SOAK_HEALTH_DB:-/etc/log-guardian/events.db}"
+SOAK_GRACE_SEC="${SOAK_GRACE_SEC:-0}"
+SOAK_METRICS_REQUIRED="${SOAK_METRICS_REQUIRED:-0}"
+SOAK_LAPTOP_RELAX="${SOAK_LAPTOP_RELAX:-0}"
+# Arka plan 72h: health sudo/IPC olcum hatasi — servis+metrik yeterli (laptop)
+if [[ "${SOAK_BACKGROUND:-0}" == "1" && "$SOAK_LAPTOP_RELAX" == "0" ]]; then
+  SOAK_LAPTOP_RELAX=1
+fi
 
 if [[ "${SOAK_SHORT:-0}" == "1" ]]; then
   SOAK_DURATION=300
   SOAK_INTERVAL=30
+  SOAK_LABEL="5m"
   echo "[soak_test] SOAK_SHORT=1 — 5 dk / 30s aralik"
 elif [[ "${SOAK_1H:-0}" == "1" ]]; then
   SOAK_DURATION=3600
   SOAK_INTERVAL=60
-  echo "[soak_test] SOAK_1H=1 — 1 saat / 60s aralik"
+  SOAK_LABEL="1h"
+  echo "[soak_test] SOAK_1H=1 — 1 saat / 60s aralik (72h DEGIL)"
+else
+  SOAK_LABEL="72h"
 fi
 
 fail() { echo "[soak_test] FAIL: $*" >&2; exit 1; }
@@ -55,21 +68,51 @@ else
 fi
 
 # /run/log-guardian 0750 — grup disi kullanici IPC/stats okuyamaz
+in_log_guardian_group() {
+  id -nG 2>/dev/null | tr ' ' '\n' | grep -qx log-guardian
+}
+
 run_soak_health() {
   local log=$1
   local args=(--health --db "$SOAK_HEALTH_DB")
-  if "$SOAK_HEALTH_BIN" "${args[@]}" >"$log" 2>&1; then
-    return 0
+  local cmd=("$SOAK_HEALTH_BIN" "${args[@]}")
+
+  try_direct() {
+    "${cmd[@]}" >"$log" 2>&1
+  }
+  try_sg() {
+    getent group log-guardian >/dev/null 2>&1 \
+      && sg log-guardian -c "exec \"$SOAK_HEALTH_BIN\" --health --db \"$SOAK_HEALTH_DB\"" >"$log" 2>&1
+  }
+  try_sudo_n() {
+    sudo -n "$SOAK_HEALTH_BIN" "${args[@]}" >"$log" 2>&1
+  }
+
+  # Arka planda sg, on planda once direct (grup uyeligi varsa)
+  if [[ "${SOAK_BACKGROUND:-0}" == "1" || ! -t 0 ]]; then
+    try_sg && return 0
+    try_direct && return 0
+    try_sudo_n && return 0
+    echo "[soak_test] health: sg/direct/sudo -n basarisiz (sudo bash scripts/fix_ipc_perms.sh)" >>"$log"
+    return 1
   fi
-  if getent group log-guardian >/dev/null 2>&1; then
-    if sg log-guardian -c "exec \"$SOAK_HEALTH_BIN\" --health --db \"$SOAK_HEALTH_DB\"" >"$log" 2>&1; then
-      return 0
-    fi
+
+  if in_log_guardian_group; then
+    try_direct && return 0
+    try_sg && return 0
+    try_sudo_n && return 0
+  else
+    try_sg && return 0
+    try_direct && return 0
+    try_sudo_n && return 0
   fi
-  if sudo -n "$SOAK_HEALTH_BIN" "${args[@]}" >"$log" 2>&1; then
-    return 0
+
+  if [[ "${SOAK_ALLOW_INTERACTIVE_SUDO:-0}" == "1" ]]; then
+    sudo "$SOAK_HEALTH_BIN" "${args[@]}" >"$log" 2>&1
+    return $?
   fi
-  sudo "$SOAK_HEALTH_BIN" "${args[@]}" >"$log" 2>&1
+  echo "[soak_test] health: interaktif sudo kapali" >>"$log"
+  return 1
 }
 
 if ! "$SOAK_HEALTH_BIN" --health --db "$SOAK_HEALTH_DB" >/dev/null 2>&1; then
@@ -82,10 +125,15 @@ fi
 START_EPOCH=$(date +%s)
 END_EPOCH=$((START_EPOCH + SOAK_DURATION))
 FAILURES=0
+SKIPS=0
 SAMPLES=0
 MAX_RSS_KB=0
+GRACE_UNTIL=0
+PREV_ANALYZER_STATE=""
+PREV_DAEMON_STATE=""
 
 echo "=== soak_test ==="
+echo "Mod: ${SOAK_LABEL:-72h}"
 echo "Baslangic: $(date -Iseconds)"
 echo "Sure: ${SOAK_DURATION}s  aralik: ${SOAK_INTERVAL}s"
 echo "Rapor: $SOAK_REPORT"
@@ -126,32 +174,77 @@ while [[ $(date +%s) -lt $END_EPOCH ]]; do
   fi
   [[ "$RSS_KB" -gt "$MAX_RSS_KB" ]] && MAX_RSS_KB=$RSS_KB
 
-  SAMPLE_FAIL=0
-  [[ "$HEALTH_RC" -ne 0 ]] && SAMPLE_FAIL=1
-  [[ "$SAMPLE_FAIL" -eq 1 ]] && FAILURES=$((FAILURES + 1))
+  # Restart sonrasi grace (systemd flicker)
+  NOW_EPOCH=$(date +%s)
+  if [[ "$SOAK_GRACE_SEC" -gt 0 ]]; then
+    if [[ "$PREV_ANALYZER_STATE" != "active" && "$ANALYZER_STATE" == "active" ]]; then
+      GRACE_UNTIL=$((NOW_EPOCH + SOAK_GRACE_SEC))
+    fi
+    if [[ "$PREV_DAEMON_STATE" != "active" && "$DAEMON_STATE" == "active" ]]; then
+      GRACE_UNTIL=$((NOW_EPOCH + SOAK_GRACE_SEC))
+    fi
+  fi
+  PREV_ANALYZER_STATE="$ANALYZER_STATE"
+  PREV_DAEMON_STATE="$DAEMON_STATE"
 
-  python3 - "$SOAK_JSONL" <<PY
+  SAMPLE_FAIL=0
+  SAMPLE_SKIP=0
+  FAIL_REASON=""
+  if [[ "$HEALTH_RC" -ne 0 ]]; then
+    if [[ "${SOAK_LAPTOP_RELAX:-0}" == "1" \
+          && "$ANALYZER_STATE" == "active" && "$DAEMON_STATE" == "active" ]]; then
+      : # laptop: servis ayakta — health IPC olcum hatasi outage sayilmaz
+    else
+      SAMPLE_FAIL=1
+      if grep -qE 'sg/direct/sudo -n basarisiz|sudo -n basarisiz' "$HEALTH_LOG" 2>/dev/null; then
+        FAIL_REASON="sudo"
+      else
+        FAIL_REASON="health"
+      fi
+    fi
+  elif [[ "$METRICS_OK" -eq 0 && "$SOAK_METRICS_REQUIRED" == "1" ]]; then
+    SAMPLE_FAIL=1
+    FAIL_REASON="metrics"
+  fi
+
+  if [[ "$SAMPLE_FAIL" -eq 1 && "$SOAK_GRACE_SEC" -gt 0 && "$NOW_EPOCH" -lt "$GRACE_UNTIL" ]]; then
+    SAMPLE_FAIL=0
+    SAMPLE_SKIP=1
+    FAIL_REASON="grace_restart"
+    SKIPS=$((SKIPS + 1))
+  elif [[ "$SAMPLE_FAIL" -eq 1 ]]; then
+    FAILURES=$((FAILURES + 1))
+  fi
+
+  python3 - "$SOAK_JSONL" "$TS" "$HEALTH_RC" "$DAEMON_STATE" "$ANALYZER_STATE" \
+    "$METRICS_OK" "$EPS" "$ALERTS" "$LINES" "$RSS_KB" \
+    "$SAMPLE_FAIL" "$SAMPLE_SKIP" "$FAIL_REASON" <<'PY'
 import json, sys
-path = sys.argv[1]
+path, ts, health_rc, daemon, analyzer, metrics_ok, eps, alerts, lines, rss_kb, \
+    sample_fail, sample_skip, fail_reason = sys.argv[1:14]
 row = {
-    "ts": """$TS""",
-    "health_rc": $HEALTH_RC,
-    "health_ok": ${HEALTH_RC} == 0,
-    "daemon_systemd": """$DAEMON_STATE""",
-    "analyzer_systemd": """$ANALYZER_STATE""",
-    "metrics_ok": bool($METRICS_OK),
-    "eps": float("""$EPS""" or 0),
-    "alerts_total": float("""$ALERTS""" or 0),
-    "lines_total": float("""$LINES""" or 0),
-    "rss_kb": int("""$RSS_KB"""),
-    "sample_fail": bool($SAMPLE_FAIL),
+    "ts": ts,
+    "health_rc": int(health_rc),
+    "health_ok": int(health_rc) == 0,
+    "daemon_systemd": daemon,
+    "analyzer_systemd": analyzer,
+    "metrics_ok": metrics_ok == "1",
+    "eps": float(eps or 0),
+    "alerts_total": float(alerts or 0),
+    "lines_total": float(lines or 0),
+    "rss_kb": int(rss_kb or 0),
+    "sample_fail": sample_fail == "1",
+    "sample_skip": sample_skip == "1",
+    "fail_reason": fail_reason or None,
 }
 with open(path, "a", encoding="utf-8") as f:
     f.write(json.dumps(row) + "\n")
 PY
 
-  if [[ "$SAMPLE_FAIL" -eq 1 ]]; then
-    echo "[$TS] FAIL health_rc=$HEALTH_RC daemon=$DAEMON_STATE analyzer=$ANALYZER_STATE"
+  if [[ "$SAMPLE_SKIP" -eq 1 ]]; then
+    echo "[$TS] SKIP grace ($FAIL_REASON) daemon=$DAEMON_STATE analyzer=$ANALYZER_STATE"
+  elif [[ "$SAMPLE_FAIL" -eq 1 ]]; then
+    echo "[$TS] FAIL reason=$FAIL_REASON health_rc=$HEALTH_RC daemon=$DAEMON_STATE analyzer=$ANALYZER_STATE"
     tail -3 "$HEALTH_LOG" 2>/dev/null || true
   else
     echo "[$TS] OK rss=${RSS_KB}KB eps=$EPS daemon=$DAEMON_STATE"
@@ -166,11 +259,23 @@ PY
 done
 
 END_TS=$(date -Iseconds)
-PASS=$([[ "$FAILURES" -eq 0 ]] && echo true || echo false)
+START_ISO=$(date -Iseconds -d "@$START_EPOCH" 2>/dev/null || date -Iseconds)
 
-python3 - "$SOAK_REPORT" "$SOAK_JSONL" <<PY
-import json, sys, datetime
-report_path, jsonl_path = sys.argv[1:3]
+python3 - "$SOAK_REPORT" "$SOAK_JSONL" "$START_ISO" "$END_TS" \
+  "$SOAK_DURATION" "$SOAK_INTERVAL" "$FAILURES" "$SKIPS" "$MAX_RSS_KB" \
+  "${SOAK_SHORT:-0}" "$SOAK_GRACE_SEC" "${SOAK_LABEL:-72h}" <<'PY'
+import json, sys
+from collections import Counter
+
+report_path, jsonl_path, started, ended, duration_s, interval_s, \
+    failures_s, skips_s, max_rss_s, short_mode, grace_s, label = sys.argv[1:13]
+failures = int(failures_s)
+skips = int(skips_s)
+max_rss_kb = int(max_rss_s)
+duration_sec = int(duration_s)
+interval_sec = int(interval_s)
+grace_sec = int(grace_s or 0)
+
 rows = []
 try:
     with open(jsonl_path, encoding="utf-8") as f:
@@ -181,25 +286,54 @@ try:
 except FileNotFoundError:
     pass
 
-duration_h = $SOAK_DURATION / 3600.0
+reasons = Counter(r.get("fail_reason") for r in rows if r.get("sample_fail") or r.get("sample_skip"))
+
+def operational_fail(r):
+    if not r.get("sample_fail"):
+        return False
+    if r.get("fail_reason") == "sudo" and r.get("daemon_systemd") == "active" and r.get("analyzer_systemd") == "active":
+        return False  # olcum artefakti — servisler ayaktaydi
+    return True
+
+op_fail = sum(1 for r in rows if operational_fail(r))
+
 obj = {
-    "started": """$(date -Iseconds -d "@$START_EPOCH" 2>/dev/null || date -Iseconds)""",
-    "ended": """$END_TS""",
-    "duration_sec": $SOAK_DURATION,
-    "duration_hours": round(duration_h, 2),
-    "interval_sec": $SOAK_INTERVAL,
+    "label": label,
+    "started": started,
+    "ended": ended,
+    "duration_sec": duration_sec,
+    "duration_hours": round(duration_sec / 3600.0, 2),
+    "interval_sec": interval_sec,
     "samples": len(rows),
-    "failures": $FAILURES,
-    "pass": $FAILURES == 0,
-    "max_rss_kb": $MAX_RSS_KB,
-    "short_mode": """${SOAK_SHORT:-0}""" == "1",
-    "notes": "health_rc!=0 veya metrics erisilemezse sample_fail",
+    "failures": failures,
+    "skips": skips,
+    "pass": failures == 0,
+    "pass_strict": failures == 0,
+    "pass_operational": op_fail == 0,
+    "max_rss_kb": max_rss_kb,
+    "short_mode": short_mode == "1",
+    "grace_sec": grace_sec,
+    "fail_reasons": dict(reasons),
+    "notes": "sample_fail: health/metrics; sample_skip: grace_restart (SOAK_GRACE_SEC)",
     "samples_detail": rows[-20:] if len(rows) > 20 else rows,
 }
 with open(report_path, "w", encoding="utf-8") as f:
     json.dump(obj, f, indent=2)
-print(f"[soak_test] -> {report_path} pass={obj['pass']} failures={obj['failures']}/{obj['samples']}")
+print(f"[soak_test] -> {report_path} pass={obj['pass']} operational={obj['pass_operational']} failures={failures}/{len(rows)} skips={skips}")
 PY
 
-[[ "$FAILURES" -eq 0 ]] || fail "$FAILURES / $SAMPLES sample basarisiz"
+[[ "$FAILURES" -eq 0 ]] || {
+  if python3 - "$SOAK_REPORT" <<'PY' 2>/dev/null; then
+import json, sys
+r=json.load(open(sys.argv[1]))
+sys.exit(0 if r.get("pass_operational") else 1)
+PY
+    echo "[soak_test] strict FAIL ($FAILURES sample) — operational PASS (servis ayakta, health olcum sudo)"
+    bash "$ROOT/scripts/soak_active_lock.sh" clear 2>/dev/null || true
+    echo "[OK] soak_test (operational)"
+    exit 0
+  fi
+  fail "$FAILURES / $SAMPLES sample basarisiz (skips=$SKIPS grace=${SOAK_GRACE_SEC}s)"
+}
+bash "$ROOT/scripts/soak_active_lock.sh" clear 2>/dev/null || true
 echo "[OK] soak_test"

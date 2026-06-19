@@ -89,6 +89,14 @@ export const GRAFANA_TABLE_METRICS: { id: string; label: string; expr: string }[
   { id: "bp_ipset", label: "ban_pipeline_ipset", expr: 'loganalyzer_ban_pipeline_ipset{tenant_id="$tenant"}' },
 ];
 
+/** Grafana row: Telegram operator (Ack) */
+export const GRAFANA_TELEGRAM_STAT_PANELS: GrafanaStatPanel[] = [
+  { id: "tg_ack", title: "Telegram Ack (24h)", expr: 'loganalyzer_telegram_ack_24h{tenant_id="$tenant"}' },
+  { id: "tg_unacked", title: "Telegram Unacked (24h)", expr: 'loganalyzer_telegram_unacked_24h{tenant_id="$tenant"}' },
+  { id: "quiet_hours", title: "Quiet hours", expr: 'loganalyzer_webhook_quiet_hours{tenant_id="$tenant"}' },
+  { id: "quiet_active", title: "Quiet active now", expr: 'loganalyzer_webhook_quiet_active{tenant_id="$tenant"}' },
+];
+
 /** Grafana row: Threat intel + FP + ban pipeline + JA3 cluster */
 export const GRAFANA_SOC_STAT_PANELS: GrafanaStatPanel[] = [
   { id: "ja3_clusters", title: "JA3 cluster buckets", expr: 'loganalyzer_ja3_clusters_active{tenant_id="$tenant"}' },

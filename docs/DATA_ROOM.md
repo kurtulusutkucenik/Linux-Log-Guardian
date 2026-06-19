@@ -41,16 +41,19 @@ Kaynak JSON'lar repo kökünde de kalır: `fp-report.json`, `crs-parity-report.j
 
 ```bash
 sudo systemctl start log-guardian-daemon log-guardian
-bash scripts/soak_start.sh          # arka plan
-bash scripts/soak_status.sh         # ilerleme
+SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start   # önce 1 saat
+# bash scripts/laptop_soak_72h.sh --start           # 72 saat
+tail -f soak-72h.log
 # Bittiğinde:
 bash scripts/competitive_proof.sh
 bash scripts/data_room_pack.sh
 bash scripts/sync_dashboard_data.sh
 ```
 
+Detay: [SOAK_TEST.md](SOAK_TEST.md) · [LAPTOP_OPS.md](LAPTOP_OPS.md)
+
 ## Topluluğa nasıl anlatılır
 
 > “Her release'te otomatik test suite çalışıyor. PDF ve JSON'da **ne iddia ediyoruz** ve **ne iddia etmiyoruz** açık: ModSec hız yarışı değil — log→WAF→kernel ban, FP oranı, CRS paritesi, ban gecikmesi ölçülüyor.”
 
-Detay: [OPERATIONS.md](OPERATIONS.md) · [BENCHMARK.md](BENCHMARK.md) · [SCOPE_COVERAGE.md](SCOPE_COVERAGE.md)
+Detay: [OPERATIONS.md](OPERATIONS.md) · [BENCHMARK.md](BENCHMARK.md) · [SCOPE_COVERAGE.md](SCOPE_COVERAGE.md) · [COMPETITIVE_STATUS.md](COMPETITIVE_STATUS.md)

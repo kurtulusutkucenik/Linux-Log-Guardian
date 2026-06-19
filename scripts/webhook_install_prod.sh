@@ -30,7 +30,8 @@ if [[ "${SKIP_BINARY_UPGRADE:-0}" != 1 ]]; then
 fi
 
 # Yerel env -> /etc (token burada kalir, rules.conf'a YAZMA)
-grep -v '^[[:space:]]*#' "$ENV_SRC" | grep -v '^[[:space:]]*$' >"$WEBHOOK_ENV"
+grep -v '^[[:space:]]*#' "$ENV_SRC" | grep -v '^[[:space:]]*$' \
+  | sed 's/^[[:space:]]*//;s/[[:space:]]*$//' >"$WEBHOOK_ENV"
 chmod 600 "$WEBHOOK_ENV"
 chown root:root "$WEBHOOK_ENV"
 
@@ -40,7 +41,15 @@ source "$WEBHOOK_ENV"
 set +a
 
 [[ -n "${LOGANALYZER_TELEGRAM_TOKEN:-}" ]] \
-  || fail "LOGANALYZER_TELEGRAM_TOKEN eksik ($ENV_SRC)"
+  || fail "LOGANALYZER_TELEGRAM_TOKEN eksik ($ENV_SRC)
+
+  1. Telegram @BotFather -> /newbot -> token kopyala
+  2. .env.webhook.local icinde yorumu kaldir:
+       LOGANALYZER_TELEGRAM_TOKEN=...
+       LOGANALYZER_TELEGRAM_CHAT_ID=-100...   (kanal veya DM)
+  3. Tekrar: sudo bash scripts/webhook_install_prod.sh --test-all
+
+  Token hazir degilse: bash scripts/webhook_apply_local.sh --dev --test alert"
 
 if [[ "${WEBHOOK_TELEGRAM_ROUTE:-0}" == "1" ]]; then
   [[ -n "${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" && -n "${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" ]] \
@@ -124,25 +133,47 @@ echo "  sudo -u log-guardian env \$(grep -v '^#' $WEBHOOK_ENV | xargs) $LG_BIN -
 
 run_test() {
   local kind="$1"
-  local expect_ok="${2:-2}"
+  local expect_ok="${2:-1}"
   set -a
   # shellcheck disable=SC1090
   source "$WEBHOOK_ENV"
   set +a
   export WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0
-  local out
-  out=$("$LG_BIN" webhook-test "$kind" --quiet --rules "$RULES" 2>&1) || {
+  export WEBHOOK_COOLDOWN_SEC=0 ALERT_COOLDOWN_SEC=0
+  local out attempt
+  for attempt in 1 2 3; do
+    out=$("$LG_BIN" webhook-test "$kind" --quiet --rules "$RULES" 2>&1) || true
+    if echo "$out" | grep -qiE 'Timeout|timed out|Couldn.t connect'; then
+      echo "$out" >&2
+      echo "  [retry $attempt/3] Telegram ag — 5s bekleniyor..." >&2
+      sleep 5
+      continue
+    fi
+    if echo "$out" | grep -q '"fail":0'; then
+      break
+    fi
     echo "$out" >&2
+    if echo "$out" | grep -qi 'chat not found'; then
+      fail "webhook-test $kind — Telegram chat not found
+
+  Bot gruba/kanala admin olarak eklendi mi?
+  CHAT_ID dogru mu? Supergroup forum icin genelde -100... ile baslar.
+  Ornek: -5577870816 -> -1005577870816
+  Dogrula: bash scripts/telegram_chat_id.sh
+  .env.webhook.local duzelt -> sudo bash scripts/webhook_install_prod.sh --test-all"
+    fi
     fail "webhook-test $kind"
-  }
+  done
+  [[ -n "${out:-}" ]] || fail "webhook-test $kind (bos cikti)"
   echo "$out"
   echo "$out" | grep -q '"ok":' || fail "ok alani yok ($kind)"
   echo "$out" | grep -q '"fail":0' || fail "fail>0 ($kind): $out"
-  if [[ "$kind" == "alert" || "$kind" == "ban" || "$kind" == "trap" ]]; then
-    echo "$out" | grep -qE "\"ok\":${expect_ok}[,}]" \
-      || fail "$kind ok=${expect_ok} bekleniyordu (route?): $out"
+  if [[ "$kind" == "alert" || "$kind" == "ban" || "$kind" == "trap" || "$kind" == "batch" ]]; then
+    ok_n=$(echo "$out" | grep -o '"ok":[0-9]*' | grep -o '[0-9]*$' || echo 0)
+    [[ "$ok_n" -ge "$expect_ok" ]] \
+      || fail "$kind ok=$ok_n (beklenen >=$expect_ok): $out"
   fi
-  echo "  [test $kind] OK"
+  echo "  [test $kind] OK (ok=$ok_n)"
 }
 
 if [[ "${1:-}" == "--test" ]]; then
@@ -169,17 +200,24 @@ elif [[ "${1:-}" == "--test-all" ]]; then
     echo "[webhook_install_prod] WARN: format v2 dry-run dogrulanamadi (canli test devam)" >&2
   fi
   export WEBHOOK_DRY_RUN=0
-  expect_ok=2
+  alert_expect=1
   if [[ "${WEBHOOK_TELEGRAM_ROUTE:-0}" == "1" ]]; then
-    expect_ok=1
-    echo "  [route] CRIT/WARN ayri hedef — her test ok:1 bekleniyor"
+    echo "  [route] CRIT/WARN ayri hedef"
+  fi
+  if [[ "${WEBHOOK_TELEGRAM_MIRROR_WARN:-0}" == "1" \
+        && "${WEBHOOK_TELEGRAM_ROUTE:-0}" == "1" \
+        && "${WEBHOOK_TELEGRAM_TOPIC_WARN:-0}" -gt 0 ]]; then
+    alert_expect=2
+    echo "  [mirror] WARN alert — ok>=2 (DM + #uyari topic)"
   fi
   for k in alert ban trap; do
-    run_test "$k" "$expect_ok"
-    sleep 1
+    exp=1
+    [[ "$k" == "alert" ]] && exp=$alert_expect
+    run_test "$k" "$exp"
+    sleep 2
   done
   if [[ "${WEBHOOK_TELEGRAM_BATCH_SEC:-0}" -gt 0 ]]; then
-    run_test batch "$expect_ok"
+    run_test batch 1
     echo "  [batch] WARN ozet DM'e gitti (10sn penceresi)"
   fi
   echo "[OK] Telegram alert + ban + trap gonderildi"

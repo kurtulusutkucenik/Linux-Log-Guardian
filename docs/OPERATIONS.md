@@ -2,7 +2,7 @@
 
 **Hedef:** Kurulumdan sonra sunucu reboot olsa bile Log Guardian otomatik ayakta; operatör üç komutla durumu görür.
 
-**İlgili:** [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md) · [GRAFANA_SETUP.md](GRAFANA_SETUP.md) · [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md)
+**İlgili:** [LAPTOP_OPS.md](LAPTOP_OPS.md) · [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md) · [GRAFANA_SETUP.md](GRAFANA_SETUP.md) · [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) · [DOCS_INDEX.md](DOCS_INDEX.md)
 
 ---
 
@@ -33,9 +33,12 @@ kernel ban (ipset / XDP)
 
 ```bash
 git clone https://github.com/kurtulusutkucenik/loganalyzer.git
-cd loganalyzer
+cd loganalyzer   # ürün: Linux Log Guardian
 sudo bash install.sh
+sudo bash scripts/ensure_api_security.sh
 ```
+
+Laptop operasyon matrisi: [LAPTOP_OPS.md](LAPTOP_OPS.md)
 
 XDP desteklenmiyorsa veya container:
 
@@ -108,9 +111,12 @@ BAN_TTL_SEC=600
 ```nginx
 log_format log_guardian '$remote_addr - $remote_user [$time_local] '
     '"$request" $status $body_bytes_sent '
-    '"$http_referer" "$http_user_agent" "$request_body"';
+    '"$http_referer" "$http_user_agent" "$http_x_forwarded_for" '
+    '"$request_body"';
 access_log /var/log/nginx/access.log log_guardian;
 ```
+
+**XFF:** Log formatı `X-Forwarded-For` içerir. Varsayılan olarak parser **XFF'ye güvenmez** (`TRUST_XFF=0`). Reverse proxy arkasındaysanız `rules.conf` içinde `TRUST_XFF=1` ve `TRUST_PROXY_CIDRS=...` ayarlayın.
 
 ```bash
 sudo nginx -t && sudo systemctl reload nginx

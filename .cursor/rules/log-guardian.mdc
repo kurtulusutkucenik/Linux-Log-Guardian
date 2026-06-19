@@ -23,3 +23,8 @@ alwaysApply: true
 ## Grafana
 - Dashboard/alert: `grafana-dashboard.json`, `grafana-alerts.json`
 - Tenant değişkeni: `$tenant` — sorgularda `tenant_id="$tenant"`
+
+## Laptop operasyon
+- Script matrisi: `docs/LAPTOP_OPS.md`
+- API: `ensure_api_security.sh` · JWT: `laptop_jwt_setup.sh` · FP prod: `install_fp_trust_prod.sh` · Soak: `laptop_soak_72h.sh`
+- Demo parola `DegistirBeni!123` repoda kalir; internet sunucusunda `laptop_harden.sh`

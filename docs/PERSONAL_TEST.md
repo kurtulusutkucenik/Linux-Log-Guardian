@@ -8,7 +8,7 @@ Tahmini süre: **45–90 dk** (daemon/root testleri dahil).
 ## 0. Hazırlık
 
 ```bash
-cd "/home/kurtulus/Masaüstü/Log Analyzer"   # kendi yolunuz
+cd "/path/to/Linux Log Guardian"   # kendi clone yolunuz
 export LOGANALYZER_PASSWORD='DegistirBeni!123'
 
 make -j$(nproc)
@@ -108,15 +108,22 @@ sudo ./log-guardian unban 203.0.113.99
 
 ## 5. Dashboard + Fleet (20–30 dk)
 
+**Prod benzeri (önerilen):**
+
 ```bash
-cd dashboard
-npx prisma db push
-node prisma/seed.mjs
-npm run dev
+bash scripts/dashboard_stack.sh
 ```
 
-Tarayıcı: `http://localhost:3000`  
-Giriş: **admin** / **ChangeMeOnFirstLogin!** (veya seed sırasında `DASHBOARD_ADMIN_PASSWORD` ile belirlediğiniz parola)
+Tarayıcı: `https://localhost:8443`  
+Giriş: **admin** / `.env` içindeki `DASHBOARD_ADMIN_PASSWORD` (yoksa `ChangeMeOnFirstLogin!`)
+
+**Geliştirme (npm dev):**
+
+```bash
+cd dashboard && npx prisma db push && node prisma/seed.mjs && npm run dev
+```
+
+Tarayıcı: `http://localhost:3000`
 
 | Sayfa | Ne kontrol edilir |
 |-------|-------------------|

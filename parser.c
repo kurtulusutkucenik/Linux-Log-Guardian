@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "parser.h"
+#include "firewall.h"
 #include "ip_map.h"
 #include <string.h>
 #include <strings.h>
@@ -10,6 +11,65 @@
 
 #define IS_DIGIT(c)  ((c) >= '0' && (c) <= '9')
 #define IS_SPACE(c)  ((c) == ' '  || (c) == '\t')
+
+#define MAX_PROXY_CIDRS 32
+
+static int  g_trust_xff = 0;
+static char g_proxy_cidrs[MAX_PROXY_CIDRS][64];
+static int  g_proxy_cidr_count = 0;
+
+void parser_set_trust_xff(int enabled)
+{
+    g_trust_xff = enabled ? 1 : 0;
+}
+
+void parser_clear_proxy_cidrs(void)
+{
+    g_proxy_cidr_count = 0;
+}
+
+int parser_add_proxy_cidr(const char *cidr)
+{
+    if (!cidr || !cidr[0])
+        return -1;
+    char buf[256];
+    strncpy(buf, cidr, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+
+    int added = 0;
+    char *save = NULL;
+    for (char *tok = strtok_r(buf, ", \t", &save); tok;
+         tok = strtok_r(NULL, ", \t", &save)) {
+        if (g_proxy_cidr_count >= MAX_PROXY_CIDRS)
+            break;
+        size_t n = strlen(tok);
+        if (n == 0 || n >= sizeof(g_proxy_cidrs[0]))
+            continue;
+        memcpy(g_proxy_cidrs[g_proxy_cidr_count], tok, n + 1);
+        g_proxy_cidr_count++;
+        added++;
+    }
+    return added > 0 ? 0 : -1;
+}
+
+static int xff_ip_trusted(const char *remote_ip)
+{
+    if (!g_trust_xff || g_proxy_cidr_count == 0)
+        return 0;
+    return ip_matches_cidr_list(remote_ip, g_proxy_cidrs, g_proxy_cidr_count);
+}
+
+static int copy_strview_ip(StrView sv, char *buf, size_t cap)
+{
+    if (!sv.ptr || sv.len == 0 || !buf || cap < 2)
+        return -1;
+    size_t n = sv.len;
+    if (n >= cap)
+        n = cap - 1;
+    memcpy(buf, sv.ptr, n);
+    buf[n] = '\0';
+    return 0;
+}
 
 int sv_eq_lit(StrView sv, const char *lit) {
     size_t n = strlen(lit);
@@ -336,20 +396,32 @@ int parse_log_line(const char *line, size_t line_len, LogEntry *out) {
     if (out->status < 100 || out->status > 599)  return -1;
     out->resp_bytes = out->bytes;
 
-    /* X-Forwarded-For: gerçek client IP'yi al */
+    /* XFF: yalnizca TRUST_XFF=1 ve remote_addr guvenilir proxy CIDR icindeyse */
     if (out->xff.len > 0 && out->xff.ptr[0] != '-') {
-        const char *xp   = out->xff.ptr;
-        size_t      xlen = 0;
-        while (xlen < out->xff.len && xp[xlen] != ',' && xp[xlen] != ' ') xlen++;
-        if (xlen > 0) {
-            /* IPv6 köşeli parantez temizleme (XFF'de de gelebilir) */
-            static char xff_ip_buf[IP_STR_LEN];
-            size_t clean_len;
-            const char *clean = strip_ipv6_brackets(xp, xlen,
-                                                    xff_ip_buf, sizeof(xff_ip_buf),
-                                                    &clean_len);
-            out->ip.ptr = clean;
-            out->ip.len = clean_len;
+        char remote_ip[IP_STR_LEN];
+        if (copy_strview_ip(out->ip, remote_ip, sizeof(remote_ip)) == 0 &&
+            xff_ip_trusted(remote_ip)) {
+            const char *xp   = out->xff.ptr;
+            size_t      xlen = 0;
+            while (xlen < out->xff.len && xp[xlen] != ',' && xp[xlen] != ' ')
+                xlen++;
+            if (xlen > 0) {
+                static char xff_ip_buf[IP_STR_LEN];
+                size_t clean_len;
+                const char *clean = strip_ipv6_brackets(xp, xlen,
+                                                        xff_ip_buf, sizeof(xff_ip_buf),
+                                                        &clean_len);
+                char candidate[IP_STR_LEN];
+                size_t cn = clean_len;
+                if (cn >= sizeof(candidate))
+                    cn = sizeof(candidate) - 1;
+                memcpy(candidate, clean, cn);
+                candidate[cn] = '\0';
+                if (is_valid_ip(candidate)) {
+                    out->ip.ptr = clean;
+                    out->ip.len = clean_len;
+                }
+            }
         }
     }
 

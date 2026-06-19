@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import axios from "axios";
+import { useSearchParams } from "next/navigation";
 import { useLanguage } from "./LanguageProvider";
 
 type Incident = {
@@ -42,20 +43,11 @@ function fmtTs(ts?: number): string {
 
 export function IncidentsPanel() {
   const { t } = useLanguage();
+  const searchParams = useSearchParams();
   const [incidents, setIncidents] = useState<Incident[]>([]);
   const [source, setSource] = useState<string>("");
   const [selected, setSelected] = useState<IncidentDetail | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
-
-  useEffect(() => {
-    axios
-      .get("/api/incidents")
-      .then((r) => {
-        setIncidents(r.data.incidents ?? []);
-        setSource(r.data.source ?? "");
-      })
-      .catch(() => setIncidents([]));
-  }, []);
 
   const openDetail = useCallback(async (inc: Incident) => {
     setLoadingDetail(true);
@@ -73,7 +65,49 @@ export function IncidentsPanel() {
     }
   }, []);
 
-  if (incidents.length === 0 && source !== "demo") return null;
+  const openDetailById = useCallback(
+    async (incidentId: string) => {
+      setLoadingDetail(true);
+      try {
+        const r = await axios.get("/api/incidents", {
+          params: { id: incidentId },
+        });
+        const one = r.data.incident ?? r.data.incidents?.[0];
+        if (one) {
+          setSelected(one);
+          setLoadingDetail(false);
+          return;
+        }
+      } catch {
+        /* fallback stub */
+      }
+      setSelected({
+        incident_id: incidentId,
+        ip: "—",
+        risk_score: 0,
+      });
+      setLoadingDetail(false);
+    },
+    [],
+  );
+
+  useEffect(() => {
+    axios
+      .get("/api/incidents")
+      .then((r) => {
+        setIncidents(r.data.incidents ?? []);
+        setSource(r.data.source ?? "");
+      })
+      .catch(() => setIncidents([]));
+  }, []);
+
+  useEffect(() => {
+    const deep = searchParams.get("incident");
+    if (!deep) return;
+    void openDetailById(deep);
+  }, [searchParams, openDetailById]);
+
+  if (incidents.length === 0 && source !== "demo" && !selected) return null;
 
   const detailSignals = decodeSignals(selected?.signals);
   const ebpfSignals = detailSignals.filter((s) => s.startsWith("ebpf_"));

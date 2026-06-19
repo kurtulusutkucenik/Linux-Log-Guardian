@@ -25,7 +25,7 @@ alerts_from_json() {
   local log="$1"
   local rules="$2"
   local out
-  out=$(./log-guardian "$log" --no-tui --json --no-ban --no-db --rules "$rules" 2>/dev/null || true)
+  out=$(./log-guardian "$log" --no-tui --json --no-ban --no-webhook --no-db --rules "$rules" 2>/dev/null || true)
   echo "$out" | grep -o '"alerts_total"[[:space:]]*:[[:space:]]*[0-9]*' | tail -1 | grep -o '[0-9]*$' || echo 0
 }
 

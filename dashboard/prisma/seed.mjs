@@ -30,9 +30,14 @@ async function main() {
     create: { id: 'default', name: 'Default Tenant' },
   });
 
+  const update =
+    process.env.DASHBOARD_ADMIN_PASSWORD != null && process.env.DASHBOARD_ADMIN_PASSWORD !== ''
+      ? { passwordHash: hashPassword(adminPass) }
+      : {};
+
   await prisma.user.upsert({
     where: { username: 'admin' },
-    update: { passwordHash: hashPassword(adminPass) },
+    update,
     create: {
       username: 'admin',
       passwordHash: hashPassword(adminPass),

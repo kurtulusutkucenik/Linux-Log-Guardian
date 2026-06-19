@@ -33,7 +33,13 @@ static char             g_tenant_id[128] = "default_tenant";
 static double           g_tenant_ema;
 static uint64_t         g_tenant_samples;
 static uint64_t         g_suppressed_total;
+static fp_trust_promote_fn g_promote_fn;
 static pthread_mutex_t  g_persist_mu = PTHREAD_MUTEX_INITIALIZER;
+
+void fp_trust_register_promote_fn(fp_trust_promote_fn fn)
+{
+    g_promote_fn = fn;
+}
 
 static uint32_t fp_hash(const char *s)
 {
@@ -74,6 +80,7 @@ static double benign_score(const LogEntry *e)
 static void refresh_flags(FpTrustSlot *s)
 {
     if (!s || !s->ip[0]) return;
+    uint8_t was_trusted = s->trusted;
     time_t now = time(NULL);
     int days_ok = g_trust_days <= 0
         || (s->first_seen > 0 && (now - s->first_seen) >= (time_t)g_trust_days * 86400);
@@ -83,6 +90,9 @@ static void refresh_flags(FpTrustSlot *s)
     s->trusted = (s->samples >= (uint64_t)g_min_samples
                   && s->clean_ema >= FP_FULL_EMA
                   && days_ok) ? 1 : 0;
+
+    if (!was_trusted && s->trusted && g_promote_fn)
+        g_promote_fn(s->ip);
 }
 
 static int never_suppress_message(const Alert *a)
@@ -232,9 +242,32 @@ int fp_trust_is_trusted(const char *ip)
     return s && s->trusted;
 }
 
+static int fp_pool_entry_count(void)
+{
+    int n = 0;
+    for (size_t i = 0; i < FP_POOL_SIZE; i++) {
+        if (g_pool[i].ip[0] && g_pool[i].samples > 0)
+            n++;
+    }
+    return n;
+}
+
+static int fp_store_has_rows(void)
+{
+    FILE *f = fopen(g_store_path, "r");
+    if (!f) return 0;
+    char line[8];
+    int has = fgets(line, sizeof(line), f) != NULL;
+    fclose(f);
+    return has;
+}
+
 void fp_trust_persist(void)
 {
     if (!g_store_path[0]) return;
+    /* Bos havuzla diske yazma — offline warmup / prod install uzerine yazilmasin */
+    if (fp_pool_entry_count() == 0 && fp_store_has_rows())
+        return;
     pthread_mutex_lock(&g_persist_mu);
     char tmp[560];
     snprintf(tmp, sizeof(tmp), "%s.tmp", g_store_path);
