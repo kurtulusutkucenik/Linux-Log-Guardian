@@ -17,6 +17,15 @@ docker compose -f docker-compose.prod.yml build dashboard
 echo "[dashboard_refresh] Container yeniden baslatiliyor..."
 docker compose -f docker-compose.prod.yml up -d dashboard
 
+if [[ -f /etc/log-guardian/rules.conf ]]; then
+  TOK=$(grep -E '^API_TOKEN=' /etc/log-guardian/rules.conf 2>/dev/null | tail -1 | cut -d= -f2- || true)
+  if [[ -n "$TOK" ]]; then
+    export GUARDIAN_API_TOKEN="$TOK"
+    docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard
+    echo "[OK] GUARDIAN_API_TOKEN container'a verildi"
+  fi
+fi
+
 if docker ps --format '{{.Names}}' | grep -qx log-guardian-caddy; then
   echo "[OK] Caddy ayakta — https://${DOMAIN:-localhost}:${HTTPS_PORT:-8443}/tests"
 else

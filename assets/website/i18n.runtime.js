@@ -4,6 +4,7 @@
 
 
 const LANG_KEY = "lg_website_lang";
+const THEME_KEY = "lg_website_theme";
 const DEFAULT_LANG = "tr";
 const __lgExpected = typeof document !== "undefined"
   ? (document.querySelector('meta[name="lg-integrity-i18n"]')?.getAttribute("content") || "")
@@ -120,6 +121,28 @@ function applyI18nAlt(lang) {
   });
 }
 
+const LG_CONTACT_USER = "kurtulusutkucenikcontact";
+const LG_CONTACT_DOMAIN = "gmail.com";
+
+function lgContactEmail() {
+  return LG_CONTACT_USER + "\u0040" + LG_CONTACT_DOMAIN;
+}
+
+/** E-posta: HTML'de @ yok (CF obfuscation); JS calisinca tam adres + mailto. */
+function applyContactEmail() {
+  const email = lgContactEmail();
+  document.querySelectorAll(".contact-plain").forEach((el) => {
+    el.textContent = email;
+    el.classList.add("contact-email-live");
+  });
+  document.querySelectorAll("[data-lg-email]").forEach((el) => {
+    el.textContent = email;
+  });
+  document.querySelectorAll("[data-lg-email-link]").forEach((el) => {
+    el.setAttribute("href", "mailto:" + email);
+  });
+}
+
 function isAllowedLang(lang) {
   return typeof lang === "string" && ALLOWED_LANGS.has(lang);
 }
@@ -161,10 +184,53 @@ function setLang(lang) {
       }
     });
     applyI18nAlt(lang);
+    applyContactEmail();
   } finally {
     __lgApplyingI18n = false;
   }
   try { sessionStorage.setItem(LANG_KEY, lang); } catch (_) {}
+  updateThemeButtonLabel(lang);
+  document.dispatchEvent(new CustomEvent("lg-lang-change", { detail: { lang } }));
+}
+
+function isAllowedTheme(theme) {
+  return theme === "light" || theme === "dark";
+}
+
+function updateThemeButtonLabel(lang) {
+  const theme = document.documentElement.getAttribute("data-theme") || "dark";
+  const key = theme === "dark" ? "theme.label_light" : "theme.label_dark";
+  const label = t(lang, key);
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    if (label) {
+      btn.setAttribute("aria-label", label);
+      btn.setAttribute("title", label);
+    }
+  });
+}
+
+function setTheme(theme) {
+  if (!isAllowedTheme(theme)) theme = "dark";
+  document.documentElement.setAttribute("data-theme", theme);
+  document.querySelectorAll(".theme-btn").forEach((btn) => {
+    btn.setAttribute("aria-pressed", theme === "dark" ? "true" : "false");
+    btn.textContent = theme === "dark" ? "\u2600" : "\u263E";
+  });
+  try { localStorage.setItem(THEME_KEY, theme); } catch (_) {}
+  updateThemeButtonLabel(document.documentElement.lang || DEFAULT_LANG);
+}
+
+function getInitialTheme() {
+  try {
+    const saved = localStorage.getItem(THEME_KEY);
+    if (isAllowedTheme(saved)) return saved;
+  } catch (_) {}
+  try {
+    if (window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches) {
+      return "light";
+    }
+  } catch (_) {}
+  return "dark";
 }
 
 function getInitialLang() {
@@ -212,21 +278,31 @@ function installDomGuard() {
   }).observe(document.documentElement, { childList: true, subtree: true });
 }
 
+let __lgBootDone = false;
+
 function bootI18n() {
-  if (!__lgSriOk || bootI18n.done) return;
-  bootI18n.done = true;
-  purgeServiceWorkers();
-  installDomGuard();
+  if (__lgBootDone) return;
+  __lgBootDone = true;
+  if (__lgSriOk) {
+    purgeServiceWorkers();
+    installDomGuard();
+  }
   document.addEventListener("click", (e) => {
+    const themeBtn = e.target.closest(".theme-btn");
+    if (themeBtn) {
+      e.preventDefault();
+      const cur = document.documentElement.getAttribute("data-theme") || "dark";
+      setTheme(cur === "dark" ? "light" : "dark");
+      return;
+    }
     const btn = e.target.closest(".lang-btn");
     if (!btn || !isAllowedLang(btn.dataset.lang)) return;
     e.preventDefault();
     setLang(btn.dataset.lang);
   });
+  setTheme(getInitialTheme());
   setLang(getInitialLang());
 }
-
-Object.freeze(bootI18n);
 
 if (document.readyState === "loading") {
   document.addEventListener("DOMContentLoaded", bootI18n);

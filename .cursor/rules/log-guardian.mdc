@@ -28,3 +28,12 @@ alwaysApply: true
 - Script matrisi: `docs/LAPTOP_OPS.md`
 - API: `ensure_api_security.sh` · JWT: `laptop_jwt_setup.sh` · FP prod: `install_fp_trust_prod.sh` · Soak: `laptop_soak_72h.sh`
 - Demo parola `DegistirBeni!123` repoda kalir; internet sunucusunda `laptop_harden.sh`
+
+## VM (VirtualBox) — kod değişince hatırlat
+C/binary veya script değişikliğinden sonra kullanıcıya VM akışını hatırlat:
+`vm_sync_from_host.sh` → (C ise) `vm_build_binary.sh` → `vm_demo_gate.sh` (FAIL=0).
+Detay: `docs/LAPTOP_OPS.md` § VM güncelleme · `rsync -a /mnt/lg/` kullanma.
+
+## Geliştirme önceliği (GitHub en son)
+1. VM demo gate 0 FAIL · 2. Site · 3. Dashboard 8090 · 4. `.deb` · 5. VM binary pipeline
+6. Webhook P2 (ACK/batch) · 7. Attack map · 8. GitHub push/release

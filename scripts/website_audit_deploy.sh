@@ -44,6 +44,15 @@ else
   ok "source map yok"
 fi
 
+CSS_LINK="$(grep -oP 'href="(?:\./|/)\Ksite[^"]+\.css' "$DEPLOY/index.html" 2>/dev/null | head -1 || true)"
+if [[ -z "$CSS_LINK" ]]; then
+  bad "index.html site*.css link yok"
+elif [[ ! -f "$DEPLOY/$CSS_LINK" ]]; then
+  bad "deploy paketinde CSS eksik: $CSS_LINK"
+else
+  ok "versioned CSS deploy'da: $CSS_LINK"
+fi
+
 # Manifest (repo kokunde, deploy disinda)
 MANIFEST="$ROOT/assets/website-deploy.manifest.json"
 if [[ -f "$MANIFEST" ]]; then

@@ -1,0 +1,102 @@
+{
+  "date": "2026-06-21T23:58:15Z",
+  "pass": true,
+  "gates": [
+    {
+      "id": "post-install-verify",
+      "script": "scripts/post_install_verify.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "Kurulum kapısı — servis, IPC, API fail-closed",
+      "titleEn": "Install gate — services, IPC, API fail-closed",
+      "purpose": "systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.",
+      "purposeEn": "systemd, --health, metrics :9091, API_BIND and nginx format green matrix.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "local-security-audit",
+      "script": "scripts/local_security_audit.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 1,
+      "title": "Yerel güvenlik denetimi — IPC, JWT, token sızıntısı",
+      "titleEn": "Local security audit — IPC, JWT, secret hygiene",
+      "purpose": "Laptop/prod öncesi güvenlik script matrisi; demo parola laptop'ta WARN kabul.",
+      "purposeEn": "Pre-prod security script matrix; demo password WARN on laptop is OK.",
+      "verdict": "FAIL: 0 · WARN: 1",
+      "verdictEn": "FAIL: 0 · WARN: 1",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "1"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "api-fail-closed",
+      "script": "scripts/api_fail_closed_test.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "API fail-closed — tokensiz istek 403",
+      "titleEn": "API fail-closed — unauthenticated requests return 403",
+      "purpose": "Ban/consult/metrics uçları token olmadan reddedilir.",
+      "purposeEn": "Ban/consult/metrics endpoints reject requests without a token.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "auth-log-ingest",
+      "script": "scripts/auth_log_e2e.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "auth.log sshd ingest — parse + brute esigi",
+      "titleEn": "auth.log sshd ingest — parse + brute threshold",
+      "purpose": "nginx disi SSH failed-password satirlari anomaly hattina girer.",
+      "purposeEn": "Non-nginx SSH failed-password lines enter the anomaly path.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    }
+  ]
+}

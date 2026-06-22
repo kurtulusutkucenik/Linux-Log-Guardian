@@ -40,8 +40,9 @@ export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, webhookRoute] =
+  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, webhookRoute, authLog, siemExport, crowdsecBouncer] =
     await Promise.all([
+      readJson("ops-gate-report.json"),
       readJson("crs-parity-report.json"),
       readJson("fp-report.json"),
       readJson("real-attack-report.json"),
@@ -63,9 +64,13 @@ export async function GET(req: NextRequest) {
       readJson("guardian-status.json"),
       readJson("dashboard-ban-api-report.json"),
       readJson("webhook-route-proof-report.json"),
+      readJson("auth-log-report.json"),
+      readJson("siem-export-report.json"),
+      readJson("crowdsec-bouncer-report.json"),
     ]);
 
   const reports: TestReports = {
+    opsGates: opsGates as TestReports["opsGates"],
     crs: crs as TestReports["crs"],
     fp: fp as TestReports["fp"],
     realAttack: realAttack as TestReports["realAttack"],
@@ -87,6 +92,9 @@ export async function GET(req: NextRequest) {
     live: live as TestReports["live"],
     dashboardBanApi: dashboardBanApi as TestReports["dashboardBanApi"],
     webhookRoute: webhookRoute as TestReports["webhookRoute"],
+    authLog: authLog as TestReports["authLog"],
+    siemExport: siemExport as TestReports["siemExport"],
+    crowdsecBouncer: crowdsecBouncer as TestReports["crowdsecBouncer"],
   };
 
   const tests = evaluateValidationTests(reports, locale);

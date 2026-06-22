@@ -119,6 +119,18 @@ sudo systemctl status log-guardian-daemon log-guardian
 - `METRICS_PORT=9091`
 - `BAN_TTL_SEC=600`
 
+**SSH / auth.log (opsiyonel):** parser sshd satırlarını destekler; serviste tek kaynak:
+
+```ini
+LOG_PATH=/var/log/auth.log
+```
+
+(nginx + auth birlikte: ayrı `log-guardian` instance veya birleşik log dosyası.)
+
+```bash
+bash scripts/auth_log_e2e.sh
+```
+
 ## 3b. Threat intel (opsiyonel, internet gerekir)
 
 Core ban hattı internet olmadan çalışır. Dış tehdit listeleri için **çıkış interneti** lazım (Wi‑Fi / ethernet fark etmez).

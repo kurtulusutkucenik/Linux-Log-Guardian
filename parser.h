@@ -11,8 +11,9 @@ typedef struct {
     size_t      len;
 } StrView;
 
-// Nginx/Apache combined log formati:
-//   IP - - [timestamp] "METHOD URL HTTP/x.x" status bytes "ref" "ua"
+// Nginx combined veya auth.log/journald sshd:
+//   nginx: IP - - [timestamp] "METHOD URL HTTP/x.x" status bytes ...
+//   sshd:  ... sshd[pid]: Failed password ... from IP port ...
 typedef struct {
     StrView  ip;
     StrView  method;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import {
   Activity, Server, Network, ShieldAlert, Skull,
@@ -9,6 +9,7 @@ import {
 import axios from "axios";
 import { useLanguage } from "@/components/LanguageProvider";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
+import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
 const FleetCharts = dynamic(
   () => import("@/components/FleetCharts").then((m) => m.FleetCharts),
@@ -85,7 +86,7 @@ function tenantColor(tenantId: string, idx: number) {
 }
 
 export default function FleetDashboard() {
-  const { t } = useLanguage();
+  const { t, locale } = useLanguage();
   const [fleet, setFleet] = useState<AgentTelemetry[]>([]);
   const [tenants, setTenants] = useState<TenantInfo[]>([]);
   const [selectedTenant, setSelectedTenant] = useState<string>("*");
@@ -93,6 +94,7 @@ export default function FleetDashboard() {
   const [tlsStatus, setTlsStatus] = useState<TlsStatus | null>(null);
   const [commandIp, setCommandIp] = useState("");
   const [banToast, setBanToast] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [epsFromLive, setEpsFromLive] = useState(false);
   const [globalStats, setGlobalStats] = useState({
     activeAgents: 0,
     totalEps: 0,
@@ -137,7 +139,9 @@ export default function FleetDashboard() {
           tls    += a.tls_decrypted || 0;
         });
 
-        if (liveEps > 0) eps = liveEps;
+        const useLive = liveEps > 0;
+        if (useLive) eps = liveEps;
+        setEpsFromLive(useLive);
 
         let k8sKills = 0;
         k8sTick.current += 1;
@@ -158,7 +162,10 @@ export default function FleetDashboard() {
           totalTlsDecrypted: tls,
         }));
       } else if (liveEps > 0) {
+        setEpsFromLive(true);
         setGlobalStats(prev => ({ ...prev, totalEps: liveEps }));
+      } else {
+        setEpsFromLive(false);
       }
 
       if (tenantRes.status === "fulfilled") {
@@ -210,6 +217,17 @@ export default function FleetDashboard() {
 
   const selectedLabel =
     selectedTenant === "*" ? t("allTenants") : selectedTenant;
+
+  const sortedFleet = useMemo(
+    () =>
+      [...fleet].sort((a, b) => {
+        if (a.status !== b.status) return a.status === "Online" ? -1 : 1;
+        return new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
+      }),
+    [fleet],
+  );
+
+  const offlineCount = fleet.length - globalStats.activeAgents;
 
   return (
     <div className="min-h-screen p-8 max-w-7xl mx-auto flex flex-col gap-8">
@@ -304,11 +322,19 @@ export default function FleetDashboard() {
                 ${globalStats.activeAgents > 0 ? "bg-primary" : "bg-danger"}`} />
             </span>
             <span className="text-sm font-medium">
-              {globalStats.activeAgents} {t("nodesOnline")}
+              {fleet.length > 0
+                ? `${globalStats.activeAgents}/${fleet.length} ${t("nodesOnline")}`
+                : `${globalStats.activeAgents} ${t("nodesOnline")}`}
             </span>
           </div>
         </div>
       </header>
+
+      {offlineCount > 0 && fleet.length > 0 && (
+        <p className="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-2.5">
+          {offlineCount} {t("fleetOfflineBanner")}
+        </p>
+      )}
 
       {/* ── Tenant Segmentation Bar ─────────────────────────────────── */}
       {selectedTenant === "*" && tenants.length > 0 && (
@@ -349,6 +375,9 @@ export default function FleetDashboard() {
           </div>
           <p className="text-xs text-foreground/70 uppercase tracking-wider font-semibold">{t("globalEps")}</p>
           <p className="text-3xl font-bold text-white">{globalStats.totalEps.toFixed(1)}</p>
+          {epsFromLive && (
+            <p className="text-[10px] text-primary/70 font-mono">{t("epsLiveMetrics")}</p>
+          )}
         </div>
 
         {/* RCE */}
@@ -521,7 +550,7 @@ export default function FleetDashboard() {
               </p>
             </div>
           ) : (
-            fleet.map(agent => {
+            sortedFleet.map(agent => {
               const tIdx = tenantIndexMap.get(agent.tenant_id) ?? 0;
               const col  = tenantColor(agent.tenant_id, tIdx);
               const onlineBorder = agent.status === "Online"
@@ -540,8 +569,11 @@ export default function FleetDashboard() {
                         {agent.agent_id}
                       </h3>
                       <p className="text-xs text-white/50 font-mono">
-                        Last Seen: {new Date(agent.last_seen).toLocaleTimeString()}
+                        {t("lastSeenAgo")}: {formatTimeAgo(agent.last_seen, locale)}
                       </p>
+                      {agent.status === "Offline" && (
+                        <p className="text-[10px] text-amber-400/80 mt-1">{t("agentOfflineQueue")}</p>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                       <span className={`px-2 py-1 text-xs font-bold uppercase rounded

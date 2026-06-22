@@ -30,6 +30,7 @@ Core quickstart: [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md)
 | `bash scripts/laptop_fp_setup.sh` | FP warmup + prod store tek komut | Hayır |
 | `bash scripts/laptop_soak_72h.sh --start` | 72 saat stabilite (`SOAK_GRACE_SEC=120`) | Hayır |
 | `bash scripts/laptop_sprint_gate.sh` | Sprint 1–3 laptop kapısı (VPS/GitHub yok) | Hayır |
+| `bash scripts/laptop_release_gate.sh` | Sprint + `.deb` + site gate (GitHub öncesi) | Hayır |
 | `bash scripts/test_deb_local.sh` | `.deb` extract doğrulama (dpkg -i değil) | Hayır |
 | `bash scripts/demo_3min.sh` | 3 dk demo (PDF, webhook, dashboard opsiyonel) | Hayır |
 | `bash scripts/preview_website.sh` | Statik landing önizleme `:8765` | Hayır |
@@ -86,14 +87,16 @@ Token `/etc/log-guardian/rules.conf` içinde `API_TOKEN=...`. Manuel yazmayın.
 ```bash
 bash scripts/laptop_jwt_setup.sh
 # veya tam stack:
-bash scripts/dashboard_stack.sh
+bash scripts/dashboard_dev.sh
+# veya tam stack (Docker/TLS — opsiyonel):
+# bash scripts/dashboard_stack.sh
 ```
 
 - **JWT:** kök `.env` → `JWT_SECRET` (gitignore — commit etmeyin)
 - **Giriş:** kullanıcı `admin` — parola:
   - `.env` içinde `DASHBOARD_ADMIN_PASSWORD` varsa o
   - yoksa seed varsayılanı: `ChangeMeOnFirstLogin!`
-- **URL:** `https://localhost:8443`
+- **URL (laptop dev):** `http://localhost:3001`
 
 ## Reboot sonrası grafikler (Filo)
 
@@ -110,7 +113,7 @@ bash scripts/install_laptop_stack_boot.sh
 systemctl --user start log-guardian-laptop-stack.service
 ```
 
-Kontrol: `https://localhost:8443/` (Filo) — sarı “Prometheus yok” uyarısı gitmeli. Eski `/fleet` bookmark otomatik ana sayfaya yönlenir; detaylı komut: `/fleet/dispatch`.
+Kontrol: `http://localhost:3001/` (Filo + testler) — sarı “Prometheus yok” uyarısı gitmeli. Eski `/fleet` bookmark otomatik ana sayfaya yönlenir; detaylı komut: `/fleet/dispatch`.
 
 ## FP trust prod
 
@@ -169,6 +172,39 @@ bash scripts/docs_consistency_check.sh
 # 3) Servis sağlığı
 bash scripts/ops_smoke.sh
 ```
+
+## VM güncelleme (VirtualBox — laptop değişince)
+
+Laptop'ta kod değiştirdikten sonra VM'ye aktarmak için **her seferinde**:
+
+```bash
+# Host (laptop) — opsiyonel kontrol
+bash scripts/vm_host_checklist.sh
+
+# VM içinde (paylaşım: sudo mount -t vboxsf lg /mnt/lg)
+cd ~/Linux-Log-Guardian
+bash /mnt/lg/scripts/vm_sync_from_host.sh
+sudo bash scripts/vm_build_binary.sh    # C/binary değiştiyse (webhook.c, k8s_webhook.c, …)
+# Sessiz derleme varsayılan; tam make log: LG_VERBOSE_BUILD=1 sudo bash scripts/vm_build_binary.sh
+sudo bash scripts/vm_demo_gate.sh         # FAIL=0 olmalı
+```
+
+Script yoksa (ilk sefer): `bash /mnt/lg/scripts/vm_bootstrap_from_host.sh`
+
+| Ne değişti | VM komutu |
+|------------|-----------|
+| Sadece docs/script | sync + `vm_demo_gate` |
+| C kaynak (.c) | sync + **`vm_build_binary`** + `vm_demo_gate` |
+| Dashboard | laptop `dashboard_refresh.sh` (VM değil) |
+
+Opsiyonel demo kanıtı:
+
+```bash
+bash scripts/grafana_alert_e2e.sh
+sudo bash scripts/webhook_prod_e2e.sh
+```
+
+Detay: [VPS_SETUP.md](VPS_SETUP.md) §7 · `rsync -a /mnt/lg/` **kullanma** · `vmlinux.h` sync edilmez.
 
 ## Clone notu
 

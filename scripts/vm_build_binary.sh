@@ -18,9 +18,14 @@ if [[ -f vmlinux.h ]]; then
 fi
 
 if [[ ! -f vmlinux.h ]] || [[ $(wc -c < vmlinux.h) -le 4096 ]]; then
-  make vmlinux.h 2>/dev/null || rm -f vmlinux.h
+  if [[ "${VM_BUILD_QUIET:-1}" == "1" ]]; then
+    make vmlinux.h >/dev/null 2>&1 || rm -f vmlinux.h
+  else
+    make vmlinux.h 2>/dev/null || rm -f vmlinux.h
+  fi
 fi
 
+export LG_VERBOSE_BUILD="${LG_VERBOSE_BUILD:-0}"
 bash "$ROOT/scripts/upgrade_log_guardian_binary.sh"
 echo ""
 echo "[OK] vm_build_binary — binary kuruldu"

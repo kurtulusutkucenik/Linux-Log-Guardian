@@ -139,8 +139,10 @@ BPF_CFLAGS = -O2 -g -target bpf -D__TARGET_ARCH_x86 \
              -I. \
              -I/usr/include/bpf \
              -idirafter /usr/include/x86_64-linux-gnu \
-             -idirafter /usr/include \
-             -include linux/types.h
+             -idirafter /usr/include
+
+# vmlinux.h yoksa geleneksel linux/types.h (bpf_compat fallback)
+BPF_CFLAGS_FALLBACK = $(BPF_CFLAGS) -include linux/types.h
 
 $(VMLINUX_H):
 	@if [ -f $@ ] && [ $$(wc -c < $@) -lt 4096 ]; then rm -f $@; fi
@@ -164,28 +166,28 @@ $(VMLINUX_H):
 # ── XDP/eBPF kernel nesnesi (CO-RE) ──────────────────────────
 # vmlinux.h varsa kullan; yoksa geleneksel linux/*.h ile derle.
 $(XDP_OBJ): xdp_filter.c bpf_compat.h $(VMLINUX_H)
-	$(BPF_CLANG) $(BPF_CFLAGS) -c xdp_filter.c -o $@
+	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c xdp_filter.c -o $@
 
 # ── eBPF uprobe nesnesi (TLS In-Memory Sensor) ────────────────────
 # tls_uprobe.c yalnizca __BPF_TRACING__ kapsaminda derlenir.
 # Linux >= 5.5 (uprobe + ring buffer) gerektirir.
 $(UPROBE_OBJ): tls_uprobe.c bpf_compat.h $(VMLINUX_H)
-	$(BPF_CLANG) $(BPF_CFLAGS) -c tls_uprobe.c -o $@
+	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c tls_uprobe.c -o $@
 
 # ── eBPF execve tracepoint nesnesi (Zero Trust RCE Sensor) ──────────
 # sys_enter_execve hook'u: web proseslerin shell spawn etmesini engeller.
 # Linux >= 5.8 (ring buffer + cgroup helpers) gerektirir.
 $(SYSCALL_OBJ): syscall_uprobe.c bpf_compat.h $(VMLINUX_H)
-	$(BPF_CLANG) $(BPF_CFLAGS) -c syscall_uprobe.c -o $@
+	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c syscall_uprobe.c -o $@
 
 # ── eBPF Lineage Probe (Process & Network Soyağacı — Feature 3) ──────
 # openat/execve/connect/write tracepoint'lari; Attack Tree olusturur.
 # Linux >= 5.8 (ring buffer) gerektirir.
 $(LINEAGE_OBJ): lineage_probe.c bpf_compat.h $(VMLINUX_H)
-	$(BPF_CLANG) $(BPF_CFLAGS) -c lineage_probe.c -o $@
+	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c lineage_probe.c -o $@
 
 $(HTTP_L7_OBJ): http_l7_probe.c bpf_compat.h $(VMLINUX_H)
-	$(BPF_CLANG) $(BPF_CFLAGS) -c http_l7_probe.c -o $@
+	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c http_l7_probe.c -o $@
 
 
 # ── Genel .o kuralı ───────────────────────────────────────────
@@ -257,6 +259,7 @@ bench-report: all
 
 # ── Güvenlik testi ───────────────────────────────────────────
 XFF_TEST = tests/parser_xff_test
+AUTH_TEST = tests/parser_auth_test
 FIREWALL_XFF_OBJ = firewall.xff.o
 
 $(FIREWALL_XFF_OBJ): firewall.c
@@ -265,8 +268,16 @@ $(FIREWALL_XFF_OBJ): firewall.c
 $(XFF_TEST): tests/parser_xff_test.c parser.o $(FIREWALL_XFF_OBJ)
 	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_xff_test.c parser.o $(FIREWALL_XFF_OBJ)
 
+$(AUTH_TEST): tests/parser_auth_test.c parser.o $(FIREWALL_XFF_OBJ)
+	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_auth_test.c parser.o $(FIREWALL_XFF_OBJ)
+
 xff-test: $(XFF_TEST)
 	@./$(XFF_TEST)
+
+auth-test: $(AUTH_TEST)
+	@./$(AUTH_TEST)
+
+parser-test: xff-test auth-test
 
 security-test: $(TARGET) $(TESTER)
 	@echo "--- Security Testleri (Memory & Async Attack) ---"

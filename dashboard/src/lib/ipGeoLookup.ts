@@ -1,4 +1,5 @@
 import { centroidForCountry } from "./countryCentroids";
+import { IPV4_RE } from "./banUtils";
 
 export type IpGeo = {
   ip: string;
@@ -17,11 +18,16 @@ function isPrivateIpv4(ip: string): boolean {
   if (!m) return false;
   const a = +m[1];
   const b = +m[2];
+  const c = +m[3];
   if (a === 10) return true;
   if (a === 127) return true;
   if (a === 192 && b === 168) return true;
   if (a === 172 && b >= 16 && b <= 31) return true;
   if (a === 100 && b >= 64 && b <= 127) return true;
+  /* RFC 5737 documentation / test nets (webhook E2E, bench) */
+  if (a === 192 && b === 0 && c === 2) return true;
+  if (a === 198 && b === 51 && c === 100) return true;
+  if (a === 203 && b === 0 && c === 113) return true;
   return false;
 }
 
@@ -33,6 +39,7 @@ function trimCache() {
 }
 
 async function fetchIpApi(ip: string): Promise<IpGeo | null> {
+  if (!IPV4_RE.test(ip)) return null;
   const url = `http://ip-api.com/json/${encodeURIComponent(ip)}?fields=status,country,countryCode,lat,lon`;
   const res = await fetch(url, {
     cache: "no-store",
@@ -64,17 +71,28 @@ async function fetchIpApi(ip: string): Promise<IpGeo | null> {
 
 export async function lookupIpGeo(ip: string): Promise<IpGeo | null> {
   const key = ip.trim();
-  if (!key) return null;
+  if (!key || key.length > 45) return null;
   if (cache.has(key)) return cache.get(key) ?? null;
 
   let result: IpGeo | null = null;
   if (isPrivateIpv4(key) || key.startsWith("::") || key === "::1") {
+    const doc =
+      key.startsWith("203.0.113.") || key.startsWith("198.51.100.")
+        ? { lat: 41.01, lon: 28.98, label: "RFC5737 test" }
+        : key.startsWith("192.0.2.")
+          ? { lat: 39.93, lon: 32.85, label: "RFC5737 test" }
+          : { lat: 39.0, lon: 35.0, label: "Private" };
+    const octets = key.split(".").map((x) => parseInt(x, 10));
+    const last = Number.isFinite(octets[3]) ? octets[3]! : 0;
+    const hash = octets.reduce((a, p) => (a * 31 + p) | 0, 0);
+    const angle = ((hash * 137.508) % 360) * (Math.PI / 180);
+    const radius = 0.18 + (last % 16) * 0.11;
     result = {
       ip: key,
-      countryCode: "LAN",
-      country: "Private",
-      lat: 39.0,
-      lon: 35.0,
+      countryCode: "TEST",
+      country: doc.label,
+      lat: doc.lat + radius * Math.cos(angle),
+      lon: doc.lon + radius * Math.sin(angle),
       source: "private",
     };
   } else {
@@ -106,7 +124,7 @@ export async function lookupIpGeo(ip: string): Promise<IpGeo | null> {
   return result;
 }
 
-export async function lookupManyIps(ips: string[], limit = 24): Promise<IpGeo[]> {
+export async function lookupManyIps(ips: string[], limit = 48): Promise<IpGeo[]> {
   const uniq = [...new Set(ips.map((x) => x.trim()).filter(Boolean))].slice(0, limit);
   const out: IpGeo[] = [];
   for (const ip of uniq) {

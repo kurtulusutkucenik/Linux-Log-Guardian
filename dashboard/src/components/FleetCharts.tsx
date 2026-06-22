@@ -63,7 +63,7 @@ export function FleetCharts({ agents }: { agents: ChartAgent[] }) {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
           {t("chartsEps")}
         </h3>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" minWidth={0} height={200}>
           <BarChart data={epsData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 10 }} />
@@ -84,7 +84,7 @@ export function FleetCharts({ agents }: { agents: ChartAgent[] }) {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
           {t("chartsAlerts")}
         </h3>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" minWidth={0} height={200}>
           <BarChart data={alertData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 10 }} />
@@ -105,7 +105,7 @@ export function FleetCharts({ agents }: { agents: ChartAgent[] }) {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
           {t("chartsAgents")}
         </h3>
-        <ResponsiveContainer width="100%" height={200}>
+        <ResponsiveContainer width="100%" minWidth={0} height={200}>
           <PieChart>
             <Pie
               data={pieData}

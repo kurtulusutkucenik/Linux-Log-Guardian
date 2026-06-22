@@ -129,7 +129,7 @@ export function OpsMetricsCharts() {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
             EPS {t("opsMetricsTrend")}
           </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" minWidth={0} height={200}>
             <AreaChart data={series}>
               <defs>
                 <linearGradient id="epsGrad" x1="0" y1="0" x2="0" y2="1">
@@ -150,7 +150,7 @@ export function OpsMetricsCharts() {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
             {t("opsMetricsAlertsBans")}
           </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" minWidth={0} height={200}>
             <LineChart data={series}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="t" tick={{ fill: "#94a3b8", fontSize: 9 }} interval="preserveStartEnd" />
@@ -167,7 +167,7 @@ export function OpsMetricsCharts() {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
             {t("opsMetricsThroughput")}
           </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" minWidth={0} height={200}>
             <AreaChart data={series}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="t" tick={{ fill: "#94a3b8", fontSize: 9 }} />
@@ -182,7 +182,7 @@ export function OpsMetricsCharts() {
           <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
             {t("opsMetricsSnapshot")}
           </h3>
-          <ResponsiveContainer width="100%" height={200}>
+          <ResponsiveContainer width="100%" minWidth={0} height={200}>
             <BarChart data={barNow}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
               <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 10 }} />

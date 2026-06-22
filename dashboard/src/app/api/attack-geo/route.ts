@@ -2,10 +2,13 @@ import { NextResponse } from "next/server";
 import { fetchBannedIps } from "@/lib/fetchBannedIps";
 import { lookupManyIps } from "@/lib/ipGeoLookup";
 import { guardianApiAuthHeaders } from "@/lib/guardianApiAuth";
+import { guardianApiBase } from "@/lib/guardianApiBase";
+import { fetchFallbackAttackIps } from "@/lib/attackGeoFallback";
 
 export const dynamic = "force-dynamic";
 
-const GUARDIAN_API = process.env.GUARDIAN_API_URL || "http://127.0.0.1:8080";
+const GUARDIAN_API = guardianApiBase();
+const BENCH_DATA_DIR = process.env.BENCH_DATA_DIR || "/data/lg";
 
 type IncidentRow = { ip?: string; incident_id?: string; risk_score?: number };
 
@@ -46,9 +49,18 @@ export async function GET() {
     });
   }
 
+  let dataSource: "live" | "report" = "live";
+  if (meta.size === 0) {
+    const fallback = await fetchFallbackAttackIps(BENCH_DATA_DIR);
+    for (const f of fallback) {
+      meta.set(f.ip, { reason: f.reason, kind: f.kind });
+    }
+    if (fallback.length > 0) dataSource = "report";
+  }
+
   const ips = [...meta.keys()];
   const geoEnabled = process.env.ATTACK_GEO_LOOKUP !== "0";
-  const geos = geoEnabled ? await lookupManyIps(ips, 24) : [];
+  const geos = geoEnabled ? await lookupManyIps(ips, 48) : [];
 
   const markers = geos.map((g) => {
     const m = meta.get(g.ip);
@@ -70,6 +82,7 @@ export async function GET() {
     total_ips: ips.length,
     geo_lookup: geoEnabled,
     bans_source: bans.source,
+    data_source: dataSource,
     markers,
   });
 }

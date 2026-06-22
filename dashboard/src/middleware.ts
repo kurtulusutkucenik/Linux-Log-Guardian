@@ -31,14 +31,17 @@ export async function middleware(request: NextRequest) {
   const isAgentBearerApi =
     request.nextUrl.pathname === '/api/fleet/commands' ||
     request.nextUrl.pathname === '/api/fleet/commands/ack';
-  const isDataRoomApi = request.nextUrl.pathname.startsWith('/api/data-room/');
+  /* data-room: yalnizca kanit PDF/JSON herkese acik; soak/MANIFEST JWT gerekir */
+  const isPublicDataRoomFile =
+    request.nextUrl.pathname === '/api/data-room/competitive-proof.pdf' ||
+    request.nextUrl.pathname === '/api/data-room/competitive-proof.json';
   const isPublicPage = request.nextUrl.pathname === '/competitive-proof';
   /* telemetry: JWT degil Bearer API key — route handler dogrular */
   const isPublicApi =
     request.nextUrl.pathname === '/api/auth/login' ||
     request.nextUrl.pathname === '/api/telemetry' ||
     request.nextUrl.pathname === '/api/tier' ||
-    isDataRoomApi ||
+    isPublicDataRoomFile ||
     isAgentBearerApi;
 
   function tierBlocked(required: 'pro' | 'enterprise') {

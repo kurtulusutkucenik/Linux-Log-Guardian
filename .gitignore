@@ -1,3 +1,14 @@
+# Yerel e2e raporlari (kanit: competitive-proof.json + assets/website/evidence/)
+auth-log-report.json
+siem-export-report.json
+crowdsec-bouncer-report.json
+
+# make auth-test / parser-test ciktisi
+tests/parser_auth_test
+
+# Gecici / tasinan dosyalar (asla commit etme)
+1.zip
+
 # ── Derlenmiş binary'ler ─────────────────────────────────────────
 log-guardian
 log-guardian-daemon

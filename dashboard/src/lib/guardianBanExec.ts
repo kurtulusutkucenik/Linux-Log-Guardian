@@ -1,6 +1,7 @@
 import { execFile } from "child_process";
 import { promisify } from "util";
 import { IPV4_RE } from "./banUtils";
+import { guardianApiBase } from "./guardianApiBase";
 
 const execFileAsync = promisify(execFile);
 
@@ -35,12 +36,7 @@ export async function executeGuardianBan(opts: {
     };
   }
 
-  const apiBase = (
-    process.env.GUARDIAN_BAN_URL ||
-    process.env.GUARDIAN_API_URL ||
-    ""
-  ).replace(/\/$/, "");
-
+  const apiBase = guardianApiBase();
   if (apiBase) {
     const apiToken = process.env.GUARDIAN_API_TOKEN?.trim();
     if (!apiToken) {

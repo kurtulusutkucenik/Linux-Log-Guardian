@@ -437,6 +437,20 @@ static int cmd_operator_ban(int argc, char **argv)
     return rc == 0 ? 0 : 1;
 }
 
+static void operator_db_log_ban(const char *ip, const char *action,
+                                const char *reason)
+{
+    if (!ip || !action || !reason)
+        return;
+    operator_load_rules();
+    if (!g_db_enabled || !g_db_path)
+        return;
+    if (db_init(g_db_path) != 0)
+        return;
+    db_log_ban_event(ip, action, reason, time(NULL));
+    db_close();
+}
+
 static int cmd_operator_unban(int argc, char **argv)
 {
     (void)argc;
@@ -448,7 +462,13 @@ static int cmd_operator_unban(int argc, char **argv)
     operator_ipc_init();
     ban_pipeline_set_whitelist_fn(NULL);
     int rc = ban_pipeline_unban(ip);
-    printf(rc == 0 ? "[OK] %s unban\n" : "[ERR] unban %s\n", ip);
+    if (rc == 0) {
+        operator_db_log_ban(ip, "UNBAN", "operator-cli");
+        printf("[OK] %s unban\n", ip);
+    } else {
+        fprintf(stderr, "[ERR] unban %s (ipset hala dolu olabilir — sudo ipset del log_analyzer_block_v4 %s)\n",
+                ip, ip);
+    }
     return rc == 0 ? 0 : 1;
 }
 
@@ -794,6 +814,27 @@ static void operator_load_webhook_env(void)
     fclose(f);
 }
 
+static void apply_siem_env_overrides(void)
+{
+    const char *v = getenv("SIEM_FORWARDER_ENABLED");
+    if (v && v[0])
+        g_siem_config.enabled = (atoi(v) != 0);
+    v = getenv("SIEM_HOST");
+    if (v && v[0]) {
+        size_t n = strlen(v);
+        if (n >= sizeof(g_siem_config.host))
+            n = sizeof(g_siem_config.host) - 1;
+        memcpy(g_siem_config.host, v, n);
+        g_siem_config.host[n] = '\0';
+    }
+    v = getenv("SIEM_PORT");
+    if (v && v[0]) {
+        int p = atoi(v);
+        if (p > 0 && p < 65536)
+            g_siem_config.port = p;
+    }
+}
+
 static void operator_load_rules(void)
 {
     operator_load_webhook_env();
@@ -930,6 +971,9 @@ static int cmd_webhook_test(int argc, char **argv)
     }
 
     operator_load_rules();
+    apply_siem_env_overrides();
+    if (g_siem_config.enabled && g_siem_config.host[0] != '\0')
+        siem_forwarder_init();
     if (!g_webhook.enabled) {
         fprintf(stderr,
                 "[ERR] WEBHOOK_ENABLED=0 (/etc/log-guardian/rules.conf)\n"
@@ -952,10 +996,13 @@ static int cmd_webhook_test(int argc, char **argv)
     }
     if (strcmp(kind, "batch") == 0)
         usleep(800000);
+    if (strcmp(kind, "ban") == 0 || strcmp(kind, "alert") == 0)
+        usleep(300000);
     WebhookDeliveryStats st;
     webhook_delivery_stats(&st);
     int rc = st.fail > 0 ? 1 : 0;
     webhook_shutdown();
+    siem_forwarder_stop();
     if (rc != 0) return rc;
     printf("{\"sent\":true,\"kind\":\"%s\",\"dry_run\":%s,\"destinations\":%d,"
            "\"ok\":%d,\"fail\":%d}\n",
@@ -1454,7 +1501,9 @@ static int lg_telegram_ack(const char *chat_id, const char *ack_key,
 {
     if (!chat_id || !ack_key || !ack_key[0])
         return -1;
-    const char *inc = (strncmp(ack_key, "INC-", 4) == 0) ? ack_key : NULL;
+    const char *inc = NULL;
+    if (strncmp(ack_key, "INC-", 4) == 0 || strncmp(ack_key, "BATCH-", 6) == 0)
+        inc = ack_key;
     if (g_db_path && g_db_path[0])
         return db_telegram_ack_register_path(
             g_db_path, chat_id, ack_key, inc, operator_id, operator_name);
@@ -2560,7 +2609,7 @@ static void usage(const char *prog) {
             "    %s crs-stats                   PCRE/CRS yukleme istatistigi\n"
             "    %s lineage-stats [--demo] [--path FILE]  Attack tree ozeti\n"
             "    %s ban-db-prune [--db FILE] [--all]  threat-intel DB kirp\n"
-            "    %s webhook-test [alert|crit|crit-chain|ban|trap]  Bildirim testi\n"
+            "    %s webhook-test [alert|crit|crit-chain|ban|trap|batch]  Bildirim testi\n"
             "    %s webhook-metrics-reset [--all]  webhook.metrics sifirla (varsayilan: fail)\n"
             "    %s daily-summary [--force]  Gunluk ozet Telegram DM (operator)\n"
             "    %s weekly-summary [--force] Haftalik ozet Telegram DM (operator)\n\n"
@@ -2842,6 +2891,10 @@ static void *worker_loop(void *arg) {
                 atomic_fetch_add(&g_atomic_alerts, 1);
 
                 if (alert.level == ALERT_CRIT) {
+                    /* DB/RAM stale: unban sonrasi ipset temiz ama rec->banned=1 kalabilir */
+                    if (atomic_load(&rec->banned) && !ip_is_blocked(rec->ip))
+                        atomic_store(&rec->banned, 0);
+
                     BanPolicyVerdict pol;
                     int may_ban = ban_policy_should_auto_ban(rec->ip, &alert, &pol);
                     if (!g_allow_ban || !may_ban) {
@@ -2855,7 +2908,6 @@ static void *worker_loop(void *arg) {
                         int effective_ttl = siem_update(rec, &alert, g_ban_ttl_sec);
                         const char *ban_reason = alert.message[0]
                             ? alert.message : "auto-alert";
-                        int already_blocked = ip_is_blocked(rec->ip);
                         if (ban_ip_with_reason(rec->ip, ban_reason) == 0) {
                             atomic_fetch_add(&g_atomic_ban_success, 1);
                             time_t now = time(NULL);
@@ -2869,10 +2921,9 @@ static void *worker_loop(void *arg) {
                                 tui_push_ban(&g_stats, rec->ip, now);
                             }
                             send_desktop_notification(rec->ip);
-                            if (!already_blocked) {
-                                webhook_send_ban(rec->ip, now, ban_reason,
-                                                 pol.risk_score, pol.decision);
-                            }
+                            /* ban_webhook_dedup_check cift mesaji engeller */
+                            webhook_send_ban(rec->ip, now, ban_reason,
+                                             pol.risk_score, pol.decision);
                             ban_policy_audit(rec->ip, &alert, &pol, 1);
                             if (g_db_enabled) {
                                 db_log_ban_event_ex(rec->ip, "BAN", ban_reason, now,
@@ -2917,6 +2968,9 @@ static void print_json_report(double elapsed) {
     printf("  \"parse_errors\": %ld,\n", atomic_load(&g_atomic_errors));
     printf("  \"unique_ips\": %zu,\n", ipmap_size(&g_ipmap));
     printf("  \"alerts_total\": %ld,\n", atomic_load(&g_atomic_alerts));
+    printf("  \"ban_attempts\": %ld,\n", atomic_load(&g_atomic_ban_attempts));
+    printf("  \"ban_success\": %ld,\n", atomic_load(&g_atomic_ban_success));
+    printf("  \"ban_fail\": %ld,\n", atomic_load(&g_atomic_ban_fail));
     printf("  \"elapsed_sec\": %.3f,\n", elapsed);
     if (elapsed > 0)
         printf("  \"eps\": %.1f,\n", (double)atomic_load(&g_atomic_lines) / elapsed);
@@ -3300,7 +3354,9 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "[XDP] Devre disi kaldi, iptables/ipset kullanilacak.\n");
             }
         }
-        ensure_ipset_ready();
+        /* ipset hazirligi root/daemon — log-guardian kullanicisi destroy edemez/edememeli */
+        if (geteuid() == 0)
+            ensure_ipset_ready();
     }
     maybe_drop_privileges();
     /* Ban acikken seccomp uygulanmaz: fork+execve(/sbin/ipset) child filtre miras alir.
@@ -3375,8 +3431,10 @@ int main(int argc, char *argv[]) {
         agent_sync_init();
     }
     
-    if (g_siem_config.enabled && g_siem_config.host[0] != '\0')
+    if (g_siem_config.enabled && g_siem_config.host[0] != '\0') {
+        apply_siem_env_overrides();
         siem_forwarder_init();
+    }
 
     /* Etcd mesh — production (MESH_BACKEND=etcd); ZMQ devre disi */
     if (mesh_backend_use_etcd() && g_mesh_etcd_endpoints[0] != '\0') {

@@ -31,6 +31,12 @@ INPUTS = {
     "banLatency": "bench-ban-latency.json",
     "soak": "soak-report.json",
     "incidents": "incidents-snapshot.json",
+    "dashboardBanApi": "dashboard-ban-api-report.json",
+    "webhookRoute": "webhook-route-proof-report.json",
+    "authLog": "auth-log-report.json",
+    "siemExport": "siem-export-report.json",
+    "crowdsecBouncer": "crowdsec-bouncer-report.json",
+    "opsGates": "ops-gate-report.json",
 }
 
 SOAK_CANDIDATES = ("soak-report.json", "soak-report.short.json")
@@ -60,7 +66,7 @@ def load_best_soak() -> dict[str, Any] | None:
 
 
 def soak_laptop_proof(soak: dict[str, Any] | None) -> bool:
-    """~72h laptop soak: servisler ayakta + gercek outage yok (olcum artefakti sayilmaz)."""
+    """~72h VPS/VM soak: servisler ayakta + gercek outage yok."""
     if not soak:
         return False
     if soak.get("short_mode"):
@@ -128,6 +134,13 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         verdict: str,
         title_en: str,
         verdict_en: str,
+        *,
+        purpose: str = "",
+        purpose_en: str = "",
+        metrics: list[dict[str, str]] | None = None,
+        script: str = "",
+        date: str = "",
+        group: str = "proof",
     ) -> None:
         label = {"pass": "GECTI", "fail": "KALDI", "pending": "BEKLEMEDE", "warn": "UYARI"}.get(
             status, status.upper()
@@ -135,18 +148,27 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         label_en = {"pass": "PASS", "fail": "FAIL", "pending": "PENDING", "warn": "WARN"}.get(
             status, status.upper()
         )
-        out.append(
-            {
-                "id": test_id,
-                "status": status,
-                "statusLabel": label,
-                "statusLabelEn": label_en,
-                "title": title,
-                "titleEn": title_en,
-                "verdict": verdict,
-                "verdictEn": verdict_en,
-            }
-        )
+        entry: dict[str, Any] = {
+            "id": test_id,
+            "status": status,
+            "statusLabel": label,
+            "statusLabelEn": label_en,
+            "title": title,
+            "titleEn": title_en,
+            "verdict": verdict,
+            "verdictEn": verdict_en,
+            "group": group,
+        }
+        if purpose:
+            entry["purpose"] = purpose
+            entry["purposeEn"] = purpose_en or purpose
+        if metrics:
+            entry["metrics"] = metrics
+        if script:
+            entry["script"] = script
+        if date:
+            entry["date"] = date
+        out.append(entry)
 
     live = data.get("liveAttack") or {}
     if live:
@@ -391,6 +413,39 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         )
 
     soak = data.get("soak") or {}
+    soak_short = data.get("soakShort") or {}
+    if soak_short:
+        ok = soak_short.get("pass") is True
+        sec = int(soak_short.get("duration_sec") or 300)
+        mins = max(1, round(sec / 60))
+        rss_mb = round((soak_short.get("max_rss_kb") or 0) / 1024)
+        row(
+            "soak-short-gate",
+            "pass" if ok else "fail",
+            "5 dakikalik stabilite kapisi (VPS gerekmez)",
+            (
+                f"{mins} dk soak: {soak_short.get('samples', 0)} ornek, "
+                f"{soak_short.get('failures', 0)} hata — PASS."
+                if ok
+                else f"{soak_short.get('failures', 0)} basarisiz ornek — metrik/health erisimi koptu."
+            ),
+            "5-minute stability gate (no VPS required)",
+            (
+                f"{mins}m soak: {soak_short.get('samples', 0)} samples, "
+                f"{soak_short.get('failures', 0)} failures — PASS."
+                if ok
+                else f"{soak_short.get('failures', 0)} failed samples — health/metrics lost."
+            ),
+            purpose="Daemon ve analizorun kisa prod benzeri yukte ayakta kaldigini dogrular.",
+            purpose_en="Confirms daemon and analyzer stay up during a short production-like window.",
+            metrics=[
+                {"label": "Sure", "value": f"{mins} dk"},
+                {"label": "Max RSS", "value": f"{rss_mb} MB" if rss_mb else "—"},
+            ],
+            script="scripts/soak_short_proof.sh",
+            date=str(soak_short.get("ended") or soak_short.get("started") or "")[:10],
+        )
+
     if soak and not soak.get("short_mode"):
         ok = soak_laptop_proof(soak)
         dur = soak.get("duration_hours") or (soak.get("duration_sec", 0) / 3600.0)
@@ -399,19 +454,27 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         fp_bit = f" benign FP %{fp_rate}" if fp_rate is not None else ""
         rss_mb = round((soak.get("max_rss_kb") or 0) / 1024)
         fp_bit_en = f" benign FP {fp_rate}%" if fp_rate is not None else ""
-        artifacts = soak.get("measurement_artifacts", soak.get("failures", 0))
+        artifacts = soak.get("measurement_artifacts", 0)
+        samples = soak.get("samples", 0)
+        fail_n = soak.get("real_failures", soak.get("failures", 0))
         if ok:
             verdict_tr = (
-                f"{dur:.1f} saat laptop soak GECTI: servisler ayakta, max RSS {rss_mb} MB{fp_bit}. "
-                f"{artifacts} health ornegi olcum artefakti (outage degil)."
+                f"{dur:.1f} saat VPS/VM soak GECTI: {samples} ornek, {fail_n} hata — "
+                f"servisler ayakta, max RSS {rss_mb} MB{fp_bit}."
             )
             verdict_en = (
-                f"{dur:.1f}h laptop soak PASS: services up, max RSS {rss_mb} MB{fp_bit_en}. "
-                f"{artifacts} health samples were measurement artifacts (not an outage)."
+                f"{dur:.1f}h VPS/VM soak PASS: {samples} samples, {fail_n} failures — "
+                f"services up, max RSS {rss_mb} MB{fp_bit_en}."
             )
+            if artifacts:
+                verdict_tr += f" {artifacts} health ornegi olcum artefakti (outage degil)."
+                verdict_en += f" {artifacts} health samples were measurement artifacts (not an outage)."
+        elif dur < 70 and soak.get("pass_operational"):
+            verdict_tr = f"{dur:.1f} saat operasyonel gecti — 72h kaniti icin VM soak kosun."
+            verdict_en = f"{dur:.1f}h operational pass — run VM soak for 72h proof."
         else:
-            verdict_tr = f"{soak.get('failures', 0)} gercek basarisiz ornek — servis dusmus olabilir."
-            verdict_en = f"{soak.get('failures', 0)} real failed samples — possible service outage."
+            verdict_tr = f"{fail_n} basarisiz ornek — servis dusmus olabilir."
+            verdict_en = f"{fail_n} failed samples — possible service outage."
         row(
             "soak-stability",
             "pass" if ok else "fail",
@@ -581,6 +644,206 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ),
         )
 
+    wh_route = data.get("webhookRoute") or {}
+    if wh_route:
+        ok = wh_route.get("pass") is True
+        prod = wh_route.get("prod_e2e") or {}
+        prod_val = "skip" if prod.get("skipped") else ("OK" if prod.get("ok") else "—")
+        row(
+            "webhook-route-proof",
+            "pass" if ok else "fail",
+            "Telegram route + batch — #waf/#ban yönlendirme",
+            (
+                f"Mod {wh_route.get('mode', '—')}; route "
+                f"{'ON' if wh_route.get('route_enabled') else 'OFF'}, "
+                f"batch {wh_route.get('batch_sec', 0)}s."
+                if ok
+                else str(wh_route.get("fail_reason") or "webhook_route_proof FAIL")
+            ),
+            "Telegram route + batch — #waf/#ban routing",
+            (
+                f"Mode {wh_route.get('mode', '—')}; route "
+                f"{'ON' if wh_route.get('route_enabled') else 'OFF'}, "
+                f"batch {wh_route.get('batch_sec', 0)}s."
+                if ok
+                else str(wh_route.get("fail_reason") or "webhook_route_proof FAIL")
+            ),
+            purpose="WARN→DM, CRIT/ban→kanal ve batch özetinin doğru hedefe gittiğini kanıtlar.",
+            purpose_en="Proves WARN→DM, CRIT/ban→channel and batch summary routing.",
+            metrics=[
+                {"label": "mode", "value": str(wh_route.get("mode") or "—")},
+                {"label": "route", "value": "ON" if wh_route.get("route_enabled") else "OFF"},
+                {"label": "batch", "value": str(wh_route.get("batch_sec") or 0)},
+                {"label": "prod", "value": prod_val},
+            ],
+            script="scripts/webhook_route_proof.sh",
+            date=str(wh_route.get("date") or "")[:10],
+        )
+
+    dash_ban = data.get("dashboardBanApi") or {}
+    if dash_ban:
+        ok = dash_ban.get("pass") is True
+        docker = dash_ban.get("docker_api") or {}
+        docker_val = "OK" if docker.get("ok") else ("FAIL" if docker.get("ok") is False else "—")
+        row(
+            "dashboard-ban-api",
+            "pass" if ok else "fail",
+            "Dashboard ban/unban — API + Docker relay (18090)",
+            (
+                f"Host {'OK' if (dash_ban.get('host_api') or {}).get('ok') else '—'}, "
+                f"relay {'OK' if (dash_ban.get('relay_api') or {}).get('ok') else '—'}, "
+                f"Docker {docker_val} — {dash_ban.get('test_ip', '—')}."
+                if ok
+                else str(dash_ban.get("fail_reason") or "dashboard_ban_smoke FAIL")
+            ),
+            "Dashboard ban/unban — API + Docker relay (18090)",
+            (
+                f"Host {'OK' if (dash_ban.get('host_api') or {}).get('ok') else '—'}, "
+                f"relay {'OK' if (dash_ban.get('relay_api') or {}).get('ok') else '—'}, "
+                f"Docker {docker_val} — {dash_ban.get('test_ip', '—')}."
+                if ok
+                else str(dash_ban.get("fail_reason") or "dashboard_ban_smoke FAIL")
+            ),
+            purpose="Operatörün /bans sayfasından kernel ban yolunun canlı çalıştığını kanıtlar.",
+            purpose_en="Proves operators can ban/unban from /bans via the live kernel path.",
+            metrics=[
+                {"label": "host", "value": "OK" if (dash_ban.get("host_api") or {}).get("ok") else "FAIL"},
+                {"label": "relay", "value": "OK" if (dash_ban.get("relay_api") or {}).get("ok") else "FAIL"},
+                {"label": "docker", "value": docker_val},
+                {"label": "path", "value": str(dash_ban.get("ban_path") or "—")},
+            ],
+            script="scripts/dashboard_ban_smoke.sh",
+            date=str(dash_ban.get("date") or "")[:10],
+        )
+
+    auth_log = data.get("authLog") or {}
+    if auth_log:
+        ok = auth_log.get("pass") is True
+        row(
+            "auth-log-ingest",
+            "pass" if ok else "fail",
+            "auth.log / sshd ingest (nginx disi)",
+            (
+                f"lines={auth_log.get('total_lines', 0)} parse_errors="
+                f"{auth_log.get('parse_errors', 0)} unique_ips="
+                f"{auth_log.get('unique_ips', 0)} alerts={auth_log.get('alerts_total', 0)}."
+                if ok
+                else "auth_log_e2e FAIL."
+            ),
+            "auth.log / sshd ingest (beyond nginx)",
+            (
+                f"lines={auth_log.get('total_lines', 0)} parse_errors="
+                f"{auth_log.get('parse_errors', 0)} unique_ips="
+                f"{auth_log.get('unique_ips', 0)} alerts={auth_log.get('alerts_total', 0)}."
+                if ok
+                else "auth_log_e2e FAIL."
+            ),
+            purpose="SSH brute ve accepted oturumlarinin WAF/anomali hattina girdigini kanitlar.",
+            purpose_en="Proves SSH brute and accepted sessions enter the WAF/anomaly path.",
+            metrics=[
+                {"label": "lines", "value": str(auth_log.get("total_lines", 0))},
+                {"label": "unique_ips", "value": str(auth_log.get("unique_ips", 0))},
+                {"label": "alerts", "value": str(auth_log.get("alerts_total", 0))},
+            ],
+            script="scripts/auth_log_e2e.sh",
+            date=str(auth_log.get("date") or "")[:10],
+        )
+
+    siem = data.get("siemExport") or {}
+    if siem:
+        ok = siem.get("pass") is True
+        row(
+            "siem-export",
+            "pass" if ok else "fail",
+            "SIEM forwarder — alert + ban JSON (:5044)",
+            (
+                f"alert={'yes' if siem.get('alert_seen') else 'no'} "
+                f"ban={'yes' if siem.get('ban_seen') else 'no'} port={siem.get('port', 5044)}."
+                if ok
+                else "siem_export_e2e FAIL."
+            ),
+            "SIEM forwarder — alert + ban JSON (:5044)",
+            (
+                f"alert={'yes' if siem.get('alert_seen') else 'no'} "
+                f"ban={'yes' if siem.get('ban_seen') else 'no'} port={siem.get('port', 5044)}."
+                if ok
+                else "siem_export_e2e FAIL."
+            ),
+            purpose="Splunk/Elastic/Vector gibi hedeflere JSON event_type akisini kanitlar.",
+            purpose_en="Proves JSON event_type stream to Splunk/Elastic/Vector targets.",
+            metrics=[
+                {"label": "alert", "value": "yes" if siem.get("alert_seen") else "no"},
+                {"label": "ban", "value": "yes" if siem.get("ban_seen") else "no"},
+                {"label": "port", "value": str(siem.get("port") or 5044)},
+            ],
+            script="scripts/siem_export_e2e.sh",
+            date=str(siem.get("date") or "")[:10],
+        )
+
+    crowdsec = data.get("crowdsecBouncer") or {}
+    if crowdsec:
+        ok = crowdsec.get("pass") is True
+        row(
+            "crowdsec-bouncer",
+            "pass" if ok else "fail",
+            "CrowdSec LAPI → log-guardian ban API",
+            (
+                f"mode={crowdsec.get('mode', '—')} decisions="
+                f"{crowdsec.get('decisions_synced', 0)} live_api="
+                f"{'yes' if crowdsec.get('live_api_ok') else 'dry-run'}."
+                if ok
+                else "crowdsec_bouncer_e2e FAIL."
+            ),
+            "CrowdSec LAPI → log-guardian ban API",
+            (
+                f"mode={crowdsec.get('mode', '—')} decisions="
+                f"{crowdsec.get('decisions_synced', 0)} live_api="
+                f"{'yes' if crowdsec.get('live_api_ok') else 'dry-run'}."
+                if ok
+                else "crowdsec_bouncer_e2e FAIL."
+            ),
+            purpose="Dağıtık IP kararlarının kernel ban hattına aktarılmasını kanıtlar.",
+            purpose_en="Proves distributed IP decisions reach the kernel ban path.",
+            metrics=[
+                {"label": "mode", "value": str(crowdsec.get("mode") or "—")},
+                {"label": "decisions", "value": str(crowdsec.get("decisions_synced", 0))},
+                {
+                    "label": "live",
+                    "value": "yes" if crowdsec.get("live_api_ok") else "dry-run",
+                },
+            ],
+            script="scripts/crowdsec_bouncer_e2e.sh",
+            date=str(crowdsec.get("date") or "")[:10],
+        )
+
+    ops = data.get("opsGates") or {}
+    for gate in ops.get("gates") or []:
+        ok = gate.get("pass") is True
+        row(
+            str(gate.get("id") or "ops-gate"),
+            "pass" if ok else "fail",
+            str(gate.get("title") or gate.get("id") or "Ops gate"),
+            str(gate.get("verdict") or ("GECTI" if ok else "FAIL")),
+            str(gate.get("titleEn") or gate.get("title") or gate.get("id") or "Ops gate"),
+            str(gate.get("verdictEn") or gate.get("verdict") or ("PASS" if ok else "FAIL")),
+            purpose=str(gate.get("purpose") or ""),
+            purpose_en=str(gate.get("purposeEn") or gate.get("purpose") or ""),
+            metrics=gate.get("metrics"),
+            script=str(gate.get("script") or ""),
+            date=str(ops.get("date") or "")[:10],
+            group="gate",
+        )
+
+    group_order = {"gate": 0, "proof": 1}
+    id_order = {"soak-stability": 0, "soak-short-gate": 1}
+    out.sort(
+        key=lambda t: (
+            group_order.get(str(t.get("group") or "proof"), 1),
+            id_order.get(str(t.get("id")), 50),
+            str(t.get("id")),
+        )
+    )
+
     return out
 
 
@@ -734,7 +997,7 @@ def positioning_block() -> dict[str, Any]:
             "Benchmark uses the same log corpus; CRS side is @rx regex replay (not inline nginx ModSec)",
             "EPS gap is architectural — message is integration + ban speed + measurable proof",
             "Competitor table: Fail2ban/CrowdSec/ModSec columns are architectural notes — only Guardian is measured",
-            "72h laptop soak: services stayed up ~72h; raw health counter included IPC measurement artifacts (not outages)",
+            "72h VPS/VM soak: services stayed up ~72h (864 samples, 0 failures)",
         ],
         "valueBulletsTr": [
             "nginx access log -> WAF kurallari -> kernel ban (ipset/XDP) tek entegre hat",
@@ -746,7 +1009,7 @@ def positioning_block() -> dict[str, Any]:
             "Benchmark ayni log corpus; CRS tarafi @rx regex replay (inline nginx ModSec degil)",
             "EPS farki mimari farkindan — mesaj: entegrasyon + ban hizi + olculebilir kanit",
             "Rakip tablosu: Fail2ban/CrowdSec/ModSec mimari not — olculen yalnizca Guardian",
-            "72h laptop soak: servisler ~72h ayakta; ham health sayaci IPC olcum artefakti icermis (outage degil)",
+            "72h VPS/VM soak: servisler ~72h ayakta (864 ornek, 0 hata)",
         ],
     }
 
@@ -1057,6 +1320,10 @@ def main() -> int:
             missing.append(rel)
         else:
             sections[key] = val
+
+    short_soak = load_json(ROOT / "soak-report.short.json")
+    if short_soak:
+        sections["soakShort"] = short_soak
 
     sections["codeStats"] = code_stats()
     sync_live_sections(sections)

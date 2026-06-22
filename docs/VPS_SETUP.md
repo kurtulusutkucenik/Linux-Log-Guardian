@@ -87,6 +87,23 @@ journalctl -u log-guardian-soak -f
 
 Rapor: `soak-report.json` · log: `soak-72h.log`
 
+**VM/VPS soak bittiğinde** (ör. `failures=0/864`, `72.0h`) kanıtı laptop + siteye taşı:
+
+```bash
+# VM'de (zaten var):
+bash scripts/publish_soak_report.sh
+
+# Laptop'a kopyala (VM IP'sini değiştir):
+scp kurtulus@<vm-ip>:~/Linux-Log-Guardian/soak-report.json ./soak-report.json
+scp kurtulus@<vm-ip>:~/Linux-Log-Guardian/docs/evidence/SOAK_SUMMARY.md docs/evidence/ 2>/dev/null || true
+
+# Laptop'ta site kanıtına işle:
+bash scripts/publish_soak_report.sh
+bash scripts/sync_evidence_pack.sh
+```
+
+Kontrol: `python3 -c "import json; d=json.load(open('soak-report.json')); print(d.get('duration_hours'), d.get('failures'))"` → `72.0 0`
+
 ---
 
 ## 5. HTTPS Telegram webhook (tunnel yerine)
@@ -115,7 +132,60 @@ Açmak için `rules.conf` fleet anahtarları — [HOSTING_RUNBOOK_TR.md](HOSTING
 
 ---
 
-## 7. Güvenlik checklist (VPS)
+## 7. Sunum kapısı — `post_install_verify` 0 FAIL
+
+Dış demo / müşteri öncesi **zorunlu**. Telegram webhook yeşil olsa bile `:9091` / `:8090` / `--health` kırmızıysa sunumda rezil olursun.
+
+| FAIL mesajı | Anlam | Tek komut onarım |
+|-------------|-------|------------------|
+| `--health` | IPC izni / grup | `sudo bash scripts/fix_ipc_perms.sh` |
+| `metrics :9091 erisilemiyor` | Analyzer metrik dinlemiyor | `sudo systemctl restart log-guardian` |
+| `API tokensiz code=000` | API ayakta değil (000 = bağlantı yok) | `sudo bash scripts/ensure_api_security.sh` + restart |
+
+**VM kod senkronu (VirtualBox `/mnt/lg`):**
+
+Script henuz VM'de yoksa (ilk sefer):
+
+```bash
+cp /mnt/lg/scripts/vm_bootstrap_from_host.sh scripts/ 2>/dev/null \
+  || curl -fsSL ...   # veya asagidaki tek satir
+bash /mnt/lg/scripts/vm_bootstrap_from_host.sh   # paylasim mount edilmisse
+bash scripts/vm_sync_from_host.sh               # tam repo senkronu
+```
+
+`rsync -a /mnt/lg/` **kullanma** — `.cache`, `data/`, `rules.conf`, `vmlinux.h` izin hatasi verir.
+
+**Binary güncelleme (k8s_webhook vb. C değişikliği):**
+
+```bash
+bash /mnt/lg/scripts/vm_sync_from_host.sh
+sudo bash scripts/vm_build_binary.sh    # make + install (BPF vmlinux duzeltmeli)
+sudo bash scripts/vm_demo_gate.sh
+```
+
+`make -j$(nproc)` tek basina yetmez — laptop'tan gelen `vmlinux.h` typedef cakismasi yapabilir.
+
+**Tek komut (önerilen):**
+
+```bash
+sudo bash scripts/vm_demo_gate.sh
+newgrp log-guardian    # veya VM oturumunu kapat/aç
+bash scripts/vm_demo_gate.sh --verify-only
+```
+
+Çıkış: `FAIL: 0` · WARN (Prometheus docker, demo parola) lab VM’de normal.
+
+Webhook + Grafana E2E sonrası:
+
+```bash
+bash scripts/grafana_alert_e2e.sh
+sudo bash scripts/webhook_prod_e2e.sh
+bash scripts/post_install_verify.sh   # veya --verify-only gate
+```
+
+---
+
+## 8. Güvenlik checklist (VPS)
 
 ```bash
 sudo bash scripts/ensure_api_security.sh
@@ -129,7 +199,7 @@ Docker prod: `docker-compose.prod.yml` — socat `bind=127.0.0.1` (metrik/API re
 
 ---
 
-## 8. IPv6 ban doğrulama (laptop veya VPS)
+## 9. IPv6 ban doğrulama (laptop veya VPS)
 
 ```bash
 sudo bash scripts/ensure_ipv6_ipset.sh
@@ -142,7 +212,7 @@ API yoksa otomatik CLI fallback (`log-guardian ban`).
 
 ---
 
-## 9. OpenAPI strict (API SaaS)
+## 10. OpenAPI strict (API SaaS)
 
 ```bash
 sudo bash scripts/install_openapi_strict_prod.sh

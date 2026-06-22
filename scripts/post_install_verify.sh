@@ -23,13 +23,33 @@ source "$LIB"
 
 fail=0
 warn=0
+fail_lines=()
 
 ok()   { echo "[OK] $*"; }
 warn() { echo "[WARN] $*"; warn=$((warn + 1)); }
-bad()  { echo "[FAIL] $*"; fail=$((fail + 1)); }
+bad()  { echo "[FAIL] $*"; fail=$((fail + 1)); fail_lines+=("$*"); }
 
 echo "=== post_install_verify ==="
 echo ""
+
+# Grup uyeligi var ama shell'de aktif degilse (VM'de sik) — vm_demo_gate ile ayni
+if [[ $EUID -ne 0 && -z "${LG_VERIFY_IN_SG:-}" ]] \
+    && getent group log-guardian >/dev/null 2>&1 \
+    && id -nG 2>/dev/null | tr ' ' '\n' | grep -qx log-guardian; then
+  export LG_VERIFY_IN_SG=1
+  exec sg log-guardian -c "bash \"$ROOT/scripts/post_install_verify.sh\""
+fi
+
+metrics_reachable() {
+  curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1
+}
+
+api_fail_closed_ok() {
+  local code
+  code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+    http://127.0.0.1:8090/api/v1/metrics 2>/dev/null || echo 000)
+  [[ "$code" == "403" ]]
+}
 
 # --- Binary + systemd ---
 if [[ -x /usr/local/bin/log-guardian ]]; then
@@ -55,19 +75,41 @@ CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
 HEALTH_BIN="${SOAK_HEALTH_BIN:-/usr/local/bin/log-guardian}"
 DB="${SOAK_HEALTH_DB:-/etc/log-guardian/events.db}"
 health_ok=0
-if [[ -x "$HEALTH_BIN" ]] && "$HEALTH_BIN" --health --db "$DB" >/dev/null 2>&1; then
-  health_ok=1
-elif getent group log-guardian >/dev/null 2>&1 \
-    && sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1; then
-  health_ok=1
-elif sudo -n "$HEALTH_BIN" --health --db "$DB" >/dev/null 2>&1; then
-  health_ok=1
+_run_health() {
+  "$HEALTH_BIN" --health --db "$DB" >/dev/null 2>&1
+}
+_run_health_sg() {
+  sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1
+}
+if [[ -x "$HEALTH_BIN" ]]; then
+  if _run_health; then
+    health_ok=1
+  elif getent group log-guardian >/dev/null 2>&1 && _run_health_sg; then
+    health_ok=1
+  elif [[ $EUID -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]] \
+      && runuser -u "$SUDO_USER" -- sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1; then
+    health_ok=1
+  elif [[ $EUID -eq 0 ]] && _run_health_sg; then
+    health_ok=1
+  fi
 fi
 [[ "$health_ok" -eq 1 ]] && ok "--health IPC" \
   || bad "--health (sudo bash scripts/fix_ipc_perms.sh; usermod -aG log-guardian \$USER)"
 
 # --- Metrics ---
-if curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1; then
+metrics_ok=0
+if metrics_reachable; then
+  metrics_ok=1
+else
+  for _ in $(seq 1 8); do
+    sleep 1
+    if metrics_reachable; then
+      metrics_ok=1
+      break
+    fi
+  done
+fi
+if [[ "$metrics_ok" -eq 1 ]]; then
   ok "metrics :9091"
   if curl -sf http://127.0.0.1:9091/metrics 2>/dev/null | grep -q 'loganalyzer_threat_last_applied'; then
     ok "threat feed prometheus metrikleri"
@@ -75,7 +117,7 @@ if curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1; then
     warn "threat metrik yok — sudo make install && restart"
   fi
 else
-  bad "metrics :9091 erisilemiyor"
+  bad "metrics :9091 erisilemiyor (sudo bash scripts/repair_no_xdp_stack.sh)"
 fi
 
 # --- IPC (--status) ---
@@ -105,10 +147,25 @@ else
   bad "$CONF yok"
 fi
 
-api_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
-  http://127.0.0.1:8090/api/v1/metrics 2>/dev/null || echo 000)
-[[ "$api_code" == "403" ]] && ok "API fail-closed (tokensiz 403)" \
-  || bad "API tokensiz code=$api_code (beklenen 403)"
+api_ok=0
+if api_fail_closed_ok; then
+  ok "API fail-closed (tokensiz 403)"
+  api_ok=1
+else
+  for _ in $(seq 1 5); do
+    sleep 1
+    if api_fail_closed_ok; then
+      ok "API fail-closed (tokensiz 403)"
+      api_ok=1
+      break
+    fi
+  done
+fi
+if [[ "$api_ok" -eq 0 ]]; then
+  api_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+    http://127.0.0.1:8090/api/v1/metrics 2>/dev/null || echo 000)
+  bad "API tokensiz code=$api_code (beklenen 403 — repair_no_xdp_stack)"
+fi
 
 if bash "$SCRIPTS/api_fail_closed_test.sh" >/dev/null 2>&1; then
   ok "api_fail_closed_test"
@@ -179,6 +236,12 @@ if bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
   else
     warn "dashboard JWT — bash scripts/laptop_jwt_setup.sh"
   fi
+  if grep -qE '^WASM_PROD_STRICT=1' "$CONF" 2>/dev/null \
+      || grep -q 'WASM_PROD_STRICT' /etc/log-guardian/env 2>/dev/null; then
+    ok "WASM_PROD_STRICT (internet-facing)"
+  else
+    warn "WASM_PROD_STRICT yok — rules.conf veya env (unsigned wasm riski)"
+  fi
 fi
 
 # --- Opsiyonel audit ---
@@ -188,26 +251,38 @@ else
   warn "local_security_audit uyari — bash $SCRIPTS/local_security_audit.sh"
 fi
 
+if bash "$SCRIPTS/check_proxy_trust.sh" >/dev/null 2>&1; then
+  ok "check_proxy_trust (TRUST_XFF)"
+else
+  warn "check_proxy_trust — TRUST_XFF=1 ama TRUST_PROXY_CIDRS yok"
+fi
+
+if bash "$SCRIPTS/relay_lan_exposure_check.sh" >/dev/null 2>&1; then
+  ok "relay_lan_exposure_check"
+else
+  warn "relay_lan_exposure_check — relay host'ta acik olabilir"
+fi
+
 echo ""
 echo "=== ozet ==="
 echo "  FAIL: $fail   WARN: $warn"
 if [[ "$fail" -eq 0 ]]; then
   echo "[OK] post_install_verify — kurulum kapisi gecti"
   if [[ "$warn" -gt 0 ]]; then
-    echo "  WARN = opsiyonel (daemon XDP, nginx snippet, local_security_audit, JWT...)"
-    echo "  Core soak icin FAIL=0 yeterli — bkz. docs/SECURITY_PROFILES.md"
+    echo "  WARN ($warn) = opsiyonel — laptop'ta normal (daemon, JWT, FP store...)"
+    echo "  Profiller: docs/SECURITY_PROFILES.md"
   fi
-  echo ""
-  echo "Sonraki:"
-  echo "  bash scripts/demo_3min.sh"
-  echo "  bash scripts/laptop_sprint_gate.sh"
-  echo "  bash scripts/website_deploy_gate.sh"
-  echo "  bash scripts/dashboard_stack.sh   # https://localhost:8443"
-  echo "  bash scripts/grafana_stack.sh     # Prometheus :9090 + Grafana :3002"
-  echo "  (VPS: 72h soak — bash scripts/laptop_soak_72h.sh --start)"
   exit 0
 fi
 
-echo "[FAIL] post_install_verify — $fail kritik hata (servis/metrics/API/IPC)" >&2
-echo "  --no-xdp kurulum: sudo bash scripts/repair_no_xdp_stack.sh" >&2
+echo "[FAIL] post_install_verify — $fail kritik madde" >&2
+for line in "${fail_lines[@]}"; do
+  echo "  • $line" >&2
+done
+echo "" >&2
+echo "  Hizli onarim (cogu FAIL):" >&2
+echo "    sudo bash scripts/repair_no_xdp_stack.sh" >&2
+echo "    sudo bash scripts/fix_ipc_perms.sh && newgrp log-guardian" >&2
+echo "  Internet-facing demo parola:" >&2
+echo "    sudo env LG_NEW_PASSWORD='...' bash scripts/laptop_harden.sh" >&2
 exit 1

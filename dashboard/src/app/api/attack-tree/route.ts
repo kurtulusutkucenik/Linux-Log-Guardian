@@ -6,6 +6,7 @@ import path from 'path';
 import os from 'os';
 import { treeToGraph, treesToGraph, type AttackTree } from '@/lib/lineageGraph';
 import { guardianApiAuthHeaders } from '@/lib/guardianApiAuth';
+import { guardianApiBase } from '@/lib/guardianApiBase';
 
 export const dynamic = 'force-dynamic';
 
@@ -35,7 +36,7 @@ function allowDemoFallback(request: Request): boolean {
 }
 
 async function fetchFromAnalyzerApi(): Promise<AttackTreeNode[] | null> {
-  const base = process.env.GUARDIAN_API_URL || 'http://127.0.0.1:8080';
+  const base = guardianApiBase();
   try {
     const res = await fetch(`${base}/api/v1/attack-tree`, {
       cache: 'no-store',

@@ -48,6 +48,7 @@ else
 fi
 
 if [[ "${SKIP_PHASE100:-0}" != "1" ]]; then
+  echo "[sprint] phase100 (PHASE100_FAST) — ~10-25 dk, cikti sessiz; durdurmak: Ctrl+C"
   if PHASE100_FAST=1 bash scripts/phase100.sh >/dev/null 2>&1; then
     gate_ok "phase100 (PHASE100_FAST)"
   else
@@ -58,8 +59,9 @@ else
 fi
 
 if [[ "${SKIP_DEB:-0}" != "1" ]]; then
+  echo "[sprint] build_deb — ~2-5 dk (make + paket)..."
   if bash scripts/build_deb.sh >/dev/null 2>&1 && ls dist/log-guardian_*.deb >/dev/null 2>&1; then
-    deb=$(ls -1 dist/log-guardian_*.deb | tail -1)
+    deb=$(ls -1t dist/log-guardian_*.deb 2>/dev/null | head -1)
     gate_ok "build_deb -> $(basename "$deb")"
   else
     gate_fail "build_deb"

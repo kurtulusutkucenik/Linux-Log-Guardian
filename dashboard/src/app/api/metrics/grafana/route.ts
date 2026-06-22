@@ -208,12 +208,42 @@ export async function GET(req: NextRequest) {
     })),
   );
 
+  const live = await liveGuardianStats();
+  if (live?.reachable && live.stats) {
+    const counterKeys = [
+      "lines",
+      "ban_ok",
+      "ban_fail",
+      "parse_err",
+      "unique_ips",
+      "alerts",
+    ] as const;
+    for (const k of counterKeys) {
+      const lv = live.stats[k] ?? 0;
+      const pv = stats[k] ?? 0;
+      if (lv > pv) stats[k] = lv;
+    }
+    for (const [k, v] of Object.entries(live.socStats ?? {})) {
+      if ((socStats[k] ?? 0) < v) socStats[k] = v;
+    }
+    for (const [k, v] of Object.entries(live.telegramStats ?? {})) {
+      if ((telegramStats[k] ?? 0) < v) telegramStats[k] = v;
+    }
+    if ((live.stats.eps ?? 0) > (stats.eps ?? 0)) {
+      stats.eps = live.stats.eps ?? 0;
+    }
+  }
+
   const body = {
     reachable: true,
     source: "prometheus",
     tenant,
     rangeSec,
     ts: Date.now(),
+    hint:
+      live?.reachable && (stats.lines ?? 0) === 0 && (stats.ban_ok ?? 0) === 0
+        ? live.hint
+        : undefined,
     stats,
     socStats,
     telegramStats,

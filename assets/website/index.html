@@ -1,12 +1,12 @@
 <!DOCTYPE html>
-<html lang="tr" translate="no">
+<html lang="tr" translate="no" data-theme="dark">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Linux Log Guardian — Türk yapımı açık kaynak nginx WAF. log → ban ~15 dk." />
   <meta name="google" content="notranslate" />
-  <meta name="lg-integrity-i18n" content="sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo" />
-  <meta name="lg-integrity-css" content="sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+" />
+  <meta name="lg-integrity-i18n" content="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" />
+  <meta name="lg-integrity-css" content="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
   <meta name="referrer" content="no-referrer" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Linux Log Guardian" />
@@ -17,39 +17,54 @@
   <meta name="twitter:description" content="Open-source nginx WAF from Turkey. log → ban in ~15 min." />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo'; script-src-attr 'none'; style-src 'self' 'sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
-  <link rel="stylesheet" href="./site.css" id="lg-site-css" integrity="sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0'; script-src-attr 'none'; style-src 'self' 'sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <link rel="stylesheet" href="/site-s7kcuY4VYt4S.css" id="lg-site-css" integrity="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
   <link rel="icon" href="favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
 </head>
 <body>
   <a class="skip-link" href="#main">İçeriğe atla</a>
+
+  <nav class="app-nav" aria-label="Linux Log Guardian">
+    <a class="app-nav-brand" href="./">
+      <img src="logo.png" alt="" width="28" height="28" decoding="async" draggable="false" />
+      <span>Linux Log Guardian</span>
+    </a>
+    <div class="app-nav-links">
+      <a href="./" class="active" aria-current="page" data-i18n="nav.home">Ana sayfa</a>
+      <a href="#kurulum" data-i18n="nav.install">Kurulum</a>
+      <a href="/tests" data-i18n="nav.tests">Testler</a>
+      <a href="#kanit" data-i18n="nav.evidence">Kanıt</a>
+      <a href="#iletisim" data-i18n="nav.contact">İletişim</a>
+    </div>
+    <div class="app-nav-tools">
+      <button type="button" id="lg-theme-toggle" class="theme-btn theme-btn-sm" aria-pressed="true" title="Açık mod">☀</button>
+      <div class="lang-group lang-group-sm" aria-label="Language">
+        <button type="button" class="lang-btn active" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </nav>
+
   <header class="hero">
-    <nav class="topbar" aria-label="Language">
-      <button type="button" class="lang-btn active" data-lang="tr" aria-pressed="true">TR</button>
-      <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
-      <button type="button" class="lang-btn" data-lang="de" aria-pressed="false">DE</button>
-      <button type="button" class="lang-btn" data-lang="fr" aria-pressed="false">FR</button>
-      <button type="button" class="lang-btn" data-lang="es" aria-pressed="false">ES</button>
-      <button type="button" class="lang-btn" data-lang="pt" aria-pressed="false">PT</button>
-      <button type="button" class="lang-btn" data-lang="ru" aria-pressed="false">RU</button>
-      <button type="button" class="lang-btn" data-lang="ar" aria-pressed="false">AR</button>
-      <button type="button" class="lang-btn" data-lang="zh" aria-pressed="false">中文</button>
-    </nav>
-    <img src="logo.png" alt="Linux Log Guardian" class="logo" width="140" height="140" decoding="async" draggable="false" />
+    <img src="logo.png" alt="Linux Log Guardian" class="logo" width="120" height="120" decoding="async" draggable="false" />
     <h1 data-i18n="hero.title">Linux Log Guardian</h1>
     <p class="tag" data-i18n="hero.tag">nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted</p>
-    <div class="badges">
-      <span class="badge badge-accent" data-i18n="hero.badge_os">🇹🇷 Türk yapımı</span>
-      <span class="badge" data-i18n="hero.badge_mit">Açık kaynak · MIT</span>
-      <span class="badge" data-i18n="hero.badge_core">Core ~15 dk kurulum</span>
-    </div>
+    <p class="meta-line">
+      <span data-i18n="hero.badge_os">Türkiye · açık kaynak</span>
+      <span data-i18n="hero.badge_mit">MIT</span>
+      <span data-i18n="hero.badge_soak">72h soak PASS</span>
+    </p>
+    <nav class="site-nav" aria-label="Bölümler">
+      <a href="#kurulum" data-i18n="hero.cta_install">Kurulum</a>
+      <a href="/tests" data-i18n="hero.cta_tests">Testler</a>
+      <a href="#kanit" data-i18n="hero.cta_evidence">Kanıt</a>
+      <a href="#iletisim" data-i18n="hero.cta_contact">İletişim</a>
+    </nav>
     <div class="cta">
       <a class="btn btn-primary" href="#kurulum" data-i18n="hero.cta_install">15 dk kurulum</a>
-      <a class="btn btn-secondary" href="#dashboard" data-i18n="hero.cta_dashboard">Dashboard (kurulum sonrası)</a>
-      <a class="btn btn-secondary" href="#kanit" data-i18n="hero.cta_evidence">Kanıt paketi</a>
-      <a class="btn btn-secondary" href="#iletisim" data-i18n="hero.cta_contact">İletişim</a>
+      <a class="btn btn-secondary" href="#indir" data-i18n="download.title">.deb indir</a>
     </div>
   </header>
 
@@ -72,28 +87,70 @@
       <p class="prose muted-sm" data-i18n="flow.note">XDR, Wasm marketplace ve LLM Copilot uzun vadeli opsiyonel katmanlardır — Core tek başına üretimde kullanılabilir.</p>
     </section>
 
+    <section id="sinirlar">
+      <h2 data-i18n="scope.honest.title">Dürüst sınırlar</h2>
+      <div class="callout callout-warn prose" data-i18n="scope.honest.body"><ul><li><strong>Reaktif mimari</strong> — log satırı düşene kadar ilk istek geçebilir; inline ModSec hızında değiliz.</li><li><strong>L3/L4 DDoS</strong> absorb etmiyoruz — Cloudflare/CDN üstüne konuruz.</li><li><strong>Dağıtık botnet</strong> — IP başına ban; CrowdSec sinyal ağı yok.</li><li><strong>Yapar:</strong> log → CRS/WAF → ~17&nbsp;ms kernel ban, kanıt PDF, Telegram ops, MIT self-hosted.</li></ul></div>
+    </section>
+
     <section id="kurulum">
       <h2 data-i18n="install.title">Kurulum rehberi (detaylı)</h2>
-      <div class="prose" data-i18n="install.intro"><p>Bu rehber Ubuntu/Debian üzerinde sıfırdan kurulum içindir.</p></div>
+      <div class="prose" data-i18n="install.intro"></div>
 
       <h3 data-i18n="install.req_title">Gereksinimler</h3>
-      <div class="prose" data-i18n="install.req_body"><ul><li>Ubuntu 22.04 / 24.04 veya Debian 12 (amd64)</li><li>nginx + sudo</li></ul></div>
+      <div class="prose" data-i18n="install.req_body"></div>
 
-      <ol class="steps">
-        <li>
-          <strong data-i18n="install.s1_title">Kaynak veya .deb</strong>
-          <div class="prose" data-i18n="install.s1_body"></div>
-          <pre data-i18n="install.block1">git clone &lt;repo&gt; log-guardian &amp;&amp; cd log-guardian
+      <article class="install-path install-path-primary">
+        <h3 data-i18n="install.deb_title">A) Sıfır sunucu — .deb paketi (önerilen)</h3>
+        <div class="prose" data-i18n="install.deb_body"></div>
+        <ol class="steps">
+          <li>
+            <strong data-i18n="install.deb_s1_title">1. Bağımlılıklar</strong>
+            <div class="prose" data-i18n="install.deb_s1_body"></div>
+            <pre data-i18n="install.block_deb_deps">sudo apt-get update
+sudo apt-get install -y ipset libbpf1 ... nginx</pre>
+            <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı (örnek):</p>
+            <pre class="out-sample" data-i18n="install.out_deb_deps">Reading package lists... Done</pre>
+          </li>
+          <li>
+            <strong data-i18n="install.deb_s2_title">2. Paketi kur</strong>
+            <div class="prose" data-i18n="install.deb_s2_body"></div>
+            <pre data-i18n="install.block_deb">sudo dpkg -i log-guardian_*_amd64.deb</pre>
+            <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı (örnek):</p>
+            <pre class="out-sample" data-i18n="install.out_deb">log-guardian kuruldu.</pre>
+          </li>
+          <li>
+            <strong data-i18n="install.deb_s3_title">3. İlk çalıştırma ve doğrulama</strong>
+            <div class="prose" data-i18n="install.deb_s3_body"></div>
+            <pre data-i18n="install.block_deb_first">sudo bash /usr/local/share/log-guardian/scripts/install_first_run.sh</pre>
+            <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı (örnek):</p>
+            <pre class="out-sample" data-i18n="install.out_deb_first">FAIL: 0   WARN: 0</pre>
+          </li>
+        </ol>
+      </article>
+
+      <article class="install-path">
+        <h3 data-i18n="install.src_title">B) Kaynak kod — derleme ve kurulum</h3>
+        <div class="prose" data-i18n="install.src_body"></div>
+        <ol class="steps">
+          <li>
+            <strong data-i18n="install.s1_title">Kaynak ve derleme</strong>
+            <div class="prose" data-i18n="install.s1_body"></div>
+            <pre data-i18n="install.block1">git clone &lt;repo&gt; log-guardian &amp;&amp; cd log-guardian
 make -j$(nproc)
 sudo bash install.sh</pre>
-        </li>
-        <li>
-          <strong data-i18n="install.s2_title">İlk çalıştırma ve API güvenliği</strong>
-          <div class="prose" data-i18n="install.s2_body"></div>
-          <pre data-i18n="install.block_api">sudo bash scripts/install_first_run.sh
+          </li>
+          <li>
+            <strong data-i18n="install.s2_title">İlk çalıştırma ve API güvenliği</strong>
+            <div class="prose" data-i18n="install.s2_body"></div>
+            <pre data-i18n="install.block_api">sudo bash scripts/install_first_run.sh
 sudo bash scripts/ensure_api_security.sh
 bash scripts/sync_dashboard_api_token.sh</pre>
-        </li>
+          </li>
+        </ol>
+      </article>
+
+      <h3 data-i18n="install.common_title">Ortak adımlar (A ve B sonrası)</h3>
+      <ol class="steps">
         <li>
           <strong data-i18n="install.s3_title">Nginx log formatı</strong>
           <div class="prose" data-i18n="install.s3_body"></div>
@@ -106,8 +163,13 @@ sudo nginx -t &amp;&amp; sudo systemctl reload nginx</pre>
           <div class="prose" data-i18n="install.s4_body"></div>
           <pre data-i18n="install.block_verify">sudo log-guardian --health
 sudo log-guardian --status
-bash scripts/post_install_verify.sh
-curl -s http://127.0.0.1:9091/metrics | head</pre>
+bash scripts/post_install_verify.sh</pre>
+          <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı — sağlık:</p>
+          <pre class="out-sample" data-i18n="install.out_health">[HEALTH] daemon IPC: OK</pre>
+          <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı — kapı özeti:</p>
+          <pre class="out-sample" data-i18n="install.out_verify">FAIL: 0   WARN: 0</pre>
+          <p class="out-label" data-i18n="install.expect_label">Beklenen çıktı — metrik (trafik sonrası):</p>
+          <pre class="out-sample" data-i18n="install.out_metrics">loganalyzer_log_lines_total …</pre>
         </li>
         <li>
           <strong data-i18n="install.s5_title">VirtualBox / XDP yok (laptop &amp; VM)</strong>
@@ -124,14 +186,14 @@ sudo bash scripts/repair_no_xdp_stack.sh</pre>
 
     <section id="dashboard">
       <h2 data-i18n="dashboard.title">Dashboard — kurulum sonrası (opsiyonel Pro)</h2>
-      <div class="callout callout-warn" data-i18n="dashboard.where"><strong>Önemli:</strong> Dashboard bu tanıtım sitesinde çalışmaz. <code>localhost:8443</code> kendi Linux makinenizdedir.</div>
+      <div class="callout callout-warn" data-i18n="dashboard.where"><strong>Önemli:</strong> Dashboard bu tanıtım sitesinde çalışmaz. <code>localhost:3001</code> kendi Linux makinenizdedir.</div>
       <div class="prose" data-i18n="dashboard.body"></div>
 
       <h3 data-i18n="dashboard.access_title">Kim, hangi şartla erişir?</h3>
       <table class="access-table">
-        <tr><td data-i18n="dashboard.access_row1_label">Site ziyaretçisi</td><td data-i18n="dashboard.access_row1">Bu sayfayı okur, indirir — <strong>8443 açmaz</strong>.</td></tr>
-        <tr><td data-i18n="dashboard.access_row2_label">Kuran kişi</td><td data-i18n="dashboard.access_row2">Kendi Ubuntu/Debian sunucusunda kurulum + <code>dashboard_stack.sh</code> sonrası <strong>kendi makinesinde</strong> <code>https://localhost:8443</code>.</td></tr>
-        <tr><td data-i18n="dashboard.access_row3_label">Uzak VPS</td><td data-i18n="dashboard.access_row3">Aynı sunucuda SSH ile veya firewall açıksa <code>https://SUNUCU_IP:8443</code> — önce <code>laptop_harden.sh</code>.</td></tr>
+        <tr><td data-i18n="dashboard.access_row1_label">Site ziyaretçisi</td><td data-i18n="dashboard.access_row1">Bu sayfayı okur, indirir — <strong>3001 açmaz</strong>.</td></tr>
+        <tr><td data-i18n="dashboard.access_row2_label">Kuran kişi</td><td data-i18n="dashboard.access_row2">Kendi makinede <code>bash scripts/dashboard_dev.sh</code> sonrası <strong>aynı makinede</strong> <code>http://localhost:3001</code>.</td></tr>
+        <tr><td data-i18n="dashboard.access_row3_label">Uzak VPS</td><td data-i18n="dashboard.access_row3">SSH tüneli: <code>ssh -L 3001:127.0.0.1:3001 …</code> — önce <code>laptop_harden.sh</code>.</td></tr>
       </table>
 
       <h3 data-i18n="dashboard.req_title">Dashboard için ek gereksinim</h3>
@@ -139,9 +201,9 @@ sudo bash scripts/repair_no_xdp_stack.sh</pre>
 
       <h3 data-i18n="dashboard.start_title">Kendi sunucunda başlat</h3>
       <pre data-i18n="dashboard.start"># Kurulumu yaptığın makinede (bu web sitesinde değil):
-bash scripts/dashboard_stack.sh
+bash scripts/dashboard_dev.sh
 # Aynı makinede tarayıcı:
-#   https://localhost:8443
+#   http://localhost:3001
 # Giriş: admin / .env içindeki DASHBOARD_ADMIN_PASSWORD</pre>
 
       <div class="prose" data-i18n="dashboard.features"></div>
@@ -173,7 +235,7 @@ bash scripts/dashboard_stack.sh
     </section>
 
     <section class="warn">
-      <h2 data-i18n="warn.title">⚠️ İnternete açmadan önce</h2>
+      <h2 data-i18n="warn.title">İnternete açmadan önce</h2>
       <p data-i18n="warn.p1">Laptop/deneme: demo parola <code>DegistirBeni!123</code> bilinçli olarak açıktır.</p>
       <p data-i18n="warn.p2">Public VPS: <code>sudo env LG_NEW_PASSWORD='…' bash scripts/laptop_harden.sh</code></p>
       <p data-i18n="warn.p3">Profiller: <code>docs/SECURITY_PROFILES.md</code></p>
@@ -195,19 +257,29 @@ bash scripts/dashboard_stack.sh
       <pre data-i18n="download.block">bash scripts/build_deb.sh
 # → dist/log-guardian_*.deb
 bash scripts/test_deb_local.sh</pre>
+      <p class="sync-note" data-i18n="download.verify"></p>
+    </section>
+
+    <section id="testler" class="tests-teaser">
+      <h2 data-i18n="tests.title">Doğrulama testleri</h2>
+      <p class="prose" data-i18n="tests.teaser">Dashboard ile aynı otomatik test matrisi — <strong>28 kanıt</strong> (kurulum kapıları, CRS, FP, ban gecikmesi, corpus, 72h soak).</p>
+      <p class="tests-teaser-actions">
+        <a class="btn btn-primary" href="/tests" data-i18n="tests.open_full">Tüm testleri gör (24)</a>
+        <a class="btn btn-secondary" href="/evidence/competitive-proof.pdf" rel="noopener noreferrer" data-i18n="tests.proof_pdf">Kanıt PDF</a>
+      </p>
     </section>
 
     <section id="kanit">
       <h2 data-i18n="evidence.title">Kanıt paketi</h2>
-      <p data-i18n="evidence.gate">Laptop kapısı: <code>bash scripts/laptop_sprint_gate.sh</code></p>
+      <p data-i18n="evidence.gate">Kapılar: <code>laptop_sprint_gate.sh</code> · 1h soak (laptop) · <strong>72h soak (VM) PASS</strong></p>
       <ul class="evidence">
-        <li><a href="evidence/competitive-proof.pdf" rel="noopener noreferrer" type="application/pdf">competitive-proof.pdf</a></li>
-        <li><a href="evidence/competitive-proof.json" rel="noopener noreferrer" download type="application/json">competitive-proof.json</a></li>
-        <li><a href="evidence/bench-vs-modsec.json" rel="noopener noreferrer" download type="application/json">bench-vs-modsec.json</a></li>
-        <li><a href="evidence/fp-report.json" rel="noopener noreferrer" download type="application/json">fp-report.json</a></li>
-        <li><a href="evidence/bench-ban-latency.json" rel="noopener noreferrer" download type="application/json">bench-ban-latency.json</a></li>
-        <li><a href="evidence/soak-report.json" rel="noopener noreferrer" download type="application/json">soak-report.json</a></li>
-        <li><a href="evidence/SOAK_SUMMARY.md" rel="noopener noreferrer" download type="text/markdown">SOAK_SUMMARY.md</a></li>
+        <li><a href="/evidence/competitive-proof.pdf" rel="noopener noreferrer" type="application/pdf">competitive-proof.pdf</a></li>
+        <li><a href="/evidence/competitive-proof.json" rel="noopener noreferrer" download type="application/json">competitive-proof.json</a></li>
+        <li><a href="/evidence/bench-vs-modsec.json" rel="noopener noreferrer" download type="application/json">bench-vs-modsec.json</a></li>
+        <li><a href="/evidence/fp-report.json" rel="noopener noreferrer" download type="application/json">fp-report.json</a></li>
+        <li><a href="/evidence/bench-ban-latency.json" rel="noopener noreferrer" download type="application/json">bench-ban-latency.json</a></li>
+        <li><a href="/evidence/soak-report.json" rel="noopener noreferrer" download type="application/json">soak-report.json</a></li>
+        <li><a href="/evidence/SOAK_SUMMARY.md" rel="noopener noreferrer" download type="text/markdown">SOAK_SUMMARY.md</a></li>
       </ul>
       <p class="sync-note" data-i18n="evidence.sync">
         Güncelle: <code>bash scripts/sync_evidence_pack.sh</code>
@@ -216,7 +288,7 @@ bash scripts/test_deb_local.sh</pre>
 
     <section>
       <h2 data-i18n="laptop.title">Laptop doğrulama matrisi</h2>
-      <div class="prose" data-i18n="laptop.intro"></div>
+      <div class="prose" data-i18n="laptop.intro"><p>Laptop: sprint gate + 1h soak. VM/VPS: <strong>72h soak tamamlandı</strong> (864 örnek, 0 hata). Demo: <code>demo_3min.sh</code>.</p></div>
       <pre data-i18n="laptop.block">SKIP_PHASE100=1 bash scripts/laptop_sprint_gate.sh
 SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start
 SKIP_WEBHOOK=1 bash scripts/demo_3min.sh</pre>
@@ -224,16 +296,19 @@ SKIP_WEBHOOK=1 bash scripts/demo_3min.sh</pre>
 
     <section id="iletisim">
       <h2 data-i18n="contact.title">İletişim &amp; katkı</h2>
-      <div class="prose" data-i18n="contact.body"></div>
+      <div class="prose" data-i18n="contact.body"><p>Sorular, iş birliği veya katkı için yazın. Hata bildirimi ve pull request'ler açık kaynak ruhuyla memnuniyetle karşılanır.</p></div>
       <div class="contact-box">
-        <span data-i18n="contact.email_label">E-posta:</span><br />
-        <a href="mailto:kurtulusutkucenikcontact@gmail.com">kurtulusutkucenikcontact@gmail.com</a>
+        <span class="contact-label" data-i18n="contact.email_label">E-posta</span>
+        <p class="contact-plain contact-email-visible">kurtulusutkucenikcontact (at) gmail.com</p>
       </div>
     </section>
   </main>
 
-  <footer data-i18n="footer">Linux Log Guardian · Türk yapımı · MIT · açık kaynak</footer>
+  <footer>
+    <span data-i18n="footer">Linux Log Guardian · Türk yapımı · MIT · açık kaynak</span>
+    · <span class="contact-plain">kurtulusutkucenikcontact (at) gmail.com</span>
+  </footer>
 
-  <script src="./i18n.js" defer integrity="sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo" crossorigin="anonymous"></script>
+  <script src="/i18n.js?v=VjHW01jxU7I2" defer integrity="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -120,7 +120,7 @@ Beklenen: `log-guardian` + `log-guardian-daemon` **active**, `:9091/metrics` sat
 |--------|----------|-------|------|
 | **Threat intel (Firehol)** | Dış IP listesi, key yok | `sudo bash scripts/install_threat_intel_stack.sh` | ~1–4 dk (ilk) |
 | **AbuseIPDB / OTX** | Ücretsiz API key varsa | `sudo nano /etc/log-guardian/threat-feed.env` → `sudo bash scripts/install_threat_feed_live.sh` | ~30 sn–2 dk |
-| **Dashboard** | Görsel panel | `bash scripts/dashboard_stack.sh` → https://localhost:8443 | ~5 dk |
+| **Dashboard** | Görsel panel | `bash scripts/dashboard_dev.sh` → http://localhost:3001 | ~2 dk |
 | **Telegram / webhook** | Alarm bildirimi | [WEBHOOK_SETUP.md](docs/WEBHOOK_SETUP.md) | — |
 | **Inline consult** | İstek gelmeden 403 | `sudo bash scripts/merge_nginx_inline_consult.sh` | ~3 dk |
 
@@ -219,7 +219,7 @@ bash scripts/demo_3min.sh                        # 3 dk canlı demo
 |-------|-----|
 | `competitive-proof.pdf` | Ölçülebilir kanıt özeti |
 | `release-pack.zip` | GitHub release bundle |
-| `https://localhost:8443/tests` | Dashboard test paneli (Docker) |
+| `http://localhost:3001/tests` | Dashboard test paneli (dev) |
 | `real-attack-report.json` | 1000 satır corpus recall (hedef ≥ %85) |
 | `ja3-cluster-report.json` | Dağıtık saldırı (80 IP) |
 | `live-attack-report.json` | Canlı tester senaryoları |
@@ -349,7 +349,7 @@ bash scripts/demo_3min.sh                        # 3-minute live demo
 |----------|---------|
 | `competitive-proof.pdf` | Measurable evidence summary |
 | `release-pack.zip` | GitHub release bundle |
-| `https://localhost:8443/tests` | Dashboard test panel (Docker) |
+| `http://localhost:3001/tests` | Dashboard test panel (dev) |
 | `real-attack-report.json` | 500-line corpus recall (target ≥ 85%) |
 | `ja3-cluster-report.json` | Distributed attack (80 IPs) |
 | `live-attack-report.json` | Live tester scenarios |

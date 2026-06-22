@@ -2,7 +2,7 @@
 
 **Linux Log Guardian** ModSecurity/CrowdSec ile aynı kategoride değil; **log → WAF → kernel ban** hattı. Bu belge kanıt paketinin ne iddia ettiğini ve etmediğini ayırır.
 
-**Son güncelleme:** 2026-06-09 · Kanıt: `bash scripts/sprint_a.sh` · `competitive-proof.json`
+**Son güncelleme:** 2026-06-19 · Kanıt: `bash scripts/sprint_a.sh` · `competitive-proof.json` · VPS 72h soak (VM)
 
 ---
 
@@ -13,7 +13,7 @@
 | Inline ModSec (~12K EPS replay) | Log-tailing mimari; bench ~6.5K EPS (1500 satır) |
 | Her saldırıda anında kernel drop | Önce log + WAF; ban IPC/ipset |
 | CrowdSec bouncer uyumu | Yok (P2) |
-| 72h VPS soak demo | 300s soak var; 72h VPS yok |
+| 72h VPS soak demo | ✅ VM kanıtı (`72.0h`, `failures=0/864`) — laptop `docs/evidence/` henüz 1h ise VM raporunu kopyala |
 
 ---
 
@@ -94,7 +94,7 @@
 |------|-------|-------|
 | T1 | `real_attack_suite.sh` | ✅ offline ağırlıklı |
 | T1 | 10K corpus | ✅ sentetik genişletme |
-| T1 | VPS 72h soak | ⏸️ ertelendi |
+| T1 | VPS 72h soak | ✅ VM (`72.0h`, `0/864`) — `docs/evidence/` sync için scp |
 | T1 | README EDGE_PROTECTION | ✅ |
 | T2 | Tek zincir dashboard SOC | 🟡 kısmi |
 | T2 | JA3 + ASN cluster | 🟡 JA3 var |

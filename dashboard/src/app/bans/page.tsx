@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldBan, RefreshCw, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ShieldBan, RefreshCw, ChevronLeft, ChevronRight, Search, Globe2 } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import axios from "axios";
@@ -112,6 +112,13 @@ export default function BansPage() {
               {source}
             </span>
           )}
+          <Link
+            href="/#attack-world-map"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-sm text-cyan-200 hover:bg-cyan-500/15 transition-colors"
+          >
+            <Globe2 className="w-4 h-4" />
+            {t("navAttackMap")}
+          </Link>
           <button
             type="button"
             onClick={handleRefresh}
@@ -148,7 +155,11 @@ export default function BansPage() {
             {filtering ? t("bannedIpsSearchEmpty") : t("bannedIpsEmpty")}
           </p>
         ) : (
-          <ul className="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
+          <>
+            {totalCount > bans.length && !filtering && (
+              <p className="text-xs text-white/40 mb-2">{t("bannedIpsScrollHint")}</p>
+            )}
+            <ul className="space-y-2 max-h-[32rem] overflow-y-auto pr-1">
             {bans.map((b) => (
               <li
                 key={b.ip}
@@ -172,6 +183,7 @@ export default function BansPage() {
               </li>
             ))}
           </ul>
+          </>
         )}
 
         {!filtering && totalCount > PAGE_SIZE && (

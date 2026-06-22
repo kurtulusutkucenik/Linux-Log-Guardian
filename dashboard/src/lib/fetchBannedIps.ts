@@ -1,4 +1,5 @@
 import { readFile, stat } from "fs/promises";
+import { guardianApiBase } from "./guardianApiBase";
 
 export type BanEntry = { ip: string; reason?: string; ts?: number };
 
@@ -118,11 +119,7 @@ async function readBanFile(path: string, opts: FetchBannedOpts): Promise<BannedI
 }
 
 export async function fetchBannedIps(opts: FetchBannedOpts = {}): Promise<BannedIpsResult> {
-  const apiBase = (
-    process.env.GUARDIAN_BAN_URL ||
-    process.env.GUARDIAN_API_URL ||
-    ""
-  ).replace(/\/$/, "");
+  const apiBase = guardianApiBase();
 
   const dataDir = process.env.BENCH_DATA_DIR || "/data/lg";
   const filePaths = [`${dataDir}/active_bans.json`, ...BAN_FILE_PATHS];

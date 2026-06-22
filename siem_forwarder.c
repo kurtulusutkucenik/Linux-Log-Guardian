@@ -25,6 +25,9 @@ SiemForwarderConfig g_siem_config = {
 typedef struct {
     Alert alert;
     char sensor_type[32];
+    char event_type[16];
+    double risk_score;
+    char policy[64];
 } SiemEvent;
 
 static SiemEvent g_siem_queue[SIEM_QUEUE_SIZE];
@@ -39,24 +42,38 @@ static pthread_t g_siem_thread;
 static volatile int g_siem_running = 0;
 static int g_siem_thread_started = 0;
 
-/* TCP soket üzerinden JSON verisi gönderir. */
+/* TCP soket üzerinden JSON (Logstash / Elastic / özel SIEM) */
 static int send_to_siem(int sock, const SiemEvent *ev) {
     char payload[2048];
+    char esc_msg[ALERT_MSG_LEN * 2];
     const char *lvl_str = (ev->alert.level == ALERT_CRIT) ? "CRITICAL" : "WARNING";
-    
+    const char *evt = ev->event_type[0] ? ev->event_type : "alert";
+    size_t ei = 0;
+
+    for (const char *p = ev->alert.message; *p && ei + 2 < sizeof(esc_msg); p++) {
+        if (*p == '"' || *p == '\\' || *p == '\n') esc_msg[ei++] = '\\';
+        esc_msg[ei++] = *p;
+    }
+    esc_msg[ei] = '\0';
+
     int len = snprintf(payload, sizeof(payload),
-        "{\"tenant_id\":\"%s\",\"timestamp\":%ld,\"sensor\":\"%s\",\"level\":\"%s\",\"ip\":\"%s\",\"mitre\":\"%s\",\"message\":\"%s\"}\n",
+        "{\"event_type\":\"%s\",\"tenant_id\":\"%s\",\"timestamp\":%ld,"
+        "\"sensor\":\"%s\",\"level\":\"%s\",\"ip\":\"%s\",\"mitre\":\"%s\","
+        "\"message\":\"%s\",\"risk_score\":%.1f,\"policy\":\"%s\"}\n",
+        evt,
         g_tenant_id,
         (long)ev->alert.ts,
         ev->sensor_type,
         lvl_str,
         ev->alert.ip,
         ev->alert.mitre_id[0] ? ev->alert.mitre_id : "Unknown",
-        ev->alert.message);
-        
+        esc_msg,
+        ev->risk_score >= 0.0 ? ev->risk_score : 0.0,
+        ev->policy[0] ? ev->policy : "");
+
     if (len <= 0 || len >= (int)sizeof(payload)) return -1;
-    
-    ssize_t sent = send(sock, payload, len, MSG_NOSIGNAL);
+
+    ssize_t sent = send(sock, payload, (size_t)len, MSG_NOSIGNAL);
     return (sent == len) ? 0 : -1;
 }
 
@@ -130,19 +147,54 @@ void siem_forwarder_init(void) {
 }
 
 void siem_forwarder_publish(const Alert *alert, const char *sensor_type) {
-    if (!g_siem_running) return;
-    
+    if (!g_siem_running || !alert) return;
+
     pthread_mutex_lock(&g_siem_mutex);
     if (g_queue_count < SIEM_QUEUE_SIZE) {
         g_siem_queue[g_queue_head].alert = *alert;
-        strncpy(g_siem_queue[g_queue_head].sensor_type, sensor_type, 31);
+        strncpy(g_siem_queue[g_queue_head].sensor_type, sensor_type ? sensor_type : "sensor", 31);
         g_siem_queue[g_queue_head].sensor_type[31] = '\0';
-        
+        strncpy(g_siem_queue[g_queue_head].event_type, "alert", sizeof(g_siem_queue[g_queue_head].event_type) - 1);
+        g_siem_queue[g_queue_head].risk_score = -1.0;
+        g_siem_queue[g_queue_head].policy[0] = '\0';
+
         g_queue_head = (g_queue_head + 1) % SIEM_QUEUE_SIZE;
         g_queue_count++;
         pthread_cond_signal(&g_siem_cond);
     }
-    /* Kuyruk doluysa paketi drop ediyoruz. (SIEM backpressure korumasi) */
+    pthread_mutex_unlock(&g_siem_mutex);
+}
+
+void siem_forwarder_publish_ban(const char *ip, time_t ts, const char *reason,
+                                double risk_score, const char *policy) {
+    if (!g_siem_running || !ip || !ip[0]) return;
+
+    Alert a = {0};
+    a.level = ALERT_CRIT;
+    a.ts = ts > 0 ? ts : time(NULL);
+    strncpy(a.ip, ip, sizeof(a.ip) - 1);
+    snprintf(a.message, sizeof(a.message), "%s",
+             (reason && reason[0]) ? reason : "kernel-ban");
+    strncpy(a.mitre_id, MITRE_T1190, sizeof(a.mitre_id) - 1);
+    strncpy(a.mitre_tactic, "Response", sizeof(a.mitre_tactic) - 1);
+
+    pthread_mutex_lock(&g_siem_mutex);
+    if (g_queue_count < SIEM_QUEUE_SIZE) {
+        g_siem_queue[g_queue_head].alert = a;
+        strncpy(g_siem_queue[g_queue_head].sensor_type, "ban-pipeline", 31);
+        g_siem_queue[g_queue_head].sensor_type[31] = '\0';
+        strncpy(g_siem_queue[g_queue_head].event_type, "ban", sizeof(g_siem_queue[g_queue_head].event_type) - 1);
+        g_siem_queue[g_queue_head].risk_score = risk_score;
+        if (policy && policy[0]) {
+            strncpy(g_siem_queue[g_queue_head].policy, policy, sizeof(g_siem_queue[g_queue_head].policy) - 1);
+        } else {
+            g_siem_queue[g_queue_head].policy[0] = '\0';
+        }
+
+        g_queue_head = (g_queue_head + 1) % SIEM_QUEUE_SIZE;
+        g_queue_count++;
+        pthread_cond_signal(&g_siem_cond);
+    }
     pthread_mutex_unlock(&g_siem_mutex);
 }
 

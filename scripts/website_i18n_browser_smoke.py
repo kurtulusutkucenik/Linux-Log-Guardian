@@ -12,6 +12,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 SITE = Path(os.environ.get("LG_WEBSITE_SMOKE_DIR", ROOT / "assets/website-deploy"))
 HOST = os.environ.get("LG_WEBSITE_HOST", "127.0.0.1")
+CONTACT_EMAIL = "kurtulusutkucenikcontact@gmail.com"
 
 
 def free_port() -> int:
@@ -87,40 +88,30 @@ def main() -> int:
             else:
                 print("  [OK] skip-link")
 
-            page.locator('[data-lang="de"]').click()
-            page.wait_for_timeout(150)
-            body_de = page.inner_text("main")
-            if "Installationsanleitung" in body_de:
-                print("  [OK] DE install.title")
+            if page.locator(".app-nav").count() >= 1:
+                print("  [OK] app-nav")
             else:
-                print("  [FAIL] DE install.title cevrilmedi")
+                print("  [FAIL] app-nav eksik")
                 fail += 1
 
-            page.locator('[data-lang="ru"]').click()
+            page.locator('[data-lang="en"]').click()
             page.wait_for_timeout(150)
-            body_ru = page.inner_text("main")
-            if "Руководство по установке" in body_ru:
-                print("  [OK] RU install.title")
+            body_en = page.inner_text("main")
+            if "Installation" in body_en or "install" in body_en.lower():
+                print("  [OK] EN install.title")
             else:
-                print("  [FAIL] RU install.title cevrilmedi")
+                print("  [FAIL] EN install.title cevrilmedi")
                 fail += 1
 
-            page.locator('[data-lang="ar"]').click()
-            page.wait_for_timeout(150)
-            dir_attr = page.locator("html").get_attribute("dir")
-            if dir_attr == "rtl":
-                print("  [OK] AR dir=rtl")
+            before_theme = page.locator("html").get_attribute("data-theme") or "dark"
+            page.locator(".theme-btn").first.click()
+            page.wait_for_timeout(100)
+            after_theme = page.locator("html").get_attribute("data-theme")
+            expected_theme = "light" if before_theme == "dark" else "dark"
+            if after_theme == expected_theme:
+                print("  [OK] theme toggle")
             else:
-                print(f"  [FAIL] AR dir beklenen rtl, gelen {dir_attr!r}")
-                fail += 1
-
-            page.locator('[data-lang="zh"]').click()
-            page.wait_for_timeout(150)
-            body_zh = page.inner_text("main")
-            if "安装指南" in body_zh:
-                print("  [OK] ZH install.title")
-            else:
-                print("  [FAIL] ZH install.title cevrilmedi")
+                print(f"  [FAIL] theme toggle {before_theme!r} -> {after_theme!r} (beklenen {expected_theme!r})")
                 fail += 1
 
             page.locator('[data-lang="tr"]').click()
@@ -130,6 +121,84 @@ def main() -> int:
                 print("  [OK] TR footer")
             else:
                 print("  [FAIL] TR footer cevrilmedi")
+                fail += 1
+
+            contact_text = page.inner_text("#iletisim")
+            if CONTACT_EMAIL in contact_text or "(at) gmail.com" in contact_text:
+                print("  [OK] contact email (index)")
+            else:
+                print(f"  [FAIL] contact email gorunmuyor (beklenen {CONTACT_EMAIL})")
+                fail += 1
+
+            page.goto(f"{base}/tests.html", wait_until="networkidle")
+            page.wait_for_timeout(400)
+            if page.locator(".app-nav a.active").inner_text().strip().lower().startswith("test"):
+                print("  [OK] tests nav active")
+            elif "Test" in page.locator(".app-nav a.active").inner_text():
+                print("  [OK] tests nav active")
+            else:
+                active = page.locator(".app-nav a.active").inner_text()
+                print(f"  [FAIL] tests nav active degil ({active!r})")
+                fail += 1
+
+            page.locator('[data-lang="en"]').click()
+            page.wait_for_timeout(150)
+            if page.locator("html").get_attribute("lang") == "en":
+                print("  [OK] tests EN lang")
+            else:
+                print("  [FAIL] tests EN lang")
+                fail += 1
+
+            before_theme = page.locator("html").get_attribute("data-theme") or "dark"
+            page.locator(".theme-btn").first.click()
+            page.wait_for_timeout(100)
+            after_theme = page.locator("html").get_attribute("data-theme")
+            expected_theme = "light" if before_theme == "dark" else "dark"
+            if after_theme == expected_theme:
+                print("  [OK] tests theme toggle")
+            else:
+                print(f"  [FAIL] tests theme toggle {before_theme!r} -> {after_theme!r}")
+                fail += 1
+
+            install_href = page.locator('a[data-i18n="nav.install"]').get_attribute("href")
+            page.locator('a[data-i18n="nav.install"]').click()
+            page.wait_for_timeout(200)
+            if page.url.endswith("/#kurulum") or page.url.endswith("#kurulum"):
+                print("  [OK] tests nav kurulum -> /#kurulum")
+            else:
+                print(f"  [FAIL] tests nav kurulum ({install_href!r} -> {page.url})")
+                fail += 1
+
+            page.goto(f"{base}/tests.html", wait_until="networkidle")
+            page.wait_for_timeout(300)
+            pdf_href = page.locator(".tests-toolbar-pdf").get_attribute("href")
+            if pdf_href == "/evidence/competitive-proof.pdf":
+                print("  [OK] tests toolbar PDF href")
+            else:
+                print(f"  [FAIL] tests toolbar PDF href ({pdf_href!r})")
+                fail += 1
+
+            cards = page.locator("#test-results-list .test-card").count()
+            static = page.locator("#test-results-list .test-card-static").count()
+            if cards >= 15:
+                print(f"  [OK] test-results ({cards} kart, static={static})")
+            else:
+                print(f"  [FAIL] test-results yetersiz ({cards} kart, beklenen >=15)")
+                fail += 1
+            hero = page.locator("#test-results-hero:not([hidden])").count()
+            if hero >= 1:
+                print("  [OK] test-results-hero")
+            else:
+                print("  [FAIL] test-results-hero gorunmuyor")
+                fail += 1
+
+            page.goto(base, wait_until="networkidle")
+            page.wait_for_timeout(300)
+            honest = page.locator("#sinirlar .callout").inner_text().strip()
+            if len(honest) > 40:
+                print(f"  [OK] scope.honest.body ({len(honest)} char)")
+            else:
+                print("  [FAIL] scope.honest.body bos")
                 fail += 1
 
             browser.close()

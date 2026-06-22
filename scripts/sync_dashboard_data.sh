@@ -19,8 +19,9 @@ copy_if() {
 
 for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-status.json \
   crs-parity-report.json tenant-isolation-report.json competitive-proof.json compliance-report.json \
-  soak-report.json competitive-proof.pdf real-attack-report.json live-attack-report.json ja3-cluster-report.json \
+  soak-report.json soak-report.short.json ops-gate-report.json competitive-proof.pdf real-attack-report.json live-attack-report.json ja3-cluster-report.json \
   ja3-cluster-ban-live.json dashboard-ban-api-report.json webhook-route-proof-report.json \
+  auth-log-report.json siem-export-report.json crowdsec-bouncer-report.json \
   fp-cluster-trust-report.json \
   lineage-live-report.json \
   nginx-inline-consult-report.json nginx-hybrid-report.json real-attack-report-10k.json \
@@ -59,30 +60,11 @@ if [[ -f "$ROOT/ipv6-ban-e2e-report.json" ]]; then
 fi
 
 if [[ -f "$DEST/attack_tree.json" ]] && command -v curl >/dev/null 2>&1; then
-  export DEST AGENT_ID TELEMETRY_URL TOKEN
-  payload=$(python3 <<'PY'
-import json, os, sys
-dest = os.environ["DEST"]
-agent = os.environ["AGENT_ID"]
-with open(os.path.join(dest, "attack_tree.json")) as f:
-    raw = json.load(f)
-trees = raw if isinstance(raw, list) else raw.get("trees", [])
-print(json.dumps({
-    "agent_id": agent,
-    "eps": 42.0,
-    "alerts_total": 3,
-    "rce_detections": 1,
-    "attack_tree": trees,
-}))
-PY
-)
-  if curl -sf -o /dev/null --max-time 2 "${TELEMETRY_URL%/api/telemetry}/api/health" 2>/dev/null \
-     || curl -sf -o /dev/null --max-time 2 "http://127.0.0.1:3000" 2>/dev/null; then
-    code=$(curl -s -o /dev/null -w "%{http_code}" -X POST "$TELEMETRY_URL" \
-      -H "Authorization: Bearer $TOKEN" \
-      -H "Content-Type: application/json" \
-      -d "$payload" 2>/dev/null || echo "000")
-    echo "[sync] telemetry attack_tree push HTTP $code (agent=$AGENT_ID)"
+  if bash "$ROOT/scripts/fleet_telemetry_push.sh" 2>/dev/null; then
+    echo "[sync] telemetry push OK (agent=$AGENT_ID)"
+  elif curl -sf -o /dev/null --max-time 2 "http://127.0.0.1:3000/api/tier" 2>/dev/null \
+     || curl -sfk -o /dev/null --max-time 2 "https://127.0.0.1:8443/api/tier" 2>/dev/null; then
+    echo "[sync] telemetry push FAIL — bash scripts/fleet_telemetry_push.sh"
   else
     echo "[sync] telemetry SKIP — dashboard ayakta degil (docker compose -f docker-compose.prod.yml up -d dashboard)"
   fi

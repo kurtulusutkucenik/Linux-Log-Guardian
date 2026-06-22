@@ -46,8 +46,12 @@ if [[ -n "${LG_NEW_PASSWORD:-}" ]]; then
   LG_NEW_PASSWORD="$LG_NEW_PASSWORD" bash "$ROOT/scripts/laptop_harden.sh"
 elif bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then
   echo ""
-  echo "[install_first_run] Internet-facing makine — LG_NEW_PASSWORD zorunlu" >&2
+  echo "╔══════════════════════════════════════════════════════════╗"
+  echo "║  INTERNET-FACING — demo parola kabul edilmez               ║"
+  echo "╚══════════════════════════════════════════════════════════╝"
+  echo "[install_first_run] LG_NEW_PASSWORD zorunlu" >&2
   echo "  sudo env LG_NEW_PASSWORD='GucluParola' bash scripts/install_first_run.sh" >&2
+  echo "  Profil: docs/SECURITY_PROFILES.md" >&2
   exit 1
 else
   echo "[INFO] Yerel/laptop profil — demo parola kalabilir (degistirmek icin LG_NEW_PASSWORD=...)"
@@ -99,6 +103,19 @@ if [[ "${OPENAPI_STRICT_AUTO:-0}" == "1" ]]; then
   echo "[install_first_run] OpenAPI strict (API host)..."
   bash "$ROOT/scripts/install_openapi_strict_prod.sh" 2>/dev/null || \
     echo "[WARN] OpenAPI strict atlandi" >&2
+fi
+
+if command -v nginx >/dev/null 2>&1; then
+  echo ""
+  echo "[install_first_run] nginx inline consult..."
+  bash "$ROOT/scripts/fix_nginx_inline_consult.sh" 2>/dev/null || \
+    echo "[WARN] inline consult atlandi" >&2
+fi
+
+if bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then
+  if ! grep -qE '^OPENAPI_STRICT=1' "${LG_RULES:-/etc/log-guardian/rules.conf}" 2>/dev/null; then
+    echo "[INFO] Internet-facing — API host icin: sudo bash scripts/install_openapi_strict_prod.sh"
+  fi
 fi
 
 bash "$ROOT/scripts/install_fp_report_cron.sh" 2>/dev/null || true

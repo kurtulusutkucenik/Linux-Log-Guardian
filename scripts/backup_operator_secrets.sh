@@ -23,8 +23,15 @@ umask 077
     echo ""
   fi
   if [[ -r /etc/log-guardian/webhook.env ]]; then
-    echo "## /etc/log-guardian/webhook.env (token/chat — degerler maskelenmedi)"
-    grep -E '^WEBHOOK_TELEGRAM' /etc/log-guardian/webhook.env 2>/dev/null || true
+    echo "## /etc/log-guardian/webhook.env"
+    grep -E '^(LOGANALYZER_TELEGRAM|TELEGRAM_|WEBHOOK_)' /etc/log-guardian/webhook.env 2>/dev/null || true
+    echo ""
+  fi
+  DASH="$HOME/Masaüstü/Linux Log Guardian/dashboard/.env"
+  [[ -f "$DASH" ]] || DASH="$(cd "$(dirname "${BASH_SOURCE[0]}")/../dashboard" 2>/dev/null && pwd)/.env"
+  if [[ -f "$DASH" ]]; then
+    echo "## dashboard/.env"
+    grep -E '^(JWT_SECRET|DASHBOARD_FLEET_API_KEY|GUARDIAN_API_TOKEN)=' "$DASH" 2>/dev/null || true
     echo ""
   fi
 } >"$DEST"

@@ -8,6 +8,15 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RULES="${LG_RULES:-/etc/log-guardian/rules.conf}"
 RUN_USER="${SUDO_USER:-}"
+QUIET="${REPAIR_QUIET:-0}"
+
+run_step() {
+  if [[ "$QUIET" == "1" ]]; then
+    "$@" >/dev/null 2>&1 || "$@"
+  else
+    "$@"
+  fi
+}
 
 IFACE="${LG_IFACE:-}"
 if [[ -z "$IFACE" && -f "$RULES" ]]; then
@@ -24,11 +33,11 @@ chmod 644 /var/log/nginx/access.log 2>/dev/null || true
 chgrp adm /var/log/nginx/access.log 2>/dev/null || true
 
 bash "$ROOT/scripts/fix_ipc_perms.sh"
-bash "$ROOT/scripts/sync_service_password.sh"
-bash "$ROOT/scripts/fix_rules_conf_perms.sh"
-bash "$ROOT/scripts/ensure_api_security.sh"
+run_step bash "$ROOT/scripts/sync_service_password.sh"
+run_step bash "$ROOT/scripts/fix_rules_conf_perms.sh"
+run_step bash "$ROOT/scripts/ensure_api_security.sh"
 
-LG_IFACE="$IFACE" bash "$ROOT/scripts/repair_daemon_unit.sh"
+LG_IFACE="$IFACE" run_step bash "$ROOT/scripts/repair_daemon_unit.sh"
 
 # etcd / fleet telemetry — dashboard yoksa journal gurultusu
 lg_rules_sed() {
@@ -44,12 +53,29 @@ lg_rules_sed MESH_BACKEND none
 lg_rules_sed MESH_ETCD_ENDPOINTS ""
 lg_rules_sed SAAS_ENABLED 0
 echo "[OK] fleet mesh kapali (MESH_BACKEND=none SAAS_ENABLED=0)"
+echo "[INFO] Dashboard filo icin sonra: sudo bash scripts/fix_fleet_telemetry.sh"
+echo "       veya: bash scripts/fleet_telemetry_keepalive.sh --bg"
 
 systemctl daemon-reload
 systemctl enable log-guardian-daemon.service log-guardian.service 2>/dev/null || true
 systemctl restart log-guardian-daemon.service 2>/dev/null || true
 sleep 2
 systemctl restart log-guardian.service 2>/dev/null || true
+
+echo "[repair_no_xdp_stack] metrics bekleniyor (:9091)..."
+metrics_ok=0
+for _ in $(seq 1 20); do
+  if curl -sf --max-time 2 http://127.0.0.1:9091/metrics >/dev/null 2>&1; then
+    metrics_ok=1
+    break
+  fi
+  sleep 1
+done
+if [[ "$metrics_ok" -eq 1 ]]; then
+  echo "[OK] metrics :9091"
+else
+  echo "[WARN] metrics :9091 henuz yok — journalctl -u log-guardian -n 30" >&2
+fi
 
 if [[ -n "$RUN_USER" && "$RUN_USER" != "root" ]]; then
   if ! id -nG "$RUN_USER" 2>/dev/null | tr ' ' '\n' | grep -qx log-guardian; then
@@ -66,7 +92,11 @@ else
 fi
 
 echo ""
-echo "Sonraki (normal kullanici):"
-echo "  newgrp log-guardian"
-echo "  bash scripts/post_install_verify.sh"
-echo "  SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start"
+if [[ "$QUIET" == "1" ]]; then
+  echo "Sonraki: bash scripts/vm_demo_gate.sh --verify-only"
+else
+  echo "Sonraki (normal kullanici):"
+  echo "  newgrp log-guardian"
+  echo "  bash scripts/post_install_verify.sh"
+  echo "  SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start"
+fi

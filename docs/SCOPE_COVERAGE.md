@@ -19,6 +19,7 @@
 | **4** | Fleet + Grafana | `phase4_e2e.sh` | **3** | SOC | dashboard `/fleet` Online |
 | **5** | Wasm + Copilot + mesh | `phase5_e2e.sh` | **5** | Wasm native + Pro | `wasm_release.sh` native |
 | **6** | Rekabet kanıtı | `competitive_suite.sh` | **4** | Kalite | FP < %5, bench, CI gate |
+| **D** | VM/VPS sunum kapısı | `vm_demo_gate.sh` | **4** | Prod kanıt | `post_install_verify` **0 FAIL** + webhook prod E2E |
 | — | Güvenlik sertleştirme | `security_hardening_test.sh` | **4** | Kalite | IPC token, JWT |
 | — | 72h soak | `soak_test.sh` | **6** | Enterprise backlog | 72h rapor |
 | — | Enterprise tier | tier middleware | **6** | Enterprise backlog | imzalı plugin tasarımı |
@@ -89,7 +90,7 @@ flowchart TB
 | C6 | Prometheus metrikler | `metrics.c`, port 9091 | ✅ | `curl -s http://127.0.0.1:9091/metrics \| head` | Prefix: `loganalyzer_*` |
 | C7 | Kurulum + systemd | `install.sh`, unit dosyaları | ✅ | `sudo log-guardian --health` | |
 | C8 | OpenAPI / BOLA strict | `schema_validator.c` | ✅ | `bash scripts/bola_idor_e2e.sh` | Şema açıkken |
-| C9 | **ssh / auth / journald log** | — | 🔴 | — | Genişleme; bugün nginx-first |
+| C9 | **ssh / auth / journald log** | `parser.c`, `test_auth.log` | 🟡 | `bash scripts/auth_log_e2e.sh` | sshd satirlari; journald spike sonraki |
 | C10 | **ARM / embedded Linux** | — | 🔴 | — | Yalnızca x86_64 hedefleniyor |
 
 ### 2.2 Pro — SOC, eBPF, filo

@@ -14,6 +14,16 @@ fi
 PORT="${LG_WEBSITE_PORT:-8765}"
 HOST="${LG_WEBSITE_HOST:-127.0.0.1}"
 
+pick_free_port() {
+  python3 - <<'PY'
+import socket
+s = socket.socket()
+s.bind(("127.0.0.1", 0))
+print(s.getsockname()[1])
+s.close()
+PY
+}
+
 [[ -f "$SITE/index.html" ]] || { echo "[preview_website] FAIL: $SITE/index.html yok" >&2; exit 1; }
 
 bash "$ROOT/scripts/website_security_check.sh" || {
@@ -29,11 +39,18 @@ if ! grep -q 'integrity=' "$SITE/index.html" 2>/dev/null; then
   bash "$ROOT/scripts/website_refresh_sri.sh" 2>/dev/null || true
 fi
 
+if fuser "${PORT}/tcp" >/dev/null 2>&1; then
+  bash "$ROOT/scripts/website_kill_ports.sh" >/dev/null 2>&1 || true
+  sleep 0.3
+fi
+if fuser "${PORT}/tcp" >/dev/null 2>&1; then
+  busy="$PORT"
+  PORT="$(pick_free_port)"
+  echo "  [WARN] port ${busy} mesgul — http://${HOST}:${PORT}/ kullaniliyor" >&2
+fi
+
 echo "[preview_website] http://${HOST}:${PORT}/"
 echo "  Kaynak: ${SITE#$ROOT/}"
-if fuser "${PORT}/tcp" >/dev/null 2>&1; then
-  echo "  [WARN] port ${PORT} mesgul — bash scripts/website_kill_ports.sh" >&2
-fi
 echo "  Guvenlik: dizin listesi kapali, CSP basliklari, yalnizca ${HOST}"
 echo "  Kanit: http://${HOST}:${PORT}/evidence/competitive-proof.pdf"
 echo "  Durdurmak: Ctrl+C"

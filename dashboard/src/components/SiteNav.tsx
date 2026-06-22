@@ -51,6 +51,9 @@ export function SiteNav() {
           <Link href="/tests" className={linkClass("/tests")} id="nav-tests">
             {t("navTests")}
           </Link>
+          <Link href="/#attack-world-map" className={linkClass("/")} id="nav-attack-map">
+            {t("navAttackMap")}
+          </Link>
           <Link href="/copilot" className={linkClass("/copilot")} id="nav-copilot">
             {t("navCopilot")}
           </Link>

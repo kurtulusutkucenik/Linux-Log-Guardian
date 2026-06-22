@@ -213,8 +213,8 @@ function MiniStat({
         {value}
       </p>
       {spark.length > 1 && (
-        <div className="h-9 mt-auto -mx-1">
-          <ResponsiveContainer width="100%" height="100%">
+        <div className="h-9 mt-auto -mx-1 min-w-0 w-full">
+          <ResponsiveContainer width="100%" minWidth={0} height="100%">
             <AreaChart data={spark}>
               <Area
                 type="monotone"
@@ -254,11 +254,12 @@ function MiniTs({
     );
   }
   return (
-    <div className="glass-panel p-3 border border-white/5">
+    <div className="glass-panel p-3 border border-white/5 min-w-0 w-full">
       <h3 className="text-[10px] font-semibold uppercase tracking-wider text-white/50 mb-2 truncate">
         {title}
       </h3>
-      <ResponsiveContainer width="100%" height={height}>
+      <div className="min-w-0 w-full" style={{ height }}>
+        <ResponsiveContainer width="100%" minWidth={0} height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" />
           <XAxis dataKey="t" tick={{ fill: "#64748b", fontSize: 8 }} interval="preserveStartEnd" />
@@ -278,7 +279,8 @@ function MiniTs({
             />
           ))}
         </LineChart>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -453,6 +455,15 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           {data.hint}
         </p>
       )}
+      {data?.reachable &&
+        !loading &&
+        (stats.lines ?? 0) === 0 &&
+        (stats.ban_ok ?? 0) === 0 &&
+        (stats.alerts ?? 0) === 0 && (
+          <p className="text-xs text-amber-300/85 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2 font-mono">
+            {t("grafanaMiniZeroHint")}
+          </p>
+        )}
 
       {/* Core stats — Grafana row 1 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
@@ -468,7 +479,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
       </div>
 
       {/* Time series — EPS + HTTP */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-w-0">
         <MiniTs
           title={t("grafanaChartEps")}
           data={ts.eps_ts ?? []}
@@ -487,7 +498,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
       </div>
 
       {/* Alert + ban rate */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-2 min-w-0">
         <MiniTs
           title={t("grafanaChartAlertRate")}
           data={ts.alert_rate ?? []}
@@ -506,7 +517,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
       </div>
 
       {/* Extra stats + parse rate */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-2 min-w-0">
         {EXTRA_STATS.map(({ id, labelKey }) => (
           <MiniStat
             key={id}

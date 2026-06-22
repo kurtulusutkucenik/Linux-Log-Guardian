@@ -8,7 +8,7 @@ DOMAIN="${WEBSITE_LIVE_DOMAIN:-ceniklinuxlogguardian.org}"
 URL="https://${DOMAIN}"
 
 html="$(curl -sf "${URL}/")"
-css_path="$(printf '%s' "$html" | grep -oP 'href="\./\Ksite[^"]+\.css' | head -1 || true)"
+css_path="$(printf '%s' "$html" | grep -oP 'href="(?:\./|/)\Ksite[^"]+\.css' | head -1 || true)"
 if [[ -z "$css_path" ]]; then
   echo "[FAIL] website_live_css_check — site*.css link yok" >&2
   exit 1

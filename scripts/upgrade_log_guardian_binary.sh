@@ -24,7 +24,18 @@ echo "[upgrade_binary] derleniyor..."
 # shellcheck source=scripts/lib/guardian_api.sh
 source "$ROOT/scripts/lib/guardian_api.sh"
 ensure_lg_build_tree "$ROOT"
-make -j1 refresh-binaries
+build_log="$(mktemp)"
+if [[ "${LG_VERBOSE_BUILD:-0}" == "1" ]]; then
+  LG_QUIET_BUILD=1 make -j1 refresh-binaries
+else
+  LG_QUIET_BUILD=1 make -s -j1 refresh-binaries >"$build_log" 2>&1 || {
+    tail -30 "$build_log" >&2
+    rm -f "$build_log"
+    fail "make refresh-binaries"
+  }
+  grep -E '^\[OK\]|^error:|FAIL' "$build_log" 2>/dev/null || true
+  rm -f "$build_log"
+fi
 
 # root ile derleme sonrasi .o dosyalari kullaniciya geri ver (make Permission denied onler)
 if [[ -n "${SUDO_USER:-}" && "${SUDO_USER}" != "root" ]]; then

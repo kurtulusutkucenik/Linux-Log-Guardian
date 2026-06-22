@@ -5,22 +5,27 @@
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
 # Dashboard portu DISARIDA acilmaz — yalnizca Caddy 80/443.
+# API/metrics relay yalnizca lg_internal bridge — host LAN'a acilmaz.
 
 services:
-  # host:9091 yalnizca loopback — Docker icinden erisim icin relay
   metrics-relay:
     image: alpine/socat
     container_name: log-guardian-metrics-relay
-    network_mode: host
-    command: TCP-LISTEN:19091,bind=127.0.0.1,fork,reuseaddr TCP:127.0.0.1:9091
+    command: TCP-LISTEN:19091,fork,reuseaddr TCP:host.docker.internal:9091
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - lg_internal
     restart: unless-stopped
 
-  # host:8090 API_BIND=127.0.0.1 — dashboard ban/unban icin relay
   ban-api-relay:
     image: alpine/socat
     container_name: log-guardian-ban-api-relay
-    network_mode: host
-    command: TCP-LISTEN:18090,bind=127.0.0.1,fork,reuseaddr TCP:127.0.0.1:8090
+    command: TCP-LISTEN:18090,fork,reuseaddr TCP:host.docker.internal:8090
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    networks:
+      - lg_internal
     restart: unless-stopped
 
   dashboard:
@@ -47,16 +52,18 @@ services:
       - COPILOT_MODEL=${COPILOT_MODEL:-llama3.2:3b}
       - ATTACK_TREE_PATH=/data/lg/attack_tree.json
       - BENCH_DATA_DIR=/data/lg
-      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://host.docker.internal:18090}
-      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://host.docker.internal:18090}
+      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://ban-api-relay:18090}
+      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://ban-api-relay:18090}
       - GUARDIAN_API_TOKEN=${GUARDIAN_API_TOKEN:-}
-      - GUARDIAN_METRICS_URL=${GUARDIAN_METRICS_URL:-http://host.docker.internal:19091/metrics}
+      - GUARDIAN_METRICS_URL=${GUARDIAN_METRICS_URL:-http://metrics-relay:19091/metrics}
       - PROMETHEUS_URL=${PROMETHEUS_URL:-http://host.docker.internal:9090}
       - NEXT_PUBLIC_GRAFANA_EMBED_URL=${NEXT_PUBLIC_GRAFANA_EMBED_URL:-http://127.0.0.1:3002/d/log-guardian-01/linux-log-guardian?orgId=1&refresh=15s&kiosk&theme=dark&var-tenant=default}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
       ban-api-relay:
+        condition: service_started
+      metrics-relay:
         condition: service_started
     restart: unless-stopped
     networks:

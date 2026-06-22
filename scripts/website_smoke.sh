@@ -74,7 +74,14 @@ check_code() {
 }
 
 check_code "/" 200
-check_code "/site.css" 200
+check_code "/tests.html" 200
+CSS_PATH="$(grep -oP 'href="(?:\./|/)\Ksite[^"]+\.css' "$SITE/index.html" | head -1 || true)"
+if [[ -z "$CSS_PATH" ]]; then
+  bad "index.html site*.css link yok"
+else
+  check_code "/${CSS_PATH}" 200
+  check_code "/site.css" 403
+fi
 check_code "/i18n.js" 200
 check_code "/csp.txt" 403
 check_code "/publish.allowlist" 403

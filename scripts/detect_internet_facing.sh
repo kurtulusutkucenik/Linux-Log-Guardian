@@ -4,6 +4,11 @@
 # Cikis: 0 = internet-facing, 1 = laptop/yerel
 set -euo pipefail
 
+# Test/kanıt: LG_FORCE_INTERNET_FACING=1 → internet-facing say (laptop'ta demo parola FAIL kaniti)
+if [[ "${LG_FORCE_INTERNET_FACING:-0}" == "1" ]]; then
+  exit 0
+fi
+
 is_private_ip() {
   local ip="${1%%/*}"
   [[ "$ip" =~ ^127\. ]] && return 0

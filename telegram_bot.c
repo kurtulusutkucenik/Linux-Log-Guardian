@@ -556,7 +556,10 @@ static void handle_callback(const char *cb_id, const char *chat_id,
         else if (g_ack_db_path[0])
             rc = db_telegram_ack_register_path(
                 g_ack_db_path, chat_id, ack_key,
-                (strncmp(ack_key, "INC-", 4) == 0) ? ack_key : NULL,
+                (strncmp(ack_key, "INC-", 4) == 0 ||
+                 strncmp(ack_key, "BATCH-", 6) == 0)
+                    ? ack_key
+                    : NULL,
                 operator_id, operator_name);
 
         if (rc == 1) {

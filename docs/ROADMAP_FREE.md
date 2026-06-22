@@ -12,7 +12,7 @@ Dürüst liste: ne bitti, ne açık.
 | Sıra | Hedef | Durum | Not |
 |------|--------|-------|-----|
 | **1** | Threat intel live (AbuseIPDB/OTX) | ✅ | `install_threat_intel_stack.sh` + proof pass |
-| **2** | 72h soak kanıtı | 🔄 | short soak PASS ✅ · 72h `laptop_soak_72h.sh` |
+| **2** | 72h soak kanıtı | ✅ | VM `72.0h` PASS · laptop'a `scp` + `publish_soak_report.sh` |
 | **3** | EPS bench / 10K replay | ✅ | `corpus_10k_proof.sh` recall PASS · dev gate skip-cat |
 | **4** | Log-tailing → hibrit (inline consult) | ✅ | `nginx_hybrid_proof.sh` · `proof_replay_webhook_ban.sh` |
 | **5** | XDP laptop/VPS kanıtı | 📋 | Laptop: ipset fallback ✅ · VPS: `eth0` |

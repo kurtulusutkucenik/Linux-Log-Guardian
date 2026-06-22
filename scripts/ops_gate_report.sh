@@ -133,6 +133,12 @@ run_gate "api-fail-closed" "scripts/api_fail_closed_test.sh" \
   "Ban/consult/metrics uçları token olmadan reddedilir." \
   "Ban/consult/metrics endpoints reject requests without a token."
 
+run_gate "auth-log-ingest" "scripts/auth_log_e2e.sh" \
+  "auth.log sshd ingest — parse + brute esigi" \
+  "auth.log sshd ingest — parse + brute threshold" \
+  "nginx disi SSH failed-password satirlari anomaly hattina girer." \
+  "Non-nginx SSH failed-password lines enter the anomaly path."
+
 if [[ "$FULL" -eq 1 ]]; then
   run_gate "vm-demo-gate" "scripts/vm_demo_gate.sh" --verify-only \
     "VM demo kapısı — post_install 0 FAIL" \

@@ -1,4 +1,4 @@
-# Cloudflare Pages — hassas dosyalar, probe yollari, edge yonlendirme
+# Cloudflare Pages — hassas dosyalar, probe yollari ( /tests = tests.html otomatik, rewrite ekleme — dongu )
 /csp.txt              /404  404
 /publish.allowlist    /404  404
 /_headers             /404  404

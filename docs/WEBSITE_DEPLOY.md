@@ -25,11 +25,25 @@ LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 2. **Build command:** `bash scripts/website_deploy_gate.sh`
 3. **Build output directory:** `assets/website-deploy` (veya kok `wrangler.toml` otomatik okur)
 4. Custom domain ekle → HTTPS otomatik
-5. Canli dogrulama:
+5. **Cloudflare Dashboard (zorunlu — SRI kirilir):**
+   - **Speed → Optimization → Auto Minify:** JavaScript **kapalı** (HTML/CSS isteğe bağlı)
+   - **Scrape Shield → Email Address Obfuscation:** kapalı veya JS dosyalarına dokunmuyor olmalı
+   - Rocket Loader **kapalı**
+6. Deploy sonrasi:
+   ```bash
+   wrangler pages deploy assets/website-deploy --project-name=linux-log-guardian-website --branch=main --commit-dirty=true
+   bash scripts/website_live_css_check.sh   # curl — CSS drift
+   bash scripts/website_live_js_check.sh    # tarayici — JS SRI (curl yetmez)
+   ```
+7. Canli dogrulama:
    ```bash
    curl -sI https://ceniklinuxlogguardian.org/csp.txt          # 404
    curl -sI https://ceniklinuxlogguardian.org/ | grep -i strict # HSTS
    ```
+
+`website_live_js_check.sh` basarisiz ve konsolda `Failed to find a valid digest in the integrity attribute` gorurseniz: Auto Minify acik — JS minify SRI hash'i bozuluyor.
+
+`/_redirects` icinde `/tests → /tests.html` **eklemeyin** — Cloudflare zaten `/tests` pretty URL kullanir; rewrite redirect dongusu yapar.
 
 ## Onemli
 

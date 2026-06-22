@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 RULES="/etc/log-guardian/rules.conf"
 TOKEN="${FLEET_API_KEY:-sk_guardian_fleet_test_token_123}"
-AGENT_ID="${AGENT_ID:-node-kurtulus-01}"
+AGENT_ID="${AGENT_ID:-node-kurtulus-01}"  # sync_dashboard_data + fleet_push ile ayni
 # Host analyzer -> Docker dashboard (127.0.0.1:3000 TLS gerektirmez)
 SAAS_URL="${SAAS_URL:-http://127.0.0.1:3000/api/telemetry}"
 
@@ -29,6 +29,7 @@ chmod 640 "$RULES"
 chown root:log-guardian "$RULES" 2>/dev/null || true
 
 echo "[fix_fleet] log-guardian yeniden baslatiliyor..."
+bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --stop 2>/dev/null || true
 systemctl restart log-guardian.service
 sleep 3
 

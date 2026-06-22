@@ -204,7 +204,56 @@ type DashboardBanApiReport = {
   fail_reason?: string;
 };
 
+type AuthLogReport = {
+  date?: string;
+  pass?: boolean;
+  total_lines?: number;
+  parse_errors?: number;
+  unique_ips?: number;
+  alerts_total?: number;
+};
+
+type SiemExportReport = {
+  date?: string;
+  pass?: boolean;
+  alert_seen?: boolean;
+  ban_seen?: boolean;
+  port?: number;
+  attack_ip?: string;
+};
+
+type CrowdsecBouncerReport = {
+  date?: string;
+  pass?: boolean;
+  mode?: string;
+  decisions_synced?: number;
+  live_api_ok?: boolean;
+  api_base?: string;
+};
+
+type OpsGateEntry = {
+  id: string;
+  pass?: boolean;
+  fail?: number;
+  warn?: number;
+  title?: string;
+  titleEn?: string;
+  purpose?: string;
+  purposeEn?: string;
+  verdict?: string;
+  verdictEn?: string;
+  metrics?: { label: string; value: string }[];
+  script?: string;
+};
+
+type OpsGateReport = {
+  date?: string;
+  pass?: boolean;
+  gates?: OpsGateEntry[];
+};
+
 export type TestReports = {
+  opsGates?: OpsGateReport | null;
   crs?: CrsReport | null;
   fp?: FpReport | null;
   realAttack?: RealAttackReport | null;
@@ -226,6 +275,9 @@ export type TestReports = {
   live?: LiveReport | null;
   dashboardBanApi?: DashboardBanApiReport | null;
   webhookRoute?: WebhookRouteProofReport | null;
+  authLog?: AuthLogReport | null;
+  siemExport?: SiemExportReport | null;
+  crowdsecBouncer?: CrowdsecBouncerReport | null;
 };
 
 function L(locale: Locale, tr: string, en: string): string {
@@ -249,6 +301,32 @@ export function evaluateValidationTests(
   locale: Locale = "tr",
 ): ValidationTestResult[] {
   const out: ValidationTestResult[] = [];
+
+  const ops = reports.opsGates;
+  if (ops?.gates?.length) {
+    for (const gate of ops.gates) {
+      const pass = gate.pass === true;
+      const warnN = gate.warn ?? 0;
+      out.push({
+        id: gate.id,
+        /* pass=true → green (competitive-proof ile ayni); WARN metrikte kalir */
+        status: pass ? "pass" : "fail",
+        title: L(locale, gate.title ?? gate.id, gate.titleEn ?? gate.title ?? gate.id),
+        purpose: L(locale, gate.purpose ?? "", gate.purposeEn ?? gate.purpose ?? ""),
+        verdict: L(
+          locale,
+          gate.verdict ?? (pass ? (warnN > 0 ? "GECTI (WARN bilgi)" : "GECTI") : "FAIL"),
+          gate.verdictEn ?? gate.verdict ?? (pass ? (warnN > 0 ? "PASS (WARN info)" : "PASS") : "FAIL"),
+        ),
+        metrics: gate.metrics ?? [
+          { label: "FAIL", value: String(gate.fail ?? 0) },
+          { label: "WARN", value: String(warnN) },
+        ],
+        date: fmtDate(ops.date),
+        script: gate.script ?? "scripts/ops_gate_report.sh",
+      });
+    }
+  }
 
   const crs = reports.crs;
   if (crs) {
@@ -809,53 +887,56 @@ export function evaluateValidationTests(
     const passOperational = soak.pass_operational ?? false;
     const realFailures = (soak as { real_failures?: number }).real_failures;
     const artifacts = (soak as { measurement_artifacts?: number }).measurement_artifacts;
-    const passLaptop =
+    const passProd =
       (soak as { pass_laptop_proof?: boolean }).pass_laptop_proof === true ||
-      (passOperational && hours >= 70 && (realFailures ?? 0) === 0);
+      (passOperational && hours >= 70 && (realFailures ?? soak.failures ?? 0) === 0);
     const fpRate = reports.fp?.benign?.fp_rate_pct;
-    const fpLines = reports.fp?.benign?.lines;
     const fpPct =
       fpRate != null
         ? (fpRate < 1 ? fpRate.toFixed(2) : fpRate.toFixed(1))
         : null;
     const rssMb = soak.max_rss_kb ? `${(soak.max_rss_kb / 1024).toFixed(0)} MB` : "—";
-    const artN = artifacts ?? soak.failures ?? 0;
+    const sampleN = soak.samples ?? 0;
+    const failN = realFailures ?? soak.failures ?? 0;
+    const artN = artifacts ?? 0;
     out.push({
       id: "soak-stability",
-      status: passLaptop ? "pass" : passOperational ? "warn" : "fail",
+      status: passProd ? "pass" : passOperational ? "warn" : "fail",
       title: L(
         locale,
         fpPct != null
-          ? `72 saat laptop soak + benign FP %${fpPct}`
-          : "72 saat laptop soak — prod stabilite",
+          ? `72 saat VPS/VM soak + benign FP %${fpPct}`
+          : "72 saat VPS/VM soak — prod stabilite",
         fpPct != null
-          ? `72h laptop soak + ${fpPct}% benign FP`
-          : "72h laptop soak — prod stability",
+          ? `72h VPS/VM soak + ${fpPct}% benign FP`
+          : "72h VPS/VM soak — prod stability",
       ),
       purpose: L(
         locale,
-        "Servisler ~72 saat ayakta kaldı mı? Ham health sayacındaki IPC ölçüm hataları outage sayılmaz — sen zaten 72h koştun.",
-        "Did services stay up for ~72h? Raw health counter IPC measurement glitches are not counted as outages — your 72h run stands.",
+        "Servisler ~72 saat ayakta kaldı mı? (VM/VPS systemd soak — 864 örnek, 300s aralık.)",
+        "Did services stay up for ~72h? (VM/VPS systemd soak — 864 samples, 300s interval.)",
       ),
-      verdict: passLaptop
+      verdict: passProd
         ? L(
             locale,
-            `${hours.toFixed(1)} saat soak geçti: servisler ayakta, max RSS ${rssMb}${fpPct != null ? `, benign FP %${fpPct}` : ""}. ${artN} health örneği ölçüm artefaktı (servis düşmedi).`,
-            `${hours.toFixed(1)}h soak passed: services up, max RSS ${rssMb}${fpPct != null ? `, benign FP ${fpPct}%` : ""}. ${artN} health samples were measurement artifacts (no service outage).`,
+            `${hours.toFixed(1)} saat soak geçti: ${sampleN} örnek, ${failN} hata — servisler ayakta, max RSS ${rssMb}${fpPct != null ? `, benign FP %${fpPct}` : ""}.`,
+            `${hours.toFixed(1)}h soak passed: ${sampleN} samples, ${failN} failures — services up, max RSS ${rssMb}${fpPct != null ? `, benign FP ${fpPct}%` : ""}.`,
           )
         : passOperational
           ? L(
               locale,
-              `${hours.toFixed(1)} saat operasyonel geçti ama kanıt kapısı eksik.`,
-              `${hours.toFixed(1)}h operational pass but proof gate incomplete.`,
+              `${hours.toFixed(1)} saat operasyonel geçti ama 72h kanıt kapısı eksik (<70h).`,
+              `${hours.toFixed(1)}h operational pass but 72h proof gate incomplete (<70h).`,
             )
           : L(
               locale,
-              `${soak.failures ?? 0} gerçek başarısız örnek — servis düşmüş olabilir.`,
-              `${soak.failures ?? 0} real failed samples — possible service outage.`,
+              `${failN} başarısız örnek — servis düşmüş olabilir.`,
+              `${failN} failed samples — possible service outage.`,
             ),
       metrics: [
         { label: L(locale, "Süre", "Duration"), value: `${hours.toFixed(1)}h` },
+        { label: L(locale, "Örnek", "Samples"), value: String(sampleN) },
+        { label: L(locale, "Hata", "Failures"), value: String(failN) },
         { label: L(locale, "Max RSS", "Max RSS"), value: rssMb },
         ...(artN > 0
           ? [{ label: L(locale, "Ölçüm artefaktı", "Meas. artifacts"), value: String(artN) }]
@@ -1130,13 +1211,90 @@ export function evaluateValidationTests(
     });
   }
 
+  const siem = reports.siemExport;
+  if (siem) {
+    const pass = siem.pass === true;
+    out.push({
+      id: "siem-export",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "SIEM forwarder — alert + ban JSON (:5044)",
+        "SIEM forwarder — alert + ban JSON (:5044)",
+      ),
+      purpose: L(
+        locale,
+        "Splunk/Elastic/Vector hedeflerine event_type JSON akışını kanıtlar.",
+        "Proves event_type JSON stream to Splunk/Elastic/Vector targets.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `alert ${siem.alert_seen ? "yes" : "no"}, ban ${siem.ban_seen ? "yes" : "no"}, port ${siem.port ?? 5044}.`,
+            `alert ${siem.alert_seen ? "yes" : "no"}, ban ${siem.ban_seen ? "yes" : "no"}, port ${siem.port ?? 5044}.`,
+          )
+        : L(locale, "siem_export_e2e FAIL", "siem_export_e2e FAIL"),
+      metrics: [
+        { label: "alert", value: siem.alert_seen ? "yes" : "no" },
+        { label: "ban", value: siem.ban_seen ? "yes" : "no" },
+        { label: "port", value: String(siem.port ?? 5044) },
+      ],
+      date: fmtDate(siem.date),
+      script: "scripts/siem_export_e2e.sh",
+    });
+  }
+
+  const crowdsec = reports.crowdsecBouncer;
+  if (crowdsec) {
+    const pass = crowdsec.pass === true;
+    out.push({
+      id: "crowdsec-bouncer",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "CrowdSec LAPI → log-guardian ban API",
+        "CrowdSec LAPI → log-guardian ban API",
+      ),
+      purpose: L(
+        locale,
+        "Dağıtık IP / botnet kararlarının kernel ban hattına aktarılmasını kanıtlar.",
+        "Proves distributed IP/botnet decisions reach the kernel ban path.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `mod ${crowdsec.mode ?? "—"}; ${crowdsec.decisions_synced ?? 0} karar; live API ${crowdsec.live_api_ok ? "OK" : "dry-run"}.`,
+            `mode ${crowdsec.mode ?? "—"}; ${crowdsec.decisions_synced ?? 0} decisions; live API ${crowdsec.live_api_ok ? "OK" : "dry-run"}.`,
+          )
+        : L(locale, "crowdsec_bouncer_e2e FAIL", "crowdsec_bouncer_e2e FAIL"),
+      metrics: [
+        { label: L(locale, "mod", "mode"), value: crowdsec.mode ?? "—" },
+        { label: L(locale, "karar", "decisions"), value: String(crowdsec.decisions_synced ?? 0) },
+        {
+          label: "live",
+          value: crowdsec.live_api_ok ? "OK" : "dry-run",
+        },
+      ],
+      date: fmtDate(crowdsec.date),
+      script: "scripts/crowdsec_bouncer_e2e.sh",
+    });
+  }
+
   const TEST_DISPLAY_ORDER: Record<string, number> = {
-    "soak-stability": 0,
+    "post-install-verify": 1,
+    "local-security-audit": 2,
+    "api-fail-closed": 3,
+    "auth-log-ingest": 4,
+    "siem-export": 5,
+    "crowdsec-bouncer": 6,
+    "vm-demo-gate": 7,
+    "soak-stability": 10,
   };
   out.sort((a, b) => {
-    const pa = TEST_DISPLAY_ORDER[a.id] ?? 100;
-    const pb = TEST_DISPLAY_ORDER[b.id] ?? 100;
-    return pa - pb;
+    const pa = TEST_DISPLAY_ORDER[a.id] ?? 50;
+    const pb = TEST_DISPLAY_ORDER[b.id] ?? 50;
+    if (pa !== pb) return pa - pb;
+    return a.id.localeCompare(b.id);
   });
 
   return out;

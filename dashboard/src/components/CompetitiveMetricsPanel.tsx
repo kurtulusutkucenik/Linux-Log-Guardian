@@ -111,7 +111,7 @@ export function CompetitiveMetricsPanel() {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
           {t("benchTitle")}
         </h3>
-        <ResponsiveContainer width="100%" height={180}>
+        <ResponsiveContainer width="100%" minWidth={0} height={180}>
           <BarChart data={chartData}>
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" />
             <XAxis dataKey="name" tick={{ fill: "#94a3b8", fontSize: 10 }} />

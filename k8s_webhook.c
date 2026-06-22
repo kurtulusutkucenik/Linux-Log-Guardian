@@ -28,6 +28,26 @@ static size_t discard_response(void *ptr, size_t size, size_t nmemb, void *userd
     return size * nmemb;
 }
 
+static void json_escape_field(const char *in, char *out, size_t out_sz) {
+    if (!out || out_sz == 0) return;
+    if (!in) { out[0] = '\0'; return; }
+    size_t j = 0;
+    for (size_t i = 0; in[i] && j + 2 < out_sz; i++) {
+        char c = in[i];
+        if (c == '"' || c == '\\') {
+            if (j + 2 >= out_sz) break;
+            out[j++] = '\\';
+            out[j++] = c;
+        } else if ((unsigned char)c < 0x20) {
+            if (j + 6 >= out_sz) break;
+            j += (size_t)snprintf(out + j, out_sz - j, "\\u%04x", (unsigned char)c);
+        } else {
+            out[j++] = c;
+        }
+    }
+    out[j] = '\0';
+}
+
 /* ── Detached thread payload ──────────────────────────────────── */
 typedef struct {
     char endpoint[256];
@@ -77,11 +97,20 @@ void k8s_webhook_notify(const RceEvent *ev) {
             sizeof(task->endpoint) - 1);
     task->endpoint[sizeof(task->endpoint) - 1] = '\0';
 
-    /* JSON payload oluştur */
-    snprintf(task->payload, sizeof(task->payload),
+    /* JSON payload — string alanlari escape (argv icinde " veya \ olabilir) */
+    char cid_esc[140], wl_esc[140], pc_esc[80], fn_esc[140], av_esc[140];
+    const char *cid_raw = ev->container.container_id[0] ? ev->container.container_id : "unknown";
+    const char *wl_raw  = ev->container.workload_name[0] ? ev->container.workload_name : "unknown";
+    json_escape_field(cid_raw, cid_esc, sizeof(cid_esc));
+    json_escape_field(wl_raw, wl_esc, sizeof(wl_esc));
+    json_escape_field(ev->parent_comm, pc_esc, sizeof(pc_esc));
+    json_escape_field(ev->filename, fn_esc, sizeof(fn_esc));
+    json_escape_field(ev->argv1, av_esc, sizeof(av_esc));
+
+    int n = snprintf(task->payload, sizeof(task->payload),
         "{"
             "\"pid\":%d,"
-            "\"container_id\":\"%.64s\","
+            "\"container_id\":\"%s\","
             "\"workload_name\":\"%s\","
             "\"parent_comm\":\"%s\","
             "\"exec_filename\":\"%s\","
@@ -90,14 +119,19 @@ void k8s_webhook_notify(const RceEvent *ev) {
             "\"is_container\":%s"
         "}",
         (int)ev->pid,
-        ev->container.container_id[0] ? ev->container.container_id : "unknown",
-        ev->container.workload_name[0] ? ev->container.workload_name : "unknown",
-        ev->parent_comm,
-        ev->filename,
-        ev->argv1,
+        cid_esc,
+        wl_esc,
+        pc_esc,
+        fn_esc,
+        av_esc,
         (unsigned long long)ev->timestamp_ns,
         ev->container.is_container ? "true" : "false"
     );
+    if (n < 0 || (size_t)n >= sizeof(task->payload)) {
+        free(task);
+        log_rl(LOG_WARNING, "[K8S-WEBHOOK] payload tasmasi — event atlandi");
+        return;
+    }
 
     /* Detached thread — ana döngü bloklanmaz */
     pthread_t tid;

@@ -43,6 +43,8 @@ def verify(pkg_id: str, key: bytes) -> dict:
 
     sig_file = (pkg_path / ".signature").read_text().strip() if (pkg_path / ".signature").is_file() else entry.get("signature", "")
     expected_sig = entry.get("signature") or sig_file
+    if os.environ.get("MARKETPLACE_REQUIRE_SIG", "0") == "1" and not expected_sig:
+        raise SystemExit(f"[ERR] signature required {pkg_id}")
     calc_sig = hmac.new(key, digest.encode(), hashlib.sha256).hexdigest()
     if expected_sig and calc_sig != expected_sig:
         raise SystemExit(f"[ERR] signature invalid {pkg_id}")

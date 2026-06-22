@@ -51,6 +51,8 @@ static volatile int g_bans_json_dirty = 0;
 
 #define BANS_JSON_EXPORT_MAX 500
 
+static int do_ban_v4(const char *ip, uint8_t prefix);
+
 static void export_active_bans_json(void)
 {
     char ips[BANS_JSON_EXPORT_MAX][64];
@@ -78,6 +80,49 @@ static void export_active_bans_json(void)
     if (!grp_name || !grp_name[0]) grp_name = "log-guardian";
     struct group *gr = getgrnam(grp_name);
     if (gr) chown(ACTIVE_BANS_JSON, 0, gr->gr_gid);
+}
+
+static void restore_active_bans_from_json(void)
+{
+    FILE *f = fopen(ACTIVE_BANS_JSON, "r");
+    if (!f)
+        return;
+
+    char buf[32768];
+    size_t n = fread(buf, 1, sizeof(buf) - 1, f);
+    fclose(f);
+    if (n == 0)
+        return;
+    buf[n] = '\0';
+
+    const char *p = strstr(buf, "\"ips\"");
+    if (!p)
+        return;
+    p = strchr(p, '[');
+    if (!p)
+        return;
+    p++;
+
+    int restored = 0;
+    while (*p) {
+        while (*p && *p != '"' && *p != ']')
+            p++;
+        if (*p != '"')
+            break;
+        p++;
+        char ip[64] = {0};
+        size_t i = 0;
+        while (*p && *p != '"' && i + 1 < sizeof(ip))
+            ip[i++] = *p++;
+        if (*p == '"')
+            p++;
+        if (ip[0] && is_valid_ip(ip) && do_ban_v4(ip, 32) == 0)
+            restored++;
+        while (*p && *p != '"' && *p != ']')
+            p++;
+    }
+    if (restored > 0)
+        syslog(LOG_INFO, "[DAEMON] active_bans.json: %d IP geri yuklendi", restored);
 }
 
 /* logger.c, bu değişkeni extern olarak bekler.
@@ -340,13 +385,16 @@ static int do_ban_v4(const char *ip, uint8_t prefix) {
         if (inet_pton(AF_INET, ip, &addr) != 1) return -1;
         struct lpm_key_v4 key = { .prefixlen = prefix, .ipv4_addr = addr.s_addr };
         uint8_t val = 1;
-        rc = bpf_map_update_elem(g_map_v4_fd, &key, &val, BPF_ANY);
+        if (bpf_map_update_elem(g_map_v4_fd, &key, &val, BPF_ANY) == 0)
+            rc = 0;
     }
-    if (rc != 0) {
+    /* ipset: iptables yedegi + ipset test / webhook kaniti (XDP tek basina yetmez) */
+    {
         int iprc = run_ipset_ip("add", g_ipset_v4, ip);
-        if (iprc != 0)
+        if (iprc == 0)
+            rc = 0;
+        else if (rc != 0)
             syslog(LOG_WARNING, "[DAEMON] ipset add %s -> exit %d", ip, iprc);
-        rc = iprc;
     }
     return rc;
 }
@@ -380,13 +428,15 @@ static int do_ban_v6(const char *ip) {
         struct in6_addr addr;
         if (inet_pton(AF_INET6, ip, &addr) != 1) return -1;
         uint8_t val = 1;
-        rc = bpf_map_update_elem(g_map_v6_fd, addr.s6_addr, &val, BPF_ANY);
+        if (bpf_map_update_elem(g_map_v6_fd, addr.s6_addr, &val, BPF_ANY) == 0)
+            rc = 0;
     }
-    if (rc != 0) {
+    {
         int iprc = run_ipset_ip("add", g_ipset_v6, ip);
-        if (iprc != 0)
+        if (iprc == 0)
+            rc = 0;
+        else if (rc != 0)
             syslog(LOG_WARNING, "[DAEMON] ipset v6 add %s -> exit %d", ip, iprc);
-        rc = iprc;
     }
     return rc;
 }
@@ -1434,6 +1484,7 @@ int main(int argc, char *argv[]) {
     }
 
     ensure_ipset_ready();
+    restore_active_bans_from_json();
     export_active_bans_json();
     daemon_stats_write_file();
 
@@ -1450,6 +1501,7 @@ int main(int argc, char *argv[]) {
 
     syslog(LOG_INFO, "[DAEMON] Kapatiliyor...");
     if (sd_notify_fn) sd_notify_fn(0, "STOPPING=1");
+    export_active_bans_json();
     close(g_server_fd);
     unlink(DAEMON_IPC_SOCK_PATH);
     lineage_probe_cleanup();

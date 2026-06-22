@@ -21,4 +21,5 @@ bash "$ROOT/scripts/website_deploy_gate.sh" 2>/dev/null || {
 echo ""
 echo "[OK] laptop_release_gate — yerel release hazir"
 echo "  .deb: dist/log-guardian_*.deb"
-echo "  VM:   bash /mnt/lg/scripts/vm_sync_from_host.sh && sudo bash scripts/vm_demo_gate.sh"
+echo "  VM:   bash scripts/vm_host_checklist.sh  # host kontrol"
+echo "        bash /mnt/lg/scripts/vm_sync_from_host.sh && sudo bash scripts/vm_demo_gate.sh"

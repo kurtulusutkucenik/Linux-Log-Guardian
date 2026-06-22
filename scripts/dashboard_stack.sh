@@ -28,6 +28,20 @@ if ! systemctl --user is-enabled log-guardian-laptop-stack.service &>/dev/null 2
   bash "$ROOT/scripts/install_laptop_stack_boot.sh" 2>/dev/null || true
 fi
 
+echo "[dashboard_stack] Filo telemetri..."
+bash "$ROOT/scripts/fleet_prune_stale_agents.sh" 2>/dev/null || true
+bash "$ROOT/scripts/fleet_telemetry_push.sh" 2>/dev/null || true
+bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --bg 2>/dev/null || true
+
+saas_on=""
+if [[ -r /etc/log-guardian/rules.conf ]]; then
+  saas_on=$(grep -E '^SAAS_ENABLED=' /etc/log-guardian/rules.conf 2>/dev/null | cut -d= -f2 || true)
+fi
+if [[ "$saas_on" != "1" ]]; then
+  echo "[dashboard_stack] UYARI: SAAS_ENABLED=0 — filo yalnizca keepalive ile Online kalir."
+  echo "  Kalici cozum: sudo bash scripts/fix_fleet_telemetry.sh"
+fi
+
 echo ""
 echo "[OK] dashboard_stack"
 echo "  Dashboard:  https://${DOMAIN:-localhost}:${HTTPS_PORT:-8443}/  (admin — parola: .env DASHBOARD_ADMIN_PASSWORD veya ChangeMeOnFirstLogin!)"

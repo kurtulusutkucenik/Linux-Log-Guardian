@@ -16,7 +16,46 @@ ROOT_DIR = Path(__file__).resolve().parent.parent
 CSP_FILE = ROOT_DIR / "assets" / "website" / "csp.txt"
 ALLOWLIST_FILE = ROOT_DIR / "assets" / "website" / "publish.allowlist"
 
-CSP = CSP_FILE.read_text(encoding="utf-8").strip().rstrip(";")
+DEFAULT_CSP = CSP_FILE.read_text(encoding="utf-8").strip().rstrip(";")
+
+
+def load_csp(site_root: Path) -> str:
+    """Sunulan paketin en genis sayfa CSP'si — tests.html i18n+test-results icerir."""
+    best = ""
+    best_scripts = -1
+    for name in ("tests.html", "index.html"):
+        path = site_root / name
+        if not path.is_file():
+            continue
+        html = path.read_text(encoding="utf-8")
+        match = re.search(
+            r'<meta http-equiv="Content-Security-Policy" content="([^"]*)"',
+            html,
+        )
+        if not match:
+            continue
+        csp = match.group(1).strip().rstrip(";")
+        n_scripts = len(re.findall(r"sha384-", csp.split("script-src", 1)[-1].split(";", 1)[0]))
+        if n_scripts > best_scripts:
+            best_scripts = n_scripts
+            best = csp
+    if best:
+        return best
+    headers = site_root / "_headers"
+    if headers.is_file():
+        for line in headers.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if stripped.startswith("Content-Security-Policy:"):
+                return stripped.split(":", 1)[1].strip().rstrip(";")
+    return DEFAULT_CSP
+
+
+def build_security_headers(csp: str) -> dict[str, str]:
+    return {
+        **SECURITY_HEADERS_BASE,
+        "Content-Security-Policy": csp,
+    }
+
 
 PERMS = (
     "accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(), "
@@ -27,7 +66,7 @@ PERMS = (
     "usb=(), web-share=(), xr-spatial-tracking=(), interest-cohort=()"
 )
 
-SECURITY_HEADERS = {
+SECURITY_HEADERS_BASE = {
     "X-LG-Site-Server": "secure-static/1",
     "X-Content-Type-Options": "nosniff",
     "X-Frame-Options": "DENY",
@@ -35,12 +74,13 @@ SECURITY_HEADERS = {
     "X-DNS-Prefetch-Control": "off",
     "Referrer-Policy": "no-referrer",
     "Permissions-Policy": PERMS,
-    "Content-Security-Policy": CSP,
     "Cross-Origin-Opener-Policy": "same-origin",
     "Cross-Origin-Resource-Policy": "same-origin",
     "Origin-Agent-Cluster": "?1",
     "X-Permitted-Cross-Domain-Policies": "none",
 }
+
+SECURITY_HEADERS = build_security_headers(DEFAULT_CSP)
 
 ALLOWED_METHODS = frozenset({"GET", "HEAD"})
 BLOCKED_SUFFIXES = frozenset({
@@ -84,6 +124,7 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
     allowed_paths: frozenset[str]
     bind_host: str = "127.0.0.1"
     bind_port: int = 8765
+    security_headers: dict[str, str] = SECURITY_HEADERS
     rate_buckets: dict[str, list[float]] = defaultdict(list)
     server_version = ""
     sys_version = ""
@@ -95,19 +136,21 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
         allowed_paths: frozenset[str] | None = None,
         bind_host: str = "127.0.0.1",
         bind_port: int = 8765,
+        security_headers: dict[str, str] | None = None,
         **kwargs,
     ) -> None:
         self.root = Path(directory or ".").resolve()
         self.allowed_paths = allowed_paths or frozenset()
         self.bind_host = bind_host
         self.bind_port = bind_port
+        self.security_headers = security_headers or SECURITY_HEADERS
         super().__init__(*args, directory=str(self.root), **kwargs)
 
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
 
     def _apply_security_headers(self) -> None:
-        for name, value in SECURITY_HEADERS.items():
+        for name, value in self.security_headers.items():
             self.send_header(name, value)
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
@@ -285,6 +328,8 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
             self.send_header("Cache-Control", "no-store")
         elif suffix in {".js", ".css"}:
             self.send_header("Cache-Control", "public, max-age=300, must-revalidate")
+            if suffix == ".js":
+                self.send_header("Cross-Origin-Resource-Policy", "cross-origin")
         else:
             self.send_header("Cache-Control", "public, max-age=3600")
 
@@ -322,6 +367,8 @@ def main() -> int:
     if not allowlist_path.is_file():
         allowlist_path = ALLOWLIST_FILE
     allowed = load_allowlist(allowlist_path)
+    csp = load_csp(root)
+    sec_headers = build_security_headers(csp)
 
     handler = partial(
         SecureStaticHandler,
@@ -329,6 +376,7 @@ def main() -> int:
         allowed_paths=allowed,
         bind_host=args.host,
         bind_port=args.port,
+        security_headers=sec_headers,
     )
     server = http.server.ThreadingHTTPServer((args.host, args.port), handler)
 

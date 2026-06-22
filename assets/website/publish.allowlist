@@ -2,13 +2,6 @@
 .well-known/gpc.json
 .well-known/security.txt
 404.html
-evidence/SOAK_SUMMARY.md
-evidence/bench-ban-latency.json
-evidence/bench-vs-modsec.json
-evidence/competitive-proof.json
-evidence/competitive-proof.pdf
-evidence/fp-report.json
-evidence/soak-report.json
 favicon-32.png
 favicon.ico
 hero-circuit.png
@@ -19,4 +12,6 @@ robots.txt
 screenshots/dashboard-fleet.png
 screenshots/dashboard-grafana.png
 screenshots/dashboard-tests.png
-site.css
+site-s7kcuY4VYt4S.css
+test-results.js
+tests.html

@@ -2,6 +2,7 @@
 #include "telegram_bot.h"
 #include "geoip_lookup.h"
 #include "db.h"
+#include "siem_forwarder.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -2163,6 +2164,9 @@ static void deliver_job(const WhJob *job_in) {
             key = job.alert.incident_id[0] ? job.alert.incident_id
                                             : job.alert.ip;
             ip = job.alert.ip;
+            if (job.alert.incident_id[0] &&
+                strncmp(job.alert.incident_id, "BATCH-", 6) == 0)
+                ip = NULL;
         } else if (job.kind == WH_JOB_SIMPLE && job.ack_key[0]) {
             key = job.ack_key;
             if (strncmp(job.ack_key, "trap:", 5) != 0)
@@ -2277,10 +2281,24 @@ static void batch_dispatch_summary(int total, int entry_count,
     char host_e[128];
     html_escape(host, host_e, sizeof(host_e));
 
+    time_t now = time(NULL);
+    char batch_id[32];
+    snprintf(batch_id, sizeof(batch_id), "BATCH-%ld", (long)now);
+
+    int warn_n = 0;
+    int info_n = 0;
+    for (int i = 0; i < entry_count; i++) {
+        if ((int)entries[i].max_level >= ALERT_WARN)
+            warn_n += entries[i].count;
+        else
+            info_n += entries[i].count;
+    }
+
     WhJob job = {0};
     job.kind = WH_JOB_ALERT;
     job.alert.level = ALERT_WARN;
-    job.alert.ts = time(NULL);
+    job.alert.ts = now;
+    strncpy(job.alert.incident_id, batch_id, sizeof(job.alert.incident_id) - 1);
     job.telegram_silent = telegram_silent_for_level(ALERT_WARN);
     if (entries[0].ip[0])
         strncpy(job.alert.ip, entries[0].ip, sizeof(job.alert.ip) - 1);
@@ -2289,13 +2307,17 @@ static void batch_dispatch_summary(int total, int entry_count,
     size_t hpos = 0;
     ppos += (size_t)snprintf(
         job.plain + ppos, sizeof(job.plain) - ppos,
-        "UYARI \u00d6ZET\u0130 (%ds \u00b7 %d olay)\nHost: %s\n",
-        g_webhook.telegram_batch_sec, total, host);
+        "UYARI \u00d6ZET\u0130 (%ds \u00b7 %d olay \u00b7 %d IP)\n"
+        "Host: %s\nWARN: %d  INFO: %d\n",
+        g_webhook.telegram_batch_sec, total, entry_count, host,
+        warn_n, info_n);
     hpos += (size_t)snprintf(
         job.html + hpos, sizeof(job.html) - hpos,
-        "\xe2\x9a\xa0\xef\xb8\x8f <b>UYARI \u00d6ZET\u0130</b> (%ds \u00b7 %d olay)\n\n"
-        "Host: <code>%s</code>\n",
-        g_webhook.telegram_batch_sec, total, host_e);
+        "\xe2\x9a\xa0\xef\xb8\x8f <b>UYARI \u00d6ZET\u0130</b> (%ds \u00b7 %d olay \u00b7 %d IP)\n\n"
+        "Host: <code>%s</code>\n"
+        "WARN: <code>%d</code> \u00b7 INFO: <code>%d</code>\n",
+        g_webhook.telegram_batch_sec, total, entry_count, host_e,
+        warn_n, info_n);
 
     for (int i = 0; i < entry_count; i++) {
         char ip_e[96];
@@ -2328,6 +2350,12 @@ static void batch_dispatch_summary(int total, int entry_count,
 
     strncpy(job.alert.message, job.plain, sizeof(job.alert.message) - 1);
     job.alert.message[sizeof(job.alert.message) - 1] = '\0';
+
+    if (webhook_is_dry_run())
+        fprintf(stderr,
+                "[WEBHOOK][BATCH] id=%s total=%d unique_ips=%d warn=%d info=%d\n",
+                batch_id, total, entry_count, warn_n, info_n);
+
     dispatch_job(&job);
 }
 
@@ -2463,14 +2491,16 @@ void webhook_send_alert(const Alert *a) {
 
 void webhook_send_ban(const char *ip, time_t ts, const char *reason,
                       double risk_score, const char *policy) {
-    if (!g_webhook.enabled || webhook_destinations_configured() == 0) return;
     if (!ip || !ip[0]) return;
     if (!ban_webhook_dedup_check(ip, ts > 0 ? ts : time(NULL)))
         return;
 
-    webhook_batch_flush();
-
     const char *why = (reason && reason[0]) ? reason : "auto-ban";
+    siem_forwarder_publish_ban(ip, ts > 0 ? ts : time(NULL), why, risk_score, policy);
+
+    if (!g_webhook.enabled || webhook_destinations_configured() == 0) return;
+
+    webhook_batch_flush();
 
     struct tm *tm_info = localtime(&ts);
     char tsbuf[32];

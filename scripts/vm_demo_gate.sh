@@ -33,6 +33,7 @@ if [[ "$VERIFY_ONLY" -eq 0 ]]; then
     exit 1
   fi
   echo "=== stack onarim ==="
+  export REPAIR_QUIET="${VM_GATE_QUIET:-1}"
   bash "$ROOT/scripts/repair_no_xdp_stack.sh"
   echo ""
 fi

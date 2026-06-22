@@ -202,12 +202,155 @@ static int log_line_is_tampered(const char *line, size_t len) {
     return 0;
 }
 
+static const char *find_lit(const char *s, size_t slen, const char *lit)
+{
+    size_t n = strlen(lit);
+    if (slen < n) return NULL;
+    for (size_t i = 0; i + n <= slen; i++) {
+        if (memcmp(s + i, lit, n) == 0) return s + i;
+    }
+    return NULL;
+}
+
+static int parse_syslog_month(const char *mon)
+{
+    static const char *names[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+    for (int i = 0; i < 12; i++) {
+        if (!strncmp(mon, names[i], 3)) return i;
+    }
+    return -1;
+}
+
+static time_t parse_auth_timestamp(const char *line, size_t len)
+{
+    if (len >= 19 && line[4] == '-' && line[7] == '-' && (line[10] == 'T' || line[10] == ' ')) {
+        int y, m, d, h, mi, s;
+        if (sscanf(line, "%d-%d-%dT%d:%d:%d", &y, &m, &d, &h, &mi, &s) == 6 ||
+            sscanf(line, "%d-%d-%d %d:%d:%d", &y, &m, &d, &h, &mi, &s) == 6) {
+            struct tm tm = {0};
+            tm.tm_year = y - 1900;
+            tm.tm_mon = m - 1;
+            tm.tm_mday = d;
+            tm.tm_hour = h;
+            tm.tm_min = mi;
+            tm.tm_sec = s;
+            tm.tm_isdst = -1;
+            time_t t = mktime(&tm);
+            if (t > 0) return t;
+        }
+    }
+    if (len >= 15) {
+        char mon[4];
+        int day, h, mi, s;
+        if (sscanf(line, "%3s %d %d:%d:%d", mon, &day, &h, &mi, &s) == 5) {
+            int mi_idx = parse_syslog_month(mon);
+            if (mi_idx >= 0) {
+                struct tm tm = {0};
+                time_t now = time(NULL);
+                struct tm now_tm;
+                localtime_r(&now, &now_tm);
+                tm.tm_year = now_tm.tm_year;
+                tm.tm_mon = mi_idx;
+                tm.tm_mday = day;
+                tm.tm_hour = h;
+                tm.tm_min = mi;
+                tm.tm_sec = s;
+                tm.tm_isdst = -1;
+                time_t t = mktime(&tm);
+                if (t > 0) return t;
+            }
+        }
+    }
+    return time(NULL);
+}
+
+/* auth.log / journald sshd: ... Failed password ... from IP port ... */
+static int parse_auth_sshd_line(const char *line, size_t line_len, LogEntry *out)
+{
+    if (!find_lit(line, line_len, "sshd[")) return -1;
+    const char *from = find_lit(line, line_len, " from ");
+    if (!from) return -1;
+
+    const char *end = line + line_len;
+    from += 6;
+    while (from < end && *from == ' ') from++;
+
+    const char *ip_start = from;
+    const char *ip_end = from;
+    if (from < end && *from == '[') {
+        ip_start = from + 1;
+        while (ip_end < end && *ip_end != ']') ip_end++;
+    } else {
+        while (ip_end < end && *ip_end != ' ' && *ip_end != '\t') ip_end++;
+    }
+    size_t raw_len = (size_t)(ip_end - ip_start);
+    if (raw_len == 0 || raw_len >= IP_STR_LEN) return -1;
+
+    static __thread char auth_ip_buf[IP_STR_LEN];
+    size_t clean_len;
+    const char *ip_ptr = strip_ipv6_brackets(ip_start, raw_len,
+                                             auth_ip_buf, sizeof(auth_ip_buf),
+                                             &clean_len);
+    char tmp[IP_STR_LEN];
+    size_t tn = clean_len < sizeof(tmp) - 1 ? clean_len : sizeof(tmp) - 1;
+    memcpy(tmp, ip_ptr, tn);
+    tmp[tn] = '\0';
+    if (!is_valid_ip(tmp)) return -1;
+
+    memset(out, 0, sizeof(*out));
+    out->ip.ptr = ip_ptr;
+    out->ip.len = clean_len;
+    out->ts = parse_auth_timestamp(line, line_len);
+
+    static const char method_ssh[] = "SSH";
+    static const char proto_ssh[] = "SSH/2.0";
+    static const char ua_ssh[] = "OpenSSH";
+    out->method.ptr = method_ssh;
+    out->method.len = sizeof(method_ssh) - 1;
+    out->protocol.ptr = proto_ssh;
+    out->protocol.len = sizeof(proto_ssh) - 1;
+    out->user_agent.ptr = ua_ssh;
+    out->user_agent.len = sizeof(ua_ssh) - 1;
+
+    if (find_lit(line, line_len, "Failed password") ||
+        find_lit(line, line_len, "Invalid user") ||
+        find_lit(line, line_len, "authentication failure")) {
+        static const char path_fail[] = "/sshd/failed-password";
+        out->url.ptr = path_fail;
+        out->url.len = sizeof(path_fail) - 1;
+        out->status = 401;
+    } else if (find_lit(line, line_len, "Accepted password") ||
+               find_lit(line, line_len, "Accepted publickey")) {
+        static const char path_ok[] = "/sshd/accepted";
+        out->url.ptr = path_ok;
+        out->url.len = sizeof(path_ok) - 1;
+        out->status = 200;
+    } else {
+        static const char path_other[] = "/sshd/event";
+        out->url.ptr = path_other;
+        out->url.len = sizeof(path_other) - 1;
+        out->status = 403;
+    }
+
+    out->bytes = 0;
+    out->resp_bytes = 0;
+    return 0;
+}
+
 int parse_log_line(const char *line, size_t line_len, LogEntry *out) {
     if (!line || !line_len || !out) return -1;
     memset(out, 0, sizeof(*out));
 
     /* Log tampering koruması */
     if (log_line_is_tampered(line, line_len)) return -2;
+
+    if (find_lit(line, line_len, "sshd[") && find_lit(line, line_len, " from ")) {
+        int auth_rc = parse_auth_sshd_line(line, line_len, out);
+        if (auth_rc == 0) return 0;
+    }
 
     ParserState state    = ST_IP_START;
     const char *p        = line;

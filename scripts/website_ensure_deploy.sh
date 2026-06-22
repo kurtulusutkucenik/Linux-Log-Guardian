@@ -14,7 +14,11 @@ elif [[ ! -f "$MANIFEST" ]]; then
 else
   src_i18n="$(grep -oP 'name="lg-integrity-i18n" content="\K[^"]+' "$SRC/index.html" 2>/dev/null || true)"
   dep_i18n="$(grep -oP 'name="lg-integrity-i18n" content="\K[^"]+' "$DEPLOY/index.html" 2>/dev/null || true)"
-  if [[ -z "$src_i18n" || "$src_i18n" != "$dep_i18n" ]]; then
+  src_css="$(grep -oP 'name="lg-integrity-css" content="\K[^"]+' "$SRC/index.html" 2>/dev/null || true)"
+  dep_css="$(grep -oP 'name="lg-integrity-css" content="\K[^"]+' "$DEPLOY/index.html" 2>/dev/null || true)"
+  src_tests_js="$(grep -oP 'test-results\.js\?[^"]+' "$SRC/tests.html" 2>/dev/null || grep -oP 'test-results\.js"[^>]*integrity="\K[^"]+' "$SRC/tests.html" 2>/dev/null || true)"
+  dep_tests_js="$(grep -oP 'test-results\.js\?[^"]+' "$DEPLOY/tests.html" 2>/dev/null || grep -oP 'test-results\.js"[^>]*integrity="\K[^"]+' "$DEPLOY/tests.html" 2>/dev/null || true)"
+  if [[ -z "$src_i18n" || "$src_i18n" != "$dep_i18n" || -z "$src_css" || "$src_css" != "$dep_css" || "$src_tests_js" != "$dep_tests_js" ]]; then
     need_pack=1
   fi
 fi

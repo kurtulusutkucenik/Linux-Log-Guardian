@@ -181,11 +181,15 @@ int db_init(const char *path) {
 
 void db_load_previous_bans(IpMap *map) {
     if (!g_db_ready || !g_db || !map) return;
-    
-    // alerts tablosundaki son banli kayitlari cekiyoruz 
-    const char *sql = "SELECT DISTINCT ip FROM alerts WHERE banned = 1;";
+
+    /* Son ban_events aksiyonu BAN olan IP'ler (alerts.banned stale olabilir) */
+    const char *sql =
+        "SELECT b.ip FROM ban_events b "
+        "INNER JOIN (SELECT ip, MAX(id) AS mid FROM ban_events GROUP BY ip) x "
+        "ON b.ip = x.ip AND b.id = x.mid "
+        "WHERE UPPER(b.action) = 'BAN';";
     sqlite3_stmt *stmt = NULL;
-    
+
     if (sqlite3_prepare_v2(g_db, sql, -1, &stmt, NULL) == SQLITE_OK) {
         int loaded_count = 0;
         while (sqlite3_step(stmt) == SQLITE_ROW) {
@@ -195,14 +199,15 @@ void db_load_previous_bans(IpMap *map) {
                 IpRecord *rec = ipmap_get_or_create(map, sv);
                 if (rec && !atomic_load(&rec->banned)) {
                     atomic_store(&rec->banned, 1);
-                    /* Ban suresini default sure kadar uzatiyoruz veya sinirsiz yapiyoruz */
-                    atomic_store(&rec->ban_until_ts, time(NULL) + 86400); 
+                    atomic_store(&rec->ban_until_ts, time(NULL) + 86400);
                     loaded_count++;
                 }
             }
         }
         sqlite3_finalize(stmt);
-        fprintf(stderr, "[DB] %d adet onceki ban RAM'e (ip_map) yuklendi.\n", loaded_count);
+        if (loaded_count > 0)
+            fprintf(stderr, "[DB] %d adet onceki ban RAM'e (ip_map) yuklendi.\n",
+                    loaded_count);
     }
 }
 

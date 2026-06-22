@@ -2,10 +2,11 @@ import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 import { guardianApiAuthHeaders } from "@/lib/guardianApiAuth";
+import { guardianApiBase } from "@/lib/guardianApiBase";
 
 export const dynamic = "force-dynamic";
 
-const GUARDIAN_API = process.env.GUARDIAN_API_URL || "http://127.0.0.1:8080";
+const GUARDIAN_API = guardianApiBase();
 
 async function readSnapshot(): Promise<{
   incident_id: string;

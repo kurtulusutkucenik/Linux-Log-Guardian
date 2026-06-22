@@ -16,6 +16,9 @@ code() {
 
 if ! curl -s --max-time 2 "${BASE}/api/v1/metrics" >/dev/null 2>&1; then
   echo "[api_fail_closed] FAIL: API yanit vermiyor — systemctl start log-guardian" >&2
+  echo ""
+  echo "=== ozet ==="
+  echo "  FAIL: 1   WARN: 0"
   exit 1
 fi
 
@@ -72,5 +75,14 @@ if [[ -n "$tok" ]]; then
     || { echo "[FAIL] ban token code=$bcode" >&2; fail=1; }
 fi
 
-[[ "$fail" -eq 0 ]] && echo "[OK] api_fail_closed_test" && exit 0
+[[ "$fail" -eq 0 ]] && {
+  echo ""
+  echo "=== ozet ==="
+  echo "  FAIL: 0   WARN: 0"
+  echo "[OK] api_fail_closed_test"
+  exit 0
+}
+echo ""
+echo "=== ozet ==="
+echo "  FAIL: $fail   WARN: 0"
 exit 1

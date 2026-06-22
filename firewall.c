@@ -242,6 +242,13 @@ static int ipset_family_type_ok(const char *set_name, const char *want_type)
     return strcmp(typ, want_type) == 0;
 }
 
+/* Set mevcut mu (list okunabiliyorsa evet). Yok/EPERM: 0 — destroy etme. */
+static int ipset_set_exists(const char *set_name)
+{
+    char typ[48] = {0};
+    return ipset_read_type(set_name, typ, sizeof(typ)) == 0;
+}
+
 int run_ipset_create(const char *set_name, const char *family) {
     pid_t pid = fork();
     if (pid < 0) return -1;
@@ -370,15 +377,18 @@ int ipset_list_v4_members(char ips[][64], int max_ips, int *total_in_set)
 /* ── High-level API ──────────────────────────────────────────── */
 
 int ensure_ipset_ready(void) {
-    if (!ipset_family_type_ok(g_ipset_v4, "hash:net")) {
+    /* Yalnizca set VAR ve tipi yanlis ise destroy — list okunamazsa (yetki/yok) silme. */
+    if (ipset_set_exists(g_ipset_v4) &&
+        !ipset_family_type_ok(g_ipset_v4, "hash:net")) {
         if (!g_output_json)
             fprintf(stderr,
-                    "[IPSET] %s uyumsuz/eksik — hash:net olarak yeniden olusturuluyor\n",
+                    "[IPSET] %s uyumsuz tip — hash:net olarak yeniden olusturuluyor\n",
                     g_ipset_v4);
         strip_fw_rules("/sbin/iptables", g_ipset_v4);
         run_ipset_destroy(g_ipset_v4);
     }
-    if (!ipset_family_type_ok(g_ipset_v6, "hash:net")) {
+    if (ipset_set_exists(g_ipset_v6) &&
+        !ipset_family_type_ok(g_ipset_v6, "hash:net")) {
         strip_fw_rules("/sbin/ip6tables", g_ipset_v6);
         run_ipset_destroy(g_ipset_v6);
     }

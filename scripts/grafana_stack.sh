@@ -49,22 +49,31 @@ docker run -d --name grafana-lg --restart unless-stopped \
   grafana/grafana >/dev/null
 
 echo "[grafana_stack] Grafana API bekleniyor..."
-for _ in $(seq 1 40); do
-  if curl -sf -u "${GRAFANA_USER}:${GRAFANA_PASS}" "http://127.0.0.1:${GRAFANA_PORT}/api/health" >/dev/null 2>&1; then
+grafana_up=0
+for i in $(seq 1 90); do
+  if curl -sf --max-time 3 -u "${GRAFANA_USER}:${GRAFANA_PASS}" \
+      "http://127.0.0.1:${GRAFANA_PORT}/api/health" >/dev/null 2>&1; then
+    grafana_up=1
     break
+  fi
+  if (( i % 10 == 0 )); then
+    echo "[grafana_stack]   ... ${i}s (docker logs: docker logs grafana-lg --tail 5)"
   fi
   sleep 1
 done
-curl -sf -u "${GRAFANA_USER}:${GRAFANA_PASS}" "http://127.0.0.1:${GRAFANA_PORT}/api/health" >/dev/null \
-  || fail "Grafana API ayakta degil"
+if [[ "$grafana_up" -ne 1 ]]; then
+  echo "[grafana_stack] grafana-lg son log:" >&2
+  docker logs grafana-lg --tail 20 2>&1 || true
+  fail "Grafana API ayakta degil (${GRAFANA_PORT}) — docker ps; bellek/disk kontrol"
+fi
 
 scrape_ok() {
-  curl -sfG "http://127.0.0.1:9090/api/v1/query" \
+  curl -sf --max-time 3 -G "http://127.0.0.1:9090/api/v1/query" \
     --data-urlencode 'query=up{job="log-guardian"}' 2>/dev/null \
     | grep -q '"value":\[[^]]*,"1"\]'
 }
 
-for _ in $(seq 1 30); do
+for i in $(seq 1 45); do
   if scrape_ok; then
     echo "[grafana_stack] Prometheus scrape OK"
     break

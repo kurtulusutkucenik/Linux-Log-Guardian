@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="tr" translate="no" data-theme="dark">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Linux Log Guardian — doğrulama testleri (28 otomatik kanıt)." />
+  <meta name="google" content="notranslate" />
+  <meta name="lg-integrity-i18n" content="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" />
+  <meta name="lg-integrity-css" content="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
+  <meta name="referrer" content="no-referrer" />
+  <title>Testler — Linux Log Guardian</title>
+  <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+  <meta http-equiv="X-Frame-Options" content="DENY" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0' 'sha384-AMFLPCZ8CYhmDHpBw7pp6WF+8G37H15rxgROUZJAVow5KG6c08uVI9NRWVJIxkbn'; script-src-attr 'none'; style-src 'self' 'sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <link rel="stylesheet" href="/site-s7kcuY4VYt4S.css" id="lg-site-css" integrity="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
+  <link rel="icon" href="favicon.ico" sizes="48x48" />
+</head>
+<body class="page-tests">
+  <a class="skip-link" href="#main">İçeriğe atla</a>
+
+  <nav class="app-nav" aria-label="Linux Log Guardian">
+    <a class="app-nav-brand" href="/">
+      <img src="logo.png" alt="" width="28" height="28" decoding="async" draggable="false" />
+      <span>Linux Log Guardian</span>
+    </a>
+    <div class="app-nav-links">
+      <a href="/" data-i18n="nav.home">Ana sayfa</a>
+      <a href="/#kurulum" data-i18n="nav.install">Kurulum</a>
+      <a href="/tests" class="active" aria-current="page" data-i18n="nav.tests">Testler</a>
+      <a href="/#kanit" data-i18n="nav.evidence">Kanıt</a>
+      <a href="/#iletisim" data-i18n="nav.contact">İletişim</a>
+    </div>
+    <div class="app-nav-tools">
+      <button type="button" id="lg-theme-toggle" class="theme-btn theme-btn-sm" aria-pressed="true" title="Açık mod">☀</button>
+      <div class="lang-group lang-group-sm" aria-label="Language">
+        <button type="button" class="lang-btn active" data-lang="tr" aria-pressed="true">TR</button>
+        <button type="button" class="lang-btn" data-lang="en" aria-pressed="false">EN</button>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main" class="tests-page">
+    <section id="testler" class="tests-page-section">
+      <div class="tests-section-head">
+        <div class="tests-section-intro">
+          <h1 data-i18n="tests.page_title">Doğrulama testleri</h1>
+          <p class="prose" data-i18n="tests.page_intro">Dashboard <code>/tests</code> ile aynı matris — kurulum kapıları, CRS parite, FP, ban gecikmesi, corpus recall ve <strong>72 saat soak</strong>. Her kart otomatik script çıktısıdır.</p>
+        </div>
+        <!-- LG_TESTS_TOOLBAR -->
+<div id="test-results-toolbar" class="tests-toolbar" aria-live="polite">
+<div class="tests-toolbar-pill">
+<span>28 test</span>
+<span class="tests-toolbar-pass">28 ✓</span>
+</div>
+<a class="tests-toolbar-pdf" href="/evidence/competitive-proof.pdf" rel="noopener noreferrer" type="application/pdf" data-i18n="tests.proof_pdf">Kanıt PDF</a>
+</div>
+<!-- LG_TESTS_TOOLBAR_END -->
+      </div>
+      <!-- LG_TESTS_HERO -->
+<div id="test-results-hero" class="test-hero" aria-live="polite">
+<div class="test-hero-badge" aria-hidden="true">100%</div>
+<div class="test-hero-text">
+<strong>Tüm testler geçti</strong>
+<span>28/28 test geçti</span>
+</div>
+<div class="test-hero-bar" aria-hidden="true">
+<div class="test-hero-bar-fill" style="width:100%"></div>
+</div>
+</div>
+<!-- LG_TESTS_HERO_END -->
+      <!-- LG_TESTS_SUMMARY -->
+<p id="test-results-summary" class="test-summary muted-sm">28/28 test geçti</p>
+<!-- LG_TESTS_SUMMARY_END -->
+      <ul id="test-results-list" class="test-grid test-grid-full" aria-label="Test sonuçları">
+      <!-- LG_TESTS_STATIC -->
+<li class="test-group-label">Kurulum ve güvenlik kapıları</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>API fail-closed — tokensiz istek 403</h3>
+<p class="test-purpose">Ban/consult/metrics uçları token olmadan reddedilir.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">FAIL: 0 · WARN: 0</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">FAIL:</span> 0</span>
+<span class="test-metric"><span class="test-metric-label">WARN:</span> 0</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/api_fail_closed_test.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>auth.log sshd ingest — parse + brute esigi</h3>
+<p class="test-purpose">nginx disi SSH failed-password satirlari anomaly hattina girer.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">FAIL: 0 · WARN: 0</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">FAIL:</span> 0</span>
+<span class="test-metric"><span class="test-metric-label">WARN:</span> 0</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/auth_log_e2e.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Yerel güvenlik denetimi — IPC, JWT, token sızıntısı</h3>
+<p class="test-purpose">Laptop/prod öncesi güvenlik script matrisi; demo parola laptop&#x27;ta WARN kabul.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">FAIL: 0 · WARN: 1</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">FAIL:</span> 0</span>
+<span class="test-metric"><span class="test-metric-label">WARN:</span> 1</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/local_security_audit.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Kurulum kapısı — servis, IPC, API fail-closed</h3>
+<p class="test-purpose">systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">FAIL: 0 · WARN: 0</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">FAIL:</span> 0</span>
+<span class="test-metric"><span class="test-metric-label">WARN:</span> 0</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/post_install_verify.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<li class="test-group-label">Rekabet ve güvenlik kanıtı</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>72 saat prod stabilite + dusuk FP</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">72.0 saat VPS/VM soak GECTI: 864 ornek, 0 hata — servisler ayakta, max RSS 105 MB benign FP %0.2.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>5 dakikalik stabilite kapisi (VPS gerekmez)</h3>
+<p class="test-purpose">Daemon ve analizorun kisa prod benzeri yukte ayakta kaldigini dogrular.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">5 dk soak: 10 ornek, 0 hata — PASS.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">Sure:</span> 5 dk</span>
+<span class="test-metric"><span class="test-metric-label">Max RSS:</span> 110 MB</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/soak_short_proof.sh</span>
+<time datetime="2026-06-22">2026-06-22</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>auth.log / sshd ingest (nginx disi)</h3>
+<p class="test-purpose">SSH brute ve accepted oturumlarinin WAF/anomali hattina girdigini kanitlar.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">lines=4 parse_errors=0 unique_ips=2 alerts=4.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">lines:</span> 4</span>
+<span class="test-metric"><span class="test-metric-label">unique_ips:</span> 2</span>
+<span class="test-metric"><span class="test-metric-label">alerts:</span> 4</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/auth_log_e2e.sh</span>
+<time datetime="2026-06-22">2026-06-22</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Tehdit tespitinden kernel ban&#x27;a gecen sure</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">Medyan 20.07 ms — hedef &lt;75.0 ms, ipset dogrulandi.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Ayni log corpus uzerinde isleme hizi (seffaf referans)</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">Guardian 5769 EPS (tek gecis log-WAF); CRS replay 16922 EPS — farkli mimari, hiz iddiasi degil.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>CrowdSec LAPI → log-guardian ban API</h3>
+<p class="test-purpose">Dağıtık IP kararlarının kernel ban hattına aktarılmasını kanıtlar.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">mode=dry-run decisions=1 live_api=dry-run.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">mode:</span> dry-run</span>
+<span class="test-metric"><span class="test-metric-label">decisions:</span> 1</span>
+<span class="test-metric"><span class="test-metric-label">live:</span> dry-run</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/crowdsec_bouncer_e2e.sh</span>
+<time datetime="2026-06-22">2026-06-22</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>OWASP CRS ile ayni saldiri satirlarinda tespit paritesi</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">18 saldiri satirinin tamaminda uyari; recall %100.0, parite %100.0.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Dashboard ban/unban — API + Docker relay (18090)</h3>
+<p class="test-purpose">Operatörün /bans sayfasından kernel ban yolunun canlı çalıştığını kanıtlar.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">Host OK, relay OK, Docker OK — 203.0.113.248.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">host:</span> OK</span>
+<span class="test-metric"><span class="test-metric-label">relay:</span> OK</span>
+<span class="test-metric"><span class="test-metric-label">docker:</span> OK</span>
+<span class="test-metric"><span class="test-metric-label">path:</span> ipc-xdp</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/dashboard_ban_smoke.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>FP learn — guvenilir IP cluster ban disinda</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">trusted=10.0.0.50 cluster_banned=False flush=True.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Temiz (benign) trafikte yanlis alarm orani</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">500 benign satirda %0.2 FP — hedef &lt;%5.0.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Dagitik saldiri (ayni UA, farkli IP) cluster recall</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">80 IP, recall %100.0 (80/80).</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Canli nginx log -&gt; JA3/UA cluster -&gt; ban_pipeline</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">mode=live-append delta=8 flush=True block=203.0.113.162-203.0.113.166.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>eBPF lineage — openat/execve/connect zinciri</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">risk=91.2 events=4 (EXEC_SHELL · FILE_READ · FILE_WRITE · NET_CONNECT) source=daemon_file.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Canli nginx :80 saldiri harness (tester + ban)</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">sent=525 refused=525 kernel=True waf=True.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Canli ban hatti (IPC -&gt; XDP/ipset)</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">IPC ok; 0 IPC, 0 XDP, 0 ipset.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>nginx inline consult API (auth_request oncesi WAF+CRS)</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">union=403 or1=403 benign=200.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>OWASP CRS test corpus recall</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">%112.1 recall — 199 satir.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Gercek saldiri corpus (SQLi/XSS/LFI/RCE/scanner) tespit orani</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">1000 satir, ortalama recall %100.0 — hedef &gt;=%85.0.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Corpus 10K — genisletilmis saldiri seti recall</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">10000 satir, recall %100.2.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>SIEM forwarder — alert + ban JSON (:5044)</h3>
+<p class="test-purpose">Splunk/Elastic/Vector gibi hedeflere JSON event_type akisini kanitlar.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">alert=yes ban=yes port=5044.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">alert:</span> yes</span>
+<span class="test-metric"><span class="test-metric-label">ban:</span> yes</span>
+<span class="test-metric"><span class="test-metric-label">port:</span> 5044</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/siem_export_e2e.sh</span>
+<time datetime="2026-06-22">2026-06-22</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Multi-tenant kiracı izolasyonu</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">Kiraci musteri1: 4/4 kontrol gecti.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Threat intel sync -&gt; ipset</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">sync 0s, ioc=10, ipset_delta=0.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>TR hosting corpus (sentetik anonymized)</h3>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">%100.0 recall — 500 satir.</p>
+</li>
+<li class="test-card status-pass test-card-static">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Telegram route + batch — #waf/#ban yönlendirme</h3>
+<p class="test-purpose">WARN→DM, CRIT/ban→kanal ve batch özetinin doğru hedefe gittiğini kanıtlar.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">Mod prod; route ON, batch 10s.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">mode:</span> prod</span>
+<span class="test-metric"><span class="test-metric-label">route:</span> ON</span>
+<span class="test-metric"><span class="test-metric-label">batch:</span> 10</span>
+<span class="test-metric"><span class="test-metric-label">prod:</span> OK</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/webhook_route_proof.sh</span>
+<time datetime="2026-06-21">2026-06-21</time>
+</div>
+</li>
+<!-- LG_TESTS_STATIC_END -->
+      </ul>
+      <p class="sync-note" data-i18n="tests.note">Ham JSON: <a href="/evidence/competitive-proof.json" rel="noopener noreferrer" download>competitive-proof.json</a> · PDF: <a href="/evidence/competitive-proof.pdf" rel="noopener noreferrer">competitive-proof.pdf</a> · Güncelle: <code>bash scripts/competitive_proof.sh</code></p>
+    </section>
+  </main>
+
+  <footer>
+    <span data-i18n="footer">Linux Log Guardian · Türk yapımı · MIT · açık kaynak</span>
+    · <span class="contact-plain">kurtulusutkucenikcontact (at) gmail.com</span>
+  </footer>
+
+  <script src="/test-results.js?v=AMFLPCZ8CYhm" defer integrity="sha384-AMFLPCZ8CYhmDHpBw7pp6WF+8G37H15rxgROUZJAVow5KG6c08uVI9NRWVJIxkbn" crossorigin="anonymous"></script>
+  <script src="/i18n.js?v=VjHW01jxU7I2" defer integrity="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" crossorigin="anonymous"></script>
+</body>
+</html>

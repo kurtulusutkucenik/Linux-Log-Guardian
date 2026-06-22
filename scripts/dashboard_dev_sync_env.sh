@@ -13,7 +13,7 @@ ADMIN_PASS="${DASHBOARD_ADMIN_PASSWORD:-}"
 {
   echo "# dashboard_dev_sync_env.sh — otomatik, commit etmeyin"
   echo "DATABASE_URL=\"file:./dev.db\""
-  echo "GUARDIAN_API_URL=http://127.0.0.1:8080"
+  echo "GUARDIAN_API_URL=http://127.0.0.1:8090"
   echo "LOG_GUARDIAN_TIER=pro"
   echo "PROMETHEUS_URL=http://127.0.0.1:9090"
   echo "GUARDIAN_METRICS_URL=http://127.0.0.1:9091/metrics"

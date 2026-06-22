@@ -132,13 +132,10 @@ int ban_pipeline_unban(const char *ip)
     }
 
     const char *set_name = ipset_name_for_ip(ip);
-    if (run_ipset_ip("del", set_name, ip) == 0) {
-        atomic_fetch_add(&g_stat_unban, 1);
-        return 0;
-    }
-    if (run_ipset_ip("test", set_name, ip) != 0) {
-        atomic_fetch_add(&g_stat_unban, 1);
-        return 0;
-    }
-    return -1;
+    (void)run_ipset_ip("del", set_name, ip);
+    if (run_ipset_ip("test", set_name, ip) == 0)
+        return -1;
+
+    atomic_fetch_add(&g_stat_unban, 1);
+    return 0;
 }

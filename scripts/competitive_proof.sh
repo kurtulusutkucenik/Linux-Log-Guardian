@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+bash "$ROOT/scripts/ops_gate_report.sh" "${OPS_GATE_FULL:+--full}"
 python3 scripts/competitive_proof_build.py -o competitive-proof.json
 
 VENV="$ROOT/.venv-compliance"

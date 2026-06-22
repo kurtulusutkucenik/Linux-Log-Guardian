@@ -16,6 +16,99 @@ ATTACK_LOG="$CACHE/webhook_prod_attack.access"
 fail() { echo "[webhook_prod_e2e] FAIL: $*" >&2; exit 1; }
 ok() { echo "[OK] $*"; }
 
+ipset_has_ban() {
+  local ip="$1"
+  ipset test log_analyzer_block_v4 "$ip" >/dev/null 2>&1 \
+    || ipset test log_analyzer_block_v6 "$ip" >/dev/null 2>&1
+}
+
+run_lg_ingest() {
+  local siem_env=()
+  if [[ "${LG_DEMO_SIEM:-0}" == "1" || "${SIEM_FORWARDER_ENABLED:-0}" == "1" ]]; then
+    siem_env=(
+      SIEM_FORWARDER_ENABLED=1
+      SIEM_HOST="${SIEM_HOST:-127.0.0.1}"
+      SIEM_PORT="${SIEM_PORT:-5044}"
+    )
+  fi
+  if [[ $EUID -eq 0 ]]; then
+    env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
+      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
+      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
+      "${siem_env[@]}" \
+      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
+      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
+      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
+      "${siem_env[@]}" \
+      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+  else
+    env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
+      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
+      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
+      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
+      "${siem_env[@]}" \
+      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+  fi
+}
+
+unban_test_ip() {
+  if [[ $EUID -eq 0 ]]; then
+    "$LG_BIN" unban "$ATTACK_IP" >/dev/null 2>&1 || true
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo "$LG_BIN" unban "$ATTACK_IP" >/dev/null 2>&1 || true
+  fi
+  if command -v ipset >/dev/null 2>&1; then
+    if [[ $EUID -eq 0 ]]; then
+      ipset del log_analyzer_block_v4 "$ATTACK_IP" -exist 2>/dev/null || true
+    elif command -v sudo >/dev/null 2>&1; then
+      sudo ipset del log_analyzer_block_v4 "$ATTACK_IP" -exist 2>/dev/null || true
+    fi
+  fi
+  local db="${LG_DB:-/etc/log-guardian/events.db}"
+  if [[ -f "$db" ]] && command -v sqlite3 >/dev/null 2>&1; then
+    sqlite3 "$db" "INSERT INTO ban_events (ts,ip,action,reason) VALUES ($(date +%s),'${ATTACK_IP}','UNBAN','e2e-cleanup');" 2>/dev/null || true
+  fi
+}
+
+stack_repair_after_ingest() {
+  [[ $EUID -eq 0 ]] || return 0
+  command -v systemctl >/dev/null 2>&1 || return 0
+  # --json one-shot METRICS_PORT=0: :9091 cakismasi yok; restart ban'i dusurur
+  if [[ "${LG_E2E_STACK_RESTART:-0}" != "1" ]]; then
+    echo "[INFO] stack restart atlandi (--json ingest ban'i korur; zorla: LG_E2E_STACK_RESTART=1)"
+    return 0
+  fi
+  echo "[INFO] LG_E2E_STACK_RESTART=1 — systemd yeniden baslatiliyor..."
+  systemctl restart log-guardian-daemon.service 2>/dev/null || true
+  sleep 2
+  systemctl restart log-guardian.service 2>/dev/null || true
+  local n=0
+  while [[ "$n" -lt 15 ]]; do
+    if curl -sf --max-time 2 http://127.0.0.1:9091/metrics >/dev/null 2>&1 \
+        && curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+           http://127.0.0.1:8090/api/v1/metrics 2>/dev/null | grep -qx 403; then
+      ok "stack restart — metrics+API ayakta"
+      return 0
+    fi
+    sleep 1
+    n=$((n + 1))
+  done
+  echo "[WARN] stack restart sonrasi metrics/API hazir degil — sudo bash scripts/repair_no_xdp_stack.sh" >&2
+}
+
 webhook_env_readable() {
   [[ -r "$WEBHOOK_ENV" ]] || return 1
   return 0
@@ -143,28 +236,62 @@ EOF
 
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
 
-echo "[1/3] saldiri logu isleniyor: $ATTACK_LOG"
+echo "[0/4] test IP temizligi: $ATTACK_IP"
+unban_test_ip
+if command -v ipset >/dev/null 2>&1 && ipset_has_ban "$ATTACK_IP"; then
+  fail "$ATTACK_IP hala ipset'te — once temizle:
+  sudo log-guardian unban $ATTACK_IP
+  sudo ipset del log_analyzer_block_v4 $ATTACK_IP 2>/dev/null || true
+  sudo bash scripts/fix_ipc_perms.sh"
+fi
+
+echo "[1/4] saldiri logu isleniyor: $ATTACK_LOG"
 load_webhook_env
 export WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0
 export LOGANALYZER_TELEGRAM_TOKEN LOGANALYZER_TELEGRAM_CHAT_ID LOGANALYZER_TELEGRAM_CHAT_IDS
 export LOGANALYZER_TELEGRAM_CHAT_CRIT LOGANALYZER_TELEGRAM_CHAT_WARN
-combined=$("$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1 || true)
+combined=$(run_lg_ingest || true)
 alerts=$(echo "$combined" | grep -o '"alerts_total"[[:space:]]*:[[:space:]]*[0-9]*' | tail -1 | grep -o '[0-9]*$' || echo 0)
+ban_ok=$(echo "$combined" | grep -o '"ban_success"[[:space:]]*:[[:space:]]*[0-9]*' | tail -1 | grep -o '[0-9]*$' || echo 0)
 [[ "${alerts:-0}" -ge 1 ]] || fail "alarm uretilmedi: $combined"
-ok "saldiri logu alerts_total=$alerts"
+[[ "${ban_ok:-0}" -ge 1 ]] || fail "ban_success=0 (DB stale rec->banned?) — once: sudo log-guardian unban $ATTACK_IP && sudo ipset del log_analyzer_block_v4 $ATTACK_IP
+  ingest: $combined"
+ok "saldiri logu alerts_total=$alerts ban_success=$ban_ok"
 
-echo "[2/3] webhook.metrics kontrol..."
+verify_ipset_ban() {
+  if ! command -v ipset >/dev/null 2>&1; then
+    echo "[WARN] ipset yok — ban dogrulama atlandi"
+    return 0
+  fi
+  if ipset_has_ban "$ATTACK_IP"; then
+    ok "ipset ban: $ATTACK_IP"
+    return 0
+  fi
+  fail "ipset'te ban yok ($ATTACK_IP) — alarm!=ban.
+  Telegram KRITIK ALARM gelir; IP BANLANDI yalnizca ban basariliysa gelir.
+  Onarim: sudo bash scripts/fix_ipc_perms.sh && newgrp log-guardian
+           sudo bash scripts/repair_no_xdp_stack.sh
+  Tekrar: sudo bash scripts/webhook_prod_e2e.sh"
+}
+
+echo "[2/4] ipset ban dogrulama (ingest sonrasi)..."
+verify_ipset_ban
+
+echo "[3/4] webhook.metrics kontrol..."
 SENT_AFTER=$(metrics_sent)
 DELTA=$((SENT_AFTER - SENT_BEFORE))
 [[ "$DELTA" -ge 1 ]] || fail "webhook.metrics sent artmadi ($SENT_BEFORE -> $SENT_AFTER)"
+if [[ "${ban_ok:-0}" -ge 1 && "$DELTA" -lt 2 ]]; then
+  fail "ban_success=$ban_ok ama webhook.metrics +$DELTA (alert+ban>=2 beklenir) — #ban kanalini kontrol et"
+fi
 ok "webhook.metrics sent +$DELTA ($SENT_BEFORE -> $SENT_AFTER)"
 
 CLI_OK=1
 if [[ "${WEBHOOK_E2E_CLI_TEST:-0}" == "1" ]]; then
   if [[ "$ROUTE_MODE" -eq 1 ]]; then
-    echo "[3/3] route webhook-test (alert→DM, ban/trap→kanal)"
+    echo "[4/4] route webhook-test (alert→DM, ban/trap→kanal)"
   else
-    echo "[3/3] webhook-test (alert/ban/trap → tek kanal)"
+    echo "[4/4] webhook-test (alert/ban/trap → tek kanal)"
   fi
   for k in alert ban trap; do
     if [[ "$k" == "alert" ]]; then
@@ -179,7 +306,14 @@ if [[ "${WEBHOOK_E2E_CLI_TEST:-0}" == "1" ]]; then
   fi
   [[ "$CLI_OK" -eq 1 ]] || echo "[WARN] webhook-test CLI basarisiz — saldiri logu + metrik OK" >&2
 else
-  echo "[3/3] webhook-test CLI SKIP (saldiri logu + metrik yeterli; zorla: WEBHOOK_E2E_CLI_TEST=1)"
+  echo "[4/4] webhook-test CLI SKIP (saldiri logu + ipset + metrik yeterli; zorla: WEBHOOK_E2E_CLI_TEST=1)"
+fi
+
+stack_repair_after_ingest
+
+if [[ "${LG_E2E_STACK_RESTART:-0}" == "1" ]]; then
+  echo "[2b/4] ipset ban kaliciligi (stack restart sonrasi)..."
+  verify_ipset_ban
 fi
 
 SENT_AFTER=$(metrics_sent)
@@ -221,7 +355,9 @@ echo ""
 echo "Telegram kontrol:"
 if [[ "$ROUTE_MODE" -eq 1 ]]; then
   echo "  DM    — WARN + batch ozet"
-  echo "  Kanal — ban + tuzak"
+  echo "  Kanal — KRITIK ALARM (#waf) + IP BANLANDI (#ban) + tuzak"
+  echo "  Not: Sadece KRITIK ALARM (DM) gorduysen #ban kanalini kontrol et"
+  echo "  Not: alarm!=ban — journalctl -u log-guardian-daemon | grep BAN"
 else
   echo "  Tek kanal — alert + ban + trap (hepsi CHAT_ID)"
   echo "  Route icin: .env.webhook.local WEBHOOK_TELEGRAM_ROUTE=1 + CRIT/WARN"

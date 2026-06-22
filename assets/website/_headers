@@ -6,15 +6,22 @@
   X-DNS-Prefetch-Control: off
   Referrer-Policy: no-referrer
   Permissions-Policy: accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), interest-cohort=()
-  Content-Security-Policy: default-src 'none'; script-src 'sha384-I0L2RTVOzS5E46opgkY33e4pSKBuoOx/vYTwXM080XcM+CYbTaHxApBjLSTa3fNo'; script-src-attr 'none'; style-src 'self' 'sha384-xb5+FaZrvAHjFA6gnQapIqfhNTVMC2nCfrFUC+fXFbxg+C10RXo/WT6qjxGK6oZ+'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script; upgrade-insecure-requests; block-all-mixed-content;
+  Content-Security-Policy: default-src 'none'; script-src 'sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0' 'sha384-AMFLPCZ8CYhmDHpBw7pp6WF+8G37H15rxgROUZJAVow5KG6c08uVI9NRWVJIxkbn'; script-src-attr 'none'; style-src 'self' 'sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script; upgrade-insecure-requests; block-all-mixed-content;
   Cross-Origin-Opener-Policy: same-origin
   Cross-Origin-Resource-Policy: same-origin
-  Cross-Origin-Embedder-Policy: require-corp
   Origin-Agent-Cluster: ?1
   Document-Policy: force-load-at-top
   X-Permitted-Cross-Domain-Policies: none
 
 /index.html
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/tests.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+  Pragma: no-cache
+
+/tests
   Cache-Control: no-store, no-cache, must-revalidate
   Pragma: no-cache
 
@@ -38,20 +45,38 @@
 /i18n.js
   Content-Type: text/javascript; charset=utf-8
   Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: no-store, no-cache, must-revalidate, no-transform
+
+/test-results.js
+  Content-Type: text/javascript; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: no-store, no-cache, must-revalidate, no-transform
+
+/site.css
+  Content-Type: text/css; charset=utf-8
+  Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: same-origin
-  Cache-Control: public, max-age=86400, immutable
+  Cache-Control: public, max-age=0, must-revalidate
+
+/site-*.css
+  Content-Type: text/css; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=31536000, immutable, no-transform
 
 /*.js
   Content-Type: text/javascript; charset=utf-8
   Access-Control-Allow-Origin: *
-  Cross-Origin-Resource-Policy: same-origin
-  Cache-Control: public, max-age=86400, immutable
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=300, must-revalidate, no-transform
 
 /*.css
   Content-Type: text/css; charset=utf-8
   Access-Control-Allow-Origin: *
   Cross-Origin-Resource-Policy: same-origin
-  Cache-Control: public, max-age=86400, immutable
+  Cache-Control: public, max-age=3600, must-revalidate, no-transform
 
 /*.png
   Cross-Origin-Resource-Policy: same-origin

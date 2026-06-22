@@ -19,7 +19,7 @@ done
 
 echo "=== grafana_alert_e2e ==="
 
-if ! curl -sf -u "${GRAFANA_USER:-admin}:${GRAFANA_PASS:-admin}" \
+if ! curl -sf --max-time 3 -u "${GRAFANA_USER:-admin}:${GRAFANA_PASS:-admin}" \
   "${GRAFANA_URL:-http://127.0.0.1:3002}/api/health" >/dev/null 2>&1; then
   echo "[grafana_alert_e2e] Grafana yok — stack baslatiliyor..."
   bash "$ROOT/scripts/grafana_stack.sh"

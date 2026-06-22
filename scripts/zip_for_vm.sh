@@ -7,7 +7,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-OUT="${OUT:-$ROOT/../log-guardian-vm.zip}"
+OUT="${OUT:-$ROOT/dist/log-guardian-vm.zip}"
 ZIP_PROFILE="${ZIP_PROFILE:-vm}"
 
 echo "=== zip_for_vm ==="
@@ -20,6 +20,7 @@ excludes=(
   -x '*/.git/*'
   -x '*/node_modules/*'
   -x '*/.cache/*'
+  -x '.cache/*'
   -x '*/dashboard/.next/*'
   -x '*/dist/deb-stage/*'
   -x '*.o'
@@ -28,6 +29,7 @@ excludes=(
   -x '*/.cursor/*'
   -x '*/graphify-out/*'
   -x 'data-room.zip'
+  -x '.rules-multitenant-test.conf'
 )
 if [[ "$ZIP_PROFILE" == "vm" ]]; then
   excludes+=(-x 'dashboard/*')
@@ -51,7 +53,7 @@ sz=$(du -h "$OUT" | awk '{print $1}')
 echo "[OK] zip_for_vm -> $OUT ($sz)"
 echo ""
 echo "VM'de:"
-echo "  unzip log-guardian-vm.zip -d ~/Linux-Log-Guardian"
+echo "  unzip $(basename "$OUT") -d ~/Linux-Log-Guardian"
 echo "  cd ~/Linux-Log-Guardian"
 echo "  sudo bash install.sh --no-xdp"
 echo "  sudo bash scripts/install_first_run.sh"

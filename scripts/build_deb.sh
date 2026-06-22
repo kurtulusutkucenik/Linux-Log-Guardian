@@ -125,7 +125,16 @@ echo "Installed-Size: $INSTALLED_KB" >>"$DEBIAN/control"
 mkdir -p "$DIST"
 dpkg-deb --root-owner-group --build "$STAGE" "$OUT"
 
+sha256sum "$OUT" | awk '{print $1}' >"${OUT}.sha256"
+bn="$(basename "$OUT")"
+sha="$(cat "${OUT}.sha256")"
+touch "$DIST/SHA256SUMS"
+grep -v " ${bn}$" "$DIST/SHA256SUMS" >"$DIST/.sha256.tmp" 2>/dev/null || true
+echo "${sha}  ${bn}" >>"$DIST/.sha256.tmp"
+mv "$DIST/.sha256.tmp" "$DIST/SHA256SUMS"
+
 echo "[build_deb] -> $OUT ($(du -h "$OUT" | awk '{print $1}'))"
+echo "[build_deb] sha256: $(cat "${OUT}.sha256")"
 echo ""
 echo "Kurulum:"
 echo "  sudo dpkg -i $OUT"

@@ -86,11 +86,23 @@ else
 fi
 
 CSP="$(tr -d '\n' < "$CSP_FILE" | sed 's/  */ /g' | sed 's/;$//')"
-META_CSP="$(grep -oP 'http-equiv="Content-Security-Policy" content="\K[^"]+' "$SITE/index.html" | sed 's/;$//' || true)"
-if [[ -n "$META_CSP" && "$META_CSP" == "$CSP" ]]; then
-  ok "meta CSP == csp.txt"
+META_INDEX="$(grep -oP 'http-equiv="Content-Security-Policy" content="\K[^"]+' "$SITE/index.html" | sed 's/;$//' || true)"
+META_TESTS="$(grep -oP 'http-equiv="Content-Security-Policy" content="\K[^"]+' "$SITE/tests.html" | sed 's/;$//' || true)"
+CSP_BASE="${CSP%; upgrade-insecure-requests; block-all-mixed-content}"
+if [[ -n "$META_TESTS" && "$CSP_BASE" == "$META_TESTS" ]]; then
+  ok "tests.html meta CSP == csp.txt (upgrade haric)"
 else
-  bad "meta CSP csp.txt ile uyumsuz (bash scripts/website_refresh_sri.sh)"
+  bad "tests.html meta CSP csp.txt ile uyumsuz"
+fi
+if [[ -n "$META_INDEX" ]] && ! grep -q "test-results" "$SITE/index.html"; then
+  TR_HASH="$(grep -oP "script-src '[^']+' '\K[^']+" "$CSP_FILE" | tail -1 || true)"
+  if [[ -n "$TR_HASH" && "$META_INDEX" != *"$TR_HASH"* ]]; then
+    ok "index.html meta CSP (yalnizca i18n.js)"
+  else
+    bad "index.html meta CSP test hash iceriyor veya bos"
+  fi
+else
+  bad "index.html meta CSP veya test-results script tag hatali"
 fi
 
 if grep -q "require-sri-for script" "$CSP_FILE" && ! grep -q "require-sri-for script style" "$CSP_FILE"; then
@@ -106,7 +118,7 @@ else
 fi
 
 META_I18N_SRI="$(grep -oP 'name="lg-integrity-i18n" content="\K[^"]+' "$SITE/index.html" || true)"
-SCRIPT_SRI="$(grep -oP 'i18n\.js" defer integrity="\K[^"]+' "$SITE/index.html" || true)"
+SCRIPT_SRI="$(grep -oP 'i18n\.js(?:\?[^"]*)?" defer integrity="\K[^"]+' "$SITE/index.html" || true)"
 if [[ -n "$META_I18N_SRI" && "$META_I18N_SRI" == "$SCRIPT_SRI" ]]; then
   ok "lg-integrity-i18n == script SRI"
 else
@@ -149,7 +161,7 @@ else
   warn "i18n.js SRI yok (bash scripts/website_refresh_sri.sh)"
 fi
 
-if grep -q 'site.css' "$SITE/index.html" && grep -q 'integrity=' "$SITE/index.html"; then
+if [[ -f "$SITE/site.css" ]] && grep -qE 'href="(?:\./|/)site[^"]*\.css"' "$SITE/index.html"; then
   ok "site.css SRI"
 else
   warn "site.css SRI yok (bash scripts/website_refresh_sri.sh)"
@@ -193,7 +205,7 @@ else
   bad "gpc.json eksik"
 fi
 
-if grep -qE 'href="https?://|src="https?://' "$SITE/index.html" 2>/dev/null; then
+if grep -qE 'href="https://|href="http://|src="https://|src="http://' "$SITE/index.html" 2>/dev/null; then
   bad "index.html dis URL"
 else
   ok "index dis URL yok"
@@ -296,9 +308,15 @@ else
 fi
 
 if grep -q "Cross-Origin-Embedder-Policy" "$SITE/_headers"; then
-  ok "COEP (_headers prod)"
+  bad "COEP aktif — crossorigin scriptler bloklanir"
 else
-  bad "COEP eksik (_headers)"
+  ok "COEP yok (crossorigin script uyumu)"
+fi
+
+if grep -q "Cross-Origin-Resource-Policy: cross-origin" "$SITE/_headers"; then
+  ok "JS CORP cross-origin (_headers)"
+else
+  bad "JS CORP cross-origin eksik (_headers)"
 fi
 
 if grep -qF "/csp.txt" "$SITE/_redirects" && grep -q "404" "$SITE/_redirects"; then

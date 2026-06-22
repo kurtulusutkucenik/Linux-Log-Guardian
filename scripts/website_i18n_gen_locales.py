@@ -14,6 +14,7 @@ ALL_LOCALES = Path(__file__).resolve().parent / "i18n_all_locales.json"
 COMMAND_KEYS = frozenset({
     "install.block1", "install.block_api", "install.block_nginx",
     "install.block_verify", "install.block2",
+    "install.block_deb_deps", "install.block_deb", "install.block_deb_first",
     "dashboard.start", "download.block", "laptop.block",
 })
 
