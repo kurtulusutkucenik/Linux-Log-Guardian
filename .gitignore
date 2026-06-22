@@ -69,6 +69,7 @@ vmlinux.h
 *.env
 
 # ── IDE / editör dosyaları ────────────────────────────────────────
+.cursor/
 .vscode/
 *.code-workspace
 .idea/
