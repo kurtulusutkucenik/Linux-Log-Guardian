@@ -27,9 +27,15 @@ else
   ok "secret pattern yok"
 fi
 
-# Harici kaynak yukleme (ornek metinler degil: href/src/fetch/import)
-if grep -qE '(href|src)="https?://' "$DEPLOY/index.html" 2>/dev/null; then
+# Harici kaynak yukleme (yalnizca GitHub repo linkleri izinli)
+_ext_urls() {
+  grep -oE '(href|src)="https?://[^"]+' "$DEPLOY/index.html" 2>/dev/null \
+    | sed 's/^[^"]*"//' || true
+}
+if bad_urls="$(_ext_urls | grep -vE '^https://github\.com/kurtulusutkucenik/Linux-Log-Guardian' || true)" && [[ -n "$bad_urls" ]]; then
   bad "index.html dis kaynak attribute"
+elif grep -qE '(href|src)="https?://' "$DEPLOY/index.html" 2>/dev/null; then
+  ok "harici link (GitHub repo)"
 elif grep -qE 'fetch\(|import\(|\.src\s*=' "$DEPLOY/i18n.js" 2>/dev/null \
      && grep -qE 'https?://' "$DEPLOY/i18n.js" 2>/dev/null; then
   bad "i18n.js dis kaynak yukleme"
