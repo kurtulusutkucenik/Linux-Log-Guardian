@@ -205,10 +205,10 @@ else
   bad "gpc.json eksik"
 fi
 
-if grep -qE 'href="https://|href="http://|src="https://|src="http://' "$SITE/index.html" 2>/dev/null; then
-  bad "index.html dis URL"
+if grep -oE 'href="https?://[^"]+|src="https?://[^"]+' "$SITE/index.html" 2>/dev/null | grep -qvE 'github\.com/kurtulusutkucenik/Linux-Log-Guardian'; then
+  bad "index.html dis URL (yalnizca github.com/kurtulusutkucenik/Linux-Log-Guardian)"
 else
-  ok "index dis URL yok"
+  ok "index dis URL (github repo)"
 fi
 
 if [[ -f "$ROOT/scripts/website_audit_deploy.sh" ]]; then

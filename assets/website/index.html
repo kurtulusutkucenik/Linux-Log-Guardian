@@ -5,8 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Linux Log Guardian — Türk yapımı açık kaynak nginx WAF. log → ban ~15 dk." />
   <meta name="google" content="notranslate" />
-  <meta name="lg-integrity-i18n" content="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" />
-  <meta name="lg-integrity-css" content="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
+  <meta name="lg-integrity-i18n" content="sha384-iwJ0aXsAtpvCGNGXL6zSapz4z/rVVopt9pQVTpR9O+JAKrM4mk8LQMOddh7cDVIZ" />
+  <meta name="lg-integrity-css" content="sha384-Lqdwqbt1ezWpUAfMTqOMC+a5xWIO0PUVfpLiTlu7PlM6+j9lDd5kagMuaQadBQ+m" />
   <meta name="referrer" content="no-referrer" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Linux Log Guardian" />
@@ -17,8 +17,8 @@
   <meta name="twitter:description" content="Open-source nginx WAF from Turkey. log → ban in ~15 min." />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0'; script-src-attr 'none'; style-src 'self' 'sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto:; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
-  <link rel="stylesheet" href="/site-s7kcuY4VYt4S.css" id="lg-site-css" integrity="sha384-s7kcuY4VYt4S3rnG4nbiKFIHyGAhuNJtkEO2gXq+fyq/f64fUvK9dDRuEhoW/Bk3" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-iwJ0aXsAtpvCGNGXL6zSapz4z/rVVopt9pQVTpR9O+JAKrM4mk8LQMOddh7cDVIZ'; script-src-attr 'none'; style-src 'self' 'sha384-Lqdwqbt1ezWpUAfMTqOMC+a5xWIO0PUVfpLiTlu7PlM6+j9lDd5kagMuaQadBQ+m'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'none'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <link rel="stylesheet" href="/site-Lqdwqbt1ezWp.css" id="lg-site-css" integrity="sha384-Lqdwqbt1ezWpUAfMTqOMC+a5xWIO0PUVfpLiTlu7PlM6+j9lDd5kagMuaQadBQ+m" />
   <link rel="icon" href="favicon.ico" sizes="48x48" />
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="logo.png" />
@@ -64,6 +64,7 @@
     </nav>
     <div class="cta">
       <a class="btn btn-primary" href="#kurulum" data-i18n="hero.cta_install">15 dk kurulum</a>
+      <a class="btn btn-secondary" href="https://github.com/kurtulusutkucenik/Linux-Log-Guardian" rel="noopener noreferrer" data-i18n="hero.cta_github">GitHub kaynak</a>
       <a class="btn btn-secondary" href="#indir" data-i18n="download.title">.deb indir</a>
     </div>
   </header>
@@ -90,6 +91,23 @@
     <section id="sinirlar">
       <h2 data-i18n="scope.honest.title">Dürüst sınırlar</h2>
       <div class="callout callout-warn prose" data-i18n="scope.honest.body"><ul><li><strong>Reaktif mimari</strong> — log satırı düşene kadar ilk istek geçebilir; inline ModSec hızında değiliz.</li><li><strong>L3/L4 DDoS</strong> absorb etmiyoruz — Cloudflare/CDN üstüne konuruz.</li><li><strong>Dağıtık botnet</strong> — IP başına ban; CrowdSec sinyal ağı yok.</li><li><strong>Yapar:</strong> log → CRS/WAF → ~17&nbsp;ms kernel ban, kanıt PDF, Telegram ops, MIT self-hosted.</li></ul></div>
+    </section>
+
+    <section id="github" class="repo-section">
+      <h2 data-i18n="github.title">Kaynak kod (GitHub)</h2>
+      <div class="prose" data-i18n="github.intro"></div>
+      <div class="repo-actions">
+        <a class="btn btn-primary" href="https://github.com/kurtulusutkucenik/Linux-Log-Guardian" rel="noopener noreferrer">GitHub — Linux-Log-Guardian</a>
+        <a class="btn btn-secondary" href="https://github.com/kurtulusutkucenik/Linux-Log-Guardian/releases" rel="noopener noreferrer" data-i18n="github.releases">Releases (.deb)</a>
+        <a class="btn btn-secondary" href="/tests" data-i18n="nav.tests">Testler</a>
+      </div>
+      <h3 data-i18n="github.steps_title">Hızlı başlangıç (kaynak)</h3>
+      <pre data-i18n="install.block1">git clone https://github.com/kurtulusutkucenik/Linux-Log-Guardian.git
+cd Linux-Log-Guardian
+make -j$(nproc)
+sudo bash install.sh</pre>
+      <div class="prose" data-i18n="github.steps_body"></div>
+      <div class="highlight prose" data-i18n="github.contrib"></div>
     </section>
 
     <section id="kurulum">
@@ -135,7 +153,8 @@ sudo apt-get install -y ipset libbpf1 ... nginx</pre>
           <li>
             <strong data-i18n="install.s1_title">Kaynak ve derleme</strong>
             <div class="prose" data-i18n="install.s1_body"></div>
-            <pre data-i18n="install.block1">git clone &lt;repo&gt; log-guardian &amp;&amp; cd log-guardian
+            <pre data-i18n="install.block1">git clone https://github.com/kurtulusutkucenik/Linux-Log-Guardian.git
+cd Linux-Log-Guardian
 make -j$(nproc)
 sudo bash install.sh</pre>
           </li>
@@ -306,9 +325,10 @@ SKIP_WEBHOOK=1 bash scripts/demo_3min.sh</pre>
 
   <footer>
     <span data-i18n="footer">Linux Log Guardian · Türk yapımı · MIT · açık kaynak</span>
+    · <a href="https://github.com/kurtulusutkucenik/Linux-Log-Guardian" rel="noopener noreferrer">GitHub</a>
     · <span class="contact-plain">kurtulusutkucenikcontact (at) gmail.com</span>
   </footer>
 
-  <script src="/i18n.js?v=VjHW01jxU7I2" defer integrity="sha384-VjHW01j/U7I2JWIiymwyJMrgsEG1uzuK9EJAO3GHDXngpJYJ3get0lu1ou122cz0" crossorigin="anonymous"></script>
+  <script src="/i18n.js?v=iwJ0aXsAtpvC" defer integrity="sha384-iwJ0aXsAtpvCGNGXL6zSapz4z/rVVopt9pQVTpR9O+JAKrM4mk8LQMOddh7cDVIZ" crossorigin="anonymous"></script>
 </body>
 </html>

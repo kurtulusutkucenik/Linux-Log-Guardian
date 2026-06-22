@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Platform](https://img.shields.io/badge/Platform-Linux%20x86__64-green.svg)](docs/CUSTOMER_REQUIREMENTS.md)
-[![CI](https://github.com/kurtulusutkucenik/loganalyzer/actions/workflows/build.yml/badge.svg)](https://github.com/kurtulusutkucenik/loganalyzer/actions/workflows/build.yml)
+[![CI](https://github.com/kurtulusutkucenik/Linux-Log-Guardian/actions/workflows/build.yml/badge.svg)](https://github.com/kurtulusutkucenik/Linux-Log-Guardian/actions/workflows/build.yml)
 
 > **nginx access log → WAF/CRS → kernel ban** — tek zincir, MIT lisanslı açık kaynak.
 
@@ -44,7 +44,7 @@
 ### Adım 1 — Repo ve kurulum (~5–10 dk)
 
 ```bash
-git clone https://github.com/kurtulusutkucenik/loganalyzer.git
+git clone https://github.com/kurtulusutkucenik/Linux-Log-Guardian.git
 cd loganalyzer          # ürün adı: Linux Log Guardian; binary: log-guardian
 sudo bash install.sh    # derle, /usr/local/bin'e kur, systemd unit'leri yaz
 ```
@@ -310,7 +310,7 @@ Details: [docs/VS_RAKIPLER.md](docs/VS_RAKIPLER.md)
 **Requirements:** Ubuntu 22.04+ / Debian 12+ x86_64 · 512 MB+ RAM · nginx with access log · `install.sh` installs build deps automatically.
 
 ```bash
-git clone https://github.com/kurtulusutkucenik/loganalyzer.git
+git clone https://github.com/kurtulusutkucenik/Linux-Log-Guardian.git
 cd loganalyzer
 sudo bash install.sh
 

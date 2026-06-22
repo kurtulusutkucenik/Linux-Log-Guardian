@@ -71,9 +71,17 @@ function sanitizeHtml(html) {
     if (tag === "A") {
       const href = (node.getAttribute("href") || "").trim();
       const lower = href.toLowerCase();
-      if (!lower.startsWith("mailto:") || lower.includes("javascript:")) return;
+      if (!href || lower.includes("javascript:") || lower.includes("data:")) return;
+      const ok =
+        lower.startsWith("mailto:") ||
+        lower.startsWith("#") ||
+        lower.startsWith("https://github.com/");
+      if (!ok) return;
       el.setAttribute("href", href);
       el.setAttribute("rel", "noopener noreferrer");
+      if (lower.startsWith("https://")) {
+        el.setAttribute("target", "_blank");
+      }
     }
     node.childNodes.forEach((child) => appendSafe(el, child));
     parent.appendChild(el);

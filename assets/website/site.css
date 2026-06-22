@@ -246,6 +246,19 @@ h1 {
   justify-content: center;
 }
 
+.repo-section {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 1.25rem 1.35rem;
+  background: var(--surface);
+}
+.repo-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .65rem;
+  margin: 1rem 0 1.25rem;
+}
+
 .btn {
   display: inline-block;
   padding: .625rem 1.25rem;
