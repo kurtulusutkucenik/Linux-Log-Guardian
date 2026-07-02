@@ -1,6 +1,8 @@
 # Cloudflare Pages — domain baglandiginda bu dosya build yolunu kilitler.
 # Dashboard: Build command = bash scripts/website_deploy_gate.sh
-#            Build output  = assets/website-deploy (wrangler ile ayni)
+#            Build output  = landing/out (wrangler ile ayni)
+# NOT: Canli site artik Next.js "landing/" projesinden uretilir (24 dil).
+#      Eski statik "assets/website/" pipeline'i emekliye ayrildi.
 name = "linux-log-guardian-website"
 compatibility_date = "2024-09-23"
-pages_build_output_dir = "assets/website-deploy"
+pages_build_output_dir = "landing/out"

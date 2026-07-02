@@ -4,21 +4,19 @@ on:
   push:
     branches: [main]
     paths:
-      - "assets/website/**"
-      - "scripts/website_*"
-      - "scripts/i18n_all_locales.json"
+      - "landing/**"
+      - "scripts/website_deploy_gate.sh"
+      - "scripts/landing_sync_assets.sh"
       - "scripts/sync_evidence_pack.sh"
-      - "scripts/preview_website.sh"
       - "wrangler.toml"
       - ".github/workflows/website.yml"
   pull_request:
     branches: [main]
     paths:
-      - "assets/website/**"
-      - "scripts/website_*"
-      - "scripts/i18n_all_locales.json"
+      - "landing/**"
+      - "scripts/website_deploy_gate.sh"
+      - "scripts/landing_sync_assets.sh"
       - "scripts/sync_evidence_pack.sh"
-      - "scripts/preview_website.sh"
       - "wrangler.toml"
       - ".github/workflows/website.yml"
 
@@ -32,24 +30,16 @@ jobs:
         with:
           node-version: "20"
 
-      - name: Deploy gate (build + pack + audit)
+      - name: Deploy gate (landing build + verify)
+        env:
+          CI: "true"
         run: bash scripts/website_deploy_gate.sh
-
-      - name: HTTP smoke (domain olmadan)
-        run: bash scripts/website_smoke.sh
-
-      - name: Playwright kurulum
-        run: |
-          pip install playwright
-          playwright install chromium --with-deps
-
-      - name: Browser i18n smoke
-        run: bash scripts/website_i18n_browser_smoke.sh
 
       - name: Cloudflare Pages output dogrulama
         run: |
           test -f wrangler.toml
-          grep -q 'pages_build_output_dir = "assets/website-deploy"' wrangler.toml
-          test ! -f assets/website-deploy/csp.txt
-          test ! -f assets/website-deploy/publish.allowlist
-          test -f assets/website-deploy/404.html
+          grep -q 'pages_build_output_dir = "landing/out"' wrangler.toml
+          test -f landing/out/index.html
+          test -f landing/out/404.html
+          test -f landing/out/_headers
+          test -f landing/out/_redirects

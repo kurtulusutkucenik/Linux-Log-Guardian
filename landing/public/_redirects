@@ -1,0 +1,9 @@
+# Cloudflare Pages — hassas dosyalar ve probe yollari 404
+# NOT: /tests ve /testler Next.js route'lari; bunlara rewrite EKLEME (dongu olur)
+/_headers             /404  404
+/_redirects           /404  404
+/.env                 /404  404
+/.git/*               /404  404
+/wp-admin/*           /404  404
+/admin/*              /404  404
+/*.map                /404  404

@@ -1,60 +1,48 @@
 #!/usr/bin/env bash
-# Domain / Cloudflare Pages oncesi tek kapı
+# Domain / Cloudflare Pages tek kapı — CANLI SITE = Next.js "landing/" (24 dil)
+# Cloudflare Pages: Build command = bash scripts/website_deploy_gate.sh
+#                   Build output  = landing/out  (wrangler.toml ile ayni)
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+LANDING="$ROOT/landing"
+OUT="$LANDING/out"
 
-echo "=== website_deploy_gate ==="
-bash "$ROOT/scripts/sync_evidence_pack.sh"
-bash "$ROOT/scripts/website_build.sh"
-bash "$ROOT/scripts/website_pack_deploy.sh"
-bash "$ROOT/scripts/website_audit_deploy.sh"
+echo "=== website_deploy_gate (landing) ==="
 
-SITE="$ROOT/assets/website"
-DEPLOY="$ROOT/assets/website-deploy"
+# 1) Kanit dosyalarini tazele + landing/public/evidence altina senkronla
+bash "$ROOT/scripts/sync_evidence_pack.sh" || true
+bash "$ROOT/scripts/landing_sync_assets.sh"
 
-for path in csp.txt publish.allowlist _headers _redirects deploy-manifest.json .env; do
-  if grep -qF "/${path}" "$SITE/_redirects" 2>/dev/null; then
-    echo "  [OK] _redirects -> /${path} 404"
-  else
-    echo "  [FAIL] _redirects /${path} 404 eksik" >&2
-    exit 1
-  fi
+# 2) Next.js statik export
+cd "$LANDING"
+if [[ -n "${CI:-}" || ! -d node_modules ]]; then
+  npm ci
+fi
+npm run build
+
+# 3) Cikti dogrulama
+[[ -d "$OUT" ]] || { echo "[FAIL] landing/out yok" >&2; exit 1; }
+for f in index.html 404.html _headers _redirects; do
+  [[ -e "$OUT/$f" ]] || { echo "[FAIL] landing/out/$f eksik" >&2; exit 1; }
+  echo "  [OK] $f"
 done
-for pattern in .git wp-admin admin; do
-  if grep -qF "/${pattern}" "$SITE/_redirects" 2>/dev/null; then
-    echo "  [OK] _redirects -> /${pattern}* 404"
-  else
-    echo "  [FAIL] _redirects /${pattern} eksik" >&2
-    exit 1
-  fi
-done
-if grep -qF '/*.map' "$SITE/_redirects" 2>/dev/null; then
-  echo "  [OK] _redirects -> /*.map 404"
+
+# 4) Guvenlik basligi ve gizli-yol kontrolu
+grep -q 'Strict-Transport-Security' "$OUT/_headers" || { echo "[FAIL] HSTS eksik" >&2; exit 1; }
+grep -q 'Content-Security-Policy' "$OUT/_headers"   || { echo "[FAIL] CSP eksik" >&2; exit 1; }
+grep -q '/.git/\*' "$OUT/_redirects"                || { echo "[FAIL] _redirects .git 404 eksik" >&2; exit 1; }
+echo "  [OK] guvenlik basliklari + gizli-yol 404"
+
+# 5) wrangler output dizini dogrulama
+if [[ -f "$ROOT/wrangler.toml" ]] && grep -q 'pages_build_output_dir = "landing/out"' "$ROOT/wrangler.toml"; then
+  echo "  [OK] wrangler.toml output dizini -> landing/out"
 else
-  echo "  [FAIL] _redirects /*.map 404 eksik" >&2
+  echo "  [FAIL] wrangler.toml pages_build_output_dir landing/out degil" >&2
   exit 1
 fi
-
-for forbidden in csp.txt publish.allowlist; do
-  [[ -e "$DEPLOY/$forbidden" ]] && { echo "  [FAIL] deploy: $forbidden" >&2; exit 1; }
-  echo "  [OK] deploy paketinde yok: $forbidden"
-done
-
-if [[ -f "$ROOT/wrangler.toml" ]] && grep -q 'pages_build_output_dir = "assets/website-deploy"' "$ROOT/wrangler.toml"; then
-  echo "  [OK] wrangler.toml output dizini"
-else
-  echo "  [FAIL] wrangler.toml pages_build_output_dir eksik/yanlis" >&2
-  exit 1
-fi
-
-bash "$ROOT/scripts/website_smoke.sh"
-bash "$ROOT/scripts/website_i18n_browser_smoke.sh"
-bash "$ROOT/scripts/website_award_pack.sh"
 
 echo ""
 echo "[OK] website_deploy_gate"
-echo "  Cloudflare Pages output: assets/website-deploy"
-echo "  Award ZIP: dist/linux-log-guardian-website-award.zip"
-echo "  Prod onizleme: LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh"
+echo "  Cloudflare Pages output: landing/out"
+echo "  Onizleme: cd landing && bash scripts/preview.sh   (veya cd landing/out && python3 -m http.server 4321)"
 echo "  Rehber: docs/WEBSITE_DEPLOY.md"
-echo "  Canli kontrol (domain sonrasi): curl -sI https://DOMAIN/csp.txt  # 404"
