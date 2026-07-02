@@ -334,7 +334,7 @@ export const MESSAGES: Record<Locale, Messages> = {
   sah: SAH,
 };
 
-export const DEFAULT_LOCALE: Locale = "tr";
+export const DEFAULT_LOCALE: Locale = "en";
 
 export function isLocale(v: string): v is Locale {
   return v in MESSAGES;

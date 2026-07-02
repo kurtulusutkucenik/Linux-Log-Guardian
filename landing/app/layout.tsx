@@ -6,7 +6,7 @@ import { I18nProvider } from "@/lib/i18n/I18nProvider";
 export const metadata: Metadata = {
   title: "Linux Log Guardian | nginx log → WAF → kernel ban",
   description:
-    "Türkiye'de geliştirilen açık kaynak (MIT) self-hosted güvenlik yazılımı. nginx access log → OWASP CRS/WAF → ~17 ms kernel ban. Tek zincir, 68 otomatik test, 72h soak PASS.",
+    "Open-source (MIT) self-hosted security software. nginx access log → OWASP CRS/WAF → ~17 ms kernel ban. Single chain, 75 automated tests, 72h soak PASS.",
   metadataBase: new URL("https://ceniklinuxlogguardian.org"),
   icons: {
     icon: "/favicon.ico",
@@ -15,7 +15,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Linux Log Guardian",
     description:
-      "nginx log → WAF/CRS → ~17 ms kernel ban. Tek zincir, self-hosted, MIT, Türk yapımı.",
+      "nginx log → WAF/CRS → ~17 ms kernel ban. Single chain, self-hosted, MIT.",
     type: "website",
   },
 };
@@ -33,7 +33,7 @@ export default function RootLayout({
 }) {
   return (
     <html
-      lang="tr"
+      lang="en"
       className={`scroll-smooth ${fontDisplay.variable} ${fontBody.variable}`}
     >
       <body className="relative min-h-screen bg-pitch font-sans antialiased selection:bg-neon/20 selection:text-white">

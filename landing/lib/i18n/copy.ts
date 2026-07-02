@@ -1110,6 +1110,20 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
 // Full prose translation of the high-visibility body text. Any field left
 // undefined falls back to the English base (CO_EN).
 
+type SetupStepText = { t: string; d: string };
+type SetupL10n = {
+  pathTitles: [string, string];
+  pathBadges: [string, string];
+  pathNotes: [string, string];
+  pathSteps: [SetupStepText[], SetupStepText[]]; // A: 3 steps, B: 2 steps
+  commonTitle: string;
+  commonSteps: SetupStepText[]; // 4
+  dashboardTitle: string;
+  dashboardBadge: string;
+  dashboardNote: string;
+  dashboardSteps: SetupStepText[]; // 2
+};
+
 type BodyOverride = {
   pipelineNote?: string;
   selectedBodies?: string[]; // 12
@@ -1117,6 +1131,12 @@ type BodyOverride = {
   advantages?: { k: string; v: string }[]; // 6
   vsNote?: string;
   vsLegend?: string;
+  vsCols?: string[]; // 5 (product names stay, first cell translates)
+  vsGroupLabels?: [string, string];
+  vsRows0?: string[][]; // 16 rows
+  vsRows1?: string[][]; // 6 rows
+  requirements?: string[]; // 5
+  setup?: SetupL10n;
   honestItems?: string[]; // 4
   layersBodies?: string[]; // 3
   layersNote?: string;
@@ -1183,6 +1203,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72h-Soak PASS · 0 Fehler",
     proofBody:
       "Keine Folien, reproduzierbarer Nachweis. OWASP-CRS-Parität, False-Positive-Gates, Ban-Latenz-Benchmarks, Korpus-Recall und ein 72-Stunden-Soak — alles gemessen, automatisiert und in einer öffentlichen Testmatrix sichtbar.",
+    vsCols: ["Metrik", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Stärken (gemessen)", "Ehrliche Grenzen"],
+    vsRows0: [
+      ["Log → WAF → Kernel-Ban", "Eine Kette", "Nur Ban", "Stückweise", "WAF separat"],
+      ["OWASP-CRS-Parität", "100% (121 Regeln)", "—", "—", "Referenz (100%)"],
+      ["Recall echter Angriffe", "100% (1K+10K)", "—", "—", "100%"],
+      ["Verteilter / JA3-Cluster-Ban", "100% (80 IP)", "—", "Signalbasiert", "—"],
+      ["nginx-Inline-Consult", "PASS", "—", "—", "Separates Modul"],
+      ["L7-Anwendungsschutz", "WAF + Consult + eBPF", "—", "—", "CRS inline"],
+      ["Kernel / eBPF (XDP) Ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["False Positive", "0,2% (gemessen)", "Hoch", "Mittel", "CRS-abhängig"],
+      ["Ban-Latenz", "~17 ms", "Sek–Min", "Sek", "Separate Integration"],
+      ["Kurze Stabilität (5 Min)", "PASS (0 Fehler)", "—", "—", "—"],
+      ["72h-Soak", "PASS (864/0)", "—", "—", "—"],
+      ["Nachweispaket PDF+JSON", "Automatisch (14 Dateien)", "Keines", "Teilweise", "Modul für Modul"],
+      ["Automatische Testmatrix", "75 Tests", "—", "Teilweise", "—"],
+      ["SOC-Timeline / Dashboard", "Ja (:8443)", "—", "Konsole", "—"],
+      ["Telegram-Betrieb + Ack", "Ja (Ein-Klick)", "—", "Teilweise", "—"],
+      ["Einrichtungszeit", "~15 Min", "Minuten", "Minuten", "Stunden (Tuning)"],
+    ],
+    vsRows1: [
+      ["Inline-Regex-EPS", "~5.357 EPS (Log-Replay)", "—", "—", "~14.300 EPS inline"],
+      ["Erste Anfrage sofort blocken", "Reaktiv (Logzeile)", "Reaktiv", "Teilweise", "Inline (sofort)"],
+      ["Volumetrisches L3/L4-Scrubbing", "Keines — CDN empfohlen", "Keines", "Keines", "Keines"],
+      ["Community-Signalnetz", "Self-hosted", "—", "Ja (global)", "—"],
+      ["Edge / Cloud-WAF", "Origin-Schicht", "—", "Bouncer", "Proxy-Modus"],
+      ["Managed Cloud / SaaS", "Keines (self-hosted)", "Keines", "Ja (Konsole)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 oder Debian 12 (amd64)",
+      "nginx + beschreibbares Access-Log (log_guardian-Format)",
+      "Root oder sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB Disk, 128 MB RAM (Core); Docker für Pro",
+      "Optional Pro: Kernel 5.10+ für eBPF/XDP, Docker (Dashboard/Metriken)",
+    ],
+    setup: {
+      pathTitles: ["Frischer Server — .deb-Paket", "Quellcode — bauen und installieren"],
+      pathBadges: ["empfohlen", "Entwickler"],
+      pathNotes: [
+        "Kein Bauen nötig. Das Paket liefert die Binary, systemd-Units, Regeln und Skripte. Upgrade-sicher: eine vorhandene /etc/log-guardian/rules.conf bleibt erhalten. Von GitHub Releases (log-guardian_*_amd64.deb) oder mit bash scripts/build_deb.sh → dist/.",
+        "Klonen Sie das GitHub-Repo und bauen Sie. Ideal für Entwicklung, Anpassung und vollständige Quellcode-Prüfung. install.sh richtet systemd-Units, Regeln und das nginx-Log-Format ein.",
+      ],
+      pathSteps: [
+        [
+          { t: "Abhängigkeiten", d: "Fügen Sie bei der Erstinstallation die Debian-Paketabhängigkeiten hinzu. Fehlt nginx, kann es im selben Befehl ergänzt werden." },
+          { t: "Paket installieren", d: "Meldet dpkg -i einen Abhängigkeitsfehler, führen Sie apt-get install -f aus. Der postinst-Schritt legt den log-guardian-Benutzer, Rechte, systemd-Units und eine Standard-rules.conf automatisch an." },
+          { t: "Erster Start und API-Sicherheit", d: "Bereitet nginx-Log-Format, FP-Trust und API-Sicherheit (Token, fail-closed) in einem Rutsch vor. Die Skripte liegen im Paket (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Quelle und Bauen", d: "Klonen Sie das Repo, bauen Sie mit allen Kernen und führen Sie das Haupt-Installationsskript aus." },
+          { t: "Erster Start und Token-Sync", d: "Startet die Dienste und bereitet den API-Token-Sync und die Dashboard-Verbindung vor." },
+        ],
+      ],
+      commonTitle: "Gemeinsame Schritte (nach A oder B)",
+      commonSteps: [
+        { t: "Nginx-Log-Format", d: "Das log_guardian-Log-Format ist nötig, damit die WAF den Request-Body und X-Forwarded-For lesen kann. Setup wendet es meist automatisch an; im STRICT-Modus prüfen." },
+        { t: "Gesundheits- und Statusprüfung", d: "Prüfen Sie Daemon-IPC, Dienststatus und BPF-Features. Grünes Gate: Am Ende von post_install_verify sollte FAIL: 0 stehen." },
+        { t: "Metriken und erster Ban-Test", d: "Prüfen Sie Prometheus-Metriken; beobachten Sie, wie die Zähler nach Traffic steigen. Sie können eine Angriffszeile einspeisen und den Ban in ipset verifizieren." },
+        { t: "VirtualBox / ohne XDP (Laptop & VM)", d: "In Umgebungen ohne eBPF/XDP genügt --no-xdp mit einem ipset-basierten Ban. Scheitert eine Dienstabhängigkeit, ist das Reparaturskript ein einziger Befehl." },
+      ],
+      dashboardTitle: "Pro-Dashboard — nach der Installation (optional)",
+      dashboardBadge: "Pro · optional",
+      dashboardNote: "Das Dashboard läuft nicht auf dieser Landing-Seite, sondern auf Ihrem eigenen Rechner. Der Prod-Stack wird via Caddy + Docker unter https://localhost:8443 bereitgestellt.",
+      dashboardSteps: [
+        { t: "Prod-Stack starten", d: "Baut und startet das Dashboard auf Ihrem eigenen Server. Login: admin / DASHBOARD_ADMIN_PASSWORD aus .env." },
+        { t: "SSH-Tunnel für einen entfernten VPS", d: "Um das Dashboard sicher zu sehen, ohne es dem Internet auszusetzen, richten Sie einen SSH-Tunnel ein; härten Sie zuerst den Server." },
+      ],
+    },
   },
   fr: {
     pipelineNote:
@@ -1238,6 +1326,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "soak 72h PASS · 0 échec",
     proofBody:
       "Pas des diapositives, une preuve reproductible. Parité OWASP CRS, gates de faux positifs, benchmarks de latence de ban, rappel de corpus et un soak de 72 heures — tout mesuré, automatisé et visible dans une matrice de tests publique.",
+    vsCols: ["Métrique", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Points forts (mesurés)", "Limites honnêtes"],
+    vsRows0: [
+      ["Log → WAF → ban noyau", "Chaîne unique", "Ban seul", "Fragmenté", "WAF séparé"],
+      ["Parité OWASP CRS", "100% (121 règles)", "—", "—", "Référence (100%)"],
+      ["Rappel d'attaques réelles", "100% (1K+10K)", "—", "—", "100%"],
+      ["Ban distribué / cluster JA3", "100% (80 IP)", "—", "Basé signal", "—"],
+      ["Consult inline nginx", "PASS", "—", "—", "Module séparé"],
+      ["Protection applicative L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ban noyau / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Faux positif", "0,2% (mesuré)", "Élevé", "Moyen", "Selon CRS"],
+      ["Latence de ban", "~17 ms", "sec–min", "sec", "Intégration séparée"],
+      ["Stabilité courte (5 min)", "PASS (0 échec)", "—", "—", "—"],
+      ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
+      ["Pack de preuves PDF+JSON", "Automatique (14 fichiers)", "Aucun", "Partiel", "Module par module"],
+      ["Matrice de tests auto", "75 tests", "—", "Partiel", "—"],
+      ["Timeline SOC / tableau de bord", "Oui (:8443)", "—", "Console", "—"],
+      ["Ops Telegram + ack", "Oui (un clic)", "—", "Partiel", "—"],
+      ["Temps d'installation", "~15 min", "minutes", "minutes", "heures (réglage)"],
+    ],
+    vsRows1: [
+      ["EPS regex inline", "~5 357 EPS (rejeu log)", "—", "—", "~14 300 EPS inline"],
+      ["Bloquer la 1re requête instantanément", "Réactif (ligne de log)", "Réactif", "En partie", "Inline (instantané)"],
+      ["Scrubbing volumétrique L3/L4", "Aucun — CDN recommandé", "Aucun", "Aucun", "Aucun"],
+      ["Réseau de signaux communautaire", "Auto-hébergé", "—", "Oui (global)", "—"],
+      ["Edge / WAF Cloud", "Couche origine", "—", "Bouncer", "Mode proxy"],
+      ["Cloud géré / SaaS", "Aucun (auto-hébergé)", "Aucun", "Oui (console)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 ou Debian 12 (amd64)",
+      "nginx + log d'accès inscriptible (format log_guardian)",
+      "Root ou sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 Mo disque, 128 Mo RAM (Core) ; Docker pour Pro",
+      "Pro optionnel : noyau 5.10+ pour eBPF/XDP, Docker (tableau de bord/métriques)",
+    ],
+    setup: {
+      pathTitles: ["Serveur neuf — paquet .deb", "Code source — compiler et installer"],
+      pathBadges: ["recommandé", "développeur"],
+      pathNotes: [
+        "Aucune compilation requise. Le paquet fournit le binaire, les units systemd, les règles et les scripts. Sûr à la mise à jour : un /etc/log-guardian/rules.conf existant est préservé. Depuis GitHub Releases (log-guardian_*_amd64.deb) ou via bash scripts/build_deb.sh → dist/.",
+        "Clonez le dépôt GitHub et compilez. Idéal pour le développement, la personnalisation et la revue complète des sources. install.sh met en place les units systemd, les règles et le format de log nginx.",
+      ],
+      pathSteps: [
+        [
+          { t: "Dépendances", d: "À la première installation, ajoutez les dépendances du paquet Debian. Si nginx manque, il peut être ajouté dans la même commande." },
+          { t: "Installer le paquet", d: "Si dpkg -i signale une erreur de dépendance, lancez apt-get install -f. L'étape postinst crée automatiquement l'utilisateur log-guardian, les permissions, les units systemd et un rules.conf par défaut." },
+          { t: "Premier lancement et sécurité API", d: "Prépare le format de log nginx, le FP trust et la sécurité API (token, fail-closed) en une fois. Les scripts sont livrés dans le paquet (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Source et compilation", d: "Clonez le dépôt, compilez avec tous les cœurs et lancez le script d'installation principal." },
+          { t: "Premier lancement et sync du token", d: "Démarre les services et prépare la synchronisation du token API et la connexion au tableau de bord." },
+        ],
+      ],
+      commonTitle: "Étapes communes (après A ou B)",
+      commonSteps: [
+        { t: "Format de log nginx", d: "Le format de log log_guardian est requis pour que le WAF lise le corps de la requête et X-Forwarded-For. Le setup l'applique généralement automatiquement ; vérifiez en mode STRICT." },
+        { t: "Vérification santé et statut", d: "Vérifiez l'IPC du daemon, le statut du service et les fonctions BPF. Gate vert : vous devez voir FAIL: 0 à la fin de post_install_verify." },
+        { t: "Métriques et premier test de ban", d: "Vérifiez les métriques Prometheus ; observez les compteurs monter après le trafic. Vous pouvez injecter une ligne d'attaque et vérifier le ban dans ipset." },
+        { t: "VirtualBox / sans XDP (portable & VM)", d: "Sur les environnements sans eBPF/XDP, --no-xdp avec un ban basé sur ipset suffit. Si une dépendance de service échoue, le script de réparation est une seule commande." },
+      ],
+      dashboardTitle: "Tableau de bord Pro — après l'installation (optionnel)",
+      dashboardBadge: "Pro · optionnel",
+      dashboardNote: "Le tableau de bord ne tourne pas sur ce site de présentation mais sur votre propre machine. La pile prod est servie via Caddy + Docker sur https://localhost:8443.",
+      dashboardSteps: [
+        { t: "Démarrer la pile prod", d: "Compile et démarre le tableau de bord sur votre propre serveur. Connexion : admin / DASHBOARD_ADMIN_PASSWORD depuis .env." },
+        { t: "Tunnel SSH pour un VPS distant", d: "Pour voir le tableau de bord en sécurité sans l'exposer à Internet, mettez en place un tunnel SSH ; durcissez d'abord le serveur." },
+      ],
+    },
   },
   es: {
     pipelineNote:
@@ -1293,6 +1449,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "soak 72h PASS · 0 fallos",
     proofBody:
       "No diapositivas, prueba reproducible. Paridad OWASP CRS, gates de falsos positivos, benchmarks de latencia de ban, recall de corpus y un soak de 72 horas — todo medido, automatizado y visible en una matriz de pruebas pública.",
+    vsCols: ["Métrica", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Fortalezas (medidas)", "Límites honestos"],
+    vsRows0: [
+      ["Log → WAF → ban de kernel", "Cadena única", "Solo ban", "Fragmentado", "WAF aparte"],
+      ["Paridad OWASP CRS", "100% (121 reglas)", "—", "—", "Referencia (100%)"],
+      ["Recall de ataques reales", "100% (1K+10K)", "—", "—", "100%"],
+      ["Ban distribuido / clúster JA3", "100% (80 IP)", "—", "Basado en señal", "—"],
+      ["Consult inline de nginx", "PASS", "—", "—", "Módulo aparte"],
+      ["Protección de aplicación L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ban de kernel / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Falso positivo", "0,2% (medido)", "Alto", "Medio", "Según CRS"],
+      ["Latencia de ban", "~17 ms", "seg–min", "seg", "Integración aparte"],
+      ["Estabilidad corta (5 min)", "PASS (0 fallos)", "—", "—", "—"],
+      ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
+      ["Pack de evidencias PDF+JSON", "Automático (14 archivos)", "Ninguno", "Parcial", "Módulo por módulo"],
+      ["Matriz de pruebas auto", "75 pruebas", "—", "Parcial", "—"],
+      ["Timeline SOC / panel", "Sí (:8443)", "—", "Consola", "—"],
+      ["Ops Telegram + ack", "Sí (un clic)", "—", "Parcial", "—"],
+      ["Tiempo de instalación", "~15 min", "minutos", "minutos", "horas (ajuste)"],
+    ],
+    vsRows1: [
+      ["EPS regex inline", "~5.357 EPS (replay de log)", "—", "—", "~14.300 EPS inline"],
+      ["Bloquear la 1ª petición al instante", "Reactivo (línea de log)", "Reactivo", "En parte", "Inline (instantáneo)"],
+      ["Scrubbing volumétrico L3/L4", "Ninguno — se recomienda CDN", "Ninguno", "Ninguno", "Ninguno"],
+      ["Red de señales comunitaria", "Autoalojado", "—", "Sí (global)", "—"],
+      ["Edge / WAF Cloud", "Capa de origen", "—", "Bouncer", "Modo proxy"],
+      ["Cloud gestionado / SaaS", "Ninguno (autoalojado)", "Ninguno", "Sí (consola)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 o Debian 12 (amd64)",
+      "nginx + log de acceso escribible (formato log_guardian)",
+      "Root o sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disco, 128 MB RAM (Core); Docker para Pro",
+      "Pro opcional: kernel 5.10+ para eBPF/XDP, Docker (panel/métricas)",
+    ],
+    setup: {
+      pathTitles: ["Servidor nuevo — paquete .deb", "Código fuente — compilar e instalar"],
+      pathBadges: ["recomendado", "desarrollador"],
+      pathNotes: [
+        "Sin compilación. El paquete incluye el binario, las units systemd, las reglas y los scripts. Seguro para actualizar: un /etc/log-guardian/rules.conf existente se conserva. Desde GitHub Releases (log-guardian_*_amd64.deb) o con bash scripts/build_deb.sh → dist/.",
+        "Clona el repo de GitHub y compila. Ideal para desarrollo, personalización y revisión completa del código. install.sh configura las units systemd, las reglas y el formato de log de nginx.",
+      ],
+      pathSteps: [
+        [
+          { t: "Dependencias", d: "En la primera instalación, añade las dependencias del paquete Debian. Si falta nginx, se puede añadir en el mismo comando." },
+          { t: "Instalar el paquete", d: "Si dpkg -i reporta un error de dependencias, ejecuta apt-get install -f. El paso postinst crea automáticamente el usuario log-guardian, los permisos, las units systemd y un rules.conf por defecto." },
+          { t: "Primer arranque y seguridad API", d: "Prepara el formato de log de nginx, el FP trust y la seguridad API (token, fail-closed) de una vez. Los scripts vienen en el paquete (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Fuente y compilación", d: "Clona el repo, compila con todos los núcleos y ejecuta el script de instalación principal." },
+          { t: "Primer arranque y sync del token", d: "Levanta los servicios y prepara la sincronización del token API y la conexión al panel." },
+        ],
+      ],
+      commonTitle: "Pasos comunes (después de A o B)",
+      commonSteps: [
+        { t: "Formato de log de nginx", d: "El formato de log log_guardian es necesario para que el WAF lea el cuerpo de la petición y X-Forwarded-For. El setup suele aplicarlo automáticamente; verifica en modo STRICT." },
+        { t: "Comprobación de salud y estado", d: "Comprueba el IPC del daemon, el estado del servicio y las funciones BPF. Gate verde: deberías ver FAIL: 0 al final de post_install_verify." },
+        { t: "Métricas y primer test de ban", d: "Comprueba las métricas Prometheus; observa cómo suben los contadores tras el tráfico. Puedes inyectar una línea de ataque y verificar el ban en ipset." },
+        { t: "VirtualBox / sin XDP (portátil y VM)", d: "En entornos sin eBPF/XDP, --no-xdp con un ban basado en ipset es suficiente. Si falla una dependencia de servicio, el script de reparación es un solo comando." },
+      ],
+      dashboardTitle: "Panel Pro — tras la instalación (opcional)",
+      dashboardBadge: "Pro · opcional",
+      dashboardNote: "El panel no corre en este sitio de presentación sino en tu propia máquina. La pila prod se sirve vía Caddy + Docker en https://localhost:8443.",
+      dashboardSteps: [
+        { t: "Arrancar la pila prod", d: "Compila y levanta el panel en tu propio servidor. Acceso: admin / DASHBOARD_ADMIN_PASSWORD de .env." },
+        { t: "Túnel SSH para un VPS remoto", d: "Para ver el panel de forma segura sin exponerlo a internet, configura un túnel SSH; endurece el servidor primero." },
+      ],
+    },
   },
   ru: {
     pipelineNote:
@@ -1348,6 +1572,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72ч soak PASS · 0 сбоев",
     proofBody:
       "Не слайды, а воспроизводимое доказательство. Паритет OWASP CRS, гейты ложных срабатываний, бенчмарки задержки бана, recall корпуса и 72-часовой soak — всё измерено, автоматизировано и видно в публичной матрице тестов.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Сильные стороны (измерено)", "Честные границы"],
+    vsRows0: [
+      ["Лог → WAF → бан в ядре", "Одна цепочка", "Только бан", "Фрагментарно", "WAF отдельно"],
+      ["Паритет OWASP CRS", "100% (121 правило)", "—", "—", "Эталон (100%)"],
+      ["Recall реальных атак", "100% (1K+10K)", "—", "—", "100%"],
+      ["Распределённый / бан JA3-кластера", "100% (80 IP)", "—", "По сигналу", "—"],
+      ["Inline-consult nginx", "PASS", "—", "—", "Отдельный модуль"],
+      ["Защита приложений L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Бан в ядре / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Ложное срабатывание", "0,2% (измерено)", "Высокое", "Среднее", "Зависит от CRS"],
+      ["Задержка бана", "~17 мс", "сек–мин", "сек", "Отдельная интеграция"],
+      ["Короткая стабильность (5 мин)", "PASS (0 сбоев)", "—", "—", "—"],
+      ["72ч soak", "PASS (864/0)", "—", "—", "—"],
+      ["Пакет доказательств PDF+JSON", "Автоматически (14 файлов)", "Нет", "Частично", "Модуль за модулем"],
+      ["Автоматическая матрица тестов", "75 тестов", "—", "Частично", "—"],
+      ["SOC-таймлайн / дашборд", "Да (:8443)", "—", "Консоль", "—"],
+      ["Управление Telegram + ack", "Да (один клик)", "—", "Частично", "—"],
+      ["Время установки", "~15 мин", "минуты", "минуты", "часы (тюнинг)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (реплей лога)", "—", "—", "~14 300 EPS inline"],
+      ["Мгновенно блокировать 1-й запрос", "Реактивно (строка лога)", "Реактивно", "Частично", "Inline (мгновенно)"],
+      ["Объёмная очистка L3/L4", "Нет — рекомендуется CDN", "Нет", "Нет", "Нет"],
+      ["Сеть сигналов сообщества", "Self-hosted", "—", "Да (глобально)", "—"],
+      ["Edge / облачный WAF", "Слой origin", "—", "Bouncer", "Режим прокси"],
+      ["Управляемое облако / SaaS", "Нет (self-hosted)", "Нет", "Да (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 или Debian 12 (amd64)",
+      "nginx + записываемый access-лог (формат log_guardian)",
+      "Root или sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Docker для Pro",
+      "Опционально Pro: ядро 5.10+ для eBPF/XDP, Docker (дашборд/метрики)",
+    ],
+    setup: {
+      pathTitles: ["Новый сервер — пакет .deb", "Исходный код — сборка и установка"],
+      pathBadges: ["рекомендуется", "разработчик"],
+      pathNotes: [
+        "Сборка не нужна. Пакет содержит бинарь, systemd-юниты, правила и скрипты. Безопасно при обновлении: существующий /etc/log-guardian/rules.conf сохраняется. Из GitHub Releases (log-guardian_*_amd64.deb) или через bash scripts/build_deb.sh → dist/.",
+        "Клонируйте репозиторий GitHub и соберите. Идеально для разработки, кастомизации и полного аудита кода. install.sh настраивает systemd-юниты, правила и формат лога nginx.",
+      ],
+      pathSteps: [
+        [
+          { t: "Зависимости", d: "При первой установке добавьте зависимости пакета Debian. Если nginx отсутствует, его можно добавить той же командой." },
+          { t: "Установить пакет", d: "Если dpkg -i сообщает об ошибке зависимостей, запустите apt-get install -f. Шаг postinst автоматически создаёт пользователя log-guardian, права, systemd-юниты и rules.conf по умолчанию." },
+          { t: "Первый запуск и безопасность API", d: "Готовит формат лога nginx, FP trust и безопасность API (токен, fail-closed) за один раз. Скрипты идут внутри пакета (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Исходники и сборка", d: "Клонируйте репозиторий, соберите на всех ядрах и запустите основной скрипт установки." },
+          { t: "Первый запуск и sync токена", d: "Поднимает сервисы и готовит синхронизацию API-токена и подключение к дашборду." },
+        ],
+      ],
+      commonTitle: "Общие шаги (после A или B)",
+      commonSteps: [
+        { t: "Формат лога nginx", d: "Формат лога log_guardian нужен, чтобы WAF читал тело запроса и X-Forwarded-For. Setup обычно применяет его автоматически; проверьте в режиме STRICT." },
+        { t: "Проверка здоровья и статуса", d: "Проверьте IPC демона, статус сервиса и функции BPF. Зелёный гейт: в конце post_install_verify должно быть FAIL: 0." },
+        { t: "Метрики и первый тест бана", d: "Проверьте метрики Prometheus; наблюдайте рост счётчиков после трафика. Можно внедрить строку атаки и проверить бан в ipset." },
+        { t: "VirtualBox / без XDP (ноутбук и ВМ)", d: "В средах без eBPF/XDP достаточно --no-xdp с баном на основе ipset. Если зависимость сервиса падает, скрипт починки — одна команда." },
+      ],
+      dashboardTitle: "Pro-дашборд — после установки (опционально)",
+      dashboardBadge: "Pro · опционально",
+      dashboardNote: "Дашборд работает не на этом лендинге, а на вашей собственной машине. Prod-стек обслуживается через Caddy + Docker по адресу https://localhost:8443.",
+      dashboardSteps: [
+        { t: "Запустить prod-стек", d: "Собирает и поднимает дашборд на вашем сервере. Вход: admin / DASHBOARD_ADMIN_PASSWORD из .env." },
+        { t: "SSH-туннель для удалённого VPS", d: "Чтобы безопасно смотреть дашборд, не открывая его в интернет, настройте SSH-туннель; сначала укрепите сервер." },
+      ],
+    },
   },
   pt: {
     pipelineNote:
@@ -1403,6 +1695,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "soak 72h PASS · 0 falhas",
     proofBody:
       "Não são slides, é prova reproduzível. Paridade OWASP CRS, gates de falsos positivos, benchmarks de latência de ban, recall de corpus e um soak de 72 horas — tudo medido, automatizado e visível numa matriz de testes pública.",
+    vsCols: ["Métrica", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Pontos fortes (medidos)", "Limites honestos"],
+    vsRows0: [
+      ["Log → WAF → ban de kernel", "Cadeia única", "Só ban", "Fragmentado", "WAF à parte"],
+      ["Paridade OWASP CRS", "100% (121 regras)", "—", "—", "Referência (100%)"],
+      ["Recall de ataques reais", "100% (1K+10K)", "—", "—", "100%"],
+      ["Ban distribuído / cluster JA3", "100% (80 IP)", "—", "Baseado em sinal", "—"],
+      ["Consult inline do nginx", "PASS", "—", "—", "Módulo à parte"],
+      ["Proteção de aplicação L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ban de kernel / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Falso positivo", "0,2% (medido)", "Alto", "Médio", "Depende do CRS"],
+      ["Latência de ban", "~17 ms", "seg–min", "seg", "Integração à parte"],
+      ["Estabilidade curta (5 min)", "PASS (0 falhas)", "—", "—", "—"],
+      ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
+      ["Pacote de evidências PDF+JSON", "Automático (14 ficheiros)", "Nenhum", "Parcial", "Módulo a módulo"],
+      ["Matriz de testes automática", "75 testes", "—", "Parcial", "—"],
+      ["Timeline SOC / painel", "Sim (:8443)", "—", "Consola", "—"],
+      ["Ops Telegram + ack", "Sim (um clique)", "—", "Parcial", "—"],
+      ["Tempo de instalação", "~15 min", "minutos", "minutos", "horas (ajuste)"],
+    ],
+    vsRows1: [
+      ["EPS regex inline", "~5.357 EPS (replay de log)", "—", "—", "~14.300 EPS inline"],
+      ["Bloquear o 1º pedido instantaneamente", "Reativo (linha de log)", "Reativo", "Em parte", "Inline (instantâneo)"],
+      ["Scrubbing volumétrico L3/L4", "Nenhum — CDN recomendado", "Nenhum", "Nenhum", "Nenhum"],
+      ["Rede de sinais da comunidade", "Auto-hospedado", "—", "Sim (global)", "—"],
+      ["Edge / WAF Cloud", "Camada de origem", "—", "Bouncer", "Modo proxy"],
+      ["Cloud gerida / SaaS", "Nenhum (auto-hospedado)", "Nenhum", "Sim (consola)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 ou Debian 12 (amd64)",
+      "nginx + log de acesso gravável (formato log_guardian)",
+      "Root ou sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disco, 128 MB RAM (Core); Docker para Pro",
+      "Pro opcional: kernel 5.10+ para eBPF/XDP, Docker (painel/métricas)",
+    ],
+    setup: {
+      pathTitles: ["Servidor novo — pacote .deb", "Código-fonte — compilar e instalar"],
+      pathBadges: ["recomendado", "programador"],
+      pathNotes: [
+        "Sem compilação. O pacote traz o binário, as units systemd, as regras e os scripts. Seguro na atualização: um /etc/log-guardian/rules.conf existente é preservado. Via GitHub Releases (log-guardian_*_amd64.deb) ou com bash scripts/build_deb.sh → dist/.",
+        "Clone o repo do GitHub e compile. Ideal para desenvolvimento, personalização e revisão completa do código. install.sh configura as units systemd, as regras e o formato de log do nginx.",
+      ],
+      pathSteps: [
+        [
+          { t: "Dependências", d: "Na primeira instalação, adicione as dependências do pacote Debian. Se faltar o nginx, pode ser adicionado no mesmo comando." },
+          { t: "Instalar o pacote", d: "Se o dpkg -i reportar erro de dependências, execute apt-get install -f. O passo postinst cria automaticamente o utilizador log-guardian, as permissões, as units systemd e um rules.conf padrão." },
+          { t: "Primeiro arranque e segurança da API", d: "Prepara o formato de log do nginx, o FP trust e a segurança da API (token, fail-closed) de uma vez. Os scripts vêm no pacote (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Fonte e compilação", d: "Clone o repo, compile com todos os núcleos e execute o script de instalação principal." },
+          { t: "Primeiro arranque e sync do token", d: "Sobe os serviços e prepara a sincronização do token da API e a ligação ao painel." },
+        ],
+      ],
+      commonTitle: "Passos comuns (após A ou B)",
+      commonSteps: [
+        { t: "Formato de log do nginx", d: "O formato de log log_guardian é necessário para que o WAF leia o corpo do pedido e o X-Forwarded-For. O setup normalmente aplica-o automaticamente; verifique no modo STRICT." },
+        { t: "Verificação de saúde e estado", d: "Verifique o IPC do daemon, o estado do serviço e as funções BPF. Gate verde: deve ver FAIL: 0 no fim do post_install_verify." },
+        { t: "Métricas e primeiro teste de ban", d: "Verifique as métricas Prometheus; observe os contadores a subir após o tráfego. Pode injetar uma linha de ataque e verificar o ban no ipset." },
+        { t: "VirtualBox / sem XDP (portátil e VM)", d: "Em ambientes sem eBPF/XDP, --no-xdp com um ban baseado em ipset basta. Se uma dependência de serviço falhar, o script de reparação é um único comando." },
+      ],
+      dashboardTitle: "Painel Pro — após a instalação (opcional)",
+      dashboardBadge: "Pro · opcional",
+      dashboardNote: "O painel não corre neste site de apresentação, mas na sua própria máquina. A stack de produção é servida via Caddy + Docker em https://localhost:8443.",
+      dashboardSteps: [
+        { t: "Iniciar a stack de produção", d: "Compila e sobe o painel no seu próprio servidor. Login: admin / DASHBOARD_ADMIN_PASSWORD do .env." },
+        { t: "Túnel SSH para um VPS remoto", d: "Para ver o painel em segurança sem o expor à internet, configure um túnel SSH; endureça o servidor primeiro." },
+      ],
+    },
   },
   nl: {
     pipelineNote:
@@ -1458,6 +1818,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72h-soak PASS · 0 fouten",
     proofBody:
       "Geen slides, reproduceerbaar bewijs. OWASP-CRS-pariteit, false-positive-gates, ban-latency-benchmarks, corpus-recall en een 72-uurs soak — alles gemeten, geautomatiseerd en zichtbaar in een openbare testmatrix.",
+    vsCols: ["Metriek", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Sterke punten (gemeten)", "Eerlijke grenzen"],
+    vsRows0: [
+      ["Log → WAF → kernel-ban", "Eén keten", "Alleen ban", "Stukje bij beetje", "WAF apart"],
+      ["OWASP-CRS-pariteit", "100% (121 regels)", "—", "—", "Referentie (100%)"],
+      ["Recall echte aanvallen", "100% (1K+10K)", "—", "—", "100%"],
+      ["Gedistribueerde / JA3-cluster-ban", "100% (80 IP)", "—", "Signaalgebaseerd", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Aparte module"],
+      ["L7-applicatiebescherming", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["False positive", "0,2% (gemeten)", "Hoog", "Gemiddeld", "CRS-afhankelijk"],
+      ["Ban-latency", "~17 ms", "sec–min", "sec", "Aparte integratie"],
+      ["Korte stabiliteit (5 min)", "PASS (0 fouten)", "—", "—", "—"],
+      ["72u soak", "PASS (864/0)", "—", "—", "—"],
+      ["Bewijspakket PDF+JSON", "Automatisch (14 bestanden)", "Geen", "Gedeeltelijk", "Module voor module"],
+      ["Automatische testmatrix", "75 tests", "—", "Gedeeltelijk", "—"],
+      ["SOC-tijdlijn / dashboard", "Ja (:8443)", "—", "Console", "—"],
+      ["Telegram-ops + ack", "Ja (één klik)", "—", "Gedeeltelijk", "—"],
+      ["Installatietijd", "~15 min", "minuten", "minuten", "uren (tuning)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5.357 EPS (log-replay)", "—", "—", "~14.300 EPS inline"],
+      ["Eerste verzoek direct blokkeren", "Reactief (logregel)", "Reactief", "Deels", "Inline (direct)"],
+      ["Volumetrische L3/L4-scrubbing", "Geen — CDN aanbevolen", "Geen", "Geen", "Geen"],
+      ["Community-signaalnetwerk", "Zelf gehost", "—", "Ja (globaal)", "—"],
+      ["Edge / Cloud-WAF", "Origin-laag", "—", "Bouncer", "Proxymodus"],
+      ["Beheerde cloud / SaaS", "Geen (zelf gehost)", "Geen", "Ja (console)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 of Debian 12 (amd64)",
+      "nginx + beschrijfbaar access-log (log_guardian-formaat)",
+      "Root of sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB schijf, 128 MB RAM (Core); Docker voor Pro",
+      "Optioneel Pro: kernel 5.10+ voor eBPF/XDP, Docker (dashboard/metrics)",
+    ],
+    setup: {
+      pathTitles: ["Verse server — .deb-pakket", "Broncode — bouwen en installeren"],
+      pathBadges: ["aanbevolen", "ontwikkelaar"],
+      pathNotes: [
+        "Geen build nodig. Het pakket levert de binary, systemd-units, regels en scripts. Upgrade-veilig: een bestaande /etc/log-guardian/rules.conf blijft behouden. Via GitHub Releases (log-guardian_*_amd64.deb) of met bash scripts/build_deb.sh → dist/.",
+        "Kloon de GitHub-repo en bouw. Ideaal voor ontwikkeling, aanpassing en volledige broncode-review. install.sh zet de systemd-units, regels en het nginx-logformaat op.",
+      ],
+      pathSteps: [
+        [
+          { t: "Afhankelijkheden", d: "Voeg bij de eerste installatie de Debian-pakketafhankelijkheden toe. Ontbreekt nginx, dan kan het in hetzelfde commando worden toegevoegd." },
+          { t: "Pakket installeren", d: "Meldt dpkg -i een afhankelijkheidsfout, voer dan apt-get install -f uit. De postinst-stap maakt automatisch de log-guardian-gebruiker, rechten, systemd-units en een standaard rules.conf aan." },
+          { t: "Eerste start en API-beveiliging", d: "Bereidt het nginx-logformaat, FP-trust en API-beveiliging (token, fail-closed) in één keer voor. De scripts zitten in het pakket (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Bron en build", d: "Kloon de repo, bouw met alle cores en voer het hoofd-installatiescript uit." },
+          { t: "Eerste start en token-sync", d: "Zet de services aan en bereidt de API-token-sync en dashboardverbinding voor." },
+        ],
+      ],
+      commonTitle: "Gemeenschappelijke stappen (na A of B)",
+      commonSteps: [
+        { t: "Nginx-logformaat", d: "Het log_guardian-logformaat is nodig zodat de WAF de request-body en X-Forwarded-For kan lezen. Setup past het meestal automatisch toe; controleer in STRICT-modus." },
+        { t: "Gezondheids- en statuscontrole", d: "Controleer daemon-IPC, servicestatus en BPF-functies. Groene gate: aan het eind van post_install_verify hoort FAIL: 0 te staan." },
+        { t: "Metrics en eerste ban-test", d: "Controleer Prometheus-metrics; kijk hoe de tellers stijgen na verkeer. Je kunt een aanvalsregel injecteren en de ban in ipset verifiëren." },
+        { t: "VirtualBox / zonder XDP (laptop & VM)", d: "In omgevingen zonder eBPF/XDP volstaat --no-xdp met een ipset-gebaseerde ban. Faalt een serviceafhankelijkheid, dan is het reparatiescript één commando." },
+      ],
+      dashboardTitle: "Pro-dashboard — na installatie (optioneel)",
+      dashboardBadge: "Pro · optioneel",
+      dashboardNote: "Het dashboard draait niet op deze landingssite maar op je eigen machine. De prod-stack wordt via Caddy + Docker geserveerd op https://localhost:8443.",
+      dashboardSteps: [
+        { t: "Prod-stack starten", d: "Bouwt en start het dashboard op je eigen server. Login: admin / DASHBOARD_ADMIN_PASSWORD uit .env." },
+        { t: "SSH-tunnel voor een externe VPS", d: "Om het dashboard veilig te bekijken zonder het aan internet bloot te stellen, zet een SSH-tunnel op; hard eerst de server." },
+      ],
+    },
   },
   zh: {
     pipelineNote:
@@ -1513,6 +1941,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 小时 soak 通过 · 0 失败",
     proofBody:
       "不是幻灯片，而是可复现的证据。OWASP CRS 对等、误报门槛、封禁延迟基准、语料召回和 72 小时 soak——全部实测、自动化并在公开测试矩阵中可见。",
+    vsCols: ["指标", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["优势（实测）", "诚实的边界"],
+    vsRows0: [
+      ["日志 → WAF → 内核封禁", "单一链路", "仅封禁", "零散拼接", "WAF 分离"],
+      ["OWASP CRS 对等", "100%（121 条规则）", "—", "—", "参考（100%）"],
+      ["真实攻击召回", "100%（1K+10K）", "—", "—", "100%"],
+      ["分布式 / JA3 集群封禁", "100%（80 IP）", "—", "基于信号", "—"],
+      ["nginx 内联咨询", "PASS", "—", "—", "独立模块"],
+      ["L7 应用防护", "WAF + 咨询 + eBPF", "—", "—", "CRS 内联"],
+      ["内核 / eBPF (XDP) 封禁", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["误报", "0.2%（实测）", "高", "中", "取决于 CRS"],
+      ["封禁延迟", "~17 毫秒", "秒–分", "秒", "独立集成"],
+      ["短时稳定性（5 分钟）", "PASS（0 失败）", "—", "—", "—"],
+      ["72 小时 soak", "PASS（864/0）", "—", "—", "—"],
+      ["证据包 PDF+JSON", "自动（14 个文件）", "无", "部分", "逐模块"],
+      ["自动测试矩阵", "75 项测试", "—", "部分", "—"],
+      ["SOC 时间线 / 仪表板", "是（:8443）", "—", "控制台", "—"],
+      ["Telegram 运维 + 确认", "是（一键）", "—", "部分", "—"],
+      ["安装时间", "~15 分钟", "分钟", "分钟", "小时（调优）"],
+    ],
+    vsRows1: [
+      ["内联正则 EPS", "~5,357 EPS（日志回放）", "—", "—", "~14,300 EPS 内联"],
+      ["瞬时拦截首个请求", "被动（日志行）", "被动", "部分", "内联（瞬时）"],
+      ["体量型 L3/L4 清洗", "无 — 建议 CDN", "无", "无", "无"],
+      ["社区信号网络", "自托管", "—", "是（全球）", "—"],
+      ["边缘 / 云 WAF", "源站层", "—", "Bouncer", "代理模式"],
+      ["托管云 / SaaS", "无（自托管）", "无", "是（控制台）", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 或 Debian 12（amd64）",
+      "nginx + 可写访问日志（log_guardian 格式）",
+      "Root 或 sudo（systemd、ipset、/etc/log-guardian）",
+      "~200 MB 磁盘、128 MB 内存（Core）；Pro 需 Docker",
+      "可选 Pro：eBPF/XDP 需 5.10+ 内核，Docker（仪表板/指标）",
+    ],
+    setup: {
+      pathTitles: ["全新服务器 — .deb 包", "源代码 — 编译与安装"],
+      pathBadges: ["推荐", "开发者"],
+      pathNotes: [
+        "无需编译。软件包自带二进制、systemd 单元、规则和脚本。升级安全：现有的 /etc/log-guardian/rules.conf 会被保留。可从 GitHub Releases（log-guardian_*_amd64.deb）获取或用 bash scripts/build_deb.sh → dist/ 构建。",
+        "克隆 GitHub 仓库并编译。适合开发、定制与完整源码审查。install.sh 会配置 systemd 单元、规则和 nginx 日志格式。",
+      ],
+      pathSteps: [
+        [
+          { t: "依赖项", d: "首次安装时添加 Debian 包依赖。若缺少 nginx，可在同一命令中一并添加。" },
+          { t: "安装软件包", d: "若 dpkg -i 报依赖错误，运行 apt-get install -f。postinst 步骤会自动创建 log-guardian 用户、权限、systemd 单元和默认 rules.conf。" },
+          { t: "首次运行与 API 安全", d: "一次性准备好 nginx 日志格式、FP trust 和 API 安全（令牌、fail-closed）。脚本随包提供（/usr/local/share/log-guardian/scripts/）。" },
+        ],
+        [
+          { t: "源码与编译", d: "克隆仓库，使用全部核心编译并运行主安装脚本。" },
+          { t: "首次运行与令牌同步", d: "启动服务并准备 API 令牌同步和仪表板连接。" },
+        ],
+      ],
+      commonTitle: "通用步骤（A 或 B 之后）",
+      commonSteps: [
+        { t: "Nginx 日志格式", d: "需要 log_guardian 日志格式，WAF 才能读取请求体和 X-Forwarded-For。安装通常会自动应用；在 STRICT 模式下验证。" },
+        { t: "健康与状态检查", d: "检查守护进程 IPC、服务状态和 BPF 功能。绿色关卡：post_install_verify 结尾应显示 FAIL: 0。" },
+        { t: "指标与首次封禁测试", d: "检查 Prometheus 指标；观察计数器在流量后上升。可注入一条攻击日志并在 ipset 中验证封禁。" },
+        { t: "VirtualBox / 无 XDP（笔记本与虚拟机）", d: "在无 eBPF/XDP 的环境中，--no-xdp 配合基于 ipset 的封禁即可。若某个服务依赖失败，修复脚本只需一条命令。" },
+      ],
+      dashboardTitle: "Pro 仪表板 — 安装后（可选）",
+      dashboardBadge: "Pro · 可选",
+      dashboardNote: "仪表板不在此展示站运行，而在你自己的机器上。生产栈通过 Caddy + Docker 在 https://localhost:8443 提供服务。",
+      dashboardSteps: [
+        { t: "启动生产栈", d: "在你自己的服务器上编译并启动仪表板。登录：admin / .env 中的 DASHBOARD_ADMIN_PASSWORD。" },
+        { t: "远程 VPS 的 SSH 隧道", d: "为安全查看仪表板而不暴露到互联网，请配置 SSH 隧道；先加固服务器。" },
+      ],
+    },
   },
   ja: {
     pipelineNote:
@@ -1568,6 +2064,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72時間ソーク PASS · 0 失敗",
     proofBody:
       "スライドではなく、再現可能な証拠。OWASP CRS 整合、誤検知ゲート、BAN レイテンシのベンチマーク、コーパスリコール、72時間ソーク——すべて実測・自動化され、公開テストマトリクスで確認できます。",
+    vsCols: ["指標", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["強み（実測）", "正直な限界"],
+    vsRows0: [
+      ["ログ → WAF → カーネル BAN", "単一チェーン", "BAN のみ", "断片的", "WAF は別"],
+      ["OWASP CRS 整合", "100%（121 ルール）", "—", "—", "基準（100%）"],
+      ["実攻撃のリコール", "100%（1K+10K）", "—", "—", "100%"],
+      ["分散 / JA3 クラスタ BAN", "100%（80 IP）", "—", "シグナルベース", "—"],
+      ["nginx インライン consult", "PASS", "—", "—", "別モジュール"],
+      ["L7 アプリ保護", "WAF + consult + eBPF", "—", "—", "CRS インライン"],
+      ["カーネル / eBPF (XDP) BAN", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["誤検知", "0.2%（実測）", "高", "中", "CRS 依存"],
+      ["BAN レイテンシ", "~17 ms", "秒〜分", "秒", "別統合"],
+      ["短時間安定性（5 分）", "PASS（失敗 0）", "—", "—", "—"],
+      ["72 時間ソーク", "PASS（864/0）", "—", "—", "—"],
+      ["証拠パック PDF+JSON", "自動（14 ファイル）", "なし", "部分的", "モジュールごと"],
+      ["自動テストマトリクス", "75 テスト", "—", "部分的", "—"],
+      ["SOC タイムライン / ダッシュボード", "あり（:8443）", "—", "コンソール", "—"],
+      ["Telegram 運用 + ack", "あり（ワンクリック）", "—", "部分的", "—"],
+      ["セットアップ時間", "~15 分", "分", "分", "時間（チューニング）"],
+    ],
+    vsRows1: [
+      ["インライン正規表現 EPS", "~5,357 EPS（ログ再生）", "—", "—", "~14,300 EPS インライン"],
+      ["最初のリクエストを即座にブロック", "リアクティブ（ログ行）", "リアクティブ", "一部", "インライン（即時）"],
+      ["ボリューム型 L3/L4 スクラブ", "なし — CDN 推奨", "なし", "なし", "なし"],
+      ["コミュニティシグナル網", "セルフホスト", "—", "あり（グローバル）", "—"],
+      ["エッジ / クラウド WAF", "オリジン層", "—", "Bouncer", "プロキシモード"],
+      ["マネージドクラウド / SaaS", "なし（セルフホスト）", "なし", "あり（コンソール）", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 または Debian 12（amd64）",
+      "nginx + 書き込み可能なアクセスログ（log_guardian 形式）",
+      "Root または sudo（systemd、ipset、/etc/log-guardian）",
+      "~200 MB ディスク、128 MB RAM（Core）; Pro には Docker",
+      "任意 Pro: eBPF/XDP に 5.10+ カーネル、Docker（ダッシュボード/メトリクス）",
+    ],
+    setup: {
+      pathTitles: ["新規サーバー — .deb パッケージ", "ソースコード — ビルドとインストール"],
+      pathBadges: ["推奨", "開発者"],
+      pathNotes: [
+        "ビルド不要。パッケージにはバイナリ、systemd ユニット、ルール、スクリプトが同梱。アップグレード安全: 既存の /etc/log-guardian/rules.conf は保持されます。GitHub Releases（log-guardian_*_amd64.deb）から取得するか bash scripts/build_deb.sh → dist/ でビルド。",
+        "GitHub リポジトリをクローンしてビルド。開発、カスタマイズ、完全なソースレビューに最適。install.sh が systemd ユニット、ルール、nginx ログ形式を設定します。",
+      ],
+      pathSteps: [
+        [
+          { t: "依存関係", d: "初回インストール時に Debian パッケージの依存関係を追加します。nginx がなければ同じコマンドで追加できます。" },
+          { t: "パッケージをインストール", d: "dpkg -i が依存エラーを出したら apt-get install -f を実行。postinst 手順が log-guardian ユーザー、権限、systemd ユニット、デフォルトの rules.conf を自動作成します。" },
+          { t: "初回起動と API セキュリティ", d: "nginx ログ形式、FP trust、API セキュリティ（トークン、fail-closed）を一括で準備。スクリプトはパッケージ内（/usr/local/share/log-guardian/scripts/）にあります。" },
+        ],
+        [
+          { t: "ソースとビルド", d: "リポジトリをクローンし、全コアでビルドしてメインのインストールスクリプトを実行します。" },
+          { t: "初回起動とトークン同期", d: "サービスを起動し、API トークン同期とダッシュボード接続を準備します。" },
+        ],
+      ],
+      commonTitle: "共通手順（A または B の後）",
+      commonSteps: [
+        { t: "Nginx ログ形式", d: "WAF がリクエストボディと X-Forwarded-For を読むには log_guardian ログ形式が必要です。セットアップは通常自動適用します; STRICT モードで確認してください。" },
+        { t: "ヘルスと状態確認", d: "デーモン IPC、サービス状態、BPF 機能を確認。緑のゲート: post_install_verify の最後に FAIL: 0 が表示されるはずです。" },
+        { t: "メトリクスと初回 BAN テスト", d: "Prometheus メトリクスを確認; トラフィック後にカウンターが上がるのを観察。攻撃行を注入して ipset で BAN を検証できます。" },
+        { t: "VirtualBox / XDP なし（ノート PC と VM）", d: "eBPF/XDP のない環境では ipset ベースの BAN と --no-xdp で十分。サービス依存が失敗した場合、修復スクリプトは 1 コマンドです。" },
+      ],
+      dashboardTitle: "Pro ダッシュボード — インストール後（任意）",
+      dashboardBadge: "Pro · 任意",
+      dashboardNote: "ダッシュボードはこのランディングサイトではなく、あなた自身のマシンで動作します。本番スタックは Caddy + Docker 経由で https://localhost:8443 で提供されます。",
+      dashboardSteps: [
+        { t: "本番スタックを起動", d: "あなた自身のサーバーでダッシュボードをビルドして起動。ログイン: admin / .env の DASHBOARD_ADMIN_PASSWORD。" },
+        { t: "リモート VPS 用 SSH トンネル", d: "インターネットに晒さず安全にダッシュボードを見るには SSH トンネルを設定; まずサーバーをハードニングします。" },
+      ],
+    },
   },
   ko: {
     pipelineNote:
@@ -1623,6 +2187,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72시간 soak PASS · 0 실패",
     proofBody:
       "슬라이드가 아니라 재현 가능한 증거. OWASP CRS 동등성, 오탐 게이트, 밴 지연 벤치마크, 코퍼스 재현율, 72시간 soak — 모두 측정·자동화되어 공개 테스트 매트릭스에서 확인 가능.",
+    vsCols: ["지표", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["강점(측정됨)", "정직한 한계"],
+    vsRows0: [
+      ["로그 → WAF → 커널 밴", "단일 체인", "밴만", "단편적", "WAF 별도"],
+      ["OWASP CRS 동등성", "100%(121 규칙)", "—", "—", "기준(100%)"],
+      ["실제 공격 재현율", "100%(1K+10K)", "—", "—", "100%"],
+      ["분산 / JA3 클러스터 밴", "100%(80 IP)", "—", "신호 기반", "—"],
+      ["nginx 인라인 consult", "PASS", "—", "—", "별도 모듈"],
+      ["L7 애플리케이션 보호", "WAF + consult + eBPF", "—", "—", "CRS 인라인"],
+      ["커널 / eBPF (XDP) 밴", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["오탐", "0.2%(측정됨)", "높음", "중간", "CRS 의존"],
+      ["밴 지연", "~17 ms", "초~분", "초", "별도 통합"],
+      ["짧은 안정성(5분)", "PASS(실패 0)", "—", "—", "—"],
+      ["72시간 soak", "PASS(864/0)", "—", "—", "—"],
+      ["증거 패키지 PDF+JSON", "자동(14개 파일)", "없음", "부분", "모듈별"],
+      ["자동 테스트 매트릭스", "75개 테스트", "—", "부분", "—"],
+      ["SOC 타임라인 / 대시보드", "예(:8443)", "—", "콘솔", "—"],
+      ["Telegram 운영 + ack", "예(원클릭)", "—", "부분", "—"],
+      ["설치 시간", "~15분", "분", "분", "시간(튜닝)"],
+    ],
+    vsRows1: [
+      ["인라인 정규식 EPS", "~5,357 EPS(로그 재생)", "—", "—", "~14,300 EPS 인라인"],
+      ["첫 요청을 즉시 차단", "반응형(로그 라인)", "반응형", "일부", "인라인(즉시)"],
+      ["대용량 L3/L4 스크러빙", "없음 — CDN 권장", "없음", "없음", "없음"],
+      ["커뮤니티 신호 네트워크", "셀프 호스팅", "—", "예(글로벌)", "—"],
+      ["엣지 / 클라우드 WAF", "오리진 계층", "—", "Bouncer", "프록시 모드"],
+      ["관리형 클라우드 / SaaS", "없음(셀프 호스팅)", "없음", "예(콘솔)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 또는 Debian 12(amd64)",
+      "nginx + 쓰기 가능한 접근 로그(log_guardian 형식)",
+      "Root 또는 sudo(systemd, ipset, /etc/log-guardian)",
+      "~200 MB 디스크, 128 MB RAM(Core); Pro에는 Docker",
+      "선택 Pro: eBPF/XDP에 5.10+ 커널, Docker(대시보드/메트릭)",
+    ],
+    setup: {
+      pathTitles: ["새 서버 — .deb 패키지", "소스 코드 — 빌드 및 설치"],
+      pathBadges: ["권장", "개발자"],
+      pathNotes: [
+        "빌드 불필요. 패키지에 바이너리, systemd 유닛, 규칙, 스크립트가 포함됩니다. 업그레이드 안전: 기존 /etc/log-guardian/rules.conf는 보존됩니다. GitHub Releases(log-guardian_*_amd64.deb)에서 받거나 bash scripts/build_deb.sh → dist/ 로 빌드하세요.",
+        "GitHub 저장소를 클론하고 빌드하세요. 개발, 커스터마이징, 전체 소스 검토에 이상적. install.sh가 systemd 유닛, 규칙, nginx 로그 형식을 설정합니다.",
+      ],
+      pathSteps: [
+        [
+          { t: "의존성", d: "첫 설치 시 Debian 패키지 의존성을 추가합니다. nginx가 없으면 같은 명령으로 추가할 수 있습니다." },
+          { t: "패키지 설치", d: "dpkg -i가 의존성 오류를 보고하면 apt-get install -f를 실행하세요. postinst 단계가 log-guardian 사용자, 권한, systemd 유닛, 기본 rules.conf를 자동 생성합니다." },
+          { t: "첫 실행 및 API 보안", d: "nginx 로그 형식, FP trust, API 보안(토큰, fail-closed)을 한 번에 준비합니다. 스크립트는 패키지 내부(/usr/local/share/log-guardian/scripts/)에 있습니다." },
+        ],
+        [
+          { t: "소스 및 빌드", d: "저장소를 클론하고 모든 코어로 빌드한 뒤 메인 설치 스크립트를 실행하세요." },
+          { t: "첫 실행 및 토큰 동기화", d: "서비스를 올리고 API 토큰 동기화 및 대시보드 연결을 준비합니다." },
+        ],
+      ],
+      commonTitle: "공통 단계(A 또는 B 이후)",
+      commonSteps: [
+        { t: "Nginx 로그 형식", d: "WAF가 요청 본문과 X-Forwarded-For를 읽으려면 log_guardian 로그 형식이 필요합니다. 설치가 보통 자동 적용합니다; STRICT 모드에서 확인하세요." },
+        { t: "상태 및 헬스 체크", d: "데몬 IPC, 서비스 상태, BPF 기능을 확인하세요. 녹색 게이트: post_install_verify 끝에 FAIL: 0이 보여야 합니다." },
+        { t: "메트릭 및 첫 밴 테스트", d: "Prometheus 메트릭을 확인하세요; 트래픽 후 카운터가 오르는지 관찰합니다. 공격 라인을 주입해 ipset에서 밴을 검증할 수 있습니다." },
+        { t: "VirtualBox / XDP 없음(노트북 및 VM)", d: "eBPF/XDP가 없는 환경에서는 ipset 기반 밴과 함께 --no-xdp면 충분합니다. 서비스 의존성이 실패하면 복구 스크립트는 명령 하나입니다." },
+      ],
+      dashboardTitle: "Pro 대시보드 — 설치 후(선택)",
+      dashboardBadge: "Pro · 선택",
+      dashboardNote: "대시보드는 이 랜딩 사이트가 아니라 사용자 자신의 머신에서 실행됩니다. 프로덕션 스택은 Caddy + Docker를 통해 https://localhost:8443에서 제공됩니다.",
+      dashboardSteps: [
+        { t: "프로덕션 스택 시작", d: "사용자 자신의 서버에서 대시보드를 빌드하고 올립니다. 로그인: admin / .env의 DASHBOARD_ADMIN_PASSWORD." },
+        { t: "원격 VPS용 SSH 터널", d: "대시보드를 인터넷에 노출하지 않고 안전하게 보려면 SSH 터널을 설정하세요; 먼저 서버를 하드닝합니다." },
+      ],
+    },
   },
   ar: {
     pipelineNote:
@@ -1678,6 +2310,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "soak 72 ساعة PASS · 0 فشل",
     proofBody:
       "ليست شرائح، بل دليل قابل لإعادة الإنتاج. تكافؤ OWASP CRS، بوابات الإيجابيات الكاذبة، مقاييس زمن الحظر، استرجاع المجموعة وsoak لمدة 72 ساعة — كله مقاس وآلي وظاهر في مصفوفة اختبارات عامة.",
+    vsCols: ["المقياس", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["نقاط القوة (مقاسة)", "حدود صادقة"],
+    vsRows0: [
+      ["سجل → WAF → حظر النواة", "سلسلة واحدة", "حظر فقط", "متجزئ", "WAF منفصل"],
+      ["تكافؤ OWASP CRS", "100% (121 قاعدة)", "—", "—", "مرجع (100%)"],
+      ["استرجاع الهجمات الحقيقية", "100% (1K+10K)", "—", "—", "100%"],
+      ["حظر موزّع / عنقود JA3", "100% (80 IP)", "—", "قائم على الإشارة", "—"],
+      ["استشارة nginx المضمّنة", "PASS", "—", "—", "وحدة منفصلة"],
+      ["حماية تطبيقات L7", "WAF + استشارة + eBPF", "—", "—", "CRS مضمّن"],
+      ["حظر النواة / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["إيجابية كاذبة", "0.2% (مقاس)", "مرتفع", "متوسط", "حسب CRS"],
+      ["زمن الحظر", "~17 ms", "ثانية–دقيقة", "ثانية", "تكامل منفصل"],
+      ["استقرار قصير (5 دقائق)", "PASS (0 فشل)", "—", "—", "—"],
+      ["soak 72 ساعة", "PASS (864/0)", "—", "—", "—"],
+      ["حزمة أدلة PDF+JSON", "تلقائي (14 ملفًا)", "لا شيء", "جزئي", "وحدة بوحدة"],
+      ["مصفوفة اختبارات آلية", "75 اختبارًا", "—", "جزئي", "—"],
+      ["مخطط زمني SOC / لوحة", "نعم (:8443)", "—", "طرفية", "—"],
+      ["تشغيل Telegram + إقرار", "نعم (بنقرة)", "—", "جزئي", "—"],
+      ["زمن التثبيت", "~15 دقيقة", "دقائق", "دقائق", "ساعات (ضبط)"],
+    ],
+    vsRows1: [
+      ["EPS regex مضمّن", "~5,357 EPS (إعادة تشغيل السجل)", "—", "—", "~14,300 EPS مضمّن"],
+      ["حظر أول طلب فورًا", "تفاعلي (سطر سجل)", "تفاعلي", "جزئيًا", "مضمّن (فوري)"],
+      ["تنظيف حجمي L3/L4", "لا شيء — يُنصح بـ CDN", "لا شيء", "لا شيء", "لا شيء"],
+      ["شبكة إشارات مجتمعية", "استضافة ذاتية", "—", "نعم (عالمي)", "—"],
+      ["Edge / WAF سحابي", "طبقة الأصل", "—", "Bouncer", "وضع الوكيل"],
+      ["سحابة مُدارة / SaaS", "لا شيء (استضافة ذاتية)", "لا شيء", "نعم (طرفية)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 أو Debian 12 (amd64)",
+      "nginx + سجل وصول قابل للكتابة (تنسيق log_guardian)",
+      "Root أو sudo (systemd، ipset، /etc/log-guardian)",
+      "~200 MB قرص، 128 MB RAM (Core); Docker لـ Pro",
+      "Pro اختياري: نواة 5.10+ لـ eBPF/XDP، Docker (لوحة/مقاييس)",
+    ],
+    setup: {
+      pathTitles: ["خادم جديد — حزمة .deb", "الكود المصدري — البناء والتثبيت"],
+      pathBadges: ["موصى به", "مطوّر"],
+      pathNotes: [
+        "لا حاجة للبناء. تتضمن الحزمة الملف الثنائي ووحدات systemd والقواعد والسكربتات. آمنة للترقية: يُحتفظ بـ /etc/log-guardian/rules.conf الموجود. من GitHub Releases (log-guardian_*_amd64.deb) أو ابنِ عبر bash scripts/build_deb.sh → dist/.",
+        "استنسخ مستودع GitHub وابنِ. مثالي للتطوير والتخصيص ومراجعة الكود الكاملة. يقوم install.sh بإعداد وحدات systemd والقواعد وتنسيق سجل nginx.",
+      ],
+      pathSteps: [
+        [
+          { t: "التبعيات", d: "عند التثبيت الأول، أضِف تبعيات حزمة Debian. إذا كان nginx مفقودًا يمكن إضافته في الأمر نفسه." },
+          { t: "تثبيت الحزمة", d: "إذا أبلغ dpkg -i عن خطأ تبعيات، شغّل apt-get install -f. تنشئ خطوة postinst تلقائيًا مستخدم log-guardian والأذونات ووحدات systemd وملف rules.conf افتراضي." },
+          { t: "التشغيل الأول وأمان API", d: "يُجهّز تنسيق سجل nginx وFP trust وأمان API (رمز، fail-closed) دفعة واحدة. السكربتات ضمن الحزمة (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "المصدر والبناء", d: "استنسخ المستودع، ابنِ بكل الأنوية وشغّل سكربت التثبيت الرئيسي." },
+          { t: "التشغيل الأول ومزامنة الرمز", d: "يُشغّل الخدمات ويُجهّز مزامنة رمز API واتصال اللوحة." },
+        ],
+      ],
+      commonTitle: "خطوات مشتركة (بعد A أو B)",
+      commonSteps: [
+        { t: "تنسيق سجل nginx", d: "تنسيق سجل log_guardian مطلوب ليقرأ WAF جسم الطلب وX-Forwarded-For. عادةً يطبّقه الإعداد تلقائيًا; تحقق في وضع STRICT." },
+        { t: "فحص الصحة والحالة", d: "افحص IPC للخدمة وحالة الخدمة وميزات BPF. البوابة الخضراء: يجب أن ترى FAIL: 0 في نهاية post_install_verify." },
+        { t: "المقاييس واختبار الحظر الأول", d: "افحص مقاييس Prometheus; راقب ارتفاع العدّادات بعد المرور. يمكنك حقن سطر هجوم والتحقق من الحظر في ipset." },
+        { t: "VirtualBox / بدون XDP (حاسوب محمول وVM)", d: "في البيئات بدون eBPF/XDP، يكفي --no-xdp مع حظر قائم على ipset. إذا فشلت تبعية خدمة، فسكربت الإصلاح أمر واحد." },
+      ],
+      dashboardTitle: "لوحة Pro — بعد التثبيت (اختياري)",
+      dashboardBadge: "Pro · اختياري",
+      dashboardNote: "لا تعمل اللوحة على موقع الهبوط هذا بل على جهازك الخاص. تُقدَّم حزمة الإنتاج عبر Caddy + Docker على https://localhost:8443.",
+      dashboardSteps: [
+        { t: "تشغيل حزمة الإنتاج", d: "يبني ويُشغّل اللوحة على خادمك الخاص. الدخول: admin / DASHBOARD_ADMIN_PASSWORD من .env." },
+        { t: "نفق SSH لـ VPS بعيد", d: "لعرض اللوحة بأمان دون كشفها للإنترنت، أعِدّ نفق SSH; قسِّ الخادم أولًا." },
+      ],
+    },
   },
   az: {
     pipelineNote:
@@ -1733,6 +2433,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 saat soak PASS · 0 xəta",
     proofBody:
       "Slayd deyil, təkrar istehsal edilə bilən sübut. OWASP CRS pariteti, yanlış pozitiv qapıları, ban gecikməsi bençmarkları, korpus recall və 72 saatlıq soak — hamısı ölçülmüş, avtomatik və açıq test matrisində görünür.",
+    vsCols: ["Metrik", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Güclü tərəflər (ölçülmüş)", "Dürüst sərhədlər"],
+    vsRows0: [
+      ["Log → WAF → kernel ban", "Tək zəncir", "Yalnız ban", "Parça-parça", "WAF ayrı"],
+      ["OWASP CRS pariteti", "100% (121 qayda)", "—", "—", "Referans (100%)"],
+      ["Real hücum recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Paylanmış / JA3 klaster ban", "100% (80 IP)", "—", "Siqnal əsaslı", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Ayrı modul"],
+      ["L7 tətbiq qoruması", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Yanlış pozitiv", "0,2% (ölçülmüş)", "Yüksək", "Orta", "CRS-dən asılı"],
+      ["Ban gecikməsi", "~17 ms", "san–dəq", "san", "Ayrı inteqrasiya"],
+      ["Qısa sabitlik (5 dəq)", "PASS (0 uğursuzluq)", "—", "—", "—"],
+      ["72s soak", "PASS (864/0)", "—", "—", "—"],
+      ["Sübut paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoxdur", "Qismən", "Modul-modul"],
+      ["Avtomat test matrisi", "75 test", "—", "Qismən", "—"],
+      ["SOC vaxt xətti / dashboard", "Bəli (:8443)", "—", "Konsol", "—"],
+      ["Telegram əməliyyat + ack", "Bəli (bir klik)", "—", "Qismən", "—"],
+      ["Quraşdırma vaxtı", "~15 dəq", "dəqiqə", "dəqiqə", "saat (tənzimləmə)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5.357 EPS (log replay)", "—", "—", "~14.300 EPS inline"],
+      ["İlk sorğunu dərhal blokla", "Reaktiv (log sətri)", "Reaktiv", "Qismən", "Inline (dərhal)"],
+      ["Volumetrik L3/L4 scrub", "Yoxdur — CDN tövsiyə", "Yoxdur", "Yoxdur", "Yoxdur"],
+      ["İcma siqnal şəbəkəsi", "Öz-hostinq", "—", "Bəli (qlobal)", "—"],
+      ["Edge / Cloud WAF", "Origin təbəqə", "—", "Bouncer", "Proksi rejimi"],
+      ["İdarə olunan bulud / SaaS", "Yoxdur (öz-hostinq)", "Yoxdur", "Bəli (konsol)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 və ya Debian 12 (amd64)",
+      "nginx + yazıla bilən access log (log_guardian formatı)",
+      "Root və ya sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disk, 128 MB RAM (Core); Pro üçün Docker",
+      "Opsional Pro: eBPF/XDP üçün 5.10+ kernel, Docker (dashboard/metrikalar)",
+    ],
+    setup: {
+      pathTitles: ["Təzə server — .deb paketi", "Mənbə kod — qurma və quraşdırma"],
+      pathBadges: ["tövsiyə olunan", "developer"],
+      pathNotes: [
+        "Qurma tələb olunmur. Paket binar faylı, systemd unitləri, qaydaları və skriptləri gətirir. Yeniləməyə təhlükəsiz: mövcud /etc/log-guardian/rules.conf saxlanılır. GitHub Releases-dən (log-guardian_*_amd64.deb) və ya bash scripts/build_deb.sh → dist/ ilə qurun.",
+        "GitHub repo-nu klonlayın və qurun. İnkişaf, fərdiləşdirmə və tam mənbə baxışı üçün ideal. install.sh systemd unitlərini, qaydaları və nginx log formatını qurur.",
+      ],
+      pathSteps: [
+        [
+          { t: "Asılılıqlar", d: "İlk quraşdırmada Debian paket asılılıqlarını əlavə edin. nginx yoxdursa, eyni əmrdə əlavə edilə bilər." },
+          { t: "Paketi quraşdır", d: "dpkg -i asılılıq xətası bildirsə, apt-get install -f işə salın. postinst addımı log-guardian istifadəçisini, icazələri, systemd unitlərini və default rules.conf-u avtomatik yaradır." },
+          { t: "İlk işə salma və API təhlükəsizliyi", d: "nginx log formatını, FP trust-u və API təhlükəsizliyini (token, fail-closed) bir dəfəyə hazırlayır. Skriptlər paketin içindədir (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Mənbə və qurma", d: "Repo-nu klonlayın, bütün nüvələrlə qurun və əsas quraşdırma skriptini işə salın." },
+          { t: "İlk işə salma və token sinxronu", d: "Xidmətləri qaldırır və API token sinxronunu və dashboard bağlantısını hazırlayır." },
+        ],
+      ],
+      commonTitle: "Ümumi addımlar (A və ya B-dən sonra)",
+      commonSteps: [
+        { t: "Nginx log formatı", d: "WAF-ın sorğu gövdəsini və X-Forwarded-For-u oxuması üçün log_guardian log formatı lazımdır. Setup adətən onu avtomatik tətbiq edir; STRICT rejimdə yoxlayın." },
+        { t: "Sağlamlıq və status yoxlaması", d: "Daemon IPC-ni, xidmət statusunu və BPF xüsusiyyətlərini yoxlayın. Yaşıl qapı: post_install_verify sonunda FAIL: 0 görməlisiniz." },
+        { t: "Metrikalar və ilk ban testi", d: "Prometheus metrikalarını yoxlayın; trafikdən sonra sayğacların qalxdığını izləyin. Hücum sətri yeridib ban-ı ipset-də yoxlaya bilərsiniz." },
+        { t: "VirtualBox / XDP-siz (laptop və VM)", d: "eBPF/XDP olmayan mühitlərdə ipset əsaslı ban ilə --no-xdp kifayətdir. Xidmət asılılığı uğursuz olarsa, təmir skripti bir əmrdir." },
+      ],
+      dashboardTitle: "Pro dashboard — quraşdırmadan sonra (opsional)",
+      dashboardBadge: "Pro · opsional",
+      dashboardNote: "Dashboard bu landing saytında deyil, öz maşınınızda işləyir. Prod stack Caddy + Docker vasitəsilə https://localhost:8443 ünvanında xidmət edilir.",
+      dashboardSteps: [
+        { t: "Prod stack-i başlat", d: "Öz serverinizdə dashboard-u qurur və qaldırır. Giriş: admin / .env-dəki DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Uzaq VPS üçün SSH tunel", d: "Dashboard-u internetə açmadan təhlükəsiz görmək üçün SSH tunel qurun; əvvəlcə serveri sərtləşdirin." },
+      ],
+    },
   },
   kk: {
     pipelineNote:
@@ -1788,6 +2556,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 сағат soak PASS · 0 қате",
     proofBody:
       "Слайд емес, қайта жаңғыртылатын дәлел. OWASP CRS паритеті, жалған позитив қақпалары, бан кідірісі бенчмарктары, корпус recall және 72 сағаттық soak — бәрі өлшенген, автоматтандырылған және ашық тест матрицасында көрінеді.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Күшті жақтары (өлшенген)", "Адал шектеулер"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Бір тізбек", "Тек бан", "Бөлшектеп", "WAF бөлек"],
+      ["OWASP CRS паритеті", "100% (121 ереже)", "—", "—", "Эталон (100%)"],
+      ["Нақты шабуыл recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Таратылған / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал негізді", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Бөлек модуль"],
+      ["L7 қолданба қорғауы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Жалған позитив", "0,2% (өлшенген)", "Жоғары", "Орташа", "CRS-ке тәуелді"],
+      ["Бан кідірісі", "~17 мс", "сек–мин", "сек", "Бөлек интеграция"],
+      ["Қысқа тұрақтылық (5 мин)", "PASS (0 сәтсіздік)", "—", "—", "—"],
+      ["72с soak", "PASS (864/0)", "—", "—", "—"],
+      ["Дәлел пакеті PDF+JSON", "Автоматты (14 файл)", "Жоқ", "Ішінара", "Модуль-модуль"],
+      ["Автомат тест матрицасы", "75 тест", "—", "Ішінара", "—"],
+      ["SOC уақыт сызығы / дашборд", "Иә (:8443)", "—", "Консоль", "—"],
+      ["Telegram операция + ack", "Иә (бір басу)", "—", "Ішінара", "—"],
+      ["Орнату уақыты", "~15 мин", "минут", "минут", "сағат (баптау)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог қайталау)", "—", "—", "~14 300 EPS inline"],
+      ["Бірінші сұрауды бірден бөгеу", "Реактивті (лог жолы)", "Реактивті", "Ішінара", "Inline (лезде)"],
+      ["Көлемдік L3/L4 тазалау", "Жоқ — CDN ұсынылады", "Жоқ", "Жоқ", "Жоқ"],
+      ["Қауымдастық сигнал желісі", "Өзін-өзі хостинг", "—", "Иә (жаһандық)", "—"],
+      ["Edge / Cloud WAF", "Origin қабаты", "—", "Bouncer", "Прокси режимі"],
+      ["Басқарылатын бұлт / SaaS", "Жоқ (өзін-өзі хостинг)", "Жоқ", "Иә (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 немесе Debian 12 (amd64)",
+      "nginx + жазылатын access лог (log_guardian форматы)",
+      "Root немесе sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro үшін Docker",
+      "Қосымша Pro: eBPF/XDP үшін 5.10+ ядро, Docker (дашборд/метрикалар)",
+    ],
+    setup: {
+      pathTitles: ["Жаңа сервер — .deb пакеті", "Бастапқы код — құрастыру және орнату"],
+      pathBadges: ["ұсынылады", "әзірлеуші"],
+      pathNotes: [
+        "Құрастыру қажет емес. Пакет бинарды, systemd юниттерін, ережелер мен скрипттерді әкеледі. Жаңартуға қауіпсіз: бар /etc/log-guardian/rules.conf сақталады. GitHub Releases-тен (log-guardian_*_amd64.deb) немесе bash scripts/build_deb.sh → dist/ арқылы құрастырыңыз.",
+        "GitHub репозиторийін клондап, құрастырыңыз. Әзірлеу, теңшеу және толық код тексеруі үшін тамаша. install.sh systemd юниттерін, ережелерді және nginx лог форматын орнатады.",
+      ],
+      pathSteps: [
+        [
+          { t: "Тәуелділіктер", d: "Алғашқы орнатуда Debian пакет тәуелділіктерін қосыңыз. nginx жоқ болса, оны сол әмірде қосуға болады." },
+          { t: "Пакетті орнату", d: "dpkg -i тәуелділік қатесін хабарласа, apt-get install -f орындаңыз. postinst қадамы log-guardian пайдаланушысын, рұқсаттарды, systemd юниттерін және әдепкі rules.conf-ты автоматты жасайды." },
+          { t: "Алғашқы іске қосу және API қауіпсіздігі", d: "nginx лог форматын, FP trust-ты және API қауіпсіздігін (токен, fail-closed) бір мезетте дайындайды. Скрипттер пакет ішінде (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Бастапқы код және құрастыру", d: "Репозиторийді клондап, барлық ядролармен құрастырыңыз және негізгі орнату скриптін орындаңыз." },
+          { t: "Алғашқы іске қосу және токен синхроны", d: "Қызметтерді көтереді және API токен синхронын мен дашборд байланысын дайындайды." },
+        ],
+      ],
+      commonTitle: "Ортақ қадамдар (A немесе B кейін)",
+      commonSteps: [
+        { t: "Nginx лог форматы", d: "WAF сұрау денесін және X-Forwarded-For-ды оқуы үшін log_guardian лог форматы қажет. Setup оны әдетте автоматты қолданады; STRICT режимде тексеріңіз." },
+        { t: "Денсаулық және күй тексеруі", d: "Daemon IPC-ді, қызмет күйін және BPF мүмкіндіктерін тексеріңіз. Жасыл қақпа: post_install_verify соңында FAIL: 0 көруіңіз керек." },
+        { t: "Метрикалар және алғашқы бан тесті", d: "Prometheus метрикаларын тексеріңіз; трафиктен кейін санауыштардың өсуін бақылаңыз. Шабуыл жолын енгізіп бан-ды ipset-те тексере аласыз." },
+        { t: "VirtualBox / XDP-сіз (ноутбук және VM)", d: "eBPF/XDP жоқ орталарда ipset негізді бан мен --no-xdp жеткілікті. Қызмет тәуелділігі сәтсіз болса, жөндеу скрипті бір әмір." },
+      ],
+      dashboardTitle: "Pro дашборд — орнатудан кейін (қосымша)",
+      dashboardBadge: "Pro · қосымша",
+      dashboardNote: "Дашборд осы landing сайтта емес, өз машинаңызда жұмыс істейді. Prod стек Caddy + Docker арқылы https://localhost:8443 мекенжайында ұсынылады.",
+      dashboardSteps: [
+        { t: "Prod стекті іске қосу", d: "Өз серверіңізде дашбордты құрастырып көтереді. Кіру: admin / .env-тегі DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Қашықтағы VPS үшін SSH туннель", d: "Дашбордты интернетке ашпай қауіпсіз көру үшін SSH туннель орнатыңыз; алдымен серверді қатайтыңыз." },
+      ],
+    },
   },
   uz: {
     pipelineNote:
@@ -1843,6 +2679,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 soat soak PASS · 0 xato",
     proofBody:
       "Slayd emas, qayta ishlab chiqariladigan dalil. OWASP CRS pariteti, noto'g'ri pozitiv darvozalari, ban kechikishi benchmarklari, korpus recall va 72 soatlik soak — hammasi o'lchangan, avtomatlashtirilgan va ochiq test matritsasida ko'rinadi.",
+    vsCols: ["Metrika", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Kuchli tomonlar (o'lchangan)", "Halol chegaralar"],
+    vsRows0: [
+      ["Log → WAF → yadro ban", "Yagona zanjir", "Faqat ban", "Bo'lak-bo'lak", "WAF alohida"],
+      ["OWASP CRS pariteti", "100% (121 qoida)", "—", "—", "Etalon (100%)"],
+      ["Haqiqiy hujum recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Taqsimlangan / JA3 klaster ban", "100% (80 IP)", "—", "Signal asosli", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Alohida modul"],
+      ["L7 ilova himoyasi", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Yadro / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Noto'g'ri pozitiv", "0,2% (o'lchangan)", "Yuqori", "O'rta", "CRS-ga bog'liq"],
+      ["Ban kechikishi", "~17 ms", "son–daq", "son", "Alohida integratsiya"],
+      ["Qisqa barqarorlik (5 daq)", "PASS (0 nosozlik)", "—", "—", "—"],
+      ["72s soak", "PASS (864/0)", "—", "—", "—"],
+      ["Dalil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yo'q", "Qisman", "Modul-modul"],
+      ["Avtomat test matritsasi", "75 test", "—", "Qisman", "—"],
+      ["SOC vaqt chizig'i / dashboard", "Ha (:8443)", "—", "Konsol", "—"],
+      ["Telegram operatsiya + ack", "Ha (bir bosish)", "—", "Qisman", "—"],
+      ["O'rnatish vaqti", "~15 daq", "daqiqa", "daqiqa", "soat (sozlash)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
+      ["Birinchi so'rovni darhol bloklash", "Reaktiv (log qatori)", "Reaktiv", "Qisman", "Inline (darhol)"],
+      ["Hajmli L3/L4 tozalash", "Yo'q — CDN tavsiya", "Yo'q", "Yo'q", "Yo'q"],
+      ["Jamoa signal tarmog'i", "O'zini xosting", "—", "Ha (global)", "—"],
+      ["Edge / Cloud WAF", "Origin qatlami", "—", "Bouncer", "Proksi rejimi"],
+      ["Boshqariladigan bulut / SaaS", "Yo'q (o'zini xosting)", "Yo'q", "Ha (konsol)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 yoki Debian 12 (amd64)",
+      "nginx + yoziladigan access log (log_guardian formati)",
+      "Root yoki sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disk, 128 MB RAM (Core); Pro uchun Docker",
+      "Ixtiyoriy Pro: eBPF/XDP uchun 5.10+ yadro, Docker (dashboard/metrikalar)",
+    ],
+    setup: {
+      pathTitles: ["Yangi server — .deb paketi", "Manba kod — qurish va o'rnatish"],
+      pathBadges: ["tavsiya etiladi", "dasturchi"],
+      pathNotes: [
+        "Qurish shart emas. Paket binar faylni, systemd unitlarini, qoidalar va skriptlarni keltiradi. Yangilashga xavfsiz: mavjud /etc/log-guardian/rules.conf saqlanadi. GitHub Releases-dan (log-guardian_*_amd64.deb) yoki bash scripts/build_deb.sh → dist/ orqali quring.",
+        "GitHub repozitoriyini klonlang va quring. Ishlab chiqish, sozlash va to'liq manba ko'rigi uchun ideal. install.sh systemd unitlarini, qoidalarni va nginx log formatini o'rnatadi.",
+      ],
+      pathSteps: [
+        [
+          { t: "Bog'liqliklar", d: "Birinchi o'rnatishda Debian paket bog'liqliklarini qo'shing. nginx yo'q bo'lsa, uni o'sha buyruqda qo'shish mumkin." },
+          { t: "Paketni o'rnatish", d: "dpkg -i bog'liqlik xatosi bersa, apt-get install -f ni ishga tushiring. postinst bosqichi log-guardian foydalanuvchisini, ruxsatlarni, systemd unitlarini va standart rules.conf ni avtomatik yaratadi." },
+          { t: "Birinchi ishga tushirish va API xavfsizligi", d: "nginx log formatini, FP trust-ni va API xavfsizligini (token, fail-closed) bir yo'la tayyorlaydi. Skriptlar paket ichida (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Manba va qurish", d: "Repozitoriyni klonlang, barcha yadrolar bilan quring va asosiy o'rnatish skriptini ishga tushiring." },
+          { t: "Birinchi ishga tushirish va token sinxroni", d: "Xizmatlarni ko'taradi va API token sinxroni hamda dashboard ulanishini tayyorlaydi." },
+        ],
+      ],
+      commonTitle: "Umumiy bosqichlar (A yoki B dan keyin)",
+      commonSteps: [
+        { t: "Nginx log formati", d: "WAF so'rov tanasini va X-Forwarded-For-ni o'qishi uchun log_guardian log formati kerak. Setup uni odatda avtomatik qo'llaydi; STRICT rejimda tekshiring." },
+        { t: "Sog'liq va holat tekshiruvi", d: "Daemon IPC-ni, xizmat holatini va BPF xususiyatlarini tekshiring. Yashil darvoza: post_install_verify oxirida FAIL: 0 ko'rishingiz kerak." },
+        { t: "Metrikalar va birinchi ban testi", d: "Prometheus metrikalarini tekshiring; trafikdan keyin hisoblagichlar ko'tarilishini kuzating. Hujum qatorini kiritib ban-ni ipset-da tekshirishingiz mumkin." },
+        { t: "VirtualBox / XDP-siz (noutbuk va VM)", d: "eBPF/XDP yo'q muhitlarda ipset asosli ban bilan --no-xdp yetarli. Xizmat bog'liqligi muvaffaqiyatsiz bo'lsa, ta'mirlash skripti bitta buyruq." },
+      ],
+      dashboardTitle: "Pro dashboard — o'rnatishdan keyin (ixtiyoriy)",
+      dashboardBadge: "Pro · ixtiyoriy",
+      dashboardNote: "Dashboard ushbu landing saytida emas, o'z mashinangizda ishlaydi. Prod stack Caddy + Docker orqali https://localhost:8443 manzilida xizmat qiladi.",
+      dashboardSteps: [
+        { t: "Prod stack-ni ishga tushirish", d: "O'z serveringizda dashboard-ni quradi va ko'taradi. Kirish: admin / .env-dagi DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Uzoq VPS uchun SSH tunnel", d: "Dashboard-ni internetga ochmasdan xavfsiz ko'rish uchun SSH tunnel o'rnating; avval serverni mustahkamlang." },
+      ],
+    },
   },
   ky: {
     pipelineNote:
@@ -1898,6 +2802,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 саат soak PASS · 0 ката",
     proofBody:
       "Слайд эмес, кайра чыгарылуучу далил. OWASP CRS паритети, жалган позитив дарбазалары, ban кечигүү бенчмарктары, корпус recall жана 72 сааттык soak — баары өлчөнгөн, автоматташтырылган жана ачык тест матрицасында көрүнөт.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Күчтүү жактары (өлчөнгөн)", "Чынчыл чектөөлөр"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Бир чынжыр", "Бан гана", "Бөлүктөп", "WAF өзүнчө"],
+      ["OWASP CRS паритети", "100% (121 эреже)", "—", "—", "Эталон (100%)"],
+      ["Чыныгы кол салуу recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Бөлүштүрүлгөн / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал негизинде", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Өзүнчө модуль"],
+      ["L7 колдонмо коргоосу", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Жалган позитив", "0,2% (өлчөнгөн)", "Жогорку", "Орточо", "CRS-ке көз каранды"],
+      ["Бан кечигүүсү", "~17 мс", "сек–мүн", "сек", "Өзүнчө интеграция"],
+      ["Кыска туруктуулук (5 мүн)", "PASS (0 ката)", "—", "—", "—"],
+      ["72с soak", "PASS (864/0)", "—", "—", "—"],
+      ["Далил топтому PDF+JSON", "Автоматтык (14 файл)", "Жок", "Жарым-жартылай", "Модуль-модуль"],
+      ["Автомат тест матрицасы", "75 тест", "—", "Жарым-жартылай", "—"],
+      ["SOC убакыт сызыгы / дашборд", "Ооба (:8443)", "—", "Консоль", "—"],
+      ["Telegram операция + ack", "Ооба (бир басуу)", "—", "Жарым-жартылай", "—"],
+      ["Орнотуу убактысы", "~15 мүн", "мүнөт", "мүнөт", "саат (тууралоо)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог кайталоо)", "—", "—", "~14 300 EPS inline"],
+      ["Биринчи сурамды дароо бөгөө", "Реактивдүү (лог сабы)", "Реактивдүү", "Жарым-жартылай", "Inline (дароо)"],
+      ["Көлөмдүк L3/L4 тазалоо", "Жок — CDN сунушталат", "Жок", "Жок", "Жок"],
+      ["Коомчулук сигнал тармагы", "Өз-хостинг", "—", "Ооба (глобалдык)", "—"],
+      ["Edge / Cloud WAF", "Origin катмары", "—", "Bouncer", "Прокси режими"],
+      ["Башкарылуучу булут / SaaS", "Жок (өз-хостинг)", "Жок", "Ооба (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 же Debian 12 (amd64)",
+      "nginx + жазылуучу access лог (log_guardian форматы)",
+      "Root же sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro үчүн Docker",
+      "Кошумча Pro: eBPF/XDP үчүн 5.10+ ядро, Docker (дашборд/метрикалар)",
+    ],
+    setup: {
+      pathTitles: ["Жаңы сервер — .deb пакети", "Баштапкы код — куруу жана орнотуу"],
+      pathBadges: ["сунушталат", "иштеп чыгуучу"],
+      pathNotes: [
+        "Куруу талап кылынбайт. Пакет бинарды, systemd юниттерин, эрежелерди жана скрипттерди алып келет. Жаңылоого коопсуз: бар /etc/log-guardian/rules.conf сакталат. GitHub Releases-тен (log-guardian_*_amd64.deb) же bash scripts/build_deb.sh → dist/ аркылуу куруңуз.",
+        "GitHub репозиторийин клондоп, куруңуз. Иштеп чыгуу, ыңгайлаштыруу жана толук код текшерүү үчүн эң сонун. install.sh systemd юниттерин, эрежелерди жана nginx лог форматын орнотот.",
+      ],
+      pathSteps: [
+        [
+          { t: "Көз карандылыктар", d: "Биринчи орнотууда Debian пакет көз карандылыктарын кошуңуз. nginx жок болсо, аны ошол эле буйрукта кошсо болот." },
+          { t: "Пакетти орнотуу", d: "dpkg -i көз карандылык катасын билдирсе, apt-get install -f иштетиңиз. postinst кадамы log-guardian колдонуучусун, уруксаттарды, systemd юниттерин жана демейки rules.conf-ту автоматтык түзөт." },
+          { t: "Биринчи ишке киргизүү жана API коопсуздугу", d: "nginx лог форматын, FP trust-ту жана API коопсуздугун (токен, fail-closed) бир жолу даярдайт. Скрипттер пакеттин ичинде (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Баштапкы код жана куруу", d: "Репозиторийди клондоп, бардык өзөктөр менен куруп, негизги орнотуу скриптин иштетиңиз." },
+          { t: "Биринчи ишке киргизүү жана токен синхрону", d: "Кызматтарды көтөрөт жана API токен синхронун жана дашборд байланышын даярдайт." },
+        ],
+      ],
+      commonTitle: "Жалпы кадамдар (A же B кийин)",
+      commonSteps: [
+        { t: "Nginx лог форматы", d: "WAF сурам денесин жана X-Forwarded-For-ду окуш үчүн log_guardian лог форматы керек. Setup аны адатта автоматтык колдонот; STRICT режиминде текшериңиз." },
+        { t: "Ден соолук жана абал текшерүү", d: "Daemon IPC-ди, кызмат абалын жана BPF мүмкүнчүлүктөрүн текшериңиз. Жашыл дарбаза: post_install_verify аягында FAIL: 0 көрүшүңүз керек." },
+        { t: "Метрикалар жана биринчи бан тести", d: "Prometheus метрикаларын текшериңиз; трафиктен кийин эсептегичтердин көтөрүлүшүн байкаңыз. Кол салуу сабын киргизип бан-ды ipset-те текшере аласыз." },
+        { t: "VirtualBox / XDP-сиз (ноутбук жана VM)", d: "eBPF/XDP жок чөйрөлөрдө ipset негизиндеги бан менен --no-xdp жетиштүү. Кызмат көз карандылыгы ишке ашпаса, оңдоо скрипти бир буйрук." },
+      ],
+      dashboardTitle: "Pro дашборд — орнотуудан кийин (кошумча)",
+      dashboardBadge: "Pro · кошумча",
+      dashboardNote: "Дашборд бул landing сайтта эмес, өз машинаңызда иштейт. Prod стек Caddy + Docker аркылуу https://localhost:8443 дарегинде тейленет.",
+      dashboardSteps: [
+        { t: "Prod стекти ишке киргизүү", d: "Өз серверинизде дашбордду курат жана көтөрөт. Кирүү: admin / .env-деги DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Алыскы VPS үчүн SSH туннель", d: "Дашбордду интернетке ачпай коопсуз көрүү үчүн SSH туннель орнотуңуз; адегенде серверди катыраңыз." },
+      ],
+    },
   },
   tk: {
     pipelineNote:
@@ -1953,6 +2925,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 sagat soak PASS · 0 näsazlyk",
     proofBody:
       "Slaýd däl, gaýtadan öndürilýän subutnama. OWASP CRS pariteti, ýalňyş pozitiw derwezeleri, ban gijikdirmesi benchmarklary, korpus recall we 72 sagatlyk soak — hemmesi ölçelen, awtomatik we açyk test matrisasynda görünýär.",
+    vsCols: ["Metrika", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Güýçli taraplary (ölçelen)", "Dogruçyl çäkler"],
+    vsRows0: [
+      ["Log → WAF → ýadro ban", "Ýeke zynjyr", "Diňe ban", "Böleklaýyn", "WAF aýry"],
+      ["OWASP CRS pariteti", "100% (121 düzgün)", "—", "—", "Etalon (100%)"],
+      ["Hakyky hüjüm recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Paýlanan / JA3 klaster ban", "100% (80 IP)", "—", "Signal esasly", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Aýry modul"],
+      ["L7 programma goragy", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ýadro / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Ýalňyş pozitiw", "0,2% (ölçelen)", "Ýokary", "Orta", "CRS-e bagly"],
+      ["Ban gijikdirmesi", "~17 ms", "sek–min", "sek", "Aýry integrasiýa"],
+      ["Gysga durnuklylyk (5 min)", "PASS (0 şowsuzlyk)", "—", "—", "—"],
+      ["72s soak", "PASS (864/0)", "—", "—", "—"],
+      ["Subutnama paketi PDF+JSON", "Awtomatik (14 faýl)", "Ýok", "Kismen", "Modul-modul"],
+      ["Awtomat test matrisasy", "75 test", "—", "Kismen", "—"],
+      ["SOC wagt çyzygy / dashboard", "Hawa (:8443)", "—", "Konsol", "—"],
+      ["Telegram operasiýa + ack", "Hawa (bir basyş)", "—", "Kismen", "—"],
+      ["Gurnama wagty", "~15 min", "minut", "minut", "sagat (sazlama)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
+      ["Ilkinji islegi derrew blokla", "Reaktiw (log setiri)", "Reaktiw", "Kismen", "Inline (derrew)"],
+      ["Wolýumetrik L3/L4 arassalaýyş", "Ýok — CDN maslahat berilýär", "Ýok", "Ýok", "Ýok"],
+      ["Jemgyýet signal ulgamy", "Öz-hosting", "—", "Hawa (global)", "—"],
+      ["Edge / Cloud WAF", "Origin gatlak", "—", "Bouncer", "Proksi režimi"],
+      ["Dolandyrylýan bulut / SaaS", "Ýok (öz-hosting)", "Ýok", "Hawa (konsol)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 ýa-da Debian 12 (amd64)",
+      "nginx + ýazylýan access log (log_guardian formaty)",
+      "Root ýa-da sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disk, 128 MB RAM (Core); Pro üçin Docker",
+      "Islege bagly Pro: eBPF/XDP üçin 5.10+ ýadro, Docker (dashboard/metrikalar)",
+    ],
+    setup: {
+      pathTitles: ["Täze server — .deb paketi", "Çeşme kod — gurmak we gurnamak"],
+      pathBadges: ["maslahat berilýär", "işläp düzüji"],
+      pathNotes: [
+        "Gurmak talap edilmeýär. Paket binar faýly, systemd unitleri, düzgünleri we skriptleri getirýär. Täzelemäge howpsuz: bar bolan /etc/log-guardian/rules.conf saklanýar. GitHub Releases-den (log-guardian_*_amd64.deb) ýa-da bash scripts/build_deb.sh → dist/ arkaly guruň.",
+        "GitHub repo-ny klonlaň we guruň. Ösüş, sazlama we doly çeşme barlagy üçin ideal. install.sh systemd unitlerini, düzgünleri we nginx log formatyny gurnaýar.",
+      ],
+      pathSteps: [
+        [
+          { t: "Baglylyklar", d: "Ilkinji gurnamada Debian paket baglylyklaryny goşuň. nginx ýok bolsa, ony şol buýrukda goşup bolýar." },
+          { t: "Paketi gurnamak", d: "dpkg -i baglylyk ýalňyşyny habar berse, apt-get install -f işlediň. postinst ädimi log-guardian ulanyjysyny, rugsatlary, systemd unitlerini we deslapky rules.conf-y awtomatik döredýär." },
+          { t: "Ilkinji işletmek we API howpsuzlygy", d: "nginx log formatyny, FP trust-y we API howpsuzlygyny (token, fail-closed) bir gezekde taýýarlaýar. Skriptler paketiň içinde (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Çeşme we gurmak", d: "Repo-ny klonlaň, ähli ýadrolar bilen guruň we esasy gurnama skriptini işlediň." },
+          { t: "Ilkinji işletmek we token sinhrony", d: "Hyzmatlary galdyrýar we API token sinhronyny hem-de dashboard baglanyşygyny taýýarlaýar." },
+        ],
+      ],
+      commonTitle: "Umumy ädimler (A ýa-da B-den soň)",
+      commonSteps: [
+        { t: "Nginx log formaty", d: "WAF islegiň bedenini we X-Forwarded-For-y okamagy üçin log_guardian log formaty gerek. Setup ony adatça awtomatik ulanýar; STRICT režiminde barlaň." },
+        { t: "Saglyk we ýagdaý barlagy", d: "Daemon IPC-ni, hyzmat ýagdaýyny we BPF aýratynlyklaryny barlaň. Ýaşyl derweze: post_install_verify soňunda FAIL: 0 görmeli." },
+        { t: "Metrikalar we ilkinji ban synagy", d: "Prometheus metrikalaryny barlaň; trafikden soň sanaýjylaryň galýanyny synlaň. Hüjüm setirini goýup ban-y ipset-de barlap bilersiňiz." },
+        { t: "VirtualBox / XDP-siz (noutbuk we VM)", d: "eBPF/XDP ýok gurşawlarda ipset esasly ban bilen --no-xdp ýeterlik. Hyzmat baglylygy şowsuz bolsa, bejeriş skripti bir buýruk." },
+      ],
+      dashboardTitle: "Pro dashboard — gurnamadan soň (islege bagly)",
+      dashboardBadge: "Pro · islege bagly",
+      dashboardNote: "Dashboard bu landing saýtda däl, öz maşynyňyzda işleýär. Prod stack Caddy + Docker arkaly https://localhost:8443 salgysynda hyzmat edýär.",
+      dashboardSteps: [
+        { t: "Prod stack-i başlatmak", d: "Öz serweriňizde dashboard-y gurýar we galdyrýar. Giriş: admin / .env-däki DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Uzak VPS üçin SSH tunel", d: "Dashboard-y internete açman howpsuz görmek üçin SSH tunel guruň; ilki serweri berkidiň." },
+      ],
+    },
   },
   tt: {
     pipelineNote:
@@ -2008,6 +3048,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 сәгать soak PASS · 0 хата",
     proofBody:
       "Слайд түгел, кабат җитештерелә торган дәлил. OWASP CRS паритеты, ялган позитив капкалары, ban тоткарлыгы бенчмарклары, корпус recall һәм 72 сәгатьлек soak — барысы да үлчәнгән, автоматлаштырылган һәм ачык тест матрицасында күренә.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Көчле яклары (үлчәнгән)", "Намуслы чикләр"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Бер чылбыр", "Бары бан", "Кисәкләп", "WAF аерым"],
+      ["OWASP CRS паритеты", "100% (121 кагыйдә)", "—", "—", "Эталон (100%)"],
+      ["Чын һөҗүм recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Таратылган / JA3 кластер бан", "100% (80 IP)", "—", "Сигналга нигезләнгән", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Аерым модуль"],
+      ["L7 кушымта саклавы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Ялган позитив", "0,2% (үлчәнгән)", "Югары", "Урта", "CRS-ка бәйле"],
+      ["Бан тоткарлыгы", "~17 мс", "сек–мин", "сек", "Аерым интеграция"],
+      ["Кыска тотрыклылык (5 мин)", "PASS (0 хата)", "—", "—", "—"],
+      ["72с soak", "PASS (864/0)", "—", "—", "—"],
+      ["Дәлил тупламы PDF+JSON", "Автомат (14 файл)", "Юк", "Өлешчә", "Модуль-модуль"],
+      ["Автомат тест матрицасы", "75 тест", "—", "Өлешчә", "—"],
+      ["SOC вакыт сызыгы / дашборд", "Әйе (:8443)", "—", "Консоль", "—"],
+      ["Telegram операция + ack", "Әйе (бер басу)", "—", "Өлешчә", "—"],
+      ["Урнаштыру вакыты", "~15 мин", "минут", "минут", "сәгать (көйләү)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог кабатлау)", "—", "—", "~14 300 EPS inline"],
+      ["Беренче сорауны шунда ук блоклау", "Реактив (лог юлы)", "Реактив", "Өлешчә", "Inline (шунда ук)"],
+      ["Күләмле L3/L4 чистарту", "Юк — CDN тәкъдим ителә", "Юк", "Юк", "Юк"],
+      ["Җәмгыять сигнал челтәре", "Үз-хостинг", "—", "Әйе (глобаль)", "—"],
+      ["Edge / Cloud WAF", "Origin катламы", "—", "Bouncer", "Прокси режимы"],
+      ["Идарә ителүче болыт / SaaS", "Юк (үз-хостинг)", "Юк", "Әйе (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 яки Debian 12 (amd64)",
+      "nginx + язылучан access лог (log_guardian форматы)",
+      "Root яки sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro өчен Docker",
+      "Өстәмә Pro: eBPF/XDP өчен 5.10+ ядро, Docker (дашборд/метрикалар)",
+    ],
+    setup: {
+      pathTitles: ["Яңа сервер — .deb пакеты", "Чыганак код — җыю һәм урнаштыру"],
+      pathBadges: ["тәкъдим ителә", "эшләүче"],
+      pathNotes: [
+        "Җыю таләп ителми. Пакет бинарны, systemd юнитларын, кагыйдәләрне һәм скриптларны китерә. Яңартуга куркынычсыз: булган /etc/log-guardian/rules.conf сакланa. GitHub Releases-тан (log-guardian_*_amd64.deb) яки bash scripts/build_deb.sh → dist/ аша җыегыз.",
+        "GitHub репозиторийны клонлагыз һәм җыегыз. Эшләү, көйләү һәм тулы чыганак тикшерүе өчен идеаль. install.sh systemd юнитларын, кагыйдәләрне һәм nginx лог форматын урнаштыра.",
+      ],
+      pathSteps: [
+        [
+          { t: "Бәйлелекләр", d: "Беренче урнаштыруда Debian пакет бәйлелекләрен өстәгез. nginx юк булса, аны шул ук боерыкта өстәп була." },
+          { t: "Пакетны урнаштыру", d: "dpkg -i бәйлелек хатасын хәбәр итсә, apt-get install -f эшләтегез. postinst адымы log-guardian кулланучысын, рөхсәтләрне, systemd юнитларын һәм default rules.conf-ны автомат тудыра." },
+          { t: "Беренче эшләтү һәм API куркынычсызлыгы", d: "nginx лог форматын, FP trust-ны һәм API куркынычсызлыгын (токен, fail-closed) бер юлы әзерли. Скриптлар пакет эчендә (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Чыганак һәм җыю", d: "Репозиторийны клонлагыз, барлык үзәкләр белән җыегыз һәм төп урнаштыру скриптын эшләтегез." },
+          { t: "Беренче эшләтү һәм токен синхроны", d: "Хезмәтләрне күтәрә һәм API токен синхронын һәм дашборд бәйләнешен әзерли." },
+        ],
+      ],
+      commonTitle: "Уртак адымнар (A яки B соңында)",
+      commonSteps: [
+        { t: "Nginx лог форматы", d: "WAF сорау гәүдәсен һәм X-Forwarded-For-ны укуы өчен log_guardian лог форматы кирәк. Setup аны гадәттә автомат куллана; STRICT режимында тикшерегез." },
+        { t: "Сәламәтлек һәм халәт тикшерүе", d: "Daemon IPC-ны, хезмәт халәтен һәм BPF мөмкинлекләрен тикшерегез. Яшел капка: post_install_verify азагында FAIL: 0 күрергә тиеш." },
+        { t: "Метрикалар һәм беренче бан тесты", d: "Prometheus метрикаларын тикшерегез; трафиктан соң санагычларның үсүен күзәтегез. Һөҗүм юлын кертеп бан-ны ipset-та тикшерә аласыз." },
+        { t: "VirtualBox / XDP-сыз (ноутбук һәм VM)", d: "eBPF/XDP юк тирәлекләрдә ipset нигезендәге бан белән --no-xdp җитә. Хезмәт бәйлелеге уңышсыз булса, төзәтү скрипты бер боерык." },
+      ],
+      dashboardTitle: "Pro дашборд — урнаштырудан соң (өстәмә)",
+      dashboardBadge: "Pro · өстәмә",
+      dashboardNote: "Дашборд бу landing сайтта түгел, үз машинагызда эшли. Prod стек Caddy + Docker аша https://localhost:8443 адресендә хезмәт итә.",
+      dashboardSteps: [
+        { t: "Prod стекны җибәрү", d: "Үз серверыгызда дашбордны җыя һәм күтәрә. Керү: admin / .env-тагы DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Ерак VPS өчен SSH туннель", d: "Дашбордны интернетка ачмыйча куркынычсыз күрер өчен SSH туннель урнаштырыгыз; башта серверны ныгытыгыз." },
+      ],
+    },
   },
   ba: {
     pipelineNote:
@@ -2063,6 +3171,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 сәғәт soak PASS · 0 хата",
     proofBody:
       "Слайд түгел, ҡабат етештерелә торған дәлил. OWASP CRS паритеты, ялған позитив ҡапҡалары, ban тотҡарлығы бенчмарктары, корпус recall һәм 72 сәғәтлек soak — барыһы ла үлсәнгән, автоматлаштырылған һәм асыҡ тест матрицаһында күренә.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Көслө яҡтары (үлсәнгән)", "Намыҫлы сиктәр"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Бер сылбыр", "Тик бан", "Киҫәкләп", "WAF айырым"],
+      ["OWASP CRS паритеты", "100% (121 ҡағиҙә)", "—", "—", "Эталон (100%)"],
+      ["Ысын һөжүм recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Таратылған / JA3 кластер бан", "100% (80 IP)", "—", "Сигналға нигеҙләнгән", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Айырым модуль"],
+      ["L7 ҡушымта һаҡлауы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Ялған позитив", "0,2% (үлсәнгән)", "Юғары", "Урта", "CRS-ҡа бәйле"],
+      ["Бан тотҡарлығы", "~17 мс", "сек–мин", "сек", "Айырым интеграция"],
+      ["Ҡыҫҡа тотороҡлолоҡ (5 мин)", "PASS (0 хата)", "—", "—", "—"],
+      ["72с soak", "PASS (864/0)", "—", "—", "—"],
+      ["Дәлил тупламы PDF+JSON", "Автомат (14 файл)", "Юҡ", "Өлөшләтә", "Модуль-модуль"],
+      ["Автомат тест матрицаһы", "75 тест", "—", "Өлөшләтә", "—"],
+      ["SOC ваҡыт һыҙығы / дашборд", "Эйе (:8443)", "—", "Консоль", "—"],
+      ["Telegram операция + ack", "Эйе (бер баҫыу)", "—", "Өлөшләтә", "—"],
+      ["Урынлаштырыу ваҡыты", "~15 мин", "минут", "минут", "сәғәт (көйләү)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог ҡабатлау)", "—", "—", "~14 300 EPS inline"],
+      ["Беренсе һорауҙы шунда уҡ блоклау", "Реактив (лог юлы)", "Реактив", "Өлөшләтә", "Inline (шунда уҡ)"],
+      ["Күләмле L3/L4 таҙартыу", "Юҡ — CDN тәҡдим ителә", "Юҡ", "Юҡ", "Юҡ"],
+      ["Йәмғиәт сигнал селтәре", "Үҙ-хостинг", "—", "Эйе (глобаль)", "—"],
+      ["Edge / Cloud WAF", "Origin ҡатламы", "—", "Bouncer", "Прокси режимы"],
+      ["Идара ителеүсе болот / SaaS", "Юҡ (үҙ-хостинг)", "Юҡ", "Эйе (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 йәки Debian 12 (amd64)",
+      "nginx + яҙылыусан access лог (log_guardian форматы)",
+      "Root йәки sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro өсөн Docker",
+      "Өҫтәмә Pro: eBPF/XDP өсөн 5.10+ ядро, Docker (дашборд/метрикалар)",
+    ],
+    setup: {
+      pathTitles: ["Яңы сервер — .deb пакеты", "Сығанаҡ код — йыйыу һәм урынлаштырыу"],
+      pathBadges: ["тәҡдим ителә", "эшләүсе"],
+      pathNotes: [
+        "Йыйыу талап ителмәй. Пакет бинарҙы, systemd юниттарын, ҡағиҙәләрҙе һәм скрипттарҙы килтерә. Яңыртыуға хәүефһеҙ: булған /etc/log-guardian/rules.conf һаҡлана. GitHub Releases-тан (log-guardian_*_amd64.deb) йәки bash scripts/build_deb.sh → dist/ аша йыйығыҙ.",
+        "GitHub репозиторийын клонлағыҙ һәм йыйығыҙ. Эшләү, көйләү һәм тулы сығанаҡ тикшереүе өсөн идеаль. install.sh systemd юниттарын, ҡағиҙәләрҙе һәм nginx лог форматын урынлаштыра.",
+      ],
+      pathSteps: [
+        [
+          { t: "Бәйлелектәр", d: "Беренсе урынлаштырыуҙа Debian пакет бәйлелектәрен өҫтәгеҙ. nginx юҡ булһа, уны шул уҡ бойороҡта өҫтәп була." },
+          { t: "Пакетты урынлаштырыу", d: "dpkg -i бәйлелек хатаһын хәбәр итһә, apt-get install -f эшләтегеҙ. postinst аҙымы log-guardian ҡулланыусыһын, рөхсәттәрҙе, systemd юниттарын һәм default rules.conf-ты автомат тыуҙыра." },
+          { t: "Беренсе эшләтеү һәм API хәүефһеҙлеге", d: "nginx лог форматын, FP trust-ты һәм API хәүефһеҙлеген (токен, fail-closed) бер юлы әҙерләй. Скрипттар пакет эсендә (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Сығанаҡ һәм йыйыу", d: "Репозиторийҙы клонлағыҙ, бөтә үҙәктәр менән йыйығыҙ һәм төп урынлаштырыу скриптын эшләтегеҙ." },
+          { t: "Беренсе эшләтеү һәм токен синхроны", d: "Хеҙмәттәрҙе күтәрә һәм API токен синхронын һәм дашборд бәйләнешен әҙерләй." },
+        ],
+      ],
+      commonTitle: "Уртаҡ аҙымдар (A йәки B һуңында)",
+      commonSteps: [
+        { t: "Nginx лог форматы", d: "WAF һорау кәүҙәһен һәм X-Forwarded-For-ҙы уҡыуы өсөн log_guardian лог форматы кәрәк. Setup уны ғәҙәттә автомат ҡуллана; STRICT режимында тикшерегеҙ." },
+        { t: "Һаулыҡ һәм торош тикшереүе", d: "Daemon IPC-ҙы, хеҙмәт торошон һәм BPF мөмкинлектәрен тикшерегеҙ. Йәшел ҡапҡа: post_install_verify аҙағында FAIL: 0 күрергә тейеш." },
+        { t: "Метрикалар һәм беренсе бан тесты", d: "Prometheus метрикаларын тикшерегеҙ; трафиктан һуң һанағыстарҙың үҫеүен күҙәтегеҙ. Һөжүм юлын индереп бан-ды ipset-та тикшерә алаһығыҙ." },
+        { t: "VirtualBox / XDP-һыҙ (ноутбук һәм VM)", d: "eBPF/XDP юҡ тирәлектәрҙә ipset нигеҙендәге бан менән --no-xdp етә. Хеҙмәт бәйлелеге уңышһыҙ булһа, төҙәтеү скрипты бер бойороҡ." },
+      ],
+      dashboardTitle: "Pro дашборд — урынлаштырыуҙан һуң (өҫтәмә)",
+      dashboardBadge: "Pro · өҫтәмә",
+      dashboardNote: "Дашборд был landing сайтта түгел, үҙ машинағыҙҙа эшләй. Prod стек Caddy + Docker аша https://localhost:8443 адресында хеҙмәт итә.",
+      dashboardSteps: [
+        { t: "Prod стекты ебәреү", d: "Үҙ серверығыҙҙа дашбордты йыя һәм күтәрә. Инеү: admin / .env-тағы DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Алыҫ VPS өсөн SSH туннель", d: "Дашбордты интернетҡа асмайынса хәүефһеҙ күреү өсөн SSH туннель урынлаштырығыҙ; башта серверҙы нығытығыҙ." },
+      ],
+    },
   },
   cv: {
     pipelineNote:
@@ -2118,6 +3294,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 сехет soak PASS · 0 йӑнӑш",
     proofBody:
       "Слайд мар, тепӗр хут тӑвакан кӑтарту. OWASP CRS паритечӗ, суя позитив хапхисем, бан кӗтӗвӗн бенчмаркӗсем, корпус recall тата 72 сехетлӗ soak — пурте виҫнӗ, автоматланӑ тата уҫӑ тест матрицинче курӑнать.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Вӑйлӑ енӗсем (виҫнӗ)", "Тӳрӗ чиккисем"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Пӗр сӑнчӑр", "Бан анчах", "Пайӑн-пайӑн", "WAF уйрӑм"],
+      ["OWASP CRS паритечӗ", "100% (121 правило)", "—", "—", "Эталон (100%)"],
+      ["Чӑн тапӑну recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Сапаланӑ / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал ҫинче", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Уйрӑм модуль"],
+      ["L7 приложени хӳтлӗхӗ", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Суя позитив", "0,2% (виҫнӗ)", "Ҫӳллӗ", "Вӑтам", "CRS ҫине килет"],
+      ["Бан кӗтесси", "~17 мс", "ҫек–мин", "ҫек", "Уйрӑм интеграци"],
+      ["Кӗске тӑнӑҫлӑх (5 мин)", "PASS (0 йӑнӑш)", "—", "—", "—"],
+      ["72с soak", "PASS (864/0)", "—", "—", "—"],
+      ["Кӑтарту пакечӗ PDF+JSON", "Автомат (14 файл)", "Ҫук", "Пайӑн", "Модуль-модуль"],
+      ["Автомат тест матрици", "75 тест", "—", "Пайӑн", "—"],
+      ["SOC вӑхӑт линийӗ / дашборд", "Ҫапла (:8443)", "—", "Консоль", "—"],
+      ["Telegram операци + ack", "Ҫапла (пӗр пусӑ)", "—", "Пайӑн", "—"],
+      ["Вырнаҫтару вӑхӑчӗ", "~15 мин", "минут", "минут", "сехет (тӳрлетӳ)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог тепӗр хут)", "—", "—", "~14 300 EPS inline"],
+      ["Пӗрремӗш ыйтӑва тӳрех блоклани", "Реактивлӑ (лог йӗрки)", "Реактивлӑ", "Пайӑн", "Inline (тӳрех)"],
+      ["Калӑплӑ L3/L4 тасату", "Ҫук — CDN сӗнеҫҫӗ", "Ҫук", "Ҫук", "Ҫук"],
+      ["Пӗрлӗх сигнал тетелӗ", "Хӑй-хостинг", "—", "Ҫапла (глобаллӑ)", "—"],
+      ["Edge / Cloud WAF", "Origin сийӗ", "—", "Bouncer", "Прокси режимӗ"],
+      ["Тытса пыракан пӗлӗт / SaaS", "Ҫук (хӑй-хостинг)", "Ҫук", "Ҫапла (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 е Debian 12 (amd64)",
+      "nginx + ҫырма пулакан access лог (log_guardian форматне)",
+      "Root е sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro валли Docker",
+      "Хушма Pro: eBPF/XDP валли 5.10+ ядро, Docker (дашборд/метрикӑсем)",
+    ],
+    setup: {
+      pathTitles: ["Ҫӗнӗ сервер — .deb пакет", "Пуҫламӑш код — пуҫтарни тата вырнаҫтарни"],
+      pathBadges: ["сӗнеҫҫӗ", "аталантаракан"],
+      pathNotes: [
+        "Пуҫтарма кирлӗ мар. Пакет бинарне, systemd юничӗсене, правилӑсене тата скриптсене илсе килет. Ҫӗнетме хӑрушсӑр: пур /etc/log-guardian/rules.conf упранать. GitHub Releases-ран (log-guardian_*_amd64.deb) е bash scripts/build_deb.sh → dist/ урлӑ пуҫтарӑр.",
+        "GitHub репозиторине клонлӑр тата пуҫтарӑр. Аталантару, тӳрлетӳ тата тулли код тӗрӗслев валли идеаллӑ. install.sh systemd юничӗсене, правилӑсене тата nginx лог форматне вырнаҫтарать.",
+      ],
+      pathSteps: [
+        [
+          { t: "Ҫыхӑнусем", d: "Пӗрремӗш вырнаҫтарура Debian пакет ҫыхӑнӑвӗсене хушӑр. nginx ҫук пулсан, ӑна ҫав хушурах хушма пулать." },
+          { t: "Пакет вырнаҫтарни", d: "dpkg -i ҫыхӑну йӑнӑшӗ пӗлтерсен, apt-get install -f ӗҫлеттерӗр. postinst утӑмӗ log-guardian усӑ куракана, ирӗксене, systemd юничӗсене тата default rules.conf-а автомат туса хурать." },
+          { t: "Пӗрремӗш ӗҫлеттерни тата API хӑрушсӑрлӑхӗ", d: "nginx лог форматне, FP trust-а тата API хӑрушсӑрлӑхне (токен, fail-closed) пӗр харӑс хатӗрлет. Скриптсем пакет ӑшӗнче (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Пуҫламӑш код тата пуҫтарни", d: "Репозиторине клонлӑр, пур ядрӑпа пуҫтарӑр тата тӗп вырнаҫтару скриптне ӗҫлеттерӗр." },
+          { t: "Пӗрремӗш ӗҫлеттерни тата токен синхронӗ", d: "Ӗҫсене ҫӗклет тата API токен синхронне тата дашборд ҫыхӑнӑвне хатӗрлет." },
+        ],
+      ],
+      commonTitle: "Пӗрлехи утӑмсем (A е B хыҫҫӑн)",
+      commonSteps: [
+        { t: "Nginx лог формачӗ", d: "WAF ыйту кӗлеткине тата X-Forwarded-For-а вулама log_guardian лог форматне кирлӗ. Setup ӑна яланах автомат хурать; STRICT режимра тӗрӗслӗр." },
+        { t: "Сывлӑх тата тӑрӑм тӗрӗслев", d: "Daemon IPC-не, ӗҫ тӑрӑмне тата BPF пахалӑхӗсене тӗрӗслӗр. Симӗс хапха: post_install_verify вӗҫӗнче FAIL: 0 курмалла." },
+        { t: "Метрикӑсем тата пӗрремӗш бан тест", d: "Prometheus метрикисене тӗрӗслӗр; трафик хыҫҫӑн шутлавҫӑсем ӳснине сӑнӑр. Тапӑну йӗркине кӗртсе бан-а ipset-ра тӗрӗслеме пулать." },
+        { t: "VirtualBox / XDP-сӗр (ноутбук тата VM)", d: "eBPF/XDP ҫук хутлӑхсенче ipset ҫинчи бан тата --no-xdp ҫитет. Ӗҫ ҫыхӑнӑвӗ ӑнӑҫмасан, юсав скрипчӗ пӗр хушу." },
+      ],
+      dashboardTitle: "Pro дашборд — вырнаҫтарнӑ хыҫҫӑн (хушма)",
+      dashboardBadge: "Pro · хушма",
+      dashboardNote: "Дашборд ку landing сайтра мар, хӑвӑр машинӑра ӗҫлет. Prod стек Caddy + Docker урлӑ https://localhost:8443 адресра ӗҫлет.",
+      dashboardSteps: [
+        { t: "Prod стека тапратни", d: "Хӑвӑр серверӑра дашборда пуҫтарать тата ҫӗклет. Кӗрӳ: admin / .env-ри DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Инҫетри VPS валли SSH туннель", d: "Дашборда интернета уҫмасӑр хӑрушсӑр курма SSH туннель вырнаҫтарӑр; малтан сервера ҫирӗплетӗр." },
+      ],
+    },
   },
   crh: {
     pipelineNote:
@@ -2173,6 +3417,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 saat soak PASS · 0 hata",
     proofBody:
       "Slayd degil, tekrar tüzülgen delil. OWASP CRS pariteti, yañlış pozitiv qapıları, ban keçikmesi benchmarkları, korpus recall ve 72 saatlıq soak — episi ölçengen, avtomatlaştırılğan ve açıq test matritsasında körüne.",
+    vsCols: ["Metrika", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Küçlü tarafları (ölçengen)", "Doğru sıñırlar"],
+    vsRows0: [
+      ["Log → WAF → kernel ban", "Tek zıncır", "Faqat ban", "Parça-parça", "WAF ayrı"],
+      ["OWASP CRS pariteti", "100% (121 qaide)", "—", "—", "Referans (100%)"],
+      ["Kerçek ücüm recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Dağıtılğan / JA3 klaster ban", "100% (80 IP)", "—", "Signal esaslı", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Ayrı modul"],
+      ["L7 uygulama qoruvı", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Yañlış pozitiv", "0,2% (ölçengen)", "Yüksek", "Orta", "CRS-ge bağlı"],
+      ["Ban keçikmesi", "~17 ms", "san–daq", "san", "Ayrı integratsiya"],
+      ["Qısqa istiqrarlıq (5 daq)", "PASS (0 muvafaqiyetsizlik)", "—", "—", "—"],
+      ["72s soak", "PASS (864/0)", "—", "—", "—"],
+      ["Delil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoq", "Qısmen", "Modul-modul"],
+      ["Avtomat test matritsası", "75 test", "—", "Qısmen", "—"],
+      ["SOC vaqıt sızığı / dashboard", "Ebet (:8443)", "—", "Konsol", "—"],
+      ["Telegram ameliyat + ack", "Ebet (bir basuv)", "—", "Qısmen", "—"],
+      ["Qurulım vaqtı", "~15 daq", "daqqa", "daqqa", "saat (sazlav)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
+      ["Birinci istekni deral bloklamaq", "Reaktiv (log satırı)", "Reaktiv", "Qısmen", "Inline (deral)"],
+      ["Volumetrik L3/L4 tazalav", "Yoq — CDN tevsiye etile", "Yoq", "Yoq", "Yoq"],
+      ["Cemaat signal ağı", "Öz-hosting", "—", "Ebet (global)", "—"],
+      ["Edge / Cloud WAF", "Origin qatı", "—", "Bouncer", "Proksi rejimi"],
+      ["İdare etilgen bulut / SaaS", "Yoq (öz-hosting)", "Yoq", "Ebet (konsol)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 ya da Debian 12 (amd64)",
+      "nginx + yazıla bilgen access log (log_guardian formatı)",
+      "Root ya da sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disk, 128 MB RAM (Core); Pro içün Docker",
+      "İhtiyariy Pro: eBPF/XDP içün 5.10+ kernel, Docker (dashboard/metrikalar)",
+    ],
+    setup: {
+      pathTitles: ["Taze server — .deb paketi", "Menba kod — qurmaq ve qurmaq"],
+      pathBadges: ["tevsiye etile", "programcı"],
+      pathNotes: [
+        "Qurmaq talap etilmey. Paket binar faylnı, systemd unitlerini, qaidelerni ve skriptlerni ketire. Yañartuvğa qorunçlı: mevcut /etc/log-guardian/rules.conf saqlana. GitHub Releases-ten (log-guardian_*_amd64.deb) ya da bash scripts/build_deb.sh → dist/ ile qurıñız.",
+        "GitHub repo-nı klonlañız ve qurıñız. İnkişaf, sazlav ve tam menba baquv içün ideal. install.sh systemd unitlerini, qaidelerni ve nginx log formatını qura.",
+      ],
+      pathSteps: [
+        [
+          { t: "Bağlılıqlar", d: "İlk qurulımda Debian paket bağlılıqlarını qoşuñız. nginx yoq ise, onı aynı emirde qoşmaq mümkün." },
+          { t: "Paketni qurmaq", d: "dpkg -i bağlılıq hatasını bildirse, apt-get install -f çalıştırıñız. postinst adımı log-guardian qullanıcısını, izinlerni, systemd unitlerini ve default rules.conf-nı avtomat yarata." },
+          { t: "İlk çalıştıruv ve API qorunçlığı", d: "nginx log formatını, FP trust-nı ve API qorunçlığını (token, fail-closed) bir kere azırlay. Skriptler paket içinde (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Menba ve qurmaq", d: "Repo-nı klonlañız, bütün yadrolar ile qurıñız ve esas qurulım skriptini çalıştırıñız." },
+          { t: "İlk çalıştıruv ve token sinxronı", d: "Hızmetlerni köterе ve API token sinxronını ve dashboard bağlantısını azırlay." },
+        ],
+      ],
+      commonTitle: "Umumiy adımlar (A ya da B soñu)",
+      commonSteps: [
+        { t: "Nginx log formatı", d: "WAF istek gövdesini ve X-Forwarded-For-nı oqumaq içün log_guardian log formatı kerek. Setup onı adette avtomat qullana; STRICT rejiminde teşkeriñiz." },
+        { t: "Sağlıq ve durum teşkeriv", d: "Daemon IPC-ni, hızmet durumını ve BPF hususiyetlerini teşkeriñiz. Yeşil qapı: post_install_verify soñunda FAIL: 0 körmeli." },
+        { t: "Metrikalar ve ilk ban testi", d: "Prometheus metrikalarını teşkeriñiz; trafiktan soñ sayaçlarnıñ köterilgenini közetiñiz. Ücüm satırını qoşıp ban-nı ipset-te teşkere bilesiñiz." },
+        { t: "VirtualBox / XDP-sız (laptop ve VM)", d: "eBPF/XDP olmağan çevrelerde ipset esaslı ban ile --no-xdp yeter. Hızmet bağlılığı muvafaqiyetsiz olsa, tamir skripti bir emir." },
+      ],
+      dashboardTitle: "Pro dashboard — qurulımdan soñ (ihtiyariy)",
+      dashboardBadge: "Pro · ihtiyariy",
+      dashboardNote: "Dashboard bu landing saytında degil, öz maşiñızda çalışa. Prod stack Caddy + Docker vastasında https://localhost:8443 adresinde hızmet ete.",
+      dashboardSteps: [
+        { t: "Prod stack-nı başlatmaq", d: "Öz serveriñizde dashboard-nı qura ve kötere. Kirüv: admin / .env-deki DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Uzaq VPS içün SSH tünel", d: "Dashboard-nı internetke açmadan qorunçlı körmek içün SSH tünel qurıñız; evvel serverni qatılaştırıñız." },
+      ],
+    },
   },
   gag: {
     pipelineNote:
@@ -2228,6 +3540,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 saat soak PASS · 0 hata",
     proofBody:
       "Slayd diil, tekrar yapılabilän delil. OWASP CRS pariteti, yalancı pozitiv kapıları, ban gecikmesi benchmarkları, korpus recall hem 72 saatlık soak — hepsi ölçülü, avtomatlaştırıldı hem açık test matritsasında görüner.",
+    vsCols: ["Metrika", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Kuvetli taraflar (ölçülü)", "Dooru sınırlar"],
+    vsRows0: [
+      ["Log → WAF → kernel ban", "Bir zincir", "Salt ban", "Parça-parça", "WAF ayrı"],
+      ["OWASP CRS pariteti", "100% (121 kural)", "—", "—", "Referans (100%)"],
+      ["Gerçek saldırı recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Daaıdılmış / JA3 klaster ban", "100% (80 IP)", "—", "Signal temelli", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Ayrı modul"],
+      ["L7 uygulama koruması", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Yalancı pozitiv", "0,2% (ölçülü)", "Üüsek", "Orta", "CRS-a baalı"],
+      ["Ban gecikmesi", "~17 ms", "san–dak", "san", "Ayrı integratsiya"],
+      ["Kısa stabillik (5 dak)", "PASS (0 başarısızlık)", "—", "—", "—"],
+      ["72s soak", "PASS (864/0)", "—", "—", "—"],
+      ["Delil paketi PDF+JSON", "Avtomat (14 fayl)", "Yok", "Kısmen", "Modul-modul"],
+      ["Avtomat test matritsası", "75 test", "—", "Kısmen", "—"],
+      ["SOC zaman çizgisi / dashboard", "Ya (:8443)", "—", "Konsol", "—"],
+      ["Telegram operatsiya + ack", "Ya (bir basış)", "—", "Kısmen", "—"],
+      ["Kuruluş zamanı", "~15 dak", "dakka", "dakka", "saat (ayarlama)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
+      ["İlk isteyi hemen bloklamaa", "Reaktiv (log satırı)", "Reaktiv", "Kısmen", "Inline (hemen)"],
+      ["Volumetrik L3/L4 temizleme", "Yok — CDN tavsiye ediler", "Yok", "Yok", "Yok"],
+      ["Cemaat signal aa", "Öz-hosting", "—", "Ya (global)", "—"],
+      ["Edge / Cloud WAF", "Origin katı", "—", "Bouncer", "Proksi rejimi"],
+      ["İdare edilän bulut / SaaS", "Yok (öz-hosting)", "Yok", "Ya (konsol)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 osa Debian 12 (amd64)",
+      "nginx + yazılabilän access log (log_guardian formatı)",
+      "Root osa sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 MB disk, 128 MB RAM (Core); Pro için Docker",
+      "İsteğä görä Pro: eBPF/XDP için 5.10+ kernel, Docker (dashboard/metrikalar)",
+    ],
+    setup: {
+      pathTitles: ["Yeni server — .deb paketi", "Kaynak kod — kurmaa hem kurmaa"],
+      pathBadges: ["tavsiye ediler", "geliştirici"],
+      pathNotes: [
+        "Kurmaa lääzım diil. Paket binar faylı, systemd unitlerini, kuralları hem skriptleri getirer. Enilemää güvenli: var olan /etc/log-guardian/rules.conf saklanêr. GitHub Releases-tan (log-guardian_*_amd64.deb) osa bash scripts/build_deb.sh → dist/ ile kurun.",
+        "GitHub repo-yu klonlayın hem kurun. Geliştirmä, ayarlama hem tam kaynak bakışı için ideal. install.sh systemd unitlerini, kuralları hem nginx log formatını kurêr.",
+      ],
+      pathSteps: [
+        [
+          { t: "Baalantılar", d: "İlk kuruluşta Debian paket baalantılarını ekleyin. nginx yoksa, onu aynı komutta eklemää olêr." },
+          { t: "Paketi kurmaa", d: "dpkg -i baalantı yannışı bildirärsä, apt-get install -f çalıştırın. postinst adımı log-guardian kullanıcısını, izinneri, systemd unitlerini hem default rules.conf-u avtomat yaradêr." },
+          { t: "İlk çalıştırma hem API güvenniklii", d: "nginx log formatını, FP trust-u hem API güvennikliini (token, fail-closed) birdän hazırlêr. Skriptlär paketin içindä (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Kaynak hem kurmaa", d: "Repo-yu klonlayın, hepsi çekirdeklärlän kurun hem baş kuruluş skriptini çalıştırın." },
+          { t: "İlk çalıştırma hem token sinxronu", d: "Servisleri kaldırêr hem API token sinxronunu hem dashboard baalantısını hazırlêr." },
+        ],
+      ],
+      commonTitle: "Ortak adımnar (A osa B sora)",
+      commonSteps: [
+        { t: "Nginx log formatı", d: "WAF isteyin gövdesini hem X-Forwarded-For-u okumaa için log_guardian log formatı lääzım. Setup onu genä avtomat kullanêr; STRICT rejimindä kontrol edin." },
+        { t: "Saalık hem durum kontrolü", d: "Daemon IPC-yi, servis durumunu hem BPF özelliklerini kontrol edin. Yeşil kapı: post_install_verify sonunda FAIL: 0 görmää lääzım." },
+        { t: "Metrikalar hem ilk ban testi", d: "Prometheus metrikalarını kontrol edin; trafiktän sora sayaçların kalktıını izleyin. Saldırı satırını ekleyip ban-ı ipset-tä kontrol edäbilirsiniz." },
+        { t: "VirtualBox / XDP-sız (laptop hem VM)", d: "eBPF/XDP olmayan çevrelerdä ipset temelli ban ile --no-xdp yeter. Servis baalantısı başarısız olêrsa, tamir skripti bir komut." },
+      ],
+      dashboardTitle: "Pro dashboard — kuruluştan sora (isteğä görä)",
+      dashboardBadge: "Pro · isteğä görä",
+      dashboardNote: "Dashboard bu landing saytında diil, kendi maşinanızda çalışêr. Prod stack Caddy + Docker aracıllıınnan https://localhost:8443 adresindä hizmet eder.",
+      dashboardSteps: [
+        { t: "Prod stack-i başlatmaa", d: "Kendi serverinizdä dashboard-u kurêr hem kaldırêr. Giriş: admin / .env-deki DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Uzak VPS için SSH tünel", d: "Dashboard-u internetä açmadaan güvenli görmää için SSH tünel kurun; ilkin serveri sertleştirin." },
+      ],
+    },
   },
   ug: {
     pipelineNote:
@@ -2283,6 +3663,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 سائەت soak PASS · 0 مەغلۇبىيەت",
     proofBody:
       "سلايت ئەمەس، قايتا ياسىغىلى بولىدىغان ئىسپات. OWASP CRS تەڭپۇڭلۇقى، يالغان مۇسبەت دەرۋازىلىرى، چەكلەش كېچىكىشى benchmark لىرى، كورپۇس recall ۋە 72 سائەتلىك soak — ھەممىسى ئۆلچەنگەن، ئاپتوماتلاشتۇرۇلغان ۋە ئوچۇق سىناق ماترىتسىسىدا كۆرۈنىدۇ.",
+    vsCols: ["ئۆلچەم", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["كۈچلۈك تەرەپلىرى (ئۆلچەنگەن)", "سەمىمىي چەكلەر"],
+    vsRows0: [
+      ["لوگ → WAF → يادرو چەكلەش", "بىر زەنجىر", "پەقەت چەكلەش", "پارچە-پارچە", "WAF ئايرىم"],
+      ["OWASP CRS تەڭپۇڭلۇقى", "100% (121 قائىدە)", "—", "—", "پايدىلىنىش (100%)"],
+      ["ھەقىقىي ھۇجۇم recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["تارقاق / JA3 كلاستېر چەكلەش", "100% (80 IP)", "—", "سىگنالغا ئاساسەن", "—"],
+      ["nginx ئىچكى consult", "PASS", "—", "—", "ئايرىم مودۇل"],
+      ["L7 پروگرامما قوغدىشى", "WAF + consult + eBPF", "—", "—", "CRS ئىچكى"],
+      ["يادرو / eBPF (XDP) چەكلەش", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["يالغان مۇسبەت", "0.2% (ئۆلچەنگەن)", "يۇقىرى", "ئوتتۇرا", "CRS غا باغلىق"],
+      ["چەكلەش كېچىكىشى", "~17 ms", "سېكۇنت–مىنۇت", "سېكۇنت", "ئايرىم بىرلەشتۈرۈش"],
+      ["قىسقا مۇقىملىق (5 مىنۇت)", "PASS (0 مەغلۇبىيەت)", "—", "—", "—"],
+      ["72سائەت soak", "PASS (864/0)", "—", "—", "—"],
+      ["ئىسپات بوغچىسى PDF+JSON", "ئاپتوماتىك (14 ھۆججەت)", "يوق", "قىسمەن", "مودۇل-مودۇل"],
+      ["ئاپتومات سىناق ماترىتسىسى", "75 سىناق", "—", "قىسمەن", "—"],
+      ["SOC ۋاقىت سىزىقى / تاختا", "ھەئە (:8443)", "—", "كونسول", "—"],
+      ["Telegram مەشغۇلات + ack", "ھەئە (بىر چېكىش)", "—", "قىسمەن", "—"],
+      ["ئورنىتىش ۋاقتى", "~15 مىنۇت", "مىنۇت", "مىنۇت", "سائەت (تەڭشەش)"],
+    ],
+    vsRows1: [
+      ["ئىچكى regex EPS", "~5,357 EPS (لوگ قايتىلاش)", "—", "—", "~14,300 EPS ئىچكى"],
+      ["تۇنجى ئىلتىماسنى دەرھال توسۇش", "ئىنكاسچان (لوگ قۇرى)", "ئىنكاسچان", "قىسمەن", "ئىچكى (دەرھال)"],
+      ["ھەجىملىك L3/L4 تازىلاش", "يوق — CDN تەۋسىيە", "يوق", "يوق", "يوق"],
+      ["مەھەللە سىگنال تورى", "ئۆزى ھوستلاش", "—", "ھەئە (گلوباللىق)", "—"],
+      ["Edge / بۇلۇت WAF", "مەنبە قەۋىتى", "—", "Bouncer", "ۋاكالەتچى ھالىتى"],
+      ["باشقۇرۇلىدىغان بۇلۇت / SaaS", "يوق (ئۆزى ھوستلاش)", "يوق", "ھەئە (كونسول)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 ياكى Debian 12 (amd64)",
+      "nginx + يازغىلى بولىدىغان access لوگ (log_guardian فورماتى)",
+      "Root ياكى sudo (systemd، ipset، /etc/log-guardian)",
+      "~200 MB دىسكا، 128 MB RAM (Core)؛ Pro ئۈچۈن Docker",
+      "تاللانما Pro: eBPF/XDP ئۈچۈن 5.10+ يادرو، Docker (تاختا/ئۆلچەملەر)",
+    ],
+    setup: {
+      pathTitles: ["يېڭى مۇلازىمېتىر — .deb بوغچىسى", "مەنبە كودى — قۇرۇش ۋە ئورنىتىش"],
+      pathBadges: ["تەۋسىيە قىلىنىدۇ", "ئىجادكار"],
+      pathNotes: [
+        "قۇرۇش تەلەپ قىلىنمايدۇ. بوغچا بىنارنى، systemd بىرلىكلىرىنى، قائىدىلەرنى ۋە قوليازمىلارنى ئېلىپ كېلىدۇ. يېڭىلاشقا بىخەتەر: مەۋجۇت /etc/log-guardian/rules.conf ساقلىنىدۇ. GitHub Releases دىن (log-guardian_*_amd64.deb) ياكى bash scripts/build_deb.sh → dist/ ئارقىلىق قۇرۇڭ.",
+        "GitHub خەزىنىسىنى كۆچۈرۈپ قۇرۇڭ. ئېچىش، خاسلاشتۇرۇش ۋە تولۇق مەنبە تەكشۈرۈش ئۈچۈن ئەڭ ياخشى. install.sh systemd بىرلىكلىرىنى، قائىدىلەرنى ۋە nginx لوگ فورماتىنى ئورنىتىدۇ.",
+      ],
+      pathSteps: [
+        [
+          { t: "بېقىنمىلىقلار", d: "تۇنجى ئورنىتىشتا Debian بوغچا بېقىنمىلىقلىرىنى قوشۇڭ. nginx يوق بولسا، ئۇنى ئوخشاش بۇيرۇقتا قوشقىلى بولىدۇ." },
+          { t: "بوغچىنى ئورنىتىش", d: "dpkg -i بېقىنمىلىق خاتالىقىنى مەلۇم قىلسا، apt-get install -f نى ئىجرا قىلىڭ. postinst باسقۇچى log-guardian ئىشلەتكۈچىسىنى، ھوقۇقلارنى، systemd بىرلىكلىرىنى ۋە كۆڭۈلدىكى rules.conf نى ئاپتوماتىك قۇرىدۇ." },
+          { t: "تۇنجى ئىجرا ۋە API بىخەتەرلىكى", d: "nginx لوگ فورماتىنى، FP trust نى ۋە API بىخەتەرلىكىنى (تالون، fail-closed) بىراقلا تەييارلايدۇ. قوليازمىلار بوغچا ئىچىدە (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "مەنبە ۋە قۇرۇش", d: "خەزىنىنى كۆچۈرۈپ، بارلىق يادرولار بىلەن قۇرۇڭ ۋە ئاساسلىق ئورنىتىش قوليازمىسىنى ئىجرا قىلىڭ." },
+          { t: "تۇنجى ئىجرا ۋە تالون ماسلىشىشى", d: "مۇلازىمەتلەرنى قوزغىتىدۇ ۋە API تالون ماسلىشىشى ۋە تاختا ئۇلىنىشىنى تەييارلايدۇ." },
+        ],
+      ],
+      commonTitle: "ئورتاق باسقۇچلار (A ياكى B دىن كېيىن)",
+      commonSteps: [
+        { t: "Nginx لوگ فورماتى", d: "WAF نىڭ ئىلتىماس گەۋدىسى ۋە X-Forwarded-For نى ئوقۇشى ئۈچۈن log_guardian لوگ فورماتى كېرەك. Setup ئۇنى ئادەتتە ئاپتوماتىك قوللىنىدۇ؛ STRICT ھالەتتە تەكشۈرۈڭ." },
+        { t: "ساغلاملىق ۋە ھالەت تەكشۈرۈش", d: "Daemon IPC نى، مۇلازىمەت ھالىتىنى ۋە BPF ئىقتىدارلىرىنى تەكشۈرۈڭ. يېشىل دەرۋازا: post_install_verify ئاخىرىدا FAIL: 0 كۆرۈنۈشى كېرەك." },
+        { t: "ئۆلچەملەر ۋە تۇنجى چەكلەش سىنىقى", d: "Prometheus ئۆلچەملىرىنى تەكشۈرۈڭ؛ ئېقىمدىن كېيىن ساناقچىلارنىڭ ئۆرلىگىنىنى كۆزىتىڭ. ھۇجۇم قۇرىنى قىستۇرۇپ چەكلەشنى ipset دا تەكشۈرەلەيسىز." },
+        { t: "VirtualBox / XDP سىز (يان كومپيۇتېر ۋە VM)", d: "eBPF/XDP يوق مۇھىتلاردا ipset ئاساسىدىكى چەكلەش بىلەن --no-xdp يېتەرلىك. مۇلازىمەت بېقىنمىلىقى مەغلۇپ بولسا، ئوڭشاش قوليازمىسى بىر بۇيرۇق." },
+      ],
+      dashboardTitle: "Pro تاختا — ئورنىتىشتىن كېيىن (تاللانما)",
+      dashboardBadge: "Pro · تاللانما",
+      dashboardNote: "تاختا بۇ landing بېتىدە ئەمەس، ئۆزىڭىزنىڭ ماشىنىسىدا ئىجرا بولىدۇ. Prod stack Caddy + Docker ئارقىلىق https://localhost:8443 دا مۇلازىمەت قىلىدۇ.",
+      dashboardSteps: [
+        { t: "Prod stack نى قوزغىتىش", d: "ئۆزىڭىزنىڭ مۇلازىمېتىرىدا تاختىنى قۇرۇپ قوزغىتىدۇ. كىرىش: admin / .env دىكى DASHBOARD_ADMIN_PASSWORD." },
+        { t: "يىراق VPS ئۈچۈن SSH توننېل", d: "تاختىنى تورغا ئاشكارىلىماي بىخەتەر كۆرۈش ئۈچۈن SSH توننېل قۇرۇڭ؛ ئالدى بىلەن مۇلازىمېتىرنى مۇستەھكەملەڭ." },
+      ],
+    },
   },
   sah: {
     pipelineNote:
@@ -2338,6 +3786,74 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     footerSoak: "72 чаас soak PASS · 0 алҕас",
     proofBody:
       "Слайд буолбатах, хат оҥоһуллар туоһу. OWASP CRS паритета, сымыйа позитив ааннара, бан хойутааһын бенчмарктара, корпус recall уонна 72 чаастаах soak — бары кээмэйдэммит, автоматтаммыт уонна аһаҕас тест матрицатыгар көстөр.",
+    vsCols: ["Метрика", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
+    vsGroupLabels: ["Күүстээх өрүттэрэ (кээмэйдэммит)", "Кырдьыктаах кыраныыссалар"],
+    vsRows0: [
+      ["Лог → WAF → ядро бан", "Биир силбиэ", "Бан эрэ", "Аҥаардастыы", "WAF туспа"],
+      ["OWASP CRS паритета", "100% (121 быраабыла)", "—", "—", "Эталон (100%)"],
+      ["Дьиҥнээх саба түһүү recall", "100% (1K+10K)", "—", "—", "100%"],
+      ["Тарҕаммыт / JA3 кластер бан", "100% (80 IP)", "—", "Сигналга олоҕуран", "—"],
+      ["nginx inline consult", "PASS", "—", "—", "Туспа модуль"],
+      ["L7 программа харыстабыла", "WAF + consult + eBPF", "—", "—", "CRS inline"],
+      ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
+      ["Сымыйа позитив", "0,2% (кээмэйдэммит)", "Үрдүк", "Орто", "CRS-ка тутулуктаах"],
+      ["Бан хойутааһына", "~17 мс", "сөк–мүн", "сөк", "Туспа интеграция"],
+      ["Кылгас туруктаах (5 мүн)", "PASS (0 сатаммат)", "—", "—", "—"],
+      ["72ч soak", "PASS (864/0)", "—", "—", "—"],
+      ["Туоһу пакета PDF+JSON", "Автомат (14 файл)", "Суох", "Аҥаардас", "Модуль-модуль"],
+      ["Автомат тест матрицата", "75 тест", "—", "Аҥаардас", "—"],
+      ["SOC кэм линията / дашборд", "Сөп (:8443)", "—", "Консоль", "—"],
+      ["Telegram операция + ack", "Сөп (биир баттааһын)", "—", "Аҥаардас", "—"],
+      ["Туруорар кэмэ", "~15 мүн", "мүнүүтэ", "мүнүүтэ", "чаас (туруоруу)"],
+    ],
+    vsRows1: [
+      ["Inline regex EPS", "~5 357 EPS (лог хат)", "—", "—", "~14 300 EPS inline"],
+      ["Бастакы ыйытыыны түргэнник бөҕөрдүү", "Реактивнай (лог устуруока)", "Реактивнай", "Аҥаардас", "Inline (түргэнник)"],
+      ["Кээмэйдээх L3/L4 ыраастааһын", "Суох — CDN сүбэлэнэр", "Суох", "Суох", "Суох"],
+      ["Общество сигнал ситимэ", "Бэйэ-хостинг", "—", "Сөп (глобальнай)", "—"],
+      ["Edge / Cloud WAF", "Origin хос", "—", "Bouncer", "Прокси режим"],
+      ["Салайыллар былыт / SaaS", "Суох (бэйэ-хостинг)", "Суох", "Сөп (консоль)", "—"],
+    ],
+    requirements: [
+      "Ubuntu 22.04 / 24.04 эбэтэр Debian 12 (amd64)",
+      "nginx + суруллар access лог (log_guardian формата)",
+      "Root эбэтэр sudo (systemd, ipset, /etc/log-guardian)",
+      "~200 МБ диск, 128 МБ RAM (Core); Pro туһугар Docker",
+      "Эбии Pro: eBPF/XDP туһугар 5.10+ ядро, Docker (дашборд/метрикалар)",
+    ],
+    setup: {
+      pathTitles: ["Саҥа сервер — .deb пакета", "Төрүт кот — оҥоруу уонна туруоруу"],
+      pathBadges: ["сүбэлэнэр", "оҥорооччу"],
+      pathNotes: [
+        "Оҥоруу наадата суох. Пакет бинары, systemd юниттарын, быраабылалары уонна скрипттэри аҕалар. Саҥардыыга куттала суох: баар /etc/log-guardian/rules.conf харалла хаалар. GitHub Releases-тан (log-guardian_*_amd64.deb) эбэтэр bash scripts/build_deb.sh → dist/ нөҥүө оҥоруҥ.",
+        "GitHub репозиторийын клонныаҥ уонна оҥоруҥ. Сайыннарыы, туруоруу уонна толору кот бэрэбиэркэтэ туһугар быйаҥ. install.sh systemd юниттарын, быраабылалары уонна nginx лог форматын туруорар.",
+      ],
+      pathSteps: [
+        [
+          { t: "Тутулуктар", d: "Бастакы туруорууга Debian пакет тутулуктарын эбиҥ. nginx суох буоллаҕына, кинини биир бэйэтигэр эбиэххэ сөп." },
+          { t: "Пакеты туруоруу", d: "dpkg -i тутулук алҕаһын биллэрдэҕинэ, apt-get install -f хамсатыҥ. postinst хамаан log-guardian туттааччытын, көҥүллэри, systemd юниттарын уонна default rules.conf-ы автоматынан үөскэтэр." },
+          { t: "Бастакы хамсатыы уонна API куттала суоҕа", d: "nginx лог форматын, FP trust-ы уонна API куттала суоҕун (токен, fail-closed) биирдэ бэлэмнээбит. Скрипттэр пакет иһигэр (/usr/local/share/log-guardian/scripts/)." },
+        ],
+        [
+          { t: "Төрүт уонна оҥоруу", d: "Репозиторийы клонныаҥ, бары ядролары кытта оҥоруҥ уонна сүрүн туруоруу скриптин хамсатыҥ." },
+          { t: "Бастакы хамсатыы уонна токен синхрона", d: "Сулууспалары көтөҕөр уонна API токен синхронун уонна дашборд ситимин бэлэмнээбит." },
+        ],
+      ],
+      commonTitle: "Уопсай хаамыылар (A эбэтэр B кэнниттэн)",
+      commonSteps: [
+        { t: "Nginx лог формата", d: "WAF ыйытыы этин уонна X-Forwarded-For-у ааҕарыгар log_guardian лог формата наада. Setup кинини сүрүннээн автоматынан туттар; STRICT режимҥэ бэрэбиэрдээҥ." },
+        { t: "Доруобуйа уонна турук бэрэбиэркэтэ", d: "Daemon IPC-ны, сулууспа турукун уонна BPF кыахтарын бэрэбиэрдээҥ. Күөх аан: post_install_verify бүтүүтүгэр FAIL: 0 көрүөхтээххин." },
+        { t: "Метрикалар уонна бастакы бан тест", d: "Prometheus метрикаларын бэрэбиэрдээҥ; трафик кэнниттэн ааҕааччылар үрдүүрүн одуулааҥ. Саба түһүү устуруокатын киллэрэн бан-ы ipset-ка бэрэбиэрдиэххэ сөп." },
+        { t: "VirtualBox / XDP суох (ноутбук уонна VM)", d: "eBPF/XDP суох эйгэлэргэ ipset олоҕурбут бан уонна --no-xdp тиийэр. Сулууспа тутулуга сатамматаҕына, өрөмүөн скрипта биир хамаан." },
+      ],
+      dashboardTitle: "Pro дашборд — туруорууттан кэнниттэн (эбии)",
+      dashboardBadge: "Pro · эбии",
+      dashboardNote: "Дашборд бу landing сайтка буолбатах, бэйэҥ массыынаҥар үлэлиир. Prod стек Caddy + Docker нөҥүө https://localhost:8443 адреска үлэлиир.",
+      dashboardSteps: [
+        { t: "Prod стеги саҕалааһын", d: "Бэйэҥ серверыҥар дашборду оҥорор уонна көтөҕөр. Киирии: admin / .env-тэн DASHBOARD_ADMIN_PASSWORD." },
+        { t: "Ыраах VPS туһугар SSH туннель", d: "Дашборду интэриниэккэ аспакка куттала суох көрөр туһугар SSH туннель туруоруҥ; бастаан сервери бөҕөргөтүҥ." },
+      ],
+    },
   },
 };
 
@@ -2406,6 +3922,12 @@ function applyBody(base: PageCopy, b: BodyOverride): PageCopy {
       advantages: b.advantages ?? base.vs.advantages,
       note: b.vsNote ?? base.vs.note,
       legend: b.vsLegend ?? base.vs.legend,
+      cols: b.vsCols ?? base.vs.cols,
+      groups: base.vs.groups.map((g, i) => ({
+        ...g,
+        label: b.vsGroupLabels?.[i] ?? g.label,
+        rows: (i === 0 ? b.vsRows0 : b.vsRows1) ?? g.rows,
+      })),
     },
     honest: {
       ...base.honest,
@@ -2420,6 +3942,44 @@ function applyBody(base: PageCopy, b: BodyOverride): PageCopy {
       ...base.setup,
       intro: b.setupIntro ?? base.setup.intro,
       tip: b.setupTip ?? base.setup.tip,
+      requirements: b.requirements ?? base.setup.requirements,
+      paths: b.setup
+        ? base.setup.paths.map((p, pi) => ({
+            ...p,
+            title: b.setup!.pathTitles[pi] ?? p.title,
+            badge: b.setup!.pathBadges[pi] ?? p.badge,
+            note: b.setup!.pathNotes[pi] ?? p.note,
+            steps: p.steps.map((s, si) => ({
+              ...s,
+              title: b.setup!.pathSteps[pi]?.[si]?.t ?? s.title,
+              description: b.setup!.pathSteps[pi]?.[si]?.d ?? s.description,
+            })),
+          }))
+        : base.setup.paths,
+      common: b.setup
+        ? {
+            ...base.setup.common,
+            title: b.setup.commonTitle,
+            steps: base.setup.common.steps.map((s, si) => ({
+              ...s,
+              title: b.setup!.commonSteps[si]?.t ?? s.title,
+              description: b.setup!.commonSteps[si]?.d ?? s.description,
+            })),
+          }
+        : base.setup.common,
+      dashboard: b.setup
+        ? {
+            ...base.setup.dashboard,
+            title: b.setup.dashboardTitle,
+            note: b.setup.dashboardNote,
+            steps: base.setup.dashboard.steps.map((s, si) => ({
+              ...s,
+              title: b.setup!.dashboardSteps[si]?.t ?? s.title,
+              description: b.setup!.dashboardSteps[si]?.d ?? s.description,
+            })),
+          }
+        : base.setup.dashboard,
+      dashboardBadge: b.setup?.dashboardBadge ?? base.setup.dashboardBadge,
     },
     contact: { ...base.contact, body: b.contactBody ?? base.contact.body },
     footer: {
