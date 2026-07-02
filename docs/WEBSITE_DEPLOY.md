@@ -5,10 +5,14 @@ Marketing sitesi `assets/website/` altinda gelistirilir; **internete cikan paket
 ## Tek komut (yerel)
 
 ```bash
-bash scripts/website_deploy_gate.sh   # build + pack + audit + award ZIP
+bash scripts/website_publish.sh       # landing build + Cloudflare Pages production (canli site)
+bash scripts/website_deploy_gate.sh   # yalnizca build + dogrulama (deploy yok)
 bash scripts/website_smoke.sh           # HTTP smoke (domain gerekmez)
 LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 ```
+
+**Canli yayin:** Cloudflare Pages bu repoda Git bagli degil — `git push` siteyi guncellemez.
+`bash scripts/website_publish.sh` (repo kokunden; `landing/` icinden degil).
 
 Award / portfolio paketi (Awwwards, FWA, showcase):
 
