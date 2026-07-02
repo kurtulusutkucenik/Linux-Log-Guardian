@@ -783,6 +783,15 @@ static void execve_probe_init(const char *obj_path) {
         k8s_guard_init(g_map_cgroups_fd);
     }
 
+    /* filter_mode=1: yalnizca watched_cgroups (laptop'ta bos = host bash/systemd korunur) */
+    struct bpf_map *fm_map =
+        bpf_object__find_map_by_name(g_execve_obj, "filter_mode");
+    if (fm_map) {
+        uint32_t k0 = 0, mode = 1;
+        if (bpf_map_update_elem(bpf_map__fd(fm_map), &k0, &mode, BPF_ANY) != 0)
+            syslog(LOG_WARNING, "[EXECVE-PROBE] filter_mode=1 ayarlanamadi");
+    }
+
     /* Ring buffer: RCE event'leri al */
     struct bpf_map *rb_map =
         bpf_object__find_map_by_name(g_execve_obj, "rce_ringbuf");
@@ -1248,7 +1257,20 @@ static void start_ipc_accept_thread(void)
     pthread_attr_destroy(&attr);
 }
 
+static int lg_uring_enabled(void) {
+    const char *v = getenv("LG_DISABLE_URING");
+    if (v && *v && strcmp(v, "0") != 0)
+        return 0;
+    return 1;
+}
+
 static void io_uring_accept_loop(void) {
+    if (!lg_uring_enabled()) {
+        syslog(LOG_INFO,
+               "[DAEMON] LG_DISABLE_URING=1 — io_uring atlaniyor, klasik poll dongusu.");
+        goto fallback;
+    }
+
     struct io_uring ring;
     struct io_uring_params params;
     memset(&params, 0, sizeof(params));
@@ -1326,9 +1348,12 @@ static void io_uring_accept_loop(void) {
             continue;
         }
         if (ret < 0) {
-            if (errno == EINTR) continue;
-            syslog(LOG_ERR, "[DAEMON] io_uring_wait_cqe: %s", strerror(-ret));
-            break;
+            if (ret == -EINTR) continue;
+            syslog(LOG_WARNING,
+                   "[DAEMON] io_uring_wait_cqe: %s — klasik poll dongusune geciliyor",
+                   strerror(-ret));
+            io_uring_queue_exit(&ring);
+            goto fallback;
         }
 
         uint64_t ud = (uint64_t)io_uring_cqe_get_data64(cqe);
@@ -1380,7 +1405,7 @@ static void io_uring_accept_loop(void) {
     }
 
     io_uring_queue_exit(&ring);
-    return;
+    goto fallback;
 
 fallback:
     /* io_uring yok — ringbuf poll (IPC accept ayri thread'de) */

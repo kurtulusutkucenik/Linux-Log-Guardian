@@ -25,7 +25,7 @@
 #include <pwd.h>
 #include <grp.h>
 #include <poll.h>
-#include <emmintrin.h>   /* _mm_pause() — lock-free spin-wait */
+#include "cpu_pause.h"
 
 #include "memory_pool.h"
 #include "parser.h"
@@ -55,6 +55,7 @@
 #include "falco_host_rules.h"
 #include "fp_trust.h"
 #include "ban_policy.h"
+#include "rules_bundle_verify.h"
 #include "tenant_db.h"
 #include "tenant_policy.h"
 #include "l7_telemetry.h"
@@ -80,7 +81,9 @@
 #include "agent_sync.h"
 #include "siem_forwarder.h"
 #include <dlfcn.h>
+#ifndef LG_NO_URING
 #include <liburing.h>
+#endif
 
 #ifdef HAVE_LIBBPF
 #include <bpf/libbpf.h>
@@ -135,6 +138,8 @@ static int  g_openapi_strict = 0;
 
 /* SIGHUP: kuralları yeniden yükle (hot-reload) */
 static volatile int g_sighup_pending = 0;
+/* SIGUSR2: Telegram inline WL/sessiz geri al (/run/log-guardian/telegram_undo.ip) */
+static volatile int g_sigusr2_pending = 0;
 
 /* XDP/eBPF modu: ağ arayüzü adı (örn: "eth0"). NULL = devre dışı */
 static const char *g_xdp_iface = NULL;
@@ -164,6 +169,10 @@ static pthread_mutex_t g_whitelist_mutex = PTHREAD_MUTEX_INITIALIZER;
 static char g_crs_rules_path[512] = "rules/crs-bundle.rules";
 static char g_falco_host_rules_path[512] = "";
 static int  g_crs_enabled = 1;
+static int  g_rules_verify = 0;
+static char g_rules_manifest_path[512] = "rules/crs-bundle.manifest.json";
+static char g_geoip_offline_csv[512] = "";
+static char g_geoip_mmdb[512] = "";
 static char g_openapi_schema_path[512] = "";
 static int  g_lineage_auto_alert = 1;
 static int  g_wasm_enabled = 1;
@@ -254,6 +263,7 @@ pthread_mutex_t g_tui_mutex = PTHREAD_MUTEX_INITIALIZER;
 static void handle_sigint(int sig) {
     (void)sig;
     g_running = 0;
+    agent_sync_request_stop();
 }
 
 /*
@@ -282,6 +292,11 @@ static void handle_sigwinch(int sig) {
 static void handle_sighup(int sig) {
     (void)sig;
     g_sighup_pending = 1;  /* async-signal-safe: sadece flag set et */
+}
+
+static void handle_sigusr2(int sig) {
+    (void)sig;
+    g_sigusr2_pending = 1;
 }
 
 /* is_valid_ip, trim_ws, secure_equals, secure_zero → firewall.c / crypto_utils.c */
@@ -340,6 +355,62 @@ static int lg_add_whitelist_ip(const char *ip)
     pthread_mutex_unlock(&g_whitelist_mutex);
     fprintf(stderr, "[WHITELIST] runtime eklendi: %s\n", ip);
     return 0;
+}
+
+static int lg_remove_whitelist_ip(const char *ip)
+{
+    if (!ip || !is_valid_ip(ip))
+        return -1;
+    pthread_mutex_lock(&g_whitelist_mutex);
+    for (size_t i = 0; i < g_whitelist_count; i++) {
+        if (strcmp(g_whitelist_ips[i], ip) != 0)
+            continue;
+        if (i + 1 < g_whitelist_count) {
+            memmove(g_whitelist_ips[i], g_whitelist_ips[i + 1],
+                    (g_whitelist_count - i - 1) * sizeof(g_whitelist_ips[0]));
+        }
+        g_whitelist_count--;
+        pthread_mutex_unlock(&g_whitelist_mutex);
+        fprintf(stderr, "[WHITELIST] runtime kaldirildi: %s\n", ip);
+        return 0;
+    }
+    pthread_mutex_unlock(&g_whitelist_mutex);
+    return 1;
+}
+
+static void lg_telegram_operator_undo_ip(const char *ip)
+{
+    if (!ip || !is_valid_ip(ip))
+        return;
+    int wl_rc = lg_remove_whitelist_ip(ip);
+    webhook_operator_unmute_ip(ip);
+    fprintf(stderr,
+            "[TELEGRAM_UNDO] %s — WL kaldirildi=%s, sessiz mod kapali\n",
+            ip, wl_rc == 0 ? "evet" : "yoktu");
+}
+
+static void process_telegram_operator_undo(void)
+{
+    const char *path = "/run/log-guardian/telegram_undo.ip";
+    FILE *fp = fopen(path, "r");
+    if (!fp)
+        return;
+    char ip[IP_STR_LEN];
+    if (!fgets(ip, sizeof(ip), fp)) {
+        fclose(fp);
+        return;
+    }
+    fclose(fp);
+    (void)unlink(path);
+
+    char *nl = strchr(ip, '\n');
+    if (nl)
+        *nl = '\0';
+    char *p = trim_ws(ip);
+    if (!p[0] || !is_valid_ip(p))
+        return;
+
+    lg_telegram_operator_undo_ip(p);
 }
 
 static void fp_trust_promote_whitelist_cb(const char *ip)
@@ -833,6 +904,14 @@ static void apply_siem_env_overrides(void)
         if (p > 0 && p < 65536)
             g_siem_config.port = p;
     }
+    v = getenv("SIEM_FORMAT");
+    if (v && v[0]) {
+        size_t n = strlen(v);
+        if (n >= sizeof(g_siem_config.format))
+            n = sizeof(g_siem_config.format) - 1;
+        memcpy(g_siem_config.format, v, n);
+        g_siem_config.format[n] = '\0';
+    }
 }
 
 static void operator_load_rules(void)
@@ -842,6 +921,7 @@ static void operator_load_rules(void)
     const char *rules = operator_rules_path();
     if (access(rules, F_OK) == 0)
         load_rules_file(rules);
+    apply_siem_env_overrides();
     operator_apply_db_path();
     if (g_openapi_schema_path[0]) {
         char sp[512];
@@ -972,8 +1052,11 @@ static int cmd_webhook_test(int argc, char **argv)
 
     operator_load_rules();
     apply_siem_env_overrides();
-    if (g_siem_config.enabled && g_siem_config.host[0] != '\0')
-        siem_forwarder_init();
+    if (g_siem_config.enabled && g_siem_config.host[0] != '\0') {
+        const char *sync = getenv("SIEM_SYNC_SEND");
+        if (!sync || !sync[0] || strcmp(sync, "0") == 0)
+            siem_forwarder_init();
+    }
     if (!g_webhook.enabled) {
         fprintf(stderr,
                 "[ERR] WEBHOOK_ENABLED=0 (/etc/log-guardian/rules.conf)\n"
@@ -996,8 +1079,12 @@ static int cmd_webhook_test(int argc, char **argv)
     }
     if (strcmp(kind, "batch") == 0)
         usleep(800000);
-    if (strcmp(kind, "ban") == 0 || strcmp(kind, "alert") == 0)
-        usleep(300000);
+    if (strcmp(kind, "ban") == 0 || strcmp(kind, "alert") == 0) {
+        if (g_siem_config.enabled && g_siem_config.host[0] != '\0')
+            usleep(1200000);
+        else
+            usleep(300000);
+    }
     WebhookDeliveryStats st;
     webhook_delivery_stats(&st);
     int rc = st.fail > 0 ? 1 : 0;
@@ -1282,6 +1369,20 @@ static int cmd_status_dump(void)
                    db.recent_bans[i].action, rsn);
         }
     }
+    printf("],\"recent_telegram_acks\":[");
+    if (have_db) {
+        for (int i = 0; i < db.recent_ack_count; i++) {
+            char key_esc[128];
+            char name_esc[128];
+            json_escape_str(db.recent_acks[i].ack_key, key_esc, sizeof(key_esc));
+            json_escape_str(db.recent_acks[i].operator_name, name_esc, sizeof(name_esc));
+            if (i) printf(",");
+            printf("{\"ts\":%ld,\"ack_key\":\"%s\",\"operator\":\"%s\","
+                   "\"operator_id\":\"%s\"}",
+                   (long)db.recent_acks[i].ts, key_esc, name_esc,
+                   db.recent_acks[i].operator_id);
+        }
+    }
     printf("],");
     {
         uint64_t st_total = 0, st_block = 0, st_warn = 0, st_idor = 0, st_rate = 0;
@@ -1345,7 +1446,14 @@ static int cmd_status_dump(void)
                (have_daemon && dsnap.l7_probe) ? "true" : "false");
     }
     {
-        webhook_status_json(stdout);
+        long ack_24h = 0;
+        long unacked_24h = 0;
+        if (g_db_path && g_db_path[0]) {
+            time_t since = time(NULL) - 86400;
+            (void)db_telegram_ack_count_path(g_db_path, since, &ack_24h);
+            (void)db_unacked_count_path(g_db_path, since, &unacked_24h);
+        }
+        webhook_status_json(stdout, ack_24h, unacked_24h);
         printf(",");
     }
     {
@@ -1496,6 +1604,18 @@ static void lg_telegram_ops_status(char *buf, size_t cap) {
              webhook_telegram_target_count());
 }
 
+static void lg_refresh_telegram_metrics(void)
+{
+    if (!g_db_path || !g_db_path[0])
+        return;
+    time_t since = time(NULL) - 86400;
+    long ack_24h = 0;
+    long unacked_24h = 0;
+    (void)db_telegram_ack_count_path(g_db_path, since, &ack_24h);
+    (void)db_unacked_count_path(g_db_path, since, &unacked_24h);
+    metrics_refresh_telegram_ack(ack_24h, unacked_24h);
+}
+
 static int lg_telegram_ack(const char *chat_id, const char *ack_key,
                            const char *operator_id, const char *operator_name)
 {
@@ -1504,14 +1624,17 @@ static int lg_telegram_ack(const char *chat_id, const char *ack_key,
     const char *inc = NULL;
     if (strncmp(ack_key, "INC-", 4) == 0 || strncmp(ack_key, "BATCH-", 6) == 0)
         inc = ack_key;
+    int rc = -1;
     if (g_db_path && g_db_path[0])
-        return db_telegram_ack_register_path(
+        rc = db_telegram_ack_register_path(
             g_db_path, chat_id, ack_key, inc, operator_id, operator_name);
-    if (g_db_enabled) {
+    else if (g_db_enabled) {
         db_log_telegram_ack(chat_id, ack_key, inc);
-        return 0;
+        rc = 0;
     }
-    return -1;
+    if (rc == 0)
+        lg_refresh_telegram_metrics();
+    return rc;
 }
 
 static void lg_telegram_inline(const char *chat_id, const char *verb,
@@ -1532,6 +1655,9 @@ static void lg_telegram_inline(const char *chat_id, const char *verb,
             fprintf(stderr, "[TELEGRAM] inline unban: %s\n", arg);
         else
             fprintf(stderr, "[TELEGRAM] inline unban basarisiz: %s\n", arg);
+    } else if (strcmp(verb, "undo") == 0) {
+        lg_telegram_operator_undo_ip(arg);
+        fprintf(stderr, "[TELEGRAM] inline sesli: %s\n", arg);
     }
 }
 
@@ -1625,6 +1751,7 @@ static void load_rules_file(const char *path) {
 
     parser_clear_proxy_cidrs();
     parser_set_trust_xff(0);
+    g_whitelist_count = 0;
 
     int low_slow_req = 0, brute_err = 0, ddos_rps = 0, slow_ms = 0;
     int sqli_score = 0, slow_hit_cnt = 0, cooldown = 0;
@@ -1639,6 +1766,7 @@ static void load_rules_file(const char *path) {
     char fp_store_path[512] = "data/fp-trust.lst";
     int auto_ban_policy = 1;
     double auto_ban_min_risk = 60.0;
+    int ban_max_auto_per_min = 0;
     char ban_audit_path[512] = "data/ban-policy-audit.jsonl";
     anomaly_get_thresholds(&low_slow_req, &brute_err, &ddos_rps, &slow_ms,
                            &sqli_score, &slow_hit_cnt, &cooldown);
@@ -2004,17 +2132,32 @@ static void load_rules_file(const char *path) {
             memcpy(g_agent_sync_config.agent_id, val, n);
             g_agent_sync_config.agent_id[n] = '\0';
         }
-        else if (strcmp(key, "SIEM_FORWARDER_ENABLED") == 0 && is_number)
-            g_siem_config.enabled = (int)parsed != 0;
-        else if (strcmp(key, "SIEM_HOST") == 0) {
-            size_t n = strlen(val);
-            if (n >= sizeof(g_siem_config.host))
-                n = sizeof(g_siem_config.host) - 1;
-            memcpy(g_siem_config.host, val, n);
-            g_siem_config.host[n] = '\0';
+        else if (strcmp(key, "SIEM_FORWARDER_ENABLED") == 0 && is_number) {
+            if (!getenv("SIEM_FORWARDER_ENABLED"))
+                g_siem_config.enabled = (int)parsed != 0;
         }
-        else if (strcmp(key, "SIEM_PORT") == 0 && is_number && parsed > 0 && parsed < 65536)
-            g_siem_config.port = (int)parsed;
+        else if (strcmp(key, "SIEM_HOST") == 0) {
+            if (!getenv("SIEM_HOST")) {
+                size_t n = strlen(val);
+                if (n >= sizeof(g_siem_config.host))
+                    n = sizeof(g_siem_config.host) - 1;
+                memcpy(g_siem_config.host, val, n);
+                g_siem_config.host[n] = '\0';
+            }
+        }
+        else if (strcmp(key, "SIEM_PORT") == 0 && is_number && parsed > 0 && parsed < 65536) {
+            if (!getenv("SIEM_PORT"))
+                g_siem_config.port = (int)parsed;
+        }
+        else if (strcmp(key, "SIEM_FORMAT") == 0) {
+            if (!getenv("SIEM_FORMAT")) {
+                size_t n = strlen(val);
+                if (n >= sizeof(g_siem_config.format))
+                    n = sizeof(g_siem_config.format) - 1;
+                memcpy(g_siem_config.format, val, n);
+                g_siem_config.format[n] = '\0';
+            }
+        }
         else if (strcmp(key, "K8S_WEBHOOK_ENABLED") == 0 && is_number)
             g_k8s_webhook_config.enabled = (int)parsed != 0;
         else if (strcmp(key, "K8S_OPERATOR_URL") == 0) {
@@ -2079,6 +2222,28 @@ static void load_rules_file(const char *path) {
             if (n >= sizeof(ban_audit_path)) n = sizeof(ban_audit_path) - 1;
             memcpy(ban_audit_path, val, n);
             ban_audit_path[n] = '\0';
+        }
+        else if (strcmp(key, "BAN_MAX_AUTO_PER_MIN") == 0 && is_number && parsed >= 0)
+            ban_max_auto_per_min = (int)parsed;
+        else if (strcmp(key, "RULES_VERIFY") == 0 && is_number)
+            g_rules_verify = (int)parsed != 0;
+        else if (strcmp(key, "RULES_MANIFEST") == 0) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_rules_manifest_path)) n = sizeof(g_rules_manifest_path) - 1;
+            memcpy(g_rules_manifest_path, val, n);
+            g_rules_manifest_path[n] = '\0';
+        }
+        else if (strcmp(key, "GEOIP_MMDB") == 0) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_geoip_mmdb)) n = sizeof(g_geoip_mmdb) - 1;
+            memcpy(g_geoip_mmdb, val, n);
+            g_geoip_mmdb[n] = '\0';
+        }
+        else if (strcmp(key, "GEOIP_OFFLINE_CSV") == 0) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_geoip_offline_csv)) n = sizeof(g_geoip_offline_csv) - 1;
+            memcpy(g_geoip_offline_csv, val, n);
+            g_geoip_offline_csv[n] = '\0';
         }
         else if (strcmp(key, "MESH_BACKEND") == 0) {
             size_t n = strlen(val);
@@ -2178,7 +2343,29 @@ static void load_rules_file(const char *path) {
         }
     }
     ban_policy_config(auto_ban_policy, auto_ban_min_risk, ban_audit_path);
+    ban_policy_set_rate_cap(ban_max_auto_per_min);
     ban_policy_set_tenant(g_tenant_id);
+    if (g_geoip_mmdb[0]) {
+        char mmdb_path[512];
+        strncpy(mmdb_path, g_geoip_mmdb, sizeof(mmdb_path) - 1);
+        mmdb_path[sizeof(mmdb_path) - 1] = '\0';
+        resolve_path_from_rules(path, mmdb_path, sizeof(mmdb_path));
+        if (geoip_lookup_load_mmdb(mmdb_path) == 0 && !g_output_json) {
+            fprintf(stderr, "[GEOIP] MMDB yuklendi: %s\n", mmdb_path);
+            log_rl(LOG_INFO, "[GEOIP] MMDB yuklendi: %s", mmdb_path);
+        } else if (!g_output_json && geoip_lookup_mmdb_available())
+            fprintf(stderr, "[GEOIP] MMDB acilamadi: %s\n", mmdb_path);
+    }
+    if (g_geoip_offline_csv[0]) {
+        char geo_path[512];
+        strncpy(geo_path, g_geoip_offline_csv, sizeof(geo_path) - 1);
+        geo_path[sizeof(geo_path) - 1] = '\0';
+        resolve_path_from_rules(path, geo_path, sizeof(geo_path));
+        if (geoip_lookup_load_offline_csv(geo_path) == 0 && !g_output_json) {
+            fprintf(stderr, "[GEOIP] offline CSV yuklendi: %s\n", geo_path);
+            log_rl(LOG_INFO, "[GEOIP] offline CSV yuklendi: %s", geo_path);
+        }
+    }
     ja3_cluster_config(ja3_cluster_en, ja3_cluster_min);
 
     const char *env_token = getenv("LOGANALYZER_TELEGRAM_TOKEN");
@@ -2708,7 +2895,7 @@ static void spmc_enqueue(const WorkChunk *chunk) {
 
     /* Kuyruk doluysa tüketicilerin boşaltmasını bekle */
     while (h - atomic_load_explicit(&g_queue.tail, memory_order_acquire) >= QUEUE_SIZE) {
-        _mm_pause();  /* CPU'ya hint: spin-wait döngüsü */
+        LG_CPU_PAUSE();
     }
 
     g_queue.slots[h & QUEUE_MASK] = *chunk;
@@ -2731,7 +2918,7 @@ static void *worker_loop(void *arg) {
             /* Kuyruk boş: done flag'ı kontrol et */
             if (atomic_load_explicit(&g_queue.done, memory_order_acquire)) break;
             /* Adaptive spin-wait: önce CPU hint, sonra yield */
-            if (++spin_count < 128) { _mm_pause(); }
+            if (++spin_count < 128) { LG_CPU_PAUSE(); }
             else { spin_count = 0; sched_yield(); }
             continue;
         }
@@ -3156,6 +3343,7 @@ int main(int argc, char *argv[]) {
             return 1;
         }
         else if (strcmp(argv[i], "--ban-cidr") == 0 && i + 1 < argc) {
+#ifdef HAVE_LIBBPF
             const char *ip_cidr = argv[++i];
             int map_fd = bpf_obj_get("/sys/fs/bpf/loganalyzer/xdp_blacklist_v4");
             if (map_fd < 0) {
@@ -3194,6 +3382,11 @@ int main(int argc, char *argv[]) {
                 fprintf(stderr, "[ERR] BPF guncelleme basarisiz!\n");
                 return 1;
             }
+#else
+            (void)argv[++i];
+            fprintf(stderr, "[ERR] --ban-cidr libbpf gerektirir (bu build'de kapali).\n");
+            return 1;
+#endif
         }
         else if (strcmp(argv[i], "--db") == 0 && i + 1 < argc) {
             size_t n = strlen(argv[++i]);
@@ -3241,6 +3434,17 @@ int main(int argc, char *argv[]) {
         if (g_crs_enabled && g_crs_rules_path[0]) {
             resolve_path_from_rules(g_rules_path, g_crs_rules_path,
                                     sizeof(g_crs_rules_path));
+            if (g_rules_verify && access(g_crs_rules_path, F_OK) == 0) {
+                char manifest_path[512];
+                strncpy(manifest_path, g_rules_manifest_path,
+                        sizeof(manifest_path) - 1);
+                manifest_path[sizeof(manifest_path) - 1] = '\0';
+                resolve_path_from_rules(g_rules_path, manifest_path,
+                                        sizeof(manifest_path));
+                if (rules_bundle_verify_file(g_crs_rules_path, manifest_path) != 0)
+                    exit(1);
+                log_rl(LOG_INFO, "[rules_verify] OK: %s", g_crs_rules_path);
+            }
             if (access(g_crs_rules_path, F_OK) == 0)
                 pcre_engine_load_crs(g_crs_rules_path);
             else if (!g_output_json)
@@ -3310,6 +3514,10 @@ int main(int argc, char *argv[]) {
     struct sigaction sa_hup = {0};
     sa_hup.sa_handler = handle_sighup;
     sigaction(SIGHUP, &sa_hup, NULL);
+
+    struct sigaction sa_usr2 = {0};
+    sa_usr2.sa_handler = handle_sigusr2;
+    sigaction(SIGUSR2, &sa_usr2, NULL);
 
     /* Olumcul sinyallerde terminal temizleme (SA_RESETHAND = tek seferlik) */
     struct sigaction sa_fatal = {0};
@@ -3431,9 +3639,11 @@ int main(int argc, char *argv[]) {
         agent_sync_init();
     }
     
+    apply_siem_env_overrides();
     if (g_siem_config.enabled && g_siem_config.host[0] != '\0') {
-        apply_siem_env_overrides();
-        siem_forwarder_init();
+        const char *sync = getenv("SIEM_SYNC_SEND");
+        if (!sync || !sync[0] || strcmp(sync, "0") == 0)
+            siem_forwarder_init();
     }
 
     /* Etcd mesh — production (MESH_BACKEND=etcd); ZMQ devre disi */
@@ -3482,18 +3692,26 @@ int main(int argc, char *argv[]) {
         setup_upload_watcher();
 
     /* io_uring init for event loop multiplexing */
-    struct io_uring ring;
+#ifndef LG_NO_URING
     int uring_active = 0;
-    if (io_uring_queue_init(32, &ring, 0) == 0) {
-        uring_active = 1;
-        log_rl(LOG_INFO, "[IO_URING] Asenkron I/O multiplexer aktif.");
-    } else {
-        log_rl(LOG_WARNING, "[IO_URING] Baslatilamadi, select() fallback kullanilacak.");
+    struct io_uring ring;
+    {
+        const char *disable = getenv("LG_DISABLE_URING");
+        int uring_wanted = !(disable && *disable && strcmp(disable, "0") != 0);
+        if (uring_wanted && io_uring_queue_init(32, &ring, 0) == 0) {
+            uring_active = 1;
+            log_rl(LOG_INFO, "[IO_URING] Asenkron I/O multiplexer aktif.");
+        } else if (!uring_wanted) {
+            log_rl(LOG_INFO, "[IO_URING] LG_DISABLE_URING=1 — select() fallback.");
+        } else {
+            log_rl(LOG_WARNING, "[IO_URING] Baslatilamadi, select() fallback kullanilacak.");
+        }
     }
 
     int poll_inotify_armed = 0;
     int poll_trap_armed = 0;
     int poll_tui_armed = 0;
+#endif
 
     /* inotify setup for tail -f */
     int inotify_fd = -1;
@@ -3554,6 +3772,10 @@ int main(int argc, char *argv[]) {
                 wasm_runtime_scan_plugins();
             }
         }
+        if (g_sigusr2_pending) {
+            g_sigusr2_pending = 0;
+            process_telegram_operator_undo();
+        }
 
         if (trap_inotify_fd >= 0)
             process_trap_events(trap_inotify_fd);
@@ -3610,6 +3832,7 @@ int main(int argc, char *argv[]) {
             } else if (inotify_fd >= 0 || trap_inotify_fd >= 0) {
                 int has_inotify = 0, has_trap = 0, has_tui = 0;
 
+#ifndef LG_NO_URING
                 if (uring_active) {
                     if (inotify_fd >= 0 && !poll_inotify_armed) {
                         struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
@@ -3650,7 +3873,9 @@ int main(int argc, char *argv[]) {
                         }
                         io_uring_cq_advance(&ring, (unsigned)count);
                     }
-                } else {
+                } else
+#endif
+                {
                     /* Fallback: select() */
                     struct timeval tv = {0, 100000};
                     fd_set rfds;
@@ -4018,9 +4243,11 @@ int main(int argc, char *argv[]) {
     fp_trust_export_json("fp-trust.json");
     etcd_mesh_stop();
 
+#ifndef LG_NO_URING
     if (uring_active) {
         io_uring_queue_exit(&ring);
     }
+#endif
 
     if (g_gc_thread_started) {
         pthread_join(g_gc_thread, NULL);

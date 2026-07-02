@@ -1,0 +1,8 @@
+{
+  "date": "2026-06-29T14:45:14.932357+00:00",
+  "pass": true,
+  "mode": "kind-live",
+  "deny_label": "security.log-guardian.io/deny",
+  "reason": null,
+  "script": "scripts/k8s_admission_test.sh"
+}

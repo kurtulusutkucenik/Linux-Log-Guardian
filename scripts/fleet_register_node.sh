@@ -19,5 +19,14 @@ if [[ -z "${TELEMETRY_URL:-}" ]]; then
 fi
 
 echo "=== fleet_register_node ($AGENT_ID) ==="
+echo "  TELEMETRY_URL=${TELEMETRY_URL}"
+if [[ "$TELEMETRY_URL" == *HOST_IP* ]]; then
+  echo "[fleet_register_node] FAIL: HOST_IP placeholder — gercek IP yazin" >&2
+  echo "  Host'ta: ip -4 route get 1.1.1.1 | awk '{print \$7; exit}'" >&2
+  echo "  NAT VM:  TELEMETRY_URL=https://10.0.2.2:8443/api/telemetry" >&2
+  echo "  Bridge:  TELEMETRY_URL=https://192.168.x.x:8443/api/telemetry" >&2
+  exit 1
+fi
 bash "$ROOT/scripts/fleet_telemetry_push.sh"
 echo "[OK] Filoda görünmesi için: https://localhost:8443/fleet (Ctrl+Shift+R)"
+echo "  VM curl test: curl -sk --resolve 'localhost:8443:HOST_IP' https://localhost:8443/api/tier"

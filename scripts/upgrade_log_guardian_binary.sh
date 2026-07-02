@@ -57,16 +57,34 @@ install_binary() {
   echo "[upgrade_binary] kuruldu: $dest ($label)"
 }
 
+stop_service_safely() {
+  local svc="$1"
+  systemctl is-active --quiet "$svc" 2>/dev/null || return 0
+  echo "[upgrade_binary] $svc durduruluyor..."
+  systemctl stop "$svc" 2>/dev/null || true
+  local n=0
+  while systemctl is-active --quiet "$svc" 2>/dev/null && [[ "$n" -lt 20 ]]; do
+    sleep 1
+    n=$((n + 1))
+  done
+  if systemctl is-active --quiet "$svc" 2>/dev/null; then
+    echo "[upgrade_binary] WARN: $svc hala aktif — SIGTERM/SIGKILL" >&2
+    systemctl kill -s SIGTERM "$svc" 2>/dev/null || true
+    sleep 2
+    systemctl kill -s SIGKILL "$svc" 2>/dev/null || true
+    sleep 1
+  fi
+  systemctl reset-failed "$svc" 2>/dev/null || true
+}
+
 daemon_stopped=0
 analyzer_stopped=0
 if systemctl is-active --quiet "$DAEMON_SERVICE" 2>/dev/null; then
-  echo "[upgrade_binary] $DAEMON_SERVICE durduruluyor..."
-  systemctl stop "$DAEMON_SERVICE"
+  stop_service_safely "$DAEMON_SERVICE"
   daemon_stopped=1
 fi
 if systemctl is-active --quiet "$SERVICE" 2>/dev/null; then
-  echo "[upgrade_binary] $SERVICE durduruluyor..."
-  systemctl stop "$SERVICE"
+  stop_service_safely "$SERVICE"
   analyzer_stopped=1
 fi
 
@@ -104,7 +122,8 @@ fi
 metrics_ok=0
 metrics_note=""
 for _ in 1 2 3 4 5 6 7 8; do
-  m=$(curl -sf "http://127.0.0.1:${METRICS_PORT}/metrics" 2>/dev/null || true)
+  m=$(curl -sf --connect-timeout 2 --max-time 3 \
+    "http://127.0.0.1:${METRICS_PORT}/metrics" 2>/dev/null || true)
   if [[ -n "$m" ]]; then
     if grep -q 'loganalyzer_webhook_sent_total' <<<"$m"; then
       metrics_ok=1

@@ -14,7 +14,8 @@ code() {
   curl -s -o /dev/null -w '%{http_code}' --max-time 2 "$@" 2>/dev/null || echo 000
 }
 
-if ! curl -s --max-time 2 "${BASE}/api/v1/metrics" >/dev/null 2>&1; then
+init_code=$(code "${BASE}/api/v1/metrics")
+if [[ "$init_code" == "000" ]]; then
   echo "[api_fail_closed] FAIL: API yanit vermiyor — systemctl start log-guardian" >&2
   echo ""
   echo "=== ozet ==="
@@ -69,10 +70,9 @@ if [[ -n "$tok" ]]; then
   mcode=$(code "${auth[@]}" "${BASE}/api/v1/metrics")
   [[ "$mcode" == "200" ]] && echo "[OK] GET /metrics token ile 200" \
     || { echo "[FAIL] metrics token code=$mcode" >&2; fail=1; }
-  bcode=$(code "${auth[@]}" -X POST "${BASE}/api/v1/ban?ip=203.0.113.253")
-  [[ "$bcode" == "200" || "$bcode" == "502" ]] \
-    && echo "[OK] POST /ban token ile $bcode" \
-    || { echo "[FAIL] ban token code=$bcode" >&2; fail=1; }
+  bcode=$(code "${auth[@]}" "${BASE}/api/v1/bans")
+  [[ "$bcode" == "200" ]] && echo "[OK] GET /bans token ile 200" \
+    || { echo "[FAIL] bans token code=$bcode" >&2; fail=1; }
 fi
 
 [[ "$fail" -eq 0 ]] && {

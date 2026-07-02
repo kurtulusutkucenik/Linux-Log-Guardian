@@ -95,11 +95,16 @@ else
   bad "tests.html meta CSP csp.txt ile uyumsuz"
 fi
 if [[ -n "$META_INDEX" ]] && ! grep -q "test-results" "$SITE/index.html"; then
-  TR_HASH="$(grep -oP "script-src '[^']+' '\K[^']+" "$CSP_FILE" | tail -1 || true)"
-  if [[ -n "$TR_HASH" && "$META_INDEX" != *"$TR_HASH"* ]]; then
-    ok "index.html meta CSP (yalnizca i18n.js)"
+  BOOT_HASH="$(grep -oP 'boot-enter\.js[^>]+integrity="\K[^"]+' "$SITE/index.html" || true)"
+  PHOENIX_HASH="$(grep -oP 'phoenix-3d\.js[^>]+integrity="\K[^"]+' "$SITE/index.html" || true)"
+  I18N_HASH="$(grep -oP 'i18n\.js[^>]+integrity="\K[^"]+' "$SITE/index.html" || true)"
+  TESTS_HASH="$(grep -oP 'test-results\.js[^>]+integrity="\K[^"]+' "$SITE/tests.html" || true)"
+  if [[ -n "$BOOT_HASH" && -n "$I18N_HASH" && "$META_INDEX" == *"$BOOT_HASH"* && "$META_INDEX" == *"$I18N_HASH"* && ( -z "$TESTS_HASH" || "$META_INDEX" != *"$TESTS_HASH"* ) ]]; then
+      ok "index.html meta CSP (boot-enter + i18n)"
+  elif [[ -n "$PHOENIX_HASH" && -n "$I18N_HASH" && "$META_INDEX" == *"$PHOENIX_HASH"* && "$META_INDEX" == *"$I18N_HASH"* && ( -z "$TESTS_HASH" || "$META_INDEX" != *"$TESTS_HASH"* ) ]]; then
+      ok "index.html meta CSP (phoenix + i18n)"
   else
-    bad "index.html meta CSP test hash iceriyor veya bos"
+    bad "index.html meta CSP boot/phoenix/i18n hash uyumsuz"
   fi
 else
   bad "index.html meta CSP veya test-results script tag hatali"
@@ -337,6 +342,12 @@ else
   bad "website_pack_deploy.sh eksik"
 fi
 
+if [[ -f "$ROOT/scripts/website_award_pack.sh" ]]; then
+  ok "website_award_pack.sh"
+else
+  bad "website_award_pack.sh eksik"
+fi
+
 if grep -q "load_allowlist" "$ROOT/scripts/website_secure_server.py"; then
   ok "sunucu allowlist dosyasi"
 else
@@ -384,7 +395,7 @@ while IFS= read -r href; do
   if ! grep -qxF "evidence/$href" "$ALLOWLIST"; then
     bad "index evidence allowlist disi: evidence/$href"
   fi
-done < <(grep -oP 'href="evidence/[^"]+' "$SITE/index.html" | sed 's/href="//')
+done < <(grep -oP 'href="/?evidence/\K[^"]+' "$SITE/index.html")
 
 # allowlist disi evidence/screenshot dosyalari
 while IFS= read -r extra; do

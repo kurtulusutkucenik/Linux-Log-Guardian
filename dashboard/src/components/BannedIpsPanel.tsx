@@ -19,7 +19,7 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const highlightIp = searchParams.get("ip")?.trim() || "";
-  const { bans, totalCount, truncated, source, loading, refreshing, refresh } =
+  const { bans, totalCount, truncated, source, preview, loading, refreshing, refresh } =
     useBanPreview(PREVIEW_LIMIT);
   const spinning = loading || refreshing;
 
@@ -47,6 +47,11 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
           </span>
         </h2>
         <div className="flex items-center gap-1">
+          {preview && (
+            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded border border-amber-500/30 text-amber-300 bg-amber-500/10">
+              {t("bannedIpsProofMode")}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => void refresh()}
@@ -64,6 +69,10 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
           )}
         </div>
       </div>
+
+      {preview && (
+        <p className="text-xs text-amber-400/70 mb-3">{t("bannedIpsProofDesc")}</p>
+      )}
 
       {source && (
         <p className="text-xs text-white/35 mb-3 font-mono">
@@ -106,6 +115,7 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
                   ip={b.ip}
                   variant="unban"
                   compact
+                  readOnly={preview}
                   reason="dashboard-unban"
                   onRefresh={() => void refresh()}
                   onDone={() => void refresh()}

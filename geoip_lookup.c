@@ -11,6 +11,10 @@
 #include <arpa/inet.h>
 #include <curl/curl.h>
 
+#ifdef HAVE_MAXMINDDB
+#include <maxminddb.h>
+#endif
+
 #define GEO_CACHE_MAX 128
 #define GEO_CACHE_TTL 86400
 
@@ -21,8 +25,247 @@ typedef struct {
 } GeoCacheEntry;
 
 static int              g_enabled = 0;
+static int              g_offline_only = 0;
 static GeoCacheEntry    g_cache[GEO_CACHE_MAX];
 static pthread_mutex_t  g_cache_mu = PTHREAD_MUTEX_INITIALIZER;
+
+typedef struct {
+    uint32_t start;
+    uint32_t end;
+    char     cc[4];
+} GeoCidrEntry;
+
+static GeoCidrEntry    *g_cidr = NULL;
+static size_t           g_cidr_n = 0;
+static pthread_mutex_t  g_cidr_mu = PTHREAD_MUTEX_INITIALIZER;
+
+#ifdef HAVE_MAXMINDDB
+static MMDB_s           g_mmdb;
+static int              g_mmdb_open = 0;
+static pthread_mutex_t  g_mmdb_mu = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+static uint32_t parse_ipv4_be(const char *ip)
+{
+    struct in_addr v4;
+    if (!ip || inet_pton(AF_INET, ip, &v4) != 1)
+        return 0;
+    return ntohl(v4.s_addr);
+}
+
+static int parse_cidr_v4(const char *cidr, uint32_t *start, uint32_t *end)
+{
+    if (!cidr || !start || !end)
+        return 0;
+    char buf[64];
+    strncpy(buf, cidr, sizeof(buf) - 1);
+    buf[sizeof(buf) - 1] = '\0';
+    char *slash = strchr(buf, '/');
+    int prefix = 32;
+    if (slash) {
+        *slash = '\0';
+        prefix = atoi(slash + 1);
+        if (prefix < 0 || prefix > 32)
+            return 0;
+    }
+    uint32_t base = parse_ipv4_be(buf);
+    if (!base && buf[0] != '0')
+        return 0;
+    uint32_t mask = prefix == 0 ? 0 : (0xffffffffu << (32 - prefix));
+    *start = base & mask;
+    *end = *start | (~mask);
+    return 1;
+}
+
+static int cidr_cmp(const void *a, const void *b)
+{
+    const GeoCidrEntry *x = a;
+    const GeoCidrEntry *y = b;
+    if (x->start < y->start) return -1;
+    if (x->start > y->start) return 1;
+    return 0;
+}
+
+int geoip_lookup_load_offline_csv(const char *path)
+{
+    if (!path || !path[0])
+        return -1;
+    FILE *f = fopen(path, "r");
+    if (!f)
+        return -1;
+    char line[256];
+    GeoCidrEntry *tmp = NULL;
+    size_t cap = 0;
+    size_t n = 0;
+    while (fgets(line, sizeof(line), f)) {
+        if (line[0] == '#' || line[0] == '\n')
+            continue;
+        char *nl = strchr(line, '\n');
+        if (nl) *nl = '\0';
+        char *comma = strchr(line, ',');
+        if (!comma)
+            continue;
+        *comma = '\0';
+        char *net = line;
+        char *cc = comma + 1;
+        while (*cc == ' ' || *cc == '"') cc++;
+        size_t cl = strlen(cc);
+        while (cl > 0 && (cc[cl - 1] == ' ' || cc[cl - 1] == '"'))
+            cc[--cl] = '\0';
+        if (cl != 2)
+            continue;
+        uint32_t s, e;
+        if (!parse_cidr_v4(net, &s, &e))
+            continue;
+        if (n >= cap) {
+            cap = cap ? cap * 2 : 256;
+            GeoCidrEntry *grow = realloc(tmp, cap * sizeof(*grow));
+            if (!grow) {
+                free(tmp);
+                fclose(f);
+                return -1;
+            }
+            tmp = grow;
+        }
+        tmp[n].start = s;
+        tmp[n].end = e;
+        tmp[n].cc[0] = (char)toupper((unsigned char)cc[0]);
+        tmp[n].cc[1] = (char)toupper((unsigned char)cc[1]);
+        tmp[n].cc[2] = '\0';
+        n++;
+    }
+    fclose(f);
+    if (n == 0) {
+        free(tmp);
+        return -1;
+    }
+    qsort(tmp, n, sizeof(*tmp), cidr_cmp);
+    pthread_mutex_lock(&g_cidr_mu);
+    free(g_cidr);
+    g_cidr = tmp;
+    g_cidr_n = n;
+    g_offline_only = 1;
+    pthread_mutex_unlock(&g_cidr_mu);
+    return 0;
+}
+
+static int offline_lookup_v4(uint32_t addr, char *cc_out, size_t cc_cap)
+{
+    if (!g_cidr || g_cidr_n == 0 || !cc_out || cc_cap < 3)
+        return 0;
+    int found = 0;
+    pthread_mutex_lock(&g_cidr_mu);
+    size_t lo = 0, hi = g_cidr_n;
+    while (lo < hi) {
+        size_t mid = lo + (hi - lo) / 2;
+        if (addr < g_cidr[mid].start)
+            hi = mid;
+        else if (addr > g_cidr[mid].end)
+            lo = mid + 1;
+        else {
+            strncpy(cc_out, g_cidr[mid].cc, cc_cap - 1);
+            cc_out[cc_cap - 1] = '\0';
+            found = 1;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&g_cidr_mu);
+    return found;
+}
+
+int geoip_lookup_mmdb_available(void)
+{
+#ifdef HAVE_MAXMINDDB
+    return 1;
+#else
+    return 0;
+#endif
+}
+
+int geoip_lookup_load_mmdb(const char *path)
+{
+#ifdef HAVE_MAXMINDDB
+    if (!path || !path[0])
+        return -1;
+    pthread_mutex_lock(&g_mmdb_mu);
+    if (g_mmdb_open) {
+        MMDB_close(&g_mmdb);
+        g_mmdb_open = 0;
+    }
+    int rc = MMDB_open(path, MMDB_MODE_MMAP, &g_mmdb);
+    if (rc != MMDB_SUCCESS) {
+        pthread_mutex_unlock(&g_mmdb_mu);
+        return -1;
+    }
+    g_mmdb_open = 1;
+    g_offline_only = 1;
+    pthread_mutex_unlock(&g_mmdb_mu);
+    return 0;
+#else
+    (void)path;
+    return -1;
+#endif
+}
+
+#ifdef HAVE_MAXMINDDB
+static int mmdb_lookup_country(const char *ip, char *cc_out, size_t cc_cap)
+{
+    if (!g_mmdb_open || !ip || !ip[0] || !cc_out || cc_cap < 3)
+        return 0;
+
+    int gai_error = 0;
+    int mmdb_error = 0;
+    MMDB_lookup_result_s result;
+    MMDB_entry_data_s entry_data;
+    const char *iso = NULL;
+    size_t iso_len = 0;
+
+    pthread_mutex_lock(&g_mmdb_mu);
+    result = MMDB_lookup_string(&g_mmdb, ip, &gai_error, &mmdb_error);
+    if (!result.found_entry) {
+        pthread_mutex_unlock(&g_mmdb_mu);
+        return 0;
+    }
+
+    int status = MMDB_get_value(&result.entry, &entry_data,
+                              "country", "iso_code", NULL);
+    if (status == MMDB_SUCCESS && entry_data.has_data &&
+        entry_data.type == MMDB_DATA_TYPE_UTF8_STRING &&
+        entry_data.data_size >= 2) {
+        iso = entry_data.utf8_string;
+        iso_len = entry_data.data_size;
+    } else {
+        status = MMDB_get_value(&result.entry, &entry_data,
+                                "registered_country", "iso_code", NULL);
+        if (status != MMDB_SUCCESS || !entry_data.has_data ||
+            entry_data.type != MMDB_DATA_TYPE_UTF8_STRING ||
+            entry_data.data_size < 2) {
+            pthread_mutex_unlock(&g_mmdb_mu);
+            return 0;
+        }
+        iso = entry_data.utf8_string;
+        iso_len = entry_data.data_size;
+    }
+
+    cc_out[0] = (char)toupper((unsigned char)iso[0]);
+    cc_out[1] = (char)toupper((unsigned char)iso[1]);
+    cc_out[2] = '\0';
+    pthread_mutex_unlock(&g_mmdb_mu);
+    return (iso_len >= 2 && cc_out[0] >= 'A' && cc_out[0] <= 'Z' &&
+            cc_out[1] >= 'A' && cc_out[1] <= 'Z') ? 1 : 0;
+}
+#endif
+
+const char *geoip_lookup_offline_backend(void)
+{
+#ifdef HAVE_MAXMINDDB
+    if (g_mmdb_open)
+        return "mmdb";
+#endif
+    if (g_cidr && g_cidr_n > 0)
+        return "csv";
+    return "";
+}
 
 void geoip_lookup_set_enabled(int on)
 {
@@ -211,6 +454,24 @@ int geoip_lookup_country(const char *ip, char *cc_out, size_t cc_cap)
 
     if (cache_get(ip, cc_out, cc_cap))
         return 1;
+
+#ifdef HAVE_MAXMINDDB
+    if (mmdb_lookup_country(ip, cc_out, cc_cap)) {
+        cache_put(ip, cc_out);
+        return 1;
+    }
+#endif
+
+    if (inet_pton(AF_INET, ip, &v4) == 1) {
+        uint32_t addr = ntohl(v4.s_addr);
+        if (offline_lookup_v4(addr, cc_out, cc_cap)) {
+            cache_put(ip, cc_out);
+            return 1;
+        }
+    }
+
+    if (g_offline_only)
+        return 0;
 
     if (http_lookup_country(ip, cc_out, cc_cap)) {
         cache_put(ip, cc_out);

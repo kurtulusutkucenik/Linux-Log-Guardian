@@ -59,6 +59,12 @@ jobs:
         bash scripts/ja3_cluster_proof.sh
         bash scripts/competitive_proof.sh
 
+    - name: Competitive merge gate (FP, recall, EPS)
+      run: |
+        export LOGANALYZER_PASSWORD='DegistirBeni!123'
+        export REQUIRE_WASM_NATIVE=1
+        bash scripts/competitive_gate.sh
+
     - name: Upload proof artefacts
       uses: actions/upload-artifact@v4
       if: always()

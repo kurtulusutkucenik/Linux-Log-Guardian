@@ -103,14 +103,55 @@ else
   gate_warn "competitive-proof.json yok — bash scripts/competitive_proof.sh"
 fi
 
+# --- Sprint 4 — P1 hizli E2E (nginx/auth/consult) ---
+echo ""
+echo "=== Sprint 4 — P1 E2E (hizli) ==="
+
+if bash scripts/auth_log_e2e.sh >/dev/null 2>&1; then
+  gate_ok "auth_log_e2e"
+else
+  gate_fail "auth_log_e2e"
+fi
+
+if command -v nginx >/dev/null 2>&1; then
+  if bash scripts/nginx_inline_consult_e2e.sh >/dev/null 2>&1; then
+    gate_ok "nginx_inline_consult_e2e"
+  else
+    gate_warn "nginx_inline_consult_e2e — sudo bash scripts/fix_nginx_inline_consult.sh"
+  fi
+else
+  gate_warn "nginx yok — nginx_inline_consult_e2e atlandi"
+fi
+
+if [[ -f nginx-inline-consult-report.json ]]; then
+  gate_ok "nginx-inline-consult-report.json"
+else
+  gate_warn "nginx consult raporu yok"
+fi
+
+if [[ -f auth-log-report.json ]]; then
+  gate_ok "auth-log-report.json"
+else
+  gate_warn "auth-log-report.json yok"
+fi
+
 echo ""
 echo "=== ozet ==="
 echo "  OK: $ok_n   WARN: $warn_n   FAIL: $fail_n"
 echo ""
 if [[ "$fail_n" -eq 0 ]]; then
   echo "[OK] laptop_sprint_gate — Sprint 1-3 laptop kapisi gecti"
-  echo "  Soak:  SOAK_1H=1 laptop 1 saat — bash scripts/soak_status.sh"
-  echo "  Soak:  72h yalnizca VPS/VM — bash scripts/laptop_soak_72h.sh --start"
+  if [[ -f "$ROOT/soak-report.json" ]] && python3 -c "
+import json, sys
+d=json.load(open('$ROOT/soak-report.json'))
+h=float(d.get('duration_hours') or 0)
+sys.exit(0 if d.get('pass') and h >= 70 else 1)
+" 2>/dev/null; then
+    h=$(python3 -c "import json; print(json.load(open('$ROOT/soak-report.json')).get('duration_hours','?'))")
+    echo "  Soak:  72h PASS (${h}h) — tekrar kosma"
+  else
+    echo "  Soak:  SOAK_1H=1 laptop 1 saat — bash scripts/soak_status.sh"
+  fi
   echo "  Demo:  bash scripts/demo_3min.sh"
   echo "  Site:  bash scripts/website_deploy_gate.sh"
   exit 0

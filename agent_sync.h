@@ -19,4 +19,7 @@ void agent_sync_init(void);
 /* Durdurur */
 void agent_sync_stop(void);
 
+/* SIGTERM — sync thread uyku dongusunu kes (pthread_join oncesi) */
+void agent_sync_request_stop(void);
+
 #endif /* AGENT_SYNC_H */

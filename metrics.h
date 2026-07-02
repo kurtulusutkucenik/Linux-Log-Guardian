@@ -80,6 +80,9 @@ void metrics_update(const MetricsSnapshot *snap);
 /* FP store yuklendikten sonra — log satiri beklemeden gauge yayinla */
 void metrics_refresh_fp_trust(long trusted, long partial, long enabled, long suppressed);
 
+/* Telegram inline Gördüm sonrasi — Prometheus gauge aninda guncelle */
+void metrics_refresh_telegram_ack(long ack_24h, long unacked_24h);
+
 /* Prometheus label: tenant_id (rules.conf TENANT_ID) */
 void metrics_set_tenant_id(const char *tenant_id);
 

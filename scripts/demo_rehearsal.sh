@@ -1,11 +1,17 @@
 #!/usr/bin/env bash
 # 08:00 demo provasi — laptop akisi (token silmez / rotate etmez)
-#   bash scripts/demo_rehearsal.sh
-#   SKIP_WEBHOOK=1 bash scripts/demo_rehearsal.sh
+#   bash scripts/demo_rehearsal.sh                    # varsayilan SKIP_WEBHOOK=1 (Telegram spam yok)
+#   LIVE_WEBHOOK=1 bash scripts/demo_rehearsal.sh     # gercek Telegram alarm+ban provasi
 #   SKIP_LIVE_SITE=1 bash scripts/demo_rehearsal.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+
+# Rutin provada kanala gercek KRITIK ALARM gitmesin (webhook_prod_e2e)
+if [[ "${LIVE_WEBHOOK:-0}" == "1" ]]; then
+  SKIP_WEBHOOK=0
+fi
+SKIP_WEBHOOK="${SKIP_WEBHOOK:-1}"
 
 SITE_URL="${DEMO_SITE_URL:-https://ceniklinuxlogguardian.org}"
 fail=0
@@ -59,8 +65,8 @@ else
 fi
 
 step "3/4 webhook prod e2e"
-if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
-  echo "  SKIP_WEBHOOK=1"
+if [[ "${SKIP_WEBHOOK}" == "1" ]]; then
+  echo "  SKIP_WEBHOOK=1 (gercek Telegram icin: LIVE_WEBHOOK=1 bash scripts/demo_rehearsal.sh)"
 else
   if bash scripts/webhook_prod_e2e.sh; then
     ok "webhook_prod_e2e"
@@ -75,6 +81,9 @@ if [[ $fail -eq 0 ]]; then
   echo "[OK] demo_rehearsal — 08:00 akisi hazir"
   echo "  Site:    ${SITE_URL}/tests"
   echo "  Dash:    ${DASH_URL:-https://localhost:8443}/tests"
+  bash "$ROOT/scripts/demo_rehearsal_gate.sh" >/dev/null 2>&1 \
+    && echo "  Gate:    demo_rehearsal_gate PASS" \
+    || echo "  Gate:    bash scripts/demo_rehearsal_gate.sh"
   exit 0
 fi
 echo "[WARN] demo_rehearsal — $fail uyari (yukaridaki satirlara bak)"

@@ -1,0 +1,46 @@
+{
+  "type": "bundle",
+  "id": "bundle--lg-taxii-fixture",
+  "spec_version": "2.1",
+  "objects": [
+    {
+      "type": "indicator",
+      "id": "indicator--lg-taxii-203-0-113-252",
+      "spec_version": "2.1",
+      "created": "2026-06-23T00:00:00.000Z",
+      "modified": "2026-06-23T00:00:00.000Z",
+      "pattern": "[ipv4-addr:value = '203.0.113.252']",
+      "pattern_type": "stix",
+      "valid_from": "2026-06-23T00:00:00.000Z",
+      "confidence": 92,
+      "labels": ["malicious-activity"],
+      "name": "taxii-fixture-scanner"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--lg-taxii-203-0-113-253",
+      "spec_version": "2.1",
+      "created": "2026-06-23T00:00:00.000Z",
+      "modified": "2026-06-23T00:00:00.000Z",
+      "pattern": "[ipv4-addr:value = '203.0.113.253']",
+      "pattern_type": "stix",
+      "valid_from": "2026-06-23T00:00:00.000Z",
+      "confidence": 78,
+      "labels": ["malicious-activity"],
+      "name": "taxii-fixture-bruteforce"
+    },
+    {
+      "type": "indicator",
+      "id": "indicator--lg-taxii-203-0-113-254",
+      "spec_version": "2.1",
+      "created": "2026-06-23T00:00:00.000Z",
+      "modified": "2026-06-23T00:00:00.000Z",
+      "pattern": "[ipv4-addr:value = '203.0.113.254']",
+      "pattern_type": "stix",
+      "valid_from": "2026-06-23T00:00:00.000Z",
+      "confidence": 35,
+      "labels": ["suspicious-activity"],
+      "name": "taxii-fixture-low-conf-noise"
+    }
+  ]
+}

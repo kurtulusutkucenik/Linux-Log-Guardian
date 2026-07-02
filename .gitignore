@@ -1,4 +1,6 @@
-# Yerel e2e raporlari (kanit: competitive-proof.json + assets/website/evidence/)
+# Statik site npm (Three.js bundle — commit etme)
+assets/website/node_modules/
+
 auth-log-report.json
 siem-export-report.json
 crowdsec-bouncer-report.json

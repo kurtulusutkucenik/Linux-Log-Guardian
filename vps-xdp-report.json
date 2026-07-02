@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-29T13:10:44.101378+00:00",
+  "pass": true,
+  "mode": "skip",
+  "xdp_mode": "ipset-fallback",
+  "iface": null,
+  "fail_count": 0,
+  "script": "scripts/vps_xdp_proof.sh"
+}

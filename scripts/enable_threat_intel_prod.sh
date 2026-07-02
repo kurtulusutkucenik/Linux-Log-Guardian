@@ -78,6 +78,18 @@ if [[ "${SKIP_API_FEED_INSTALL:-0}" != "1" ]] && \
     echo "[WARN] install_threat_feed_live atlandi — sudo bash scripts/install_threat_feed_live.sh" >&2
 fi
 
+install -m 755 "$ROOT/scripts/taxii_sync_hook.sh" "$PREFIX/bin/log-guardian-taxii-sync"
+echo "[OK] log-guardian-taxii-sync -> $PREFIX/bin/log-guardian-taxii-sync"
+
+UNIT="${SYSTEMD_UNIT_DIR:-/etc/systemd/system}/log-guardian-threatintel.service"
+if [[ -f "$UNIT" ]] && ! grep -q 'log-guardian-taxii-sync' "$UNIT" 2>/dev/null; then
+  if grep -q '^ExecStart=' "$UNIT"; then
+    sed -i "/^ExecStart=/a ExecStartPost=$PREFIX/bin/log-guardian-taxii-sync" "$UNIT"
+    systemctl daemon-reload 2>/dev/null || true
+    echo "[OK] threatintel.service ExecStartPost=taxii-sync (TAXII_URL varsa calisir)"
+  fi
+fi
+
 echo "[OK] enable_threat_intel_prod tamam"
 echo "  kanit: sudo bash scripts/threat_intel_prod_proof.sh"
 echo "  API feed: bash scripts/threat_feed_live_proof.sh"

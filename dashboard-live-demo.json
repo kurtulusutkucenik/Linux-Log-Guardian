@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-29T00:38:49.538494+00:00",
+  "pass": true,
+  "bans_applied": 4,
+  "bans_failed": 0,
+  "active_bans_synced": 4,
+  "api": "http://127.0.0.1:8090",
+  "ips": [
+    "203.0.113.211",
+    "203.0.113.212",
+    "203.0.113.213",
+    "203.0.113.214"
+  ],
+  "note": "Ctrl+Shift+R https://localhost:8443 \u2014 harita Live, /bans proof degil"
+}

@@ -46,19 +46,20 @@ fi
 
 echo "[5] VirtualBox paylasim (opsiyonel)"
 share="${LG_VM_SYNC_SRC:-/mnt/lg}"
-if [[ -d "$share" ]]; then
+vm_name="${LG_VM_NAME:-ubuntu 24.04}"
+if command -v VBoxManage >/dev/null 2>&1 \
+    && VBoxManage showvminfo "$vm_name" 2>/dev/null | grep -q "Host path: '$ROOT'"; then
+  ok "VBox paylasim lg -> repo"
+elif [[ -d "$share" ]]; then
   ok "paylasim mount: $share"
 else
-  warn "paylasim yok ($share) — VM icinde: sudo mount -t vboxsf lg /mnt/lg"
+  warn "paylasim yok — bash scripts/vm_host_refresh.sh"
 fi
 
 echo ""
-echo "=== VM icinde (paylasim mount sonrasi) ==="
-echo "  cd ~/Linux-Log-Guardian"
-echo "  bash /mnt/lg/scripts/vm_sync_from_host.sh"
-echo "  sudo bash scripts/vm_build_binary.sh    # .c degistiysen (sessiz varsayilan)"
-echo "  sudo bash scripts/vm_demo_gate.sh       # FAIL=0 hedef"
-echo "  LG_VERBOSE_BUILD=1 sudo bash scripts/vm_build_binary.sh  # tam make ciktisi"
+echo "=== VM (host tek komut) ==="
+echo "  bash scripts/vm_host_refresh.sh"
+echo "  # VM icinde: sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh"
 echo ""
 
 if [[ $FAIL -eq 0 ]]; then

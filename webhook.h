@@ -121,7 +121,7 @@ int  webhook_send_test(const char *kind);
 
 int webhook_destinations_configured(void);
 int webhook_is_dry_run(void);
-void webhook_status_json(FILE *out);
+void webhook_status_json(FILE *out, long ack_24h, long unacked_24h);
 
 void webhook_metrics_snapshot(long *sent, long *fail, long *queue_drops, long *queue_depth);
 /* fail_only=1: yalnizca fail sifirla (Grafana increase stale onleme) */
@@ -129,6 +129,7 @@ void webhook_metrics_reset(int fail_only);
 
 /* Telegram inline: operator IP sessiz (varsayilan operator_mute_sec) */
 void webhook_operator_mute_ip(const char *ip, int sec);
+void webhook_operator_unmute_ip(const char *ip);
 int  webhook_operator_mute_sec(void);
 
 #endif /* WEBHOOK_H */

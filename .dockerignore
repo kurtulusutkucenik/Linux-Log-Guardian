@@ -1,0 +1,25 @@
+# Docker build (log-guardian) — context kucultme; k8s_kind_e2e icin
+.git
+.cache
+dist
+release-pack
+graphify-out
+data-room
+assets
+corpus
+docs
+tests
+dashboard
+website
+.venv*
+vendor
+*.deb
+*.pdf
+*.zip
+soak-report*.json
+competitive-proof.*
+*-report.json
+vm-sprint-proof.json
+docker-compose*.yml
+Caddyfile
+grafana-*.json

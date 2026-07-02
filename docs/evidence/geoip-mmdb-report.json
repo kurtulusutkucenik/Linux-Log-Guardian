@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-23",
+  "pass": true,
+  "mode": "mmdb-probe",
+  "have_maxminddb": true,
+  "mmdb": "/home/kurtulus/Masaüstü/Linux Log Guardian/.cache/geoip-mmdb-test.mmdb",
+  "test_ip": "81.2.69.142",
+  "test_cc": "GB"
+}

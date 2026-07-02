@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import { fetchBannedIps } from "@/lib/fetchBannedIps";
 import {
+  fetchLiveDemoBansResult,
+  fetchProofBansResult,
+} from "@/lib/proofBanFallback";
+import { resolveBansDisplayMode } from "@/lib/bansDisplayMode";
+import {
   bansCacheKey,
   getCachedBans,
   invalidateAllBansCache,
@@ -8,6 +13,8 @@ import {
 } from "@/lib/bansCache";
 
 export const dynamic = "force-dynamic";
+
+const BENCH_DATA_DIR = process.env.BENCH_DATA_DIR || "/data/lg";
 
 export async function GET(req: NextRequest) {
   const sp = req.nextUrl.searchParams;
@@ -32,10 +39,33 @@ export async function GET(req: NextRequest) {
     });
   }
 
-  const data = await fetchBannedIps(opts);
-  setCachedBans(key, data);
+  const mode = await resolveBansDisplayMode(BENCH_DATA_DIR);
+  let out;
 
-  return NextResponse.json(data, {
+  if (mode.kind === "proof") {
+    out =
+      (await fetchProofBansResult(BENCH_DATA_DIR, opts)) ?? {
+        count: 0,
+        source: "empty",
+        bans: [],
+      };
+  } else if (mode.kind === "live-demo") {
+    out = fetchLiveDemoBansResult(mode.ips, opts);
+  } else {
+    const data = await fetchBannedIps(opts);
+    if (
+      data.count === 0 &&
+      (data.source === "empty" || !data.bans.length)
+    ) {
+      const proof = await fetchProofBansResult(BENCH_DATA_DIR, opts);
+      out = proof ?? data;
+    } else {
+      out = { ...data, data_mode: "live" as const };
+    }
+  }
+  setCachedBans(key, out);
+
+  return NextResponse.json(out, {
     headers: {
       "Cache-Control": countOnly ? "private, max-age=3" : "private, max-age=2",
     },

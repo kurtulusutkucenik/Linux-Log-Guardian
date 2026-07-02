@@ -1,0 +1,7 @@
+{
+  "date": "2026-06-29T15:36:49.276754+00:00",
+  "pass": true,
+  "ip": "203.0.113.198",
+  "mode": "sigusr2",
+  "script": "scripts/telegram_operator_undo_e2e.sh"
+}

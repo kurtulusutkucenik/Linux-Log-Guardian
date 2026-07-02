@@ -7,6 +7,8 @@
 /* ── IP validation ──────────────────────────────────────────── */
 int         is_valid_ip    (const char *ip);
 int         is_ipv6_addr   (const char *ip);
+/* RFC1918, loopback, link-local, multicast — ban hedefi olamaz (gateway/DNS koruma) */
+int         is_reserved_ban_target(const char *ip);
 
 /* CIDR / proxy trust (parser XFF) */
 int         ip_matches_cidr     (const char *ip, const char *cidr);

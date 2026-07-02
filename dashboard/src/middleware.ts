@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === '/api/auth/login' ||
     request.nextUrl.pathname === '/api/telemetry' ||
     request.nextUrl.pathname === '/api/tier' ||
+    request.nextUrl.pathname === '/api/internal/bans-invalidate' ||
     isPublicDataRoomFile ||
     isAgentBearerApi;
 

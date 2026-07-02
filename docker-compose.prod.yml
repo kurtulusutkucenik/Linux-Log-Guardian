@@ -52,6 +52,10 @@ services:
       - COPILOT_MODEL=${COPILOT_MODEL:-llama3.2:3b}
       - ATTACK_TREE_PATH=/data/lg/attack_tree.json
       - BENCH_DATA_DIR=/data/lg
+      - SOC_TIMELINE_PREVIEW=0
+      - INCIDENTS_ALLOW_SNAPSHOT=0
+      - MARKETPLACE_SIGN_KEY=${MARKETPLACE_SIGN_KEY:-log-guardian-marketplace-dev-key}
+      - MARKETPLACE_REQUIRE_SIG=${MARKETPLACE_REQUIRE_SIG:-1}
       - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://ban-api-relay:18090}
       - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://ban-api-relay:18090}
       - GUARDIAN_API_TOKEN=${GUARDIAN_API_TOKEN:-}

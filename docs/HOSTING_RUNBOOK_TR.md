@@ -3,7 +3,7 @@
 **Hedef kitle:** Paylaşımlı / VPS hosting firmaları, NOC ve güvenlik ekibi.  
 **Kapsam:** nginx access log → WAF/CRS → kernel ban (Core). VPS soak ve webhook bu rehberde zorunlu değil.
 
-**İlgili:** [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md) · [ATTACK_DEFENSE.md](ATTACK_DEFENSE.md) · [EDGE_PROTECTION.md](EDGE_PROTECTION.md) · [OPENAPI_STRICT_PROD.md](OPENAPI_STRICT_PROD.md)
+**İlgili:** [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md) · [ATTACK_DEFENSE.md](ATTACK_DEFENSE.md) · [EDGE_PROTECTION.md](EDGE_PROTECTION.md) · [OPENAPI_STRICT_PROD.md](OPENAPI_STRICT_PROD.md) · [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md)
 
 ---
 
@@ -12,7 +12,7 @@
 | Yapar | Yapmaz |
 |-------|--------|
 | SQLi, XSS, LFI, brute, scanner UA → alarm + ban | L3/L4 volumetrik DDoS absorb (CDN şart) |
-| CRS parite + ölçülebilir FP/bench | ModSecurity kadar inline 403 (reaktif mimari) |
+| CRS parite + ölçülebilir FP/bench | Tam inline ModSec değil; **hibrit** (log + opsiyonel `auth_request` consult) |
 | ipset ban ~17 ms (IPC) | CrowdSec global IOC ağı |
 | Incident korelasyonu (`INC-xxx`) | Webhook olmadan dış SIEM push |
 
@@ -20,11 +20,23 @@
 
 ## 2. Kurulum (15 dk)
 
+**Tek komut (sprint prod + inline consult + kanit):**
+
 ```bash
 git clone https://github.com/kurtulusutkucenik/loganalyzer.git
 cd loganalyzer   # ürün: Linux Log Guardian; binary: log-guardian
 sudo bash install.sh
+sudo bash scripts/prod_hosting_activate.sh
 sudo log-guardian --health
+```
+
+Adim adim (ayni sonuc):
+
+```bash
+sudo bash scripts/sprint_prod_activate.sh
+sudo bash scripts/sprint_harden_prod.sh
+sudo bash scripts/fix_nginx_inline_consult.sh   # nginx varsa
+bash scripts/sprint_prod_proof.sh
 ```
 
 Kurulum sonrası **mutlaka** log formatını doğrula (POST SQLi için `$request_body` şart):
@@ -61,6 +73,50 @@ location /giris { limit_req zone=lg_login burst=10 nodelay; }
 ```
 
 Detay: [EDGE_PROTECTION.md](EDGE_PROTECTION.md)
+
+### 3b. Hibrit prod — log + inline consult (önerilen hosting)
+
+**Varsayılan:** `log_guardian` access log → analyzer (POST body dahil).  
+**Ek katman:** Şüpheli istekte nginx `auth_request` ile `:8090/api/v1/consult` — upstream’e gitmeden 403.
+
+```bash
+sudo bash scripts/fix_nginx_inline_consult.sh
+sudo nginx -t && sudo systemctl reload nginx
+bash scripts/nginx_inline_consult_e2e.sh
+```
+
+Tam site örneği (`server {}`):
+
+```nginx
+server {
+    listen 80;
+    server_name musteri.example.com;
+
+    # Core — log format + rate limit (zorunlu)
+    include /etc/nginx/snippets/log-guardian-server.conf;
+    access_log /var/log/nginx/access.log log_guardian;
+
+    # Opsiyonel inline WAF (ModSec boşluğu)
+    include /etc/nginx/snippets/log-guardian-inline-consult.conf;
+    include /etc/nginx/snippets/log-guardian-inline-server.conf;
+
+    location / {
+        auth_request /_lg_consult;
+        proxy_pass http://127.0.0.1:8080;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+}
+```
+
+| Mod | Ne zaman | Kurulum |
+|-----|----------|---------|
+| **Log only** | Çoğu müşteri, düşük gecikme | §3 snippet + `log_guardian` |
+| **Hibrit** | ModSec inline beklentisi | §3b + `prod_hosting_activate.sh` |
+| **Consult only** | Test / dar path | Önerilmez — POST body logda kalmalı |
+
+Kanıt: `nginx-inline-consult-report.json` · `nginx-hybrid-report.json`
 
 ---
 
@@ -134,15 +190,28 @@ Rehber: [OPENAPI_STRICT_PROD.md](OPENAPI_STRICT_PROD.md)
 
 ---
 
-## 7. Inline consult (opsiyonel — ModSec boşluğu)
+## 7. Inline consult (hibrit katman)
 
-Şüpheli istekte nginx `auth_request` ile analyzer'a sor:
+Şüpheli istekte nginx `auth_request` ile analyzer'a sor. **Log hattı açık kalmalı** — consult büyük POST body için log replay kadar tam değildir.
 
 ```bash
-bash scripts/nginx_inline_consult_proof.sh
+sudo bash scripts/fix_nginx_inline_consult.sh
+bash scripts/nginx_inline_consult_e2e.sh
+# veya tek paket: sudo bash scripts/prod_hosting_activate.sh
 ```
 
-Snippet: `examples/nginx/snippets/log-guardian-inline-consult.conf`
+Snippet dosyaları:
+
+- `examples/nginx/snippets/log-guardian-inline-consult.conf` — internal `/_lg_consult` → API
+- `examples/nginx/snippets/log-guardian-inline-server.conf` — `@lg_blocked` JSON 403
+- `examples/nginx/log-guardian-inline-site.conf` — tam `location /` örneği
+
+**Prod kontrol listesi**
+
+1. `API_TOKEN` dolu (`sudo bash scripts/ensure_api_security.sh`)
+2. `post_install_verify` satırı: `nginx inline consult snippet` yeşil
+3. `curl -H "X-Guardian-Token: …" "http://127.0.0.1:8090/api/v1/consult?method=GET&path=/etc/passwd"` → 403 veya allow (kurala göre)
+4. Canlı site: `bash scripts/live_attack_harness.sh` veya `real_attack_suite.sh`
 
 ---
 
@@ -155,6 +224,29 @@ sudo log-guardian --list-bans | head
 ```
 
 Grafana: `bash scripts/grafana_provision.sh` → `$tenant` değişkeni.
+
+### 8b. Telegram operatör zinciri (hosting NOC)
+
+**Akış:** nginx log → WAF → ban → Telegram (WARN/INFO batch · CRIT/ban anında).
+
+| Adım | Operatör | Aksiyon |
+|------|----------|---------|
+| Kurulum | Sistem | `sudo bash scripts/webhook_install_prod.sh` → `/etc/log-guardian/webhook.env` |
+| Alarm | NOC | KRİTİK / IP BANLANDI mesajı |
+| Gördüm | NOC | Inline **Gördüm** → ack + SOC timeline |
+| Yanlış ban | NOC | **Sesi aç** veya `bash scripts/telegram_operator_undo.sh <IP>` |
+| Doğrulama | Güvenlik | Dashboard `#webhook-ops` · `#soc-timeline` · `/bans?search=` |
+
+```bash
+# Prod kurulum + test (detay: WEBHOOK_SETUP.md)
+sudo bash scripts/webhook_install_prod.sh --test-all
+bash scripts/telegram_soc_gate.sh
+bash scripts/telegram_operator_undo_e2e.sh   # kanıt (RFC5737 IP)
+```
+
+**P2 escalation** (alarm gitmiyor / yanlış sessiz): [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) § P2 — önce `telegram_soc_gate`, sonra `webhook.env` token/chat ve `WEBHOOK_DRY_RUN=0`.
+
+Laptop kanıt (VPS yok): `.env.webhook.local` + `bash scripts/webhook_apply_local.sh` — token'ları Git'e commit etmeyin.
 
 ---
 

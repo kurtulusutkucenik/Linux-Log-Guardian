@@ -7,6 +7,8 @@ export const dynamic = "force-dynamic";
 async function readFpReport() {
   const candidates = [
     process.env.FP_REPORT_JSON,
+    process.env.BENCH_DATA_DIR && path.join(process.env.BENCH_DATA_DIR, "fp-report.json"),
+    path.join("/data/lg", "fp-report.json"),
     path.join(process.cwd(), "fp-report.json"),
     path.join(process.cwd(), "..", "fp-report.json"),
   ].filter(Boolean) as string[];

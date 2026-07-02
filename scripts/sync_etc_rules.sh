@@ -14,6 +14,8 @@ fi
 install -d "${ETC}/rules" "${ETC}/examples"
 install -m 644 "$ROOT/rules/crs-bundle.rules" "${ETC}/rules/crs-bundle.rules"
 install -m 644 "$ROOT/rules/crs-core.rules" "${ETC}/rules/crs-core.rules" 2>/dev/null || true
+install -m 644 "$ROOT/rules/crs-bundle.manifest.json" "${ETC}/rules/crs-bundle.manifest.json" 2>/dev/null || true
+install -m 644 "$ROOT/examples/geoip-offline-sample.csv" "${ETC}/examples/geoip-offline-sample.csv" 2>/dev/null || true
 for schema in openapi-mini.json openapi-v2.json; do
   if [[ -f "$ROOT/examples/$schema" ]]; then
     install -m 644 "$ROOT/examples/$schema" "${ETC}/examples/$schema"

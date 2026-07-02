@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-30",
+  "pass": true,
+  "total_lines": 7,
+  "parse_errors": 0,
+  "unique_ips": 5,
+  "alerts_total": 7,
+  "sudo_lines": 2,
+  "sample_ips": [
+    "192.168.1.51",
+    "203.0.113.224",
+    "203.0.113.225",
+    "203.0.113.226"
+  ],
+  "log": "/home/kurtulus/Masaüstü/Linux Log Guardian/test_journald.log",
+  "formats": [
+    "short-iso-usec",
+    "syslog-month",
+    "sudo-rhost"
+  ],
+  "script": "scripts/journald_e2e.sh"
+}

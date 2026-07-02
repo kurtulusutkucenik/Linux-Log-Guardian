@@ -18,6 +18,20 @@ trap 'rm -f "$LOG"' EXIT
 
 if bash scripts/phase100.sh >"$LOG" 2>&1; then
   tail -15 "$LOG"
+  OUT="${ROOT}/phase100-fast-gate-report.json"
+  python3 - "$OUT" <<'PY'
+import json, sys
+from datetime import datetime, timezone
+from pathlib import Path
+Path(sys.argv[1]).write_text(json.dumps({
+    "date": datetime.now(timezone.utc).isoformat(),
+    "pass": True,
+    "mode": "fast",
+    "phases": "0-6",
+    "script": "scripts/phase100_fast_gate.sh",
+}, indent=2) + "\n", encoding="utf-8")
+PY
+  echo "[OK] report -> phase100-fast-gate-report.json"
   echo "[OK] phase100_fast_gate PASS"
   exit 0
 fi

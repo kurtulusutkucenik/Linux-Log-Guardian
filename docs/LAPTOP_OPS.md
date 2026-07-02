@@ -22,15 +22,27 @@ Core quickstart: [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md)
 | `bash scripts/laptop_jwt_setup.sh` | JWT `.env` + dashboard restart | Hayır (opsiyonel `DASHBOARD_ADMIN_PASSWORD`) |
 | `sudo bash scripts/laptop_harden.sh` | İnternete açık sunucu — tam sertleştirme | **Evet** |
 | `bash scripts/laptop_harden_check.sh` | Hızlı denetim | — |
-| `bash scripts/local_security_audit.sh` | Tam güvenlik denetimi | — |
+| `bash scripts/optional_layers_gate.sh` | K8s + mesh + wasm + copilot opsiyonel kapı | Kısmen |
+| `bash scripts/k8s_kind_e2e.sh` | K8s kind dry-run / canlı install | `K8S_KIND_CREATE=1` |
+| `bash scripts/mesh_etcd_docker_smoke.sh` | etcd docker lab smoke | Hayır |
+| `APPLY=1 bash scripts/laptop_security_excellence.sh` | JWT + haftalık audit cron | Hayır |
+| `sudo bash scripts/laptop_security_excellence.sh` | + API firewall + IPC abuse test | **Evet** |
+| `bash scripts/security_closure_gate.sh` | Tam güvenlik kapatma (~15 dk) | Kısmen |
+| `bash scripts/taxii_feed_e2e.sh` | TAXII/STIX fixture + confidence gate (URL gerekmez) | Hayır |
+| `bash scripts/taxii_sync_hook.sh` | Prod TAXII sync — `rules.conf` `TAXII_URL` varsa | Hayır |
 | `bash scripts/fp_learn_warmup.sh` | FP ısınma (corpus) | Hayır |
 | `sudo bash scripts/install_fp_trust_prod.sh` | Warmup → `/etc/log-guardian/data/fp-trust.lst` | Hayır |
 | `SOAK_1H=1 bash scripts/laptop_soak_72h.sh --start` | 1 saat stabilite (soak kilidi aktif) | Hayır |
 | `bash scripts/soak_5m.sh` | 5 dk stabilite (ön planda, ~5 dk) | Hayır |
 | `bash scripts/laptop_fp_setup.sh` | FP warmup + prod store tek komut | Hayır |
 | `bash scripts/laptop_soak_72h.sh --start` | 72 saat stabilite (`SOAK_GRACE_SEC=120`) | Hayır |
-| `bash scripts/laptop_sprint_gate.sh` | Sprint 1–3 laptop kapısı (VPS/GitHub yok) | Hayır |
+| `bash scripts/laptop_excellence_gate.sh` | Laptop mükemmellik kapısı (~2 dk, VPS/GitHub yok) | Hayır |
+| `FULL=1 bash scripts/laptop_excellence_gate.sh` | + canlı site + filo e2e + release_ready | Hayır |
+| `bash scripts/laptop_reboot_ready.sh` | Reboot sonrası stack + filo tek komut | Kısmen (daemon env sudo) |
 | `bash scripts/laptop_release_gate.sh` | Sprint + `.deb` + site gate (GitHub öncesi) | Hayır |
+| `bash scripts/optional_polish_refresh.sh` | Fleet prune + site/dashboard test parity (51/51) | Hayır |
+| `bash scripts/laptop_optional_layers_preflight.sh` | L7 + webhook durum (sudo yok) | Hayır |
+| `sudo bash scripts/laptop_optional_layers_on.sh` | L7 eBPF + Telegram webhook prod + filo | Kısmen |
 | `bash scripts/test_deb_local.sh` | `.deb` extract doğrulama (dpkg -i değil) | Hayır |
 | `bash scripts/demo_3min.sh` | 3 dk demo (PDF, webhook, dashboard opsiyonel) | Hayır |
 | `bash scripts/preview_website.sh` | Statik landing önizleme `:8765` | Hayır |
@@ -48,10 +60,21 @@ Core quickstart: [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md)
 | `bash scripts/grafana_stack.sh` | Prometheus :9090 + Grafana :3002 + provision | Hayır |
 | `bash scripts/grafana_provision.sh` | Dashboard + alert yeniden yükle | Hayır |
 | `bash scripts/install_laptop_stack_boot.sh` | Reboot’ta otomatik stack (user systemd) | Hayır (linger için sudo isteyebilir) |
+| `sudo bash scripts/install_binaries_systemd.sh` | log-guardian + daemon binary (stop→cp→start) | Hayır |
+| `sudo bash scripts/telegram_unacked_ops_cleanup.sh` | Telegram unacked sayacini ops ack ile temizle | Hayır |
+| `bash scripts/telegram_operator_undo.sh` | WL/Sessiz geri al (SIGUSR2; fallback restart) · `REBAN=1` demo | Hayır |
+| `bash scripts/telegram_soc_gate.sh` | SOC timeline + attack map + webhook panel birleşik kapı | Hayır |
+| `bash scripts/bans_telegram_ops_e2e.sh` | `/api/telegram-acks` + `/bans?search=` kapısı | Hayır |
+| `bash scripts/publish_soak_report.sh` | 72h soak JSON → docs/evidence + dashboard | Hayır |
 | `sudo bash scripts/install_threat_intel_stack.sh` | Firehol threat intel (key yok, **internet gerekir**) | Hayır |
 | `sudo bash scripts/install_threat_feed_live.sh` | AbuseIPDB/OTX (key opsiyonel; doluysa ~30 sn–2 dk) | Hayır |
 | `bash scripts/threat_intel_status.sh` | Firehol + API feed durumu | Hayır |
 | `bash scripts/threat_feed_live_proof.sh` | Threat intel kanıt JSON | Hayır |
+| `sudo bash scripts/crowdsec_lapi_setup.sh --install` | CrowdSec LAPI + bouncer key (`:8081`, Caddy `:8080` çakışmaz) | Hayır |
+| `sudo bash scripts/crowdsec_lapi_setup.sh` | Mevcut key / LAPI doğrula + `.cache/crowdsec-bouncer.env` | Hayır |
+| `LIVE_API=1 bash scripts/crowdsec_bouncer_e2e.sh` | LAPI + ban API kanıtı | Hayır |
+| `bash scripts/honeypot_feed_e2e.sh` | Deception Prometheus metrikleri | Hayır |
+| `bash scripts/l7_probe_prod_e2e.sh` | Daemon L7 probe readiness | Hayır |
 
 **İnternet:** Threat feed listeleri ve API sync için gerekli. Core log→ban offline çalışır. Bkz. [THREAT_INTEL_SETUP.md](THREAT_INTEL_SETUP.md)
 
@@ -115,6 +138,40 @@ systemctl --user start log-guardian-laptop-stack.service
 
 Kontrol: `http://localhost:3001/` (Filo + testler) — sarı “Prometheus yok” uyarısı gitmeli. Eski `/fleet` bookmark otomatik ana sayfaya yönlenir; detaylı komut: `/fleet/dispatch`.
 
+## Laptop mükemmellik (VPS gelene kadar)
+
+Tek komut durum özeti:
+
+```bash
+bash scripts/laptop_excellence_gate.sh          # ~2 dk
+FULL=1 bash scripts/laptop_excellence_gate.sh   # + canlı site + filo e2e
+```
+
+Reboot sonrası her şeyi ayağa kaldır:
+
+```bash
+bash scripts/laptop_reboot_ready.sh
+# VM icinde ayrica: bash scripts/vm_fleet_agent_setup.sh --install-user-service
+```
+
+| Katman | Hedef | Komut |
+|--------|--------|--------|
+| Core | daemon + analyzer + IPC | `ensure_daemon_env.sh` · `repair_no_xdp_stack.sh` |
+| Dashboard | 51/51 `/tests` | `dashboard_refresh.sh` |
+| Vitrin | canlı site 51 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
+| Ban temizliği | ipset flush + kanıt modu | `FLUSH=1 bash scripts/laptop_ban_cleanup.sh` |
+| CF cache | SRI drift sonrası | `LG_CF_PURGE=1` veya `bash scripts/website_cf_purge.sh` |
+| Filo | host + VM Online | `host_fleet_agent_setup.sh` · `vm_fleet_agent_setup.sh` |
+| Kanıt | PDF + ZIP | `local_proof_refresh.sh` |
+| EDGE | nginx attack + checklist | `nginx_attack_test.sh` |
+| VM demo | 0 FAIL | `vm_sync_from_host.sh` → `vm_demo_gate.sh` |
+
+**Kapalı (2026-06-28):** 72h soak · phase100_fast · release_ready · EDGE laptop checklist · prod site SRI · **security Tier-A** (`laptop_security_excellence.sh`)
+
+Güvenlik rehberi: [SECURITY_EXCELLENCE.md](SECURITY_EXCELLENCE.md)
+
+**VPS gelince tek açık kart:** kernel-XDP (`vps_bootstrap.sh`)
+
 ## FP trust prod
 
 Prod varsayılan: `FP_LEARN=1`, `FP_TRUST_DAYS=30` (`install.sh`). Warmup sadece başlangıç.
@@ -128,6 +185,25 @@ sudo systemctl restart log-guardian
 Veya tek komut: `sudo bash scripts/install_first_run.sh`
 
 Warmup çıktısı: `data/fp-trust-warmup.lst` (mutlak yol; overlay `/tmp` hatası giderildi).
+
+## CrowdSec bouncer (opsiyonel)
+
+Log Guardian WAF’a **ek** ban kaynağı — LAPI kararları → `:8090` ban API. Anahtar **repodaki `.env` değil** → `/etc/log-guardian/crowdsec.env`.
+
+```bash
+# İlk kurulum (Linux Mint: ubuntu noble repo otomatik)
+sudo bash scripts/crowdsec_lapi_setup.sh --install
+sudo bash scripts/crowdsec_lapi_setup.sh
+
+# Doğrulama + dashboard raporu
+LIVE_API=1 bash scripts/crowdsec_bouncer_e2e.sh
+bash scripts/sync_dashboard_data.sh
+```
+
+- LAPI varsayılan **`:8081`** (prod Caddy `HTTP_PORT=8080` ile çakışmaz)
+- Operator cache: `.cache/crowdsec-bouncer.env` (e2e/sync okur)
+- Timer: `log-guardian-crowdsec-bouncer.timer` (5 dk)
+- Detay: [CROWDSEC_INTEGRATION.md](CROWDSEC_INTEGRATION.md)
 
 ## Soak test (laptop)
 
@@ -175,19 +251,112 @@ bash scripts/ops_smoke.sh
 
 ## VM güncelleme (VirtualBox — laptop değişince)
 
-Laptop'ta kod değiştirdikten sonra VM'ye aktarmak için **her seferinde**:
+**Host = laptop** (`kurtulus@kurtulus`). **VM = VirtualBox** (`kurtulus@kurtulus-VirtualBox`).
+
+Laptop'ta kod değiştirdikten sonra VM'ye aktarmak için:
+
+### Tek komut (önerilen)
 
 ```bash
-# Host (laptop) — opsiyonel kontrol
-bash scripts/vm_host_checklist.sh
-
-# VM içinde (paylaşım: sudo mount -t vboxsf lg /mnt/lg)
+# VM içinde
+sudo mount -t vboxsf lg /mnt/lg    # gerekirse
 cd ~/Linux-Log-Guardian
-bash /mnt/lg/scripts/vm_sync_from_host.sh
-sudo bash scripts/vm_build_binary.sh    # C/binary değiştiyse (webhook.c, k8s_webhook.c, …)
-# Sessiz derleme varsayılan; tam make log: LG_VERBOSE_BUILD=1 sudo bash scripts/vm_build_binary.sh
-sudo bash scripts/vm_demo_gate.sh         # FAIL=0 olmalı
+sudo bash scripts/vm_prod_gate.sh
 ```
+
+Bu akış: `vm_sync` → `vm_build_binary` → `sprint_prod_activate` → `repair_no_xdp_stack` → `post_install_verify` → `sprint_prod_proof` → `vm_demo_gate --verify-only`.
+
+Tam SIEM/RULES_VERIFY harden dahil:
+
+```bash
+sudo bash scripts/vm_prod_gate.sh --harden
+# veya
+sudo bash scripts/prod_hosting_activate.sh   # sync sonrasi; VM'de build otomatik
+```
+
+Sadece doğrulama (onarim yok):
+
+```bash
+sudo bash scripts/vm_prod_gate.sh --verify-only
+```
+
+### Adim adim (eski / manuel)
+
+```bash
+cd ~/Linux-Log-Guardian
+sudo bash scripts/vm_sync_from_host.sh
+sudo bash scripts/vm_build_binary.sh
+sudo bash scripts/repair_no_xdp_stack.sh
+bash scripts/post_install_verify.sh
+bash scripts/sprint_prod_proof.sh
+bash scripts/vm_demo_gate.sh --verify-only
+```
+
+Kod + binary hizli yenileme (sprint prod olmadan):
+
+```bash
+sudo bash scripts/vm_refresh_from_host.sh
+```
+
+**VM filo agent (host :8443):** `vm_refresh_from_host` sonunda `--install-user-service` ile kurar. Manuel:
+
+```bash
+bash scripts/vm_fleet_agent_setup.sh --install-user-service
+# sync sonrasi servis: systemctl --user restart log-guardian-fleet-keepalive
+journalctl --user -u log-guardian-fleet-keepalive -f   # [fleet_push] OK agent=node-vm-02
+```
+
+**NAT (varsayilan):** `FLEET_HOST_IP` **vermeyin** — script otomatik `10.0.2.2` kullanir.  
+`192.168.x.x` dokümandaki örnektir; komutta aynen yazmayin.
+
+**Bridged** ancak o zaman: host LAN IP'si (`ip -4 addr` laptop'ta) ile  
+`FLEET_HOST_IP=192.168.1.42 bash scripts/vm_fleet_agent_setup.sh --install-user-service`
+
+**Not:** `vm_sync_from_host.sh` tek basina keepalive baslatmaz — sync sonrasi yukaridaki setup veya `vm_refresh_from_host`.
+
+**Host eski OFFLINE dugumler:** `STALE_HOURS=1 bash scripts/fleet_prune_stale.sh` (dashboard DB); UI `stale_hours=6` ile gizler.
+
+**Host filo agent (reboot-safe):**
+
+```bash
+bash scripts/host_fleet_agent_setup.sh --install-user-service
+journalctl --user -u log-guardian-fleet-keepalive -f   # [fleet_push] OK agent=node-kurtulus-01
+systemctl --user restart log-guardian-fleet-keepalive
+```
+
+`laptop_optional_layers_on.sh` filo adiminda bunu otomatik kurar. Manuel keepalive: `bash scripts/fleet_telemetry_keepalive.sh --bg`
+
+**Daemon io_uring (laptop kararlılık):** Wi-Fi / no-xdp ortamda io_uring watchdog kill onler:
+
+```bash
+sudo bash scripts/ensure_daemon_env.sh          # LG_DISABLE_URING=1 -> /etc/log-guardian/env
+sudo systemctl restart log-guardian-daemon.service
+journalctl -u log-guardian-daemon -b | grep -E 'DISABLE_URING|klasik poll'
+```
+
+Host stack ayaktayken `node-vm-02` filoda ONLINE kalir (`TELEMETRY_URL=https://10.0.2.2:8443/...` NAT).
+
+**Filo doğrulama (host laptop):**
+
+```bash
+bash scripts/vm_fleet_gate.sh          # node-kurtulus-01 + node-vm-02 Online?
+# https://localhost:8443/fleet
+```
+
+VM keepalive kurulu değilse guest içinde:
+
+```bash
+bash scripts/vm_fleet_agent_setup.sh --install-user-service
+journalctl --user -u log-guardian-fleet-keepalive -f   # [fleet_push] OK agent=node-vm-02
+```
+
+İlgili: `scripts/vm_fleet_gate.sh` · `scripts/fleet_multi_node_e2e.sh` (dispatch kanıtı) · [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) § filo demo.
+
+**Not:** `vm_sync` binary taşımaz — C değişince **mutlaka** `vm_build_binary`. `prod_hosting_activate` tek basina sync sonrasi FAIL verebilir; once build veya `vm_prod_gate` kullan.
+
+**Test fixture:** `vm_sync` kök `*.log` dosyalarini tasimaz; `tests/fixtures/*.fixture` sync olur. `auth_log_e2e` / `journald_e2e` eksik logu otomatik kopyalar. Host→VM `rsync` SSH gerekmez (VirtualBox paylasim `/mnt/lg` yeterli).
+
+**Dashboard /tests (VM):** `bash scripts/dashboard_refresh.sh` → `https://localhost:8443/tests` (Ctrl+Shift+R). `vm_refresh_from_host` ops_gate + sync_dashboard_data calistirir.
 
 Script yoksa (ilk sefer): `bash /mnt/lg/scripts/vm_bootstrap_from_host.sh`
 
@@ -197,9 +366,11 @@ Script yoksa (ilk sefer): `bash /mnt/lg/scripts/vm_bootstrap_from_host.sh`
 | C kaynak (.c) | sync + **`vm_build_binary`** + `vm_demo_gate` |
 | Dashboard | laptop `dashboard_refresh.sh` (VM değil) |
 
-Opsiyonel demo kanıtı:
+Opsiyonel demo kanıtı (laptop — Grafana stack):
 
 ```bash
+bash scripts/ops_alert_e2e.sh
+# veya parca parca:
 bash scripts/grafana_alert_e2e.sh
 sudo bash scripts/webhook_prod_e2e.sh
 ```

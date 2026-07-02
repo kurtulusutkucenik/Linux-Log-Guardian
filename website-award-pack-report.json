@@ -1,0 +1,10 @@
+{
+  "date": "2026-07-01T03:30:15.446267+00:00",
+  "pass": true,
+  "zip": "dist/linux-log-guardian-website-award.zip",
+  "dir": "dist/website-award-pack",
+  "files": 8,
+  "zip_bytes": 1083636,
+  "tests_embedded": 75,
+  "script": "scripts/website_award_pack.sh"
+}

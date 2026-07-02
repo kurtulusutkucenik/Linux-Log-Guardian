@@ -1,0 +1,12 @@
+{
+  "date": "2026-07-01T03:30:44.288579+00:00",
+  "pass": true,
+  "domain": "ceniklinuxlogguardian.org",
+  "expected_tests": 75,
+  "live_cards": 75,
+  "css_ok": true,
+  "js_ok": true,
+  "sri_ok": true,
+  "dash_url": "https://ceniklinuxlogguardian.org/tests",
+  "script": "scripts/website_live_gate.sh"
+}

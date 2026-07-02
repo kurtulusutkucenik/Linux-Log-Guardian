@@ -1,8 +1,9 @@
-/* ban_policy.c — AUTO_BAN_MIN_RISK + audit jsonl */
+/* ban_policy.c — AUTO_BAN_MIN_RISK + audit jsonl + rate cap + hash chain */
 #define _GNU_SOURCE
 #include "ban_policy.h"
 #include "fp_trust.h"
 #include "incident_engine.h"
+#include "crypto_utils.h"
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
@@ -13,9 +14,15 @@ static int     g_enabled = 1;
 static double  g_min_risk = 60.0;
 static char    g_audit_path[512] = "data/ban-policy-audit.jsonl";
 static char    g_tenant_id[128] = "default";
+static int     g_max_auto_ban_per_min = 0;
 static pthread_mutex_t g_audit_mu = PTHREAD_MUTEX_INITIALIZER;
+static pthread_mutex_t g_rate_mu = PTHREAD_MUTEX_INITIALIZER;
 static atomic_uint_fast64_t g_allowed = 0;
 static atomic_uint_fast64_t g_skipped = 0;
+static atomic_uint_fast64_t g_cap_skips = 0;
+static time_t  g_rate_window = 0;
+static int     g_rate_count = 0;
+static char    g_chain_prev[65] = "genesis";
 
 void ban_policy_init(void)
 {
@@ -30,6 +37,32 @@ void ban_policy_set_tenant(const char *tenant_id)
     g_tenant_id[sizeof(g_tenant_id) - 1] = '\0';
 }
 
+static void chain_hash_line(const char *line, char out_hex[65])
+{
+    sha256_hex(line, out_hex);
+}
+
+static void ban_policy_load_chain_head(void)
+{
+    if (!g_audit_path[0])
+        return;
+    FILE *f = fopen(g_audit_path, "r");
+    if (!f)
+        return;
+    char last[2048];
+    char line[2048];
+    last[0] = '\0';
+    while (fgets(line, sizeof(line), f)) {
+        if (line[0] && line[strlen(line) - 1] == '\n')
+            line[strlen(line) - 1] = '\0';
+        if (line[0])
+            strncpy(last, line, sizeof(last) - 1);
+    }
+    fclose(f);
+    if (last[0])
+        chain_hash_line(last, g_chain_prev);
+}
+
 void ban_policy_config(int enabled, double min_risk, const char *audit_path)
 {
     g_enabled = enabled ? 1 : 0;
@@ -38,6 +71,31 @@ void ban_policy_config(int enabled, double min_risk, const char *audit_path)
         strncpy(g_audit_path, audit_path, sizeof(g_audit_path) - 1);
         g_audit_path[sizeof(g_audit_path) - 1] = '\0';
     }
+    ban_policy_load_chain_head();
+}
+
+void ban_policy_set_rate_cap(int max_auto_ban_per_min)
+{
+    g_max_auto_ban_per_min = max_auto_ban_per_min > 0 ? max_auto_ban_per_min : 0;
+}
+
+static int rate_cap_ok(void)
+{
+    if (g_max_auto_ban_per_min <= 0)
+        return 1;
+    time_t minute = time(NULL) / 60;
+    int ok = 0;
+    pthread_mutex_lock(&g_rate_mu);
+    if (minute != g_rate_window) {
+        g_rate_window = minute;
+        g_rate_count = 0;
+    }
+    if (g_rate_count < g_max_auto_ban_per_min) {
+        g_rate_count++;
+        ok = 1;
+    }
+    pthread_mutex_unlock(&g_rate_mu);
+    return ok;
 }
 
 static double alert_risk_score(const Alert *a)
@@ -128,6 +186,16 @@ int ban_policy_should_auto_ban(const char *ip, const Alert *alert,
     }
 
     int allow = (risk >= g_min_risk) ? 1 : 0;
+    if (allow && !rate_cap_ok()) {
+        atomic_fetch_add(&g_cap_skips, 1);
+        if (out) {
+            out->risk_score = risk;
+            out->allow_ban = 0;
+            strncpy(out->decision, "skip_rate_cap",
+                    sizeof(out->decision) - 1);
+        }
+        return 0;
+    }
     if (out) {
         out->risk_score = risk;
         out->allow_ban = allow;
@@ -159,15 +227,18 @@ void ban_policy_audit(const char *ip, const Alert *alert,
             msg_esc[j++] = c;
         }
         msg_esc[j] = '\0';
-        fprintf(f,
-                "{\"ts\":%ld,\"tenant_id\":\"%s\",\"ip\":\"%s\",\"risk_score\":%.1f,\"min_risk\":%.1f,"
-                "\"decision\":\"%s\",\"banned\":%s,\"alert_level\":%d,"
-                "\"incident_id\":\"%s\",\"message\":\"%s\"}\n",
-                (long)now, g_tenant_id, ip, v->risk_score, v->min_risk, v->decision,
-                banned ? "true" : "false",
-                alert ? (int)alert->level : 0,
-                (alert && alert->incident_id[0]) ? alert->incident_id : "",
-                msg_esc);
+        char line[1536];
+        snprintf(line, sizeof(line),
+                 "{\"ts\":%ld,\"tenant_id\":\"%s\",\"ip\":\"%s\",\"risk_score\":%.1f,\"min_risk\":%.1f,"
+                 "\"decision\":\"%s\",\"banned\":%s,\"alert_level\":%d,"
+                 "\"incident_id\":\"%s\",\"message\":\"%s\",\"chain_prev\":\"%s\"}",
+                 (long)now, g_tenant_id, ip, v->risk_score, v->min_risk, v->decision,
+                 banned ? "true" : "false",
+                 alert ? (int)alert->level : 0,
+                 (alert && alert->incident_id[0]) ? alert->incident_id : "",
+                 msg_esc, g_chain_prev);
+        fprintf(f, "%s\n", line);
+        chain_hash_line(line, g_chain_prev);
         fclose(f);
     }
     pthread_mutex_unlock(&g_audit_mu);
@@ -177,4 +248,9 @@ void ban_policy_get_stats(uint64_t *allowed, uint64_t *skipped)
 {
     if (allowed) *allowed = atomic_load(&g_allowed);
     if (skipped) *skipped = atomic_load(&g_skipped);
+}
+
+void ban_policy_get_rate_cap_stats(uint64_t *cap_skips)
+{
+    if (cap_skips) *cap_skips = atomic_load(&g_cap_skips);
 }

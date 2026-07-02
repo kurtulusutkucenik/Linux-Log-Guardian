@@ -1,0 +1,11 @@
+{
+  "date": "2026-06-29T14:45:41.208705+00:00",
+  "pass": true,
+  "mode": "pro-live",
+  "tier": "pro",
+  "controls": 12,
+  "json_ok": true,
+  "pdf_ok": true,
+  "dash_url": "http://127.0.0.1:3000",
+  "script": "scripts/compliance_export_e2e.sh"
+}

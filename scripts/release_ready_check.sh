@@ -107,9 +107,45 @@ PY
 fi
 
 echo ""
+echo "=== Zincir kapilari ==="
+if [[ -f docs-consistency-gate-report.json ]]; then
+  json_pass "docs-consistency-gate-report.json"
+else
+  warn "opsiyonel yok: docs-consistency-gate-report.json — bash scripts/release_ready_gate.sh"
+fi
+
+if [[ "${SKIP_FLEET:-0}" == "1" ]]; then
+  if [[ -f vm-fleet-gate-report.json ]]; then
+    fleet_skip="$(python3 -c "import json;d=json.load(open('vm-fleet-gate-report.json'));print(d.get('skipped',False))" 2>/dev/null || echo False)"
+    fleet_pass="$(python3 -c "import json;d=json.load(open('vm-fleet-gate-report.json'));print(d.get('pass',False))" 2>/dev/null || echo False)"
+    if [[ "$fleet_skip" == "True" ]] || [[ "$fleet_pass" == "True" ]]; then
+      ok "vm-fleet-gate-report.json skipped/pass (SKIP_FLEET=1)"
+    else
+      warn "vm-fleet-gate-report.json pass=False — rutin ship: SKIP_FLEET=1; tam filo: WITH_FLEET=1"
+    fi
+  else
+    warn "vm-fleet-gate-report.json yok — SKIP_FLEET=1 rutin laptop"
+  fi
+elif [[ -f vm-fleet-gate-report.json ]]; then
+  json_pass "vm-fleet-gate-report.json"
+else
+  warn "opsiyonel yok: vm-fleet-gate-report.json — bash scripts/vm_fleet_gate.sh"
+fi
+if [[ -f website-live-gate-report.json ]]; then
+  wl="$(python3 -c "import json;print(json.load(open('website-live-gate-report.json')).get('pass'))" 2>/dev/null || echo "")"
+  if [[ "$wl" == "True" ]]; then
+    ok "website-live-gate-report.json pass=True"
+  else
+    warn "website-live-gate pass=False — LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh"
+  fi
+else
+  warn "website-live-gate-report.json yok — bash scripts/website_live_gate.sh"
+fi
+
+echo ""
 if [[ "$fail" -eq 0 ]]; then
-  echo "[OK] release_ready_check — yerel kanit paketi hazir (18 test raporu)"
-  echo "       GitHub: 18-21 Haz gecesi — gh release create vX.Y.Z release-pack.zip competitive-proof.pdf"
+  echo "[OK] release_ready_check — yerel kanit paketi hazir"
+  echo "       Zincir: bash scripts/release_ready_gate.sh"
   exit 0
 fi
 echo "[FAIL] release_ready_check — eksik veya basarisiz kanit"

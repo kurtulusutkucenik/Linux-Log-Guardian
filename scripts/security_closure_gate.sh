@@ -52,6 +52,8 @@ run "consult_rate_proof" bash scripts/consult_rate_proof.sh
 # P1 — guvenlik profili
 run "security_profile_e2e" bash scripts/security_profile_e2e.sh
 run "openapi_strict_profile_check" bash scripts/openapi_strict_profile_check.sh
+run "parser_fuzz_e2e" bash scripts/parser_fuzz_e2e.sh
+run "ban_policy_audit_e2e" bash scripts/ban_policy_audit_e2e.sh
 
 # P2 — wasm prod (native yoksa WARN)
 echo ""
@@ -65,6 +67,12 @@ fi
 # P2 — ingest / SIEM / CrowdSec (hizli, sudo yok)
 run "auth_log_e2e" bash scripts/auth_log_e2e.sh
 
+if command -v nginx >/dev/null 2>&1; then
+  run "nginx_inline_consult_e2e" bash scripts/nginx_inline_consult_e2e.sh
+else
+  warn "nginx_inline_consult_e2e — nginx yok"
+fi
+
 echo ""
 echo "=== siem_export_e2e ==="
 if [[ "${SKIP_SIEM_E2E:-0}" == "1" ]]; then
@@ -74,6 +82,8 @@ else
 fi
 
 run "crowdsec_bouncer_e2e" bash scripts/crowdsec_bouncer_e2e.sh
+run "taxii_feed_e2e" bash scripts/taxii_feed_e2e.sh
+run "lineage_incident_e2e" bash scripts/lineage_incident_e2e.sh
 
 # Docker internal relay dogrulama
 if [[ "${SKIP_DOCKER:-0}" != "1" ]] && command -v docker >/dev/null 2>&1; then

@@ -1,0 +1,6 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 24" role="img" aria-label="Turkiye">
+  <rect width="36" height="24" fill="#E30A17"/>
+  <circle cx="14.5" cy="12" r="5.2" fill="#ffffff"/>
+  <circle cx="15.8" cy="12" r="4.15" fill="#E30A17"/>
+  <path fill="#ffffff" d="M21.2 12l-1.35 1.05.52-1.65-1.35-1.05 1.67-.02.52-1.65.52 1.65 1.67.02-1.35 1.05.52 1.65z"/>
+</svg>

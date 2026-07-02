@@ -1,0 +1,7 @@
+2026-06-22T02:40:01.123456+03:00 kurtulus sshd[44001]: Failed password for invalid user admin from 203.0.113.224 port 22 ssh2
+2026-06-22T02:40:02.456789+03:00 kurtulus sshd[44002]: Failed password for root from 203.0.113.224 port 22 ssh2
+2026-06-22T02:40:03.789012+03:00 kurtulus sshd[44003]: Failed password for root from 203.0.113.224 port 22 ssh2
+2026-06-22T02:41:01+03:00 kurtulus sudo[45001]: pam_unix(sudo:auth): authentication failure; logname=kurtulus uid=1000 euid=0 tty=ssh ruser=kurtulus rhost=203.0.113.225 user=root
+Jun 22 02:41:02 kurtulus sudo[45002]: pam_unix(sudo:auth): authentication failure; logname=kurtulus uid=1000 euid=0 tty=pts/0 ruser=kurtulus rhost=203.0.113.226 user=root
+2026-06-22T02:41:03+03:00 kurtulus sshd[44006]: Accepted publickey for deploy from 192.168.1.51 port 22 ssh2
+2026-06-22T02:41:04+03:00 kurtulus sshd[44007]: Connection closed by 203.0.113.227 port 22 [preauth]

@@ -7,6 +7,7 @@ typedef struct {
     int enabled;
     char host[128];
     int port;
+    char format[16]; /* json | stix */
 } SiemForwarderConfig;
 
 extern SiemForwarderConfig g_siem_config;

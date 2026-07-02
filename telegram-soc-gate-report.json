@@ -1,0 +1,17 @@
+{
+  "date": "2026-06-30T18:45:29.819729+00:00",
+  "pass": true,
+  "dash_url": "https://localhost:8443",
+  "soc_entries": 15,
+  "soc_ack": 8,
+  "soc_ban": 3,
+  "map_markers": 4,
+  "map_ack": 1,
+  "map_ban": 3,
+  "bans_acks": 1,
+  "status_acks": 1,
+  "prod_e2e_ok": true,
+  "undo_e2e_ok": true,
+  "data_mode": "proof",
+  "script": "scripts/telegram_soc_gate.sh"
+}

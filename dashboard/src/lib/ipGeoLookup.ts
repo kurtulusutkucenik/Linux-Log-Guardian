@@ -10,6 +10,54 @@ export type IpGeo = {
   source: "lookup" | "centroid" | "private";
 };
 
+/** RFC5737 test IPs — demo icin kuresel saldiri kaynaklari (hedefe yay gosterimi). */
+const RFC5737_ATTACK_REGIONS = [
+  { cc: "US", country: "United States", lat: 40.7128, lon: -74.006 },
+  { cc: "US", country: "US West", lat: 37.7749, lon: -122.4194 },
+  { cc: "CA", country: "Canada", lat: 43.6532, lon: -79.3832 },
+  { cc: "GB", country: "United Kingdom", lat: 51.5074, lon: -0.1278 },
+  { cc: "DE", country: "Germany", lat: 52.52, lon: 13.405 },
+  { cc: "FR", country: "France", lat: 48.8566, lon: 2.3522 },
+  { cc: "NL", country: "Netherlands", lat: 52.3676, lon: 4.9041 },
+  { cc: "RU", country: "Russia", lat: 55.7558, lon: 37.6173 },
+  { cc: "CN", country: "China", lat: 39.9042, lon: 116.4074 },
+  { cc: "IN", country: "India", lat: 28.6139, lon: 77.209 },
+  { cc: "BR", country: "Brazil", lat: -23.5505, lon: -46.6333 },
+  { cc: "SG", country: "Singapore", lat: 1.3521, lon: 103.8198 },
+  { cc: "AU", country: "Australia", lat: -33.8688, lon: 151.2093 },
+  { cc: "JP", country: "Japan", lat: 35.6762, lon: 139.6503 },
+  { cc: "KR", country: "South Korea", lat: 37.5665, lon: 126.978 },
+  { cc: "IR", country: "Iran", lat: 35.6892, lon: 51.389 },
+  { cc: "UA", country: "Ukraine", lat: 50.4501, lon: 30.5234 },
+  { cc: "ZA", country: "South Africa", lat: -26.2041, lon: 28.0473 },
+  { cc: "MX", country: "Mexico", lat: 19.4326, lon: -99.1332 },
+  { cc: "PL", country: "Poland", lat: 52.2297, lon: 21.0122 },
+] as const;
+
+function rfc5737SpreadGeo(ip: string): { lat: number; lon: number; country: string; cc: string } {
+  const octets = ip.split(".").map((x) => parseInt(x, 10));
+  const o3 = Number.isFinite(octets[2]) ? octets[2]! : 0;
+  const o4 = Number.isFinite(octets[3]) ? octets[3]! : 0;
+  const idx = (o3 * 7 + o4) % RFC5737_ATTACK_REGIONS.length;
+  const base = RFC5737_ATTACK_REGIONS[idx]!;
+  const jitterLat = ((o4 % 9) - 4) * 0.38;
+  const jitterLon = ((o3 % 11) - 5) * 0.42;
+  return {
+    lat: base.lat + jitterLat,
+    lon: base.lon + jitterLon,
+    country: `Demo · ${base.country}`,
+    cc: base.cc,
+  };
+}
+
+function isRfc5737TestIp(ip: string): boolean {
+  return (
+    ip.startsWith("203.0.113.") ||
+    ip.startsWith("198.51.100.") ||
+    ip.startsWith("192.0.2.")
+  );
+}
+
 const cache = new Map<string, IpGeo | null>();
 const MAX_CACHE = 512;
 
@@ -75,13 +123,18 @@ export async function lookupIpGeo(ip: string): Promise<IpGeo | null> {
   if (cache.has(key)) return cache.get(key) ?? null;
 
   let result: IpGeo | null = null;
-  if (isPrivateIpv4(key) || key.startsWith("::") || key === "::1") {
-    const doc =
-      key.startsWith("203.0.113.") || key.startsWith("198.51.100.")
-        ? { lat: 41.01, lon: 28.98, label: "RFC5737 test" }
-        : key.startsWith("192.0.2.")
-          ? { lat: 39.93, lon: 32.85, label: "RFC5737 test" }
-          : { lat: 39.0, lon: 35.0, label: "Private" };
+  if (isRfc5737TestIp(key)) {
+    const spread = rfc5737SpreadGeo(key);
+    result = {
+      ip: key,
+      countryCode: spread.cc,
+      country: spread.country,
+      lat: spread.lat,
+      lon: spread.lon,
+      source: "private",
+    };
+  } else if (isPrivateIpv4(key) || key.startsWith("::") || key === "::1") {
+    const doc = { lat: 39.0, lon: 35.0, label: "Private" };
     const octets = key.split(".").map((x) => parseInt(x, 10));
     const last = Number.isFinite(octets[3]) ? octets[3]! : 0;
     const hash = octets.reduce((a, p) => (a * 31 + p) | 0, 0);
@@ -89,7 +142,7 @@ export async function lookupIpGeo(ip: string): Promise<IpGeo | null> {
     const radius = 0.18 + (last % 16) * 0.11;
     result = {
       ip: key,
-      countryCode: "TEST",
+      countryCode: "PRV",
       country: doc.label,
       lat: doc.lat + radius * Math.cos(angle),
       lon: doc.lon + radius * Math.sin(angle),

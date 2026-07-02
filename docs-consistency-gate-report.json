@@ -1,0 +1,12 @@
+{
+  "date": "2026-06-30T18:46:47.137805+00:00",
+  "pass": true,
+  "checks_ok": 37,
+  "checks_fail": 0,
+  "proof_tests": 75,
+  "proof_pass": 75,
+  "hosting_8b": true,
+  "escalation_hosting_link": true,
+  "support_64_kart": true,
+  "script": "scripts/docs_consistency_gate.sh"
+}

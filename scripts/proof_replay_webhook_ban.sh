@@ -88,6 +88,13 @@ dry_run_count() {
   grep -c '\[WEBHOOK\]\[DRY-RUN\]' "$1" 2>/dev/null | head -1 || true
 }
 
+# Root olsa bile sandbox/CI'da ipset kernel'e erisemeyebilir — faz3'i atla
+ipset_usable() {
+  command -v ipset >/dev/null 2>&1 || return 1
+  ipset list -n log_analyzer_block_v4 >/dev/null 2>&1 || return 1
+  return 0
+}
+
 echo "=== proof_replay_webhook_ban ==="
 echo "  lg=$LG  rules=$SRC_RULES  ips=203.0.113.${IP_BASE}+ (${IP_COUNT} satir)"
 
@@ -147,6 +154,9 @@ if [[ "$RUN_BAN" == "0" ]]; then
 elif [[ "$(id -u)" -ne 0 ]]; then
   ban_skipped=1
   echo "[WARN] faz3 ban — sudo gerekli (sudo bash $0)" >&2
+elif ! ipset_usable; then
+  ban_skipped=1
+  echo "[proof_replay] faz3 ban atlandi (ipset kullanilamiyor — sandbox veya modprobe?)" >&2
 else
   for i in $(seq 0 $((IP_COUNT - 1))); do
     ip="203.0.113.$((IP_BASE + i))"

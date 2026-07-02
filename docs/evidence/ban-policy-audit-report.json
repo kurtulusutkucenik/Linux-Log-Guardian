@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-30",
+  "pass": true,
+  "audit_lines": 1,
+  "last_decision": "force_waf",
+  "last_risk": 80.0,
+  "audit_path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/.cache/ban-policy-audit.jsonl",
+  "openapi_strict_checked": true
+}

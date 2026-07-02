@@ -1,0 +1,11 @@
+{
+  "date": "2026-06-30T18:42:43.342840+00:00",
+  "pass": true,
+  "mode": "prod-off",
+  "mesh_backend": "none",
+  "mesh_pub_enabled": false,
+  "etcd_endpoints": "http://127.0.0.1:2379",
+  "helm_mesh_backend": "etcd",
+  "policy": "fleet_rules_sync",
+  "script": "scripts/mesh_etcd_e2e.sh"
+}

@@ -1,0 +1,10 @@
+{
+  "date": "2026-06-29T14:45:41.323815+00:00",
+  "pass": true,
+  "mode": "tier_gate",
+  "tier": "pro",
+  "packages_signed": 0,
+  "verify_ok": false,
+  "dash_url": "http://127.0.0.1:3000",
+  "script": "scripts/marketplace_signed_api_e2e.sh"
+}

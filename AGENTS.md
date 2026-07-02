@@ -69,6 +69,7 @@ Görev bazlı okuma — tüm repoyu tarama:
 4. Operatör akışı: `docs/LAPTOP_OPS.md` + `docs/QUICKSTART_NGINX.md` + `docs/CUSTOMER_REQUIREMENTS.md`.
 5. Grafana işi: sadece `grafana-dashboard.json`, `grafana-alerts.json`, `metrics.c`, `scripts/grafana_provision.sh`.
 6. Kapsam / sprint takibi: `docs/SCOPE_COVERAGE.md` (tüm tier + faz checklist).
+7. **72h soak tamam** — `soak-report.json` (`72.0h`, 864 örnek, 0 fail). Kullanıcıya tekrar koşturma önerme.
 
 ## Geliştirme komutları
 

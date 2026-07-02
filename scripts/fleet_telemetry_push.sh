@@ -63,17 +63,46 @@ print(json.dumps({
 PY
 )
 
-curl_args=(-sf -X POST "$TELEMETRY_URL" \
+curl_target="$TELEMETRY_URL"
+curl_resolve="${FLEET_CURL_RESOLVE:-}"
+
+# Caddy prod (DOMAIN=localhost): IP ile baglaninca TLS SNI de localhost olmali (--resolve)
+if [[ "$TELEMETRY_URL" =~ ^(https?)://([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)(:([0-9]+))?(/.*)?$ ]]; then
+  ip_host="${BASH_REMATCH[2]}"
+  port_num="${BASH_REMATCH[4]:-}"
+  url_path="${BASH_REMATCH[5]:-/api/telemetry}"
+  scheme="${BASH_REMATCH[1]}"
+  if [[ -z "$port_num" ]]; then
+    port_num=$([[ "$scheme" == https ]] && echo 8443 || echo 8080)
+  fi
+  curl_resolve="${curl_resolve:-localhost:${port_num}:${ip_host}}"
+  curl_target="${scheme}://localhost:${port_num}${url_path}"
+fi
+
+curl_args=(-sf -X POST "$curl_target" \
   -H "Authorization: Bearer $TOKEN" \
   -H "Content-Type: application/json" \
   -d "$payload")
 
-if [[ "$TELEMETRY_URL" == https://* ]]; then
+if [[ -n "${FLEET_TELEMETRY_HOST:-}" ]]; then
+  curl_args+=(-H "Host: ${FLEET_TELEMETRY_HOST}")
+elif [[ -n "$curl_resolve" ]]; then
+  curl_args+=(-H "Host: localhost")
+fi
+
+if [[ -n "$curl_resolve" ]]; then
+  curl_args+=(--resolve "$curl_resolve")
+fi
+
+if [[ "$curl_target" == https://* ]]; then
   curl_args+=(-k)
 fi
 
 if ! curl "${curl_args[@]}" | grep -q '"success":true'; then
   echo "[fleet_push] FAIL — dashboard ayakta mi? TELEMETRY_URL=$TELEMETRY_URL" >&2
+  if [[ -n "$curl_resolve" ]]; then
+    echo "  TLS ipucu: curl -sk --resolve '${curl_resolve}' ${curl_target%/api/telemetry}/api/tier" >&2
+  fi
   exit 1
 fi
 

@@ -2,6 +2,8 @@
 # ipset log_analyzer_block_v4 tip uyumu (hash:net) — daemon ban IPC onarimi
 #   sudo bash scripts/repair_ipset_v4.sh
 #   sudo bash scripts/repair_ipset_v4.sh --no-restart
+# Ban temizligi icin DEGIL — DB'den ban geri yukler. Temizlik:
+#   FLUSH=1 bash scripts/laptop_ban_cleanup.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 

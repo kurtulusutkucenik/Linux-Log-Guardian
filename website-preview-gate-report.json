@@ -1,0 +1,13 @@
+{
+  "pass": false,
+  "expected_tests": 75,
+  "site_tests": 75,
+  "site_pass": 74,
+  "site_fail": 0,
+  "has_grafana_parity": true,
+  "has_edge_gate": true,
+  "site_dir": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/assets/website",
+  "date": "2026-07-01T03:30:02.669704+00:00",
+  "script": "scripts/website_preview_gate.sh",
+  "fail_reason": "website_smoke (assets/website)"
+}

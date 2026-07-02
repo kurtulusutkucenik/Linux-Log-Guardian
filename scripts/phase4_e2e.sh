@@ -10,6 +10,7 @@ test -f docs/GRAFANA_SETUP.md
 test -f docs/ENTERPRISE_SUPPORT.md
 test -f docs/FLEET_ONLINE.md
 test -f helm/log-guardian/Chart.yaml
+bash scripts/helm_install_smoke.sh
 
 DASH_URL="${DASH_URL:-http://127.0.0.1:3000}"
 if curl -sf --max-time 2 "${DASH_URL}/login" -o /dev/null 2>/dev/null; then

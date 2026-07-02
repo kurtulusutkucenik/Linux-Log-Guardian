@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-01",
+  "pass": true,
+  "mode": "dry-run",
+  "stix_source": "fixture",
+  "iocs_synced": 2,
+  "skipped_low_confidence": 1,
+  "min_confidence": 70,
+  "live_api_ok": false,
+  "api_base": "http://127.0.0.1:8090",
+  "fixture": "corpus/fixtures/taxii_stix_bundle.json",
+  "note": "Laptop: TAXII_URL gerekmez; fixture + confidence gate yeterli. Canli feed: rules.conf TAXII_URL"
+}

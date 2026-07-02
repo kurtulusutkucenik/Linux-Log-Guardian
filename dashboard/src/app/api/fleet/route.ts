@@ -5,20 +5,22 @@ export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
   try {
-    // Phase 6: Artık DB'den çekiliyor.
     const tenantId = request.headers.get('x-tenant-id');
     const now = new Date().getTime();
+    const url = new URL(request.url);
+    const staleHours = parseFloat(url.searchParams.get('stale_hours') || '0');
 
-    // Tenant filtresi var mı?
     const whereClause = (tenantId && tenantId !== '*') ? { tenantId } : {};
 
     const agents = await prisma.telemetry.findMany({
       where: whereClause,
-      include: { tenant: true }, // tenant bilgisini de çekiyoruz
+      include: { tenant: true },
     });
 
-    const enrichedFleet = agents.map(agent => {
-      const isOnline = (now - new Date(agent.lastSeen).getTime()) < 15000;
+    const enrichedFleet = agents
+      .map(agent => {
+      const lastMs = new Date(agent.lastSeen).getTime();
+      const isOnline = (now - lastMs) < 15000;
       let attack_trees = 0;
       try {
         const trees = JSON.parse(agent.attackTreeJson || '[]');
@@ -43,8 +45,16 @@ export async function GET(request: Request) {
         attack_trees,
         last_seen: agent.lastSeen,
         status: isOnline ? 'Online' : 'Offline',
+        _lastMs: lastMs,
+        _isOnline: isOnline,
       };
-    });
+    })
+      .filter(agent => {
+        if (staleHours <= 0) return true;
+        if (agent._isOnline) return true;
+        return (now - agent._lastMs) < staleHours * 3600 * 1000;
+      })
+      .map(({ _lastMs: _a, _isOnline: _b, ...rest }) => rest);
 
     // Tenants için group by (Aktif tenantlar)
     const activeTenants = await prisma.telemetry.groupBy({

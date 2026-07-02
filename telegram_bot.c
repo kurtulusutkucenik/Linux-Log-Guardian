@@ -118,17 +118,19 @@ void telegram_bot_build_alert_markup(const char *ack_key, const char *ip,
                   "{\"text\":\"\\u2022 Sessiz\",\"callback_data\":\"mute:%s\"}],"
                  "[{\"text\":\"\\u2b50 WL\",\"callback_data\":\"wl:%s\"},"
                   "{\"text\":\"\\u2022 Unban\",\"callback_data\":\"ub:%s\"}],"
+                 "[{\"text\":\"\\ud83d\\udd0a Sesi a\\u00e7\",\"callback_data\":\"undo:%s\"}],"
                  "[{\"text\":\"\\ud83d\\udcca Dashboard\",\"url\":\"%s\"}]]}",
-                 ack_esc, ip_esc, ip_esc, ip_esc, url_esc);
+                 ack_esc, ip_esc, ip_esc, ip_esc, ip_esc, url_esc);
     } else {
         snprintf(out, cap,
                  "{\"inline_keyboard\":["
                  "[{\"text\":\"\\u2705 G\\u00f6rd\\u00fcm\",\"callback_data\":\"%s\"},"
                   "{\"text\":\"\\u2022 Sessiz\",\"callback_data\":\"mute:%s\"}],"
                  "[{\"text\":\"\\u2b50 WL\",\"callback_data\":\"wl:%s\"},"
-                  "{\"text\":\"\\u2022 Unban\",\"callback_data\":\"ub:%s\"}]"
+                  "{\"text\":\"\\u2022 Unban\",\"callback_data\":\"ub:%s\"}],"
+                 "[{\"text\":\"\\ud83d\\udd0a Sesi a\\u00e7\",\"callback_data\":\"undo:%s\"}]"
                  "]}",
-                 ack_esc, ip_esc, ip_esc, ip_esc);
+                 ack_esc, ip_esc, ip_esc, ip_esc, ip_esc);
     }
 }
 
@@ -534,21 +536,66 @@ static void refresh_ack_footer(const char *chat_id, long msg_id,
     edit_message_text(chat_id, msg_id, html);
 }
 
+static void extract_ip_from_message(const char *msg_text, char *ip_out, size_t cap)
+{
+    if (!msg_text || !ip_out || cap < 8)
+        return;
+    ip_out[0] = '\0';
+    const char *p = strstr(msg_text, "<code>");
+    if (!p)
+        p = strstr(msg_text, "IP:");
+    if (!p)
+        return;
+    if (*p == 'I')
+        p += 3;
+    else
+        p += 6;
+    while (*p == ' ' || *p == '\n')
+        p++;
+    size_t i = 0;
+    for (; *p && i + 1 < cap; p++) {
+        if (*p == '<' || *p == '\n' || *p == ' ')
+            break;
+        ip_out[i++] = *p;
+    }
+    ip_out[i] = '\0';
+}
+
 static void handle_callback(const char *cb_id, const char *chat_id,
                             const char *data, long msg_id,
                             const char *msg_text,
                             const char *operator_id,
                             const char *operator_name) {
-    if (!chat_allowed(chat_id) || !data || !data[0])
+    if (!cb_id || !cb_id[0])
         return;
+    if (!data || !data[0]) {
+        answer_callback(cb_id, "Bos callback");
+        return;
+    }
+    if (!chat_id || !chat_allowed(chat_id)) {
+        fprintf(stderr,
+                "[TELEGRAM_BOT] callback reddedildi (chat izni yok): chat=%s data=%s\n",
+                chat_id ? chat_id : "?", data);
+        answer_callback(cb_id, "Bu chat icin yetki yok");
+        return;
+    }
+
+    fprintf(stderr,
+            "[TELEGRAM_BOT] callback chat=%s data=%s op=%s\n",
+            chat_id, data, operator_name ? operator_name : "?");
 
     if (strncmp(data, "ack:", 4) == 0 || strcmp(data, "ack") == 0) {
         char ack_key[64];
         ack_key[0] = '\0';
         if (strncmp(data, "ack:", 4) == 0)
             strncpy(ack_key, data + 4, sizeof(ack_key) - 1);
-        if (!ack_key[0])
+        if (!ack_key[0]) {
+            extract_ip_from_message(msg_text, ack_key, sizeof(ack_key));
+        }
+        if (!ack_key[0]) {
+            answer_callback(cb_id, "Onay anahtari yok");
             return;
+        }
 
         int rc = -1;
         if (g_ack_hook)
@@ -591,13 +638,23 @@ static void handle_callback(const char *cb_id, const char *chat_id,
         verb = "ub";
         arg = data + 3;
         toast = "Unban gonderildi";
+    } else if (strncmp(data, "undo:", 5) == 0) {
+        verb = "undo";
+        arg = data + 5;
+        toast = "Sesli mod aktif";
     }
 
     if (verb && arg && arg[0] && g_inline_hook) {
         g_inline_hook(chat_id, verb, arg);
         answer_callback(cb_id, toast);
         clear_inline_markup(chat_id, msg_id);
+        return;
     }
+    if (verb && arg && arg[0]) {
+        answer_callback(cb_id, "Inline handler yok");
+        return;
+    }
+    answer_callback(cb_id, "Taninmayan buton");
 }
 
 static void process_update(const char *json) {
@@ -764,7 +821,8 @@ static void *poll_loop(void *arg) {
     while (!g_poll_stop) {
         char url[640];
         snprintf(url, sizeof(url),
-                 "%s/bot%s/getUpdates?timeout=25&offset=%ld",
+                 "%s/bot%s/getUpdates?timeout=25&offset=%ld"
+                 "&allowed_updates=%%5B%%22message%%22%%2C%%22callback_query%%22%%5D",
                  api_base(), g_webhook.token, g_update_offset);
 
         CURL *curl = curl_easy_init();

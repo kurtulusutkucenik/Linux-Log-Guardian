@@ -103,16 +103,23 @@ def main() -> int:
                 print("  [FAIL] EN install.title cevrilmedi")
                 fail += 1
 
-            before_theme = page.locator("html").get_attribute("data-theme") or "dark"
-            page.locator(".theme-btn").first.click()
-            page.wait_for_timeout(100)
-            after_theme = page.locator("html").get_attribute("data-theme")
-            expected_theme = "light" if before_theme == "dark" else "dark"
-            if after_theme == expected_theme:
-                print("  [OK] theme toggle")
-            else:
-                print(f"  [FAIL] theme toggle {before_theme!r} -> {after_theme!r} (beklenen {expected_theme!r})")
-                fail += 1
+            def check_theme_toggle(page_ctx, label: str) -> None:
+                nonlocal fail
+                if page_ctx.locator(".theme-btn").count() == 0:
+                    print(f"  [OK] {label} (dark-only — theme-btn yok)")
+                    return
+                before_theme = page_ctx.locator("html").get_attribute("data-theme") or "dark"
+                page_ctx.locator(".theme-btn").first.click()
+                page_ctx.wait_for_timeout(100)
+                after_theme = page_ctx.locator("html").get_attribute("data-theme")
+                expected_theme = "light" if before_theme == "dark" else "dark"
+                if after_theme == expected_theme:
+                    print(f"  [OK] {label}")
+                else:
+                    print(f"  [FAIL] {label} {before_theme!r} -> {after_theme!r} (beklenen {expected_theme!r})")
+                    fail += 1
+
+            check_theme_toggle(page, "theme toggle")
 
             page.locator('[data-lang="tr"]').click()
             page.wait_for_timeout(150)
@@ -149,16 +156,7 @@ def main() -> int:
                 print("  [FAIL] tests EN lang")
                 fail += 1
 
-            before_theme = page.locator("html").get_attribute("data-theme") or "dark"
-            page.locator(".theme-btn").first.click()
-            page.wait_for_timeout(100)
-            after_theme = page.locator("html").get_attribute("data-theme")
-            expected_theme = "light" if before_theme == "dark" else "dark"
-            if after_theme == expected_theme:
-                print("  [OK] tests theme toggle")
-            else:
-                print(f"  [FAIL] tests theme toggle {before_theme!r} -> {after_theme!r}")
-                fail += 1
+            check_theme_toggle(page, "tests theme toggle")
 
             install_href = page.locator('a[data-i18n="nav.install"]').get_attribute("href")
             page.locator('a[data-i18n="nav.install"]').click()

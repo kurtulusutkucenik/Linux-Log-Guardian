@@ -1,0 +1,9 @@
+# network,country_iso_code — offline GeoIP (GEOIP_OFFLINE_CSV)
+# MaxMind GeoLite2-Country-Blocks-IPv4.csv'den network,country_iso_code sutunlari da kullanilabilir
+0.0.0.0/8,LAN
+10.0.0.0/8,LAN
+127.0.0.0/8,LAN
+192.168.0.0/16,LAN
+203.0.113.0/24,TEST
+85.153.0.0/16,TR
+104.16.0.0/12,US

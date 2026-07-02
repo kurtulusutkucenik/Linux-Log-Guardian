@@ -61,10 +61,24 @@ fi
 if command -v nginx >/dev/null 2>&1; then
   bash "$ROOT/scripts/enforce_nginx_log_format.sh" 2>/dev/null \
     || bash "$ROOT/scripts/fix_nginx_log_format.sh" 2>/dev/null || true
-  bash "$ROOT/scripts/enforce_nginx_inline_consult.sh" 2>/dev/null \
-    || bash "$ROOT/scripts/fix_nginx_inline_consult.sh" 2>/dev/null || true
+  if ! bash "$ROOT/scripts/enforce_nginx_inline_consult.sh"; then
+    echo "[install_first_run] FAIL: nginx inline consult (log+hibrit) zorunlu" >&2
+    echo "  sudo bash scripts/fix_nginx_inline_consult.sh" >&2
+    exit 1
+  fi
+  echo "[OK] nginx log+inline consult (hibrit prod default)"
 else
   echo "[INFO] nginx yok — log format / inline consult atlandi"
+fi
+
+if [[ "${SKIP_FP_WARMUP:-0}" != "1" ]]; then
+  # VM .deb: paket kokunde main.c yok — host binary ile warmup segfault yapar
+  if [[ ! -f "$ROOT/main.c" ]] && { [[ "${HOSTNAME:-}" == *VirtualBox* ]] \
+      || { command -v systemd-detect-virt >/dev/null 2>&1 \
+           && [[ "$(systemd-detect-virt 2>/dev/null)" == "oracle" ]]; }; }; then
+    echo "[INFO] VM paket kurulumu — FP warmup atlandi (vm_install_deb / vm_build_binary)"
+    SKIP_FP_WARMUP=1
+  fi
 fi
 
 if [[ "${SKIP_FP_WARMUP:-0}" != "1" ]]; then
@@ -98,18 +112,33 @@ if [[ "${SKIP_FP_WARMUP:-0}" != "1" ]]; then
   fi
 fi
 
-if [[ "${OPENAPI_STRICT_AUTO:-0}" == "1" ]]; then
+if [[ "${OPENAPI_STRICT_AUTO:-0}" == "1" ]] || bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then
   echo ""
-  echo "[install_first_run] OpenAPI strict (API host)..."
+  echo "[install_first_run] OpenAPI strict (API host / internet-facing)..."
   bash "$ROOT/scripts/install_openapi_strict_prod.sh" 2>/dev/null || \
-    echo "[WARN] OpenAPI strict atlandi" >&2
+    echo "[WARN] OpenAPI strict atlandi — sudo bash scripts/install_openapi_strict_prod.sh" >&2
 fi
 
 if command -v nginx >/dev/null 2>&1; then
   echo ""
-  echo "[install_first_run] nginx inline consult..."
-  bash "$ROOT/scripts/fix_nginx_inline_consult.sh" 2>/dev/null || \
-    echo "[WARN] inline consult atlandi" >&2
+  echo "[install_first_run] nginx inline consult (dogrulama)..."
+  bash "$ROOT/scripts/check_nginx_inline_consult.sh" 2>/dev/null || \
+    echo "[WARN] inline consult eksik — sudo bash scripts/fix_nginx_inline_consult.sh" >&2
+fi
+
+if [[ "${CROWDSEC_INSTALL:-0}" == "1" ]] || [[ -f "${LG_ETC:-/etc/log-guardian}/crowdsec.env" ]]; then
+  echo ""
+  echo "[install_first_run] CrowdSec bouncer..."
+  if [[ "${CROWDSEC_INSTALL:-0}" == "1" ]]; then
+    if command -v cscli >/dev/null 2>&1; then
+      bash "$ROOT/scripts/crowdsec_lapi_setup.sh" 2>/dev/null || true
+    else
+      bash "$ROOT/scripts/crowdsec_lapi_setup.sh" --install 2>/dev/null || \
+        echo "[WARN] CrowdSec kurulumu atlandi — docs/CROWDSEC_INTEGRATION.md" >&2
+    fi
+  fi
+  bash "$ROOT/scripts/install_crowdsec_bouncer.sh" 2>/dev/null || \
+    echo "[WARN] CrowdSec bouncer atlandi — docs/CROWDSEC_INTEGRATION.md" >&2
 fi
 
 if bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then

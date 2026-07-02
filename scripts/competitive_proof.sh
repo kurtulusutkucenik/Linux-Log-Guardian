@@ -5,6 +5,10 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 bash "$ROOT/scripts/ops_gate_report.sh" "${OPS_GATE_FULL:+--full}"
+bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null || true
+python3 scripts/competitive_proof_build.py -o competitive-proof.json
+# Uzun ops_gate sonrasi ipc:fail onlenir — status + proof ikinci kez
+bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null || true
 python3 scripts/competitive_proof_build.py -o competitive-proof.json
 
 VENV="$ROOT/.venv-compliance"

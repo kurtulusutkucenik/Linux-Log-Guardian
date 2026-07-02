@@ -1,0 +1,14 @@
+{
+  "date": "2026-06-30",
+  "pass": true,
+  "mode": "incident-sim",
+  "incident_id": "INC-6a440909-2382",
+  "ip": "10.0.0.99",
+  "active_incidents": 1,
+  "correlated_total": 1,
+  "signals": [
+    "LOG_SQLI",
+    "EBPF_EXECVE"
+  ],
+  "note": "lineage INC_SIG_EBPF_LINEAGE prod hattinda daemon ile birlesir"
+}

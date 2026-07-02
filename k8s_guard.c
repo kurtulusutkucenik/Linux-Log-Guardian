@@ -91,6 +91,14 @@ int k8s_guard_kill_process(const RceEvent *ev)
 {
     if (!ev) return -1;
 
+    /* Host/laptop: yalnizca izlenen konteyner cgroup'larinda SIGKILL */
+    if (!ev->container.is_container) {
+        syslog(LOG_INFO,
+               "[K8S-GUARD] host execve (izleme disi) PID=%d %s — kill yok",
+               (int)ev->pid, ev->filename);
+        return 1;
+    }
+
     syslog(LOG_CRIT,
            "[K8S-GUARD] *** ZERO TRUST RCE *** PID=%d Parent=%s Exec=%s Arg=%s "
            "Container=%.12s Workload=%s",

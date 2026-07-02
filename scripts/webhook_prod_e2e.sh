@@ -1,12 +1,34 @@
 #!/usr/bin/env bash
 # Prod Telegram route: nginx saldiri logu + webhook-test paketi
-#   sudo bash scripts/webhook_prod_e2e.sh
+#   LIVE_WEBHOOK=1 sudo bash scripts/webhook_prod_e2e.sh   # bilincli canli prova
+#   sudo bash scripts/webhook_prod_e2e.sh                    # dogrudan ops (root)
 set -euo pipefail
+set +H
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# Rutin gate/rehearsal — kanala alarm gitmesin
+if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
+  echo "[SKIP] webhook_prod_e2e — SKIP_WEBHOOK=1 (LIVE_WEBHOOK=1 ile ac)"
+  exit 0
+fi
+# Dogrudan root ops cagrisi (bilincli); gate'ler LIVE_WEBHOOK=1 gerekir
+if [[ "$(id -u)" -eq 0 && "${LIVE_WEBHOOK:-0}" != "1" && "${WEBHOOK_PROD_FORCE:-0}" != "1" ]]; then
+  WEBHOOK_PROD_FORCE=1
+fi
+if [[ "${LIVE_WEBHOOK:-0}" != "1" && "${WEBHOOK_PROD_FORCE:-0}" != "1" ]]; then
+  echo "[SKIP] webhook_prod_e2e — LIVE_WEBHOOK=1 veya sudo bash scripts/webhook_prod_e2e.sh"
+  exit 0
+fi
+
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+LG_AUTH_ARGS=()
+
 WEBHOOK_ENV="${WEBHOOK_ENV:-/etc/log-guardian/webhook.env}"
-RULES="${LG_RULES:-/etc/log-guardian/rules.conf}"
+PROD_RULES="${LG_RULES:-/etc/log-guardian/rules.conf}"
+RULES="${PROD_RULES}"
+E2E_RULES=""
 LG_BIN="${LG_BIN:-/usr/local/bin/log-guardian}"
 METRICS_FILE="${LOGANALYZER_WEBHOOK_METRICS_FILE:-/var/lib/log-guardian/webhook.metrics}"
 ATTACK_IP="203.0.113.198"
@@ -22,45 +44,74 @@ ipset_has_ban() {
     || ipset test log_analyzer_block_v6 "$ip" >/dev/null 2>&1
 }
 
+prepare_e2e_rules() {
+  local src="$PROD_RULES" base
+  [[ -f "$src" ]] || fail "rules yok: $src"
+  base="$(cd "$(dirname "$src")" && pwd)"
+  mkdir -p "$CACHE"
+  E2E_RULES="$CACHE/webhook_prod_e2e.rules"
+  {
+    while IFS= read -r ln || [[ -n "$ln" ]]; do
+      case "$ln" in
+        BLOCK_COUNTRIES=*|THREAT_FEED_*|GEOIP_REFRESH_*|GEOIP_MMDB=*|GEOIP_OFFLINE_CSV=*|MESH_*|ETCD_*|SIEM_*)
+          continue ;;
+        CRS_RULES=*|OPENAPI_SCHEMA=*|FALCO_HOST_RULES=*|WASM_PLUGIN_DIR=*)
+          key="${ln%%=*}"
+          val="${ln#*=}"
+          if [[ -n "$val" && "$val" != /* ]]; then
+            ln="${key}=${base}/${val}"
+          fi
+          ;;
+      esac
+      printf '%s\n' "$ln"
+    done <"$src"
+    echo "THREAT_FEED_ENABLED=0"
+    echo "BLOCK_COUNTRIES="
+    echo "GEOIP_FEED_SKIP=1"
+    echo "METRICS_PORT=0"
+    echo "MESH_PUB_ENABLED=0"
+    echo "MESH_SUB_ENABLED=0"
+    echo "SIEM_FORWARDER_ENABLED=0"
+  } >"$E2E_RULES"
+  chmod 600 "$E2E_RULES"
+}
+
 run_lg_ingest() {
   local siem_env=()
-  if [[ "${LG_DEMO_SIEM:-0}" == "1" || "${SIEM_FORWARDER_ENABLED:-0}" == "1" ]]; then
-    siem_env=(
+  local ingest_rules="${E2E_RULES:-$RULES}"
+  [[ -f "$ingest_rules" ]] || ingest_rules="$RULES"
+  local auth_env=()
+  if [[ ${#LG_AUTH_ARGS[@]} -eq 0 ]]; then
+    auth_env=(LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}")
+  fi
+  local ingest_env=(
+    "${auth_env[@]}"
+    WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0
+    GEOIP_FEED_SKIP=1 THREAT_FEED_ENABLED=0
+    LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}"
+    LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}"
+    LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}"
+    LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}"
+    LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}"
+  )
+  if [[ "${LG_DEMO_SIEM:-0}" == "1" ]]; then
+    ingest_env+=(
       SIEM_FORWARDER_ENABLED=1
       SIEM_HOST="${SIEM_HOST:-127.0.0.1}"
       SIEM_PORT="${SIEM_PORT:-5044}"
+      SIEM_FORMAT="${SIEM_FORMAT:-json}"
+      SIEM_SYNC_SEND=1
     )
   fi
   if [[ $EUID -eq 0 ]]; then
-    env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
-      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
-      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
-      "${siem_env[@]}" \
-      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+    env "${ingest_env[@]}" \
+      "$LG_BIN" "${LG_AUTH_ARGS[@]}" "$ATTACK_LOG" --no-tui --json --rules "$ingest_rules" 2>&1
   elif command -v sudo >/dev/null 2>&1; then
-    sudo env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
-      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
-      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
-      "${siem_env[@]}" \
-      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+    sudo env "${ingest_env[@]}" \
+      "$LG_BIN" "${LG_AUTH_ARGS[@]}" "$ATTACK_LOG" --no-tui --json --rules "$ingest_rules" 2>&1
   else
-    env LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD}" \
-      WEBHOOK_ENABLED=1 WEBHOOK_DRY_RUN=0 METRICS_PORT=0 \
-      LOGANALYZER_TELEGRAM_TOKEN="${LOGANALYZER_TELEGRAM_TOKEN:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_ID="${LOGANALYZER_TELEGRAM_CHAT_ID:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_IDS="${LOGANALYZER_TELEGRAM_CHAT_IDS:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_CRIT="${LOGANALYZER_TELEGRAM_CHAT_CRIT:-}" \
-      LOGANALYZER_TELEGRAM_CHAT_WARN="${LOGANALYZER_TELEGRAM_CHAT_WARN:-}" \
-      "${siem_env[@]}" \
-      "$LG_BIN" "$ATTACK_LOG" --no-tui --json --rules "$RULES" 2>&1
+    env "${ingest_env[@]}" \
+      "$LG_BIN" "${LG_AUTH_ARGS[@]}" "$ATTACK_LOG" --no-tui --json --rules "$ingest_rules" 2>&1
   fi
 }
 
@@ -124,9 +175,16 @@ load_webhook_env() {
 if [[ -f "$WEBHOOK_ENV" && ! -r "$WEBHOOK_ENV" && "$(id -u)" -ne 0 ]]; then
   echo "[webhook_prod_e2e] $WEBHOOK_ENV root-only — sudo ile yeniden calistiriliyor"
   exec sudo env \
+    SKIP_WEBHOOK="${SKIP_WEBHOOK:-0}" \
+    LIVE_WEBHOOK="${LIVE_WEBHOOK:-0}" \
+    WEBHOOK_PROD_FORCE="${WEBHOOK_PROD_FORCE:-0}" \
     WEBHOOK_ENV="$WEBHOOK_ENV" \
     LG_RULES="${LG_RULES:-}" \
     LG_BIN="${LG_BIN:-}" \
+    LG_DEMO_SIEM="${LG_DEMO_SIEM:-0}" \
+    SIEM_HOST="${SIEM_HOST:-}" \
+    SIEM_PORT="${SIEM_PORT:-}" \
+    SIEM_FORMAT="${SIEM_FORMAT:-}" \
     LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-}" \
     WEBHOOK_E2E_CLI_TEST="${WEBHOOK_E2E_CLI_TEST:-}" \
     METRICS_PORT="${METRICS_PORT:-}" \
@@ -143,13 +201,21 @@ if ! [[ -f "$WEBHOOK_ENV" ]]; then
   fi
 fi
 webhook_env_readable || fail "$WEBHOOK_ENV okunamiyor (chmod 600 root)"
-[[ -f "$RULES" ]] || fail "$RULES yok"
+[[ -f "$PROD_RULES" ]] || fail "$PROD_RULES yok"
+prepare_e2e_rules
+echo "[info] ingest rules: $E2E_RULES (BLOCK_COUNTRIES/threat-intel kapali — ag koruma)"
 
 metrics_sent() {
   grep -E '^sent=' "$METRICS_FILE" 2>/dev/null | cut -d= -f2 || echo 0
 }
 
 echo "=== webhook_prod_e2e ==="
+
+if ! bash "$ROOT/scripts/laptop_network_sanity.sh"; then
+  fail "ag guvenligi — gateway/DNS ipset'te. Once:
+  sudo bash scripts/laptop_network_sanity.sh --fix
+  FLUSH=1 bash scripts/laptop_ban_cleanup.sh"
+fi
 
 if ! systemctl is-active --quiet log-guardian.service 2>/dev/null; then
   echo "[WARN] log-guardian.service inactive"
@@ -234,7 +300,13 @@ ${ATTACK_IP} - - [09/Jun/2026:01:15:02 +0300] "GET /admin?id=1 OR 1=1 HTTP/1.1" 
 ${ATTACK_IP} - - [09/Jun/2026:01:15:03 +0300] "GET /api?x=<script>alert(1)</script> HTTP/1.1" 403 80 "-" "webhook_prod_e2e"
 EOF
 
-export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+prepare_lg_replay_auth
+if [[ ${#LG_AUTH_ARGS[@]} -gt 0 ]]; then
+  echo "[info] auth: --password-file /etc/log-guardian/service.password"
+else
+  load_lg_replay_password
+  echo "[info] auth: LOGANALYZER_PASSWORD (KDF dogrulandi)"
+fi
 
 echo "[0/4] test IP temizligi: $ATTACK_IP"
 unban_test_ip
@@ -276,6 +348,32 @@ verify_ipset_ban() {
 
 echo "[2/4] ipset ban dogrulama (ingest sonrasi)..."
 verify_ipset_ban
+
+echo "[2a/4] active_bans.json → dashboard feed..."
+DEST="${LG_DASHBOARD_DATA:-$ROOT/.cache/dashboard-live}"
+mkdir -p "$DEST"
+if [[ -f /run/log-guardian/active_bans.json ]]; then
+  if [[ -w /run/log-guardian/active_bans.json ]]; then
+    FORCE_IPSET_REFRESH=1 bash "$ROOT/scripts/repair_active_bans_json.sh" \
+      /run/log-guardian/active_bans.json 2>/dev/null || true
+  elif command -v sudo >/dev/null 2>&1; then
+    sudo FORCE_IPSET_REFRESH=1 bash "$ROOT/scripts/repair_active_bans_json.sh" \
+      /run/log-guardian/active_bans.json 2>/dev/null || true
+  fi
+  cp -f /run/log-guardian/active_bans.json "$DEST/active_bans.json" 2>/dev/null \
+    || sudo cp -f /run/log-guardian/active_bans.json "$DEST/active_bans.json" 2>/dev/null || true
+fi
+
+echo "[2b/4] bans telegram ops (canli ban + ack API)..."
+if [[ -x "$ROOT/scripts/bans_telegram_ops_e2e.sh" ]]; then
+  if TEST_IP="$ATTACK_IP" REQUIRE_BAN=1 bash "$ROOT/scripts/bans_telegram_ops_e2e.sh"; then
+    ok "bans_telegram_ops_e2e (ban+ack)"
+  else
+    echo "[WARN] bans_telegram_ops_e2e — dashboard :8443 + login kontrol" >&2
+  fi
+else
+  echo "[WARN] bans_telegram_ops_e2e.sh yok" >&2
+fi
 
 echo "[3/4] webhook.metrics kontrol..."
 SENT_AFTER=$(metrics_sent)
@@ -363,4 +461,37 @@ else
   echo "  Route icin: .env.webhook.local WEBHOOK_TELEGRAM_ROUTE=1 + CRIT/WARN"
 fi
 echo "[report] $REPORT"
+echo "[5/5] e2e sonrasi ipset temizligi (gateway/LAN/DNS)..."
+unban_test_ip
+if [[ -x "$ROOT/scripts/laptop_network_sanity.sh" ]]; then
+  bash "$ROOT/scripts/laptop_network_sanity.sh" --fix >/dev/null 2>&1 || true
+  if ! bash "$ROOT/scripts/laptop_network_sanity.sh"; then
+    echo "[WARN] E2E sonrasi ag kontrolu — FLUSH=1 bash scripts/laptop_ban_cleanup.sh" >&2
+  fi
+fi
+
+echo "[6/6] kanit sync (dashboard /tests)..."
+bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null \
+  || sudo bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null \
+  || true
+if [[ "${WEBHOOK_E2E_SKIP_ACK:-0}" != "1" ]] && [[ -x "$ROOT/scripts/webhook_ack_e2e.sh" ]]; then
+  if bash "$ROOT/scripts/webhook_ack_e2e.sh" 2>/dev/null; then
+    ok "webhook_ack_e2e (Gordum DB+metrik)"
+  else
+    echo "[WARN] webhook_ack_e2e atlandi — bash scripts/webhook_ack_e2e.sh" >&2
+  fi
+fi
+DEST="${LG_DASHBOARD_DATA:-$ROOT/.cache/dashboard-live}"
+mkdir -p "$DEST"
+for f in webhook-route-proof-report.json webhook-telegram-ack-live-report.json \
+  bans-telegram-ops-report.json telegram-soc-gate-report.json guardian-status.json; do
+  [[ -f "$ROOT/$f" ]] && cp -f "$ROOT/$f" "$DEST/$f" && echo "[sync] $f -> $DEST/"
+done
+if [[ -x "$ROOT/scripts/telegram_soc_gate.sh" ]]; then
+  bash "$ROOT/scripts/telegram_soc_gate.sh" 2>/dev/null \
+    && cp -f "$ROOT/telegram-soc-gate-report.json" "$DEST/" 2>/dev/null \
+    && echo "[sync] telegram-soc-gate-report.json -> $DEST/" \
+    || echo "[WARN] telegram_soc_gate atlandi" >&2
+fi
+
 echo "[OK] webhook_prod_e2e"

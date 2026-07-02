@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-28",
+  "pass": true,
+  "mode": "metrics",
+  "honey_traps_total": 0,
+  "lfi_traps_total": 0,
+  "c2_traps_total": 0,
+  "note": "Aktif deception — trap_watcher + tarpit; feed = prometheus counter"
+}

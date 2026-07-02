@@ -49,6 +49,7 @@ make -j$(nproc)
 | **Telegram** | Alarm bildirimi | `docs/WEBHOOK_SETUP.md`, `WEBHOOK_DRY_RUN=1` test |
 | **Grafana** | SOC görselleştirme | `docs/GRAFANA_SETUP.md`, `scripts/grafana_provision.sh` |
 | **AbuseIPDB / OTX** | Threat feed | `rules.conf` threat feed blokları |
+| **CrowdSec LAPI** | Topluluk sinyali + ek ban | `docs/CROWDSEC_INTEGRATION.md` · timer `log-guardian-crowdsec-bouncer` |
 
 **Ollama zorunlu değil.** Kurulu değilse Copilot kural tabanlı modda çalışır.
 

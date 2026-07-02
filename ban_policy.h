@@ -15,6 +15,8 @@ typedef struct {
 
 void ban_policy_init(void);
 void ban_policy_config(int enabled, double min_risk, const char *audit_path);
+/** 0 = sınırsız; otomatik ban dakika tavanı (ban storm koruması) */
+void ban_policy_set_rate_cap(int max_auto_ban_per_min);
 void ban_policy_set_tenant(const char *tenant_id);
 
 /** 1 = ban uygula, 0 = atla (audit yazilir) */
@@ -25,5 +27,6 @@ void ban_policy_audit(const char *ip, const Alert *alert,
                       const BanPolicyVerdict *v, int banned);
 
 void ban_policy_get_stats(uint64_t *allowed, uint64_t *skipped);
+void ban_policy_get_rate_cap_stats(uint64_t *cap_skips);
 
 #endif /* BAN_POLICY_H */

@@ -60,6 +60,23 @@ else
 fi
 
 if [[ "$fail" -eq 0 ]]; then
+  python3 - "$ROOT/marketplace-sig-report.json" <<'PY'
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+ROOT = Path(__file__).resolve().parents[1] if False else Path(".")
+p = Path("marketplace-sig-report.json")
+manifest = json.loads(Path("rules/marketplace/manifest.json").read_text())
+pkgs = [x.get("id") for x in manifest.get("packages", [])]
+p.write_text(json.dumps({
+    "date": datetime.now(timezone.utc).isoformat(),
+    "pass": True,
+    "packages_signed": len(pkgs),
+    "package_ids": pkgs,
+    "require_sig_enforced": True,
+    "script": "scripts/marketplace_sig_gate.sh",
+}, indent=2) + "\n", encoding="utf-8")
+PY
   echo "[OK] marketplace_sig_gate"
   exit 0
 fi

@@ -62,6 +62,7 @@ should_skip() {
   case "$f" in
     *.o|*.deb|*.zip|*.pdf|*.db|*.sqlite|*.png|*.jpg|*.gif|*.ico|*.woff*|*.pyc) return 0 ;;
     data-room/*|graphify-out/*|.cache/*|assets/website-deploy/*|dist/deb-stage/*) return 0 ;;
+    docs/website-lighthouse.json) return 0 ;;  # base64 JPEG icinde AKIA false positive
   esac
   return 1
 }

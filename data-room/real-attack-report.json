@@ -1,13 +1,134 @@
 {
-  "date": "2026-06-15T19:25:48.580357+00:00",
+  "date": "2026-06-28T20:39:07.314991+00:00",
   "corpus": "corpus/real_attack_corpus.access",
   "manifest": "corpus/real_attack_manifest.json",
   "lines_total": 1000,
   "alerts_total": 1010,
   "attack_recall_pct": 101.0,
-  "category_avg_recall_pct": 0.0,
+  "category_avg_recall_pct": 100.6,
   "target_recall_pct": 85.0,
-  "categories": {},
+  "categories": {
+    "api_abuse": {
+      "lines": 64,
+      "alerts": 64,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "brute": {
+      "lines": 25,
+      "alerts": 25,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "crlf": {
+      "lines": 20,
+      "alerts": 20,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "distributed": {
+      "lines": 80,
+      "alerts": 80,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "jwt_abuse": {
+      "lines": 24,
+      "alerts": 24,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "lfi": {
+      "lines": 41,
+      "alerts": 41,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "log4shell": {
+      "lines": 20,
+      "alerts": 20,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "nosql": {
+      "lines": 35,
+      "alerts": 35,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "open_redirect": {
+      "lines": 25,
+      "alerts": 25,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "post_sqli": {
+      "lines": 73,
+      "alerts": 73,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "prototype_pollution": {
+      "lines": 23,
+      "alerts": 23,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "rce": {
+      "lines": 41,
+      "alerts": 41,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "scanner": {
+      "lines": 96,
+      "alerts": 105,
+      "recall_pct": 109.4,
+      "pass": true
+    },
+    "sqli": {
+      "lines": 171,
+      "alerts": 171,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssrf": {
+      "lines": 37,
+      "alerts": 37,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssti": {
+      "lines": 34,
+      "alerts": 34,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "tr_scan": {
+      "lines": 35,
+      "alerts": 36,
+      "recall_pct": 102.9,
+      "pass": true
+    },
+    "webshell": {
+      "lines": 25,
+      "alerts": 25,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "xss": {
+      "lines": 106,
+      "alerts": 106,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "xxe": {
+      "lines": 25,
+      "alerts": 25,
+      "recall_pct": 100.0,
+      "pass": true
+    }
+  },
   "pass": true,
   "note": "Corpus replay (offline). brute=canli flood (LIVE=1). bash scripts/real_attack_suite.sh LIVE=1",
   "live": {
@@ -26,8 +147,8 @@
       "ban_evidence_live": false,
       "ban_evidence_replay_waf": true,
       "ban_evidence_replay_kernel": true,
-      "bans_active_before": 26,
-      "bans_active_after": 26,
+      "bans_active_before": 23,
+      "bans_active_after": 23,
       "metrics_alerts": 0.0,
       "ipc": "ok",
       "ban_pipeline": {
@@ -99,7 +220,7 @@
         "pass": true
       }
     ],
-    "date": "2026-06-15T19:27:26.159817+00:00"
+    "date": "2026-06-26T11:04:11.685805+00:00"
   },
-  "updated": "2026-06-15T19:27:26.182909+00:00"
+  "updated": "2026-06-28T20:39:07.344145+00:00"
 }

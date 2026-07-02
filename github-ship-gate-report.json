@@ -1,0 +1,15 @@
+{
+  "date": "2026-06-30T18:20:58.639533+00:00",
+  "pass": true,
+  "presentation_ship_ok": true,
+  "security_closure_ok": true,
+  "security_closure_skipped": false,
+  "secret_scan_ok": true,
+  "website_live_ok": null,
+  "vm_fleet_ok": null,
+  "proof_tests": 73,
+  "proof_pass": 73,
+  "dash_url": "https://localhost:8443/tests",
+  "site_url": "https://ceniklinuxlogguardian.org/tests",
+  "script": "scripts/github_ship_gate.sh"
+}

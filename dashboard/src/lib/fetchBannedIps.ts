@@ -25,6 +25,8 @@ export type BannedIpsResult = {
   truncated?: boolean;
   limit?: number;
   offset?: number;
+  data_mode?: "live" | "preview";
+  preview?: boolean;
 };
 
 const BAN_FILE_PATHS = [
@@ -145,13 +147,29 @@ export async function fetchBannedIps(opts: FetchBannedOpts = {}): Promise<Banned
           bans?: BanEntry[];
         };
         if (Array.isArray(data.bans)) {
+          let bans = data.bans as BanEntry[];
+          const q = opts.search?.trim().toLowerCase();
+          if (q) {
+            bans = bans.filter((b) => b.ip.toLowerCase().includes(q));
+          }
+          if (opts.countOnly) {
+            return {
+              count: bans.length,
+              source: data.source || "ipset",
+              bans: [],
+              truncated: bans.length > 0,
+            };
+          }
+          const offset = Math.max(0, opts.offset ?? 0);
+          const limit = clampLimit(opts.limit ?? 50);
+          const page = bans.slice(offset, offset + limit);
           return {
-            count: data.count ?? data.total_count ?? data.bans.length,
+            count: bans.length,
             source: data.source || "ipset",
-            bans: data.bans,
-            truncated: data.truncated,
-            limit: opts.limit,
-            offset: opts.offset,
+            bans: page,
+            truncated: bans.length > offset + page.length,
+            limit,
+            offset,
           };
         }
         const ips = data.ips || [];

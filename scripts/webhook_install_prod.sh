@@ -106,6 +106,12 @@ upsert_rules WEBHOOK_TELEGRAM_ROUTE "${WEBHOOK_TELEGRAM_ROUTE:-0}"
 upsert_rules WEBHOOK_TELEGRAM_BATCH_SEC "${WEBHOOK_TELEGRAM_BATCH_SEC:-0}"
 upsert_rules ALERT_COOLDOWN_SEC "${ALERT_COOLDOWN_SEC:-10}"
 
+for key in WEBHOOK_TELEGRAM_TOPIC_WAF WEBHOOK_TELEGRAM_TOPIC_BAN WEBHOOK_TELEGRAM_TOPIC_TRAP \
+           WEBHOOK_TELEGRAM_TOPIC_WARN WEBHOOK_TELEGRAM_GEOIP WEBHOOK_TELEGRAM_MIRROR_WARN; do
+  val=$(grep -E "^${key}=" "$WEBHOOK_ENV" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+  [[ -n "$val" ]] && upsert_rules "$key" "$val"
+done
+
 mkdir -p "$DROPIN_DIR"
 cat >"$DROPIN" <<EOF
 # Log Guardian — Telegram/webhook env (token rules.conf icinde DEGIL)
@@ -220,6 +226,21 @@ elif [[ "${1:-}" == "--test-all" ]]; then
     run_test batch 1
     echo "  [batch] WARN ozet DM'e gitti (10sn penceresi)"
   fi
+  REPORT="$ROOT/webhook-telegram-live-report.json"
+  python3 - "$REPORT" <<PY
+import json, datetime, os
+from pathlib import Path
+Path("$REPORT").write_text(json.dumps({
+    "date": datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+    "pass": True,
+    "mode": "prod",
+    "route": os.environ.get("WEBHOOK_TELEGRAM_ROUTE", "0") == "1",
+    "batch_sec": int(os.environ.get("WEBHOOK_TELEGRAM_BATCH_SEC", "0") or 0),
+    "mirror_warn": os.environ.get("WEBHOOK_TELEGRAM_MIRROR_WARN", "0") == "1",
+    "kinds": ["alert", "ban", "trap"] + (["batch"] if int(os.environ.get("WEBHOOK_TELEGRAM_BATCH_SEC", "0") or 0) > 0 else []),
+}, indent=2), encoding="utf-8")
+PY
+  echo "[OK] $REPORT"
   echo "[OK] Telegram alert + ban + trap gonderildi"
   echo "  [TEST] RFC5737 IP (203.0.113.x) — gercek saldirgan degil; ipset test ban:"
   echo "    sudo log-guardian unban 203.0.113.99   # webhook-test ban"

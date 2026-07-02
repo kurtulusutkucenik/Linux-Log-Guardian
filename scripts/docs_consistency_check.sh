@@ -59,6 +59,43 @@ else
   bad "install_fp_trust_prod eksik"
 fi
 
+# Sprint AK — 64+ test vitrin + HOSTING_RUNBOOK Telegram cross-link
+if [[ -f competitive-proof.json ]]; then
+  proof_n=$(python3 -c "import json; print(len(json.load(open('competitive-proof.json')).get('validationTests',[])))" 2>/dev/null || echo 0)
+  if [[ "${proof_n:-0}" -ge 64 ]]; then
+    ok "competitive-proof validationTests=${proof_n}"
+  else
+    bad "competitive-proof tests=${proof_n} (beklenen >=64)"
+  fi
+else
+  bad "competitive-proof.json yok"
+fi
+
+if grep -qE '8b\. Telegram|§8b' docs/HOSTING_RUNBOOK_TR.md \
+   && grep -q 'telegram_soc_gate' docs/HOSTING_RUNBOOK_TR.md \
+   && grep -q 'ENTERPRISE_ESCALATION' docs/HOSTING_RUNBOOK_TR.md; then
+  ok "HOSTING_RUNBOOK §8b Telegram"
+else
+  bad "HOSTING_RUNBOOK §8b Telegram eksik"
+fi
+
+if grep -q 'HOSTING_RUNBOOK_TR.md' docs/ENTERPRISE_ESCALATION.md \
+   && grep -qE '§8b|8b' docs/ENTERPRISE_ESCALATION.md; then
+  ok "ENTERPRISE_ESCALATION → hosting §8b"
+else
+  bad "ENTERPRISE_ESCALATION hosting §8b link eksik"
+fi
+
+for doc_pat in '75 kart:docs/ENTERPRISE_SUPPORT.md' '75/75:docs/COMPETITIVE_STATUS.md' '75 test:docs/SCOPE_COVERAGE.md'; do
+  label="${doc_pat%%:*}"
+  docf="${doc_pat#*:}"
+  if grep -q "$label" "$docf" 2>/dev/null; then
+    ok "$docf ($label)"
+  else
+    bad "$docf — $label yok"
+  fi
+done
+
 echo ""
 if [[ "$fail" -eq 0 ]]; then
   echo "[OK] docs_consistency_check — $fail fail"

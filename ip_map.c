@@ -4,7 +4,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <emmintrin.h>
+#include "cpu_pause.h"
 
 // FNV-1a hash fonksiyonu
 static uint64_t fnv1a(const char *data, size_t len) {
@@ -61,7 +61,7 @@ IpRecord *ipmap_get_or_create(IpMap *m, StrView ip_sv) {
         if (current_state == 1) {
             // Başka thread yazıyor! Tamamen READY (2) olana kadar donanım seviyesinde spin-wait yap
             while (atomic_load_explicit(&rec->state, memory_order_acquire) == 1) {
-                _mm_pause(); 
+                LG_CPU_PAUSE();
             }
             current_state = atomic_load_explicit(&rec->state, memory_order_acquire);
         }

@@ -94,6 +94,42 @@ int ip_matches_cidr_list(const char *ip, const char cidrs[][64], int count)
     return 0;
 }
 
+int is_reserved_ban_target(const char *ip)
+{
+    if (!ip || !*ip || !is_valid_ip(ip))
+        return 1;
+
+    if (!is_ipv6_addr(ip)) {
+        static const char *v4_reserved[] = {
+            "0.0.0.0/8",
+            "10.0.0.0/8",
+            "127.0.0.0/8",
+            "169.254.0.0/16",
+            "172.16.0.0/12",
+            "192.168.0.0/16",
+            "224.0.0.0/4",
+            "240.0.0.0/4",
+            NULL
+        };
+        for (int i = 0; v4_reserved[i]; i++) {
+            if (ip_matches_cidr(ip, v4_reserved[i]))
+                return 1;
+        }
+        return 0;
+    }
+
+    if (strcmp(ip, "::1") == 0)
+        return 1;
+    if (strncmp(ip, "fe80:", 5) == 0 || strncmp(ip, "FE80:", 5) == 0)
+        return 1;
+    if (strncmp(ip, "fc", 2) == 0 || strncmp(ip, "fd", 2) == 0
+        || strncmp(ip, "FC", 2) == 0 || strncmp(ip, "FD", 2) == 0)
+        return 1;
+    if (strncmp(ip, "ff", 2) == 0 || strncmp(ip, "FF", 2) == 0)
+        return 1;
+    return 0;
+}
+
 int ipc_clamp_v4_prefix(uint8_t prefix)
 {
     if (prefix == 0)
@@ -107,6 +143,8 @@ int ipc_validate_ban_ipv4(const char *ip, uint8_t *prefix_io)
 {
     if (!ip || !is_valid_ip(ip) || is_ipv6_addr(ip))
         return -1;
+    if (is_reserved_ban_target(ip))
+        return -1;
     struct in_addr a;
     if (inet_pton(AF_INET, ip, &a) != 1)
         return -1;
@@ -118,6 +156,8 @@ int ipc_validate_ban_ipv4(const char *ip, uint8_t *prefix_io)
 int ipc_validate_ban_ipv6(const char *ip)
 {
     if (!ip || !is_valid_ip(ip) || !is_ipv6_addr(ip))
+        return -1;
+    if (is_reserved_ban_target(ip))
         return -1;
     struct in6_addr a;
     return inet_pton(AF_INET6, ip, &a) == 1 ? 0 : -1;

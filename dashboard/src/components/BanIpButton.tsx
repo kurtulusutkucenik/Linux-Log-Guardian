@@ -12,6 +12,7 @@ type Props = {
   /** IP zaten ipset/XDP listesinde */
   banned?: boolean;
   compact?: boolean;
+  readOnly?: boolean;
   className?: string;
   onDone?: (ok: boolean, message: string) => void;
   onRefresh?: () => void;
@@ -23,6 +24,7 @@ export function BanIpButton({
   variant = "ban",
   banned = false,
   compact = false,
+  readOnly = false,
   className = "",
   onDone,
   onRefresh,
@@ -32,8 +34,18 @@ export function BanIpButton({
   const [flashErr, setFlashErr] = useState(false);
   const [errMsg, setErrMsg] = useState("");
 
-  const showUnban = variant === "unban" || (variant === "ban" && banned);
+  const showUnban = !readOnly && (variant === "unban" || (variant === "ban" && banned));
   const showBannedBadge = variant === "ban" && banned && !busy;
+
+  if (readOnly) {
+    return (
+      <span
+        className={`text-[10px] uppercase tracking-wide text-amber-400/80 px-2 py-1 rounded border border-amber-500/25 bg-amber-500/10 ${className}`}
+      >
+        {t("bannedIpsProofOnly")}
+      </span>
+    );
+  }
 
   const run = async () => {
     if (busy || !ip) return;

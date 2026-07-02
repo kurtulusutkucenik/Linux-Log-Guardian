@@ -3,8 +3,8 @@ FROM ubuntu:24.04 AS builder
 
 RUN apt-get update && apt-get install -y \
     clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
-    libcurl4-openssl-dev libssl-dev liburing-dev \
-    pkg-config make bpftool linux-headers-generic \
+    libcurl4-openssl-dev libssl-dev liburing-dev libseccomp-dev \
+    pkg-config make linux-tools-common linux-headers-generic \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
@@ -17,7 +17,7 @@ RUN make clean && make -j$(nproc) log-guardian log-guardian-daemon \
 FROM ubuntu:24.04
 
 RUN apt-get update && apt-get install -y \
-    libbpf1 libpcre2-8-0 libsqlite3-0 \
+    libbpf1 libpcre2-8-0 libsqlite3-0 libseccomp2 \
     libcurl4t64 libssl3 liburing2 \
     iproute2 && \
     rm -rf /var/lib/apt/lists/*

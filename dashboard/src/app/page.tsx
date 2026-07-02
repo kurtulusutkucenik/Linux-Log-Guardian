@@ -35,6 +35,26 @@ const AttackWorldMap = dynamic(
   () => import("@/components/AttackWorldMap").then((m) => m.AttackWorldMap),
   { ssr: false, loading: () => <div className="glass-panel h-64 animate-pulse" /> },
 );
+const SocTimelinePanel = dynamic(
+  () => import("@/components/SocTimelinePanel").then((m) => m.SocTimelinePanel),
+  { ssr: false, loading: () => <div className="glass-panel h-48 animate-pulse" /> },
+);
+const WebhookOpsPanel = dynamic(
+  () => import("@/components/WebhookOpsPanel").then((m) => m.WebhookOpsPanel),
+  { ssr: false, loading: () => <div className="glass-panel h-28 animate-pulse" /> },
+);
+const EdgeProtectionPanel = dynamic(
+  () => import("@/components/EdgeProtectionPanel").then((m) => m.EdgeProtectionPanel),
+  { ssr: false, loading: () => <div className="glass-panel h-28 animate-pulse" /> },
+);
+const LineageL7Panel = dynamic(
+  () => import("@/components/LineageL7Panel").then((m) => m.LineageL7Panel),
+  { ssr: false, loading: () => <div className="glass-panel h-28 animate-pulse" /> },
+);
+const FpMetricsPanel = dynamic(
+  () => import("@/components/FpMetricsPanel").then((m) => m.FpMetricsPanel),
+  { ssr: false, loading: () => <div className="glass-panel h-24 animate-pulse" /> },
+);
 
 export interface AgentTelemetry {
   agent_id: string;
@@ -95,6 +115,7 @@ export default function FleetDashboard() {
   const [commandIp, setCommandIp] = useState("");
   const [banToast, setBanToast] = useState<{ ok: boolean; msg: string } | null>(null);
   const [epsFromLive, setEpsFromLive] = useState(false);
+  const [kpiFromSnapshot, setKpiFromSnapshot] = useState(false);
   const [globalStats, setGlobalStats] = useState({
     activeAgents: 0,
     totalEps: 0,
@@ -114,14 +135,17 @@ export default function FleetDashboard() {
           ? { "X-Tenant-ID": selectedTenant }
           : {};
 
-      const [fleetRes, tenantRes, tlsRes, metricsRes] = await Promise.allSettled([
-        axios.get("/api/fleet", { headers }),
+      const [fleetRes, tenantRes, tlsRes, metricsRes, snapRes] = await Promise.allSettled([
+        axios.get("/api/fleet?stale_hours=6", { headers }),
         axios.get("/api/tenants"),
         axios.get("/api/tls-status"),
         fetch("/api/metrics/live").then((r) => r.json()),
+        fetch("/api/dashboard-snapshot").then((r) => (r.ok ? r.json() : null)),
       ]);
 
       let liveEps = 0;
+      let fleetRce = 0;
+      let fleetTarpit = 0;
 
       if (metricsRes.status === "fulfilled" && metricsRes.value?.reachable) {
         liveEps = Number(metricsRes.value.eps) || 0;
@@ -138,6 +162,8 @@ export default function FleetDashboard() {
           tarpit += a.tarpit_active;
           tls    += a.tls_decrypted || 0;
         });
+        fleetRce = rce;
+        fleetTarpit = tarpit;
 
         const useLive = liveEps > 0;
         if (useLive) eps = liveEps;
@@ -166,6 +192,31 @@ export default function FleetDashboard() {
         setGlobalStats(prev => ({ ...prev, totalEps: liveEps }));
       } else {
         setEpsFromLive(false);
+      }
+
+      if (snapRes.status === "fulfilled" && snapRes.value?.hints) {
+        const h = snapRes.value.hints as {
+          rce_blocked?: number;
+          l7_blocked?: number;
+          alerts_total?: number;
+        };
+        const useSnap =
+          liveEps === 0 &&
+          fleetRce === 0 &&
+          ((h.rce_blocked ?? 0) > 0 || (h.l7_blocked ?? 0) > 0);
+        if (useSnap) {
+          setGlobalStats((prev) => ({
+            ...prev,
+            totalRce: prev.totalRce > 0 ? prev.totalRce : (h.rce_blocked ?? 0),
+            totalTarpit:
+              prev.totalTarpit > 0 ? prev.totalTarpit : (h.l7_blocked ?? 0),
+          }));
+          setKpiFromSnapshot(true);
+        } else {
+          setKpiFromSnapshot(false);
+        }
+      } else {
+        setKpiFromSnapshot(false);
       }
 
       if (tenantRes.status === "fulfilled") {
@@ -387,6 +438,9 @@ export default function FleetDashboard() {
           </div>
           <p className="text-xs text-foreground/70 uppercase tracking-wider font-semibold">{t("rcePrevented")}</p>
           <p className="text-3xl font-bold text-danger">{globalStats.totalRce.toLocaleString()}</p>
+          {kpiFromSnapshot && globalStats.totalRce > 0 && (
+            <p className="text-[10px] text-amber-400/70 mt-auto">{t("kpiSnapshotHint")}</p>
+          )}
         </div>
 
         {/* Tarpits */}
@@ -448,6 +502,17 @@ export default function FleetDashboard() {
 
       {/* ── Saldırı haritası ─────────────────────────────────────────── */}
       <AttackWorldMap />
+
+      {/* ── SOC tek timeline (incident · ban · lineage) ─────────────── */}
+      <SocTimelinePanel />
+
+      <WebhookOpsPanel />
+
+      <EdgeProtectionPanel />
+
+      <LineageL7Panel />
+
+      <FpMetricsPanel />
 
       {/* ── Doğrulama testleri ───────────────────────────────────────── */}
       <ValidationTestsPanel compact showHeaderLink />

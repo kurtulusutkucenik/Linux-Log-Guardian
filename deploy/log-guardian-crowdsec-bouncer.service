@@ -1,0 +1,19 @@
+# CrowdSec LAPI kararlari -> log-guardian ban API
+# Kurulum: sudo bash scripts/install_crowdsec_bouncer.sh
+[Unit]
+Description=Log Guardian CrowdSec bouncer sync
+Documentation=file://docs/COMPETITIVE_STATUS.md
+After=network-online.target log-guardian.service
+Wants=log-guardian.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/log-guardian/crowdsec.env
+EnvironmentFile=-/etc/log-guardian/env
+Environment=LG_RULES=/etc/log-guardian/rules.conf
+Environment=LG_BAN_API_BASE=http://127.0.0.1:8090
+ExecStart=/bin/bash @LG_ROOT@/scripts/crowdsec_bouncer_sync.sh
+Nice=10
+
+[Install]
+WantedBy=multi-user.target

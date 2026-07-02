@@ -105,6 +105,40 @@ Key'lerden biri dolu olsa yeterli; ikisi de boşsa script Firehol-only modda kal
 
 ---
 
+## Opsiyonel — TAXII / STIX 2.1 (enterprise IOC)
+
+**Laptop için zorunlu değil.** Kanıt fixture ile geçer:
+
+```bash
+bash scripts/taxii_feed_e2e.sh
+```
+
+| Ne | Kaynak |
+|----|--------|
+| Laptop test | `corpus/fixtures/taxii_stix_bundle.json` (repoda) |
+| Canlı feed | Senin TAXII sunucun (MISP, OpenCTI, ticari feed) |
+
+### Prod kurulum (gerçek URL olduğunda)
+
+`/etc/log-guardian/rules.conf` içinde yorumu kaldır:
+
+```ini
+TAXII_URL=https://GERCEK-HOST/taxii2/collections/KOLEKSIYON_ID/objects/
+TAXII_API_KEY=anahtarin
+TAXII_MIN_CONFIDENCE=70
+```
+
+Gece threat intel timer'ı ile birlikte (URL varsa otomatik):
+
+```bash
+sudo bash scripts/enable_threat_intel_prod.sh
+sudo bash scripts/taxii_sync_hook.sh    # tek seferlik test
+```
+
+`TAXII_URL` yoksa hook `[SKIP]` döner — hata değil.
+
+---
+
 ## Threat feed güvenlik (AbuseIPDB / OTX katmanı)
 
 `threat_feed.c` indirme politikası (yerel laptop / prod):

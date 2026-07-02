@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# competitive-proof -> site test kartlari + evidence (28 test)
+# competitive-proof -> site test kartlari + evidence (30 test)
 #   bash scripts/website_sync_tests.sh
 #   bash scripts/website_sync_tests.sh --deploy   # + pack + wrangler hazir
 set -euo pipefail

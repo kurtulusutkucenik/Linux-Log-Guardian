@@ -34,12 +34,18 @@ export_from_ipset() {
   python3 - "$TMP" "$EXPORT_MAX" <<'PY'
 import json, subprocess, sys
 dst, cap = sys.argv[1], int(sys.argv[2])
-try:
-    out = subprocess.check_output(
-        ["/sbin/ipset", "list", "log_analyzer_block_v4", "-o", "plain"],
-        stderr=subprocess.DEVNULL, text=True,
-    )
-except (subprocess.CalledProcessError, FileNotFoundError):
+cmds = (
+    ["/sbin/ipset", "list", "log_analyzer_block_v4", "-o", "plain"],
+    ["sudo", "-n", "/sbin/ipset", "list", "log_analyzer_block_v4", "-o", "plain"],
+)
+out = None
+for cmd in cmds:
+    try:
+        out = subprocess.check_output(cmd, stderr=subprocess.DEVNULL, text=True)
+        break
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        continue
+if out is None:
     sys.exit(1)
 ips = []
 for line in out.splitlines():
@@ -58,6 +64,45 @@ with open(dst, "w") as f:
     f.write("\n")
 PY
 }
+
+if [[ "${FORCE_IPSET_REFRESH:-0}" == "1" ]]; then
+  if export_from_ipset 2>/dev/null; then
+    if [[ -w "$BANS_JSON" ]]; then
+      install -m 644 "$TMP" "$BANS_JSON" 2>/dev/null || mv -f "$TMP" "$BANS_JSON"
+    elif command -v sudo >/dev/null 2>&1; then
+      sudo install -m 644 "$TMP" "$BANS_JSON" 2>/dev/null || sudo mv -f "$TMP" "$BANS_JSON"
+    else
+      rm -f "$TMP"
+      exit 1
+    fi
+    rm -f "$TMP"
+    echo "[repair] $BANS_JSON ipset'ten yenilendi (force)"
+    exit 0
+  fi
+  # ipset bos veya okunamadi — bos snapshot yaz (stale JSON onleme)
+  write_empty() {
+    if [[ -w "$BANS_JSON" ]]; then
+      python3 - "$BANS_JSON" <<'PY'
+import json, sys
+with open(sys.argv[1], "w") as f:
+    json.dump({"ips": [], "total_count": 0, "truncated": False, "source": "ipset"}, f)
+    f.write("\n")
+PY
+    elif command -v sudo >/dev/null 2>&1; then
+      sudo python3 - "$BANS_JSON" <<'PY'
+import json, sys
+with open(sys.argv[1], "w") as f:
+    json.dump({"ips": [], "total_count": 0, "truncated": False, "source": "ipset"}, f)
+    f.write("\n")
+PY
+    else
+      return 1
+    fi
+  }
+  write_empty || exit 1
+  echo "[repair] $BANS_JSON bos (ipset refresh)"
+  exit 0
+fi
 
 if [[ ! -f "$BANS_JSON" ]]; then
   if export_from_ipset 2>/dev/null; then

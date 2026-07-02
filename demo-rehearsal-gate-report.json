@@ -1,0 +1,17 @@
+{
+  "date": "2026-06-30T18:46:09.430889+00:00",
+  "pass": true,
+  "demo_3min_ok": true,
+  "dashboard_ok": true,
+  "website_live_ok": null,
+  "website_live_skipped": true,
+  "security_closure_ok": null,
+  "webhook_ok": null,
+  "full_mode": false,
+  "proof_tests": 75,
+  "proof_pass": 75,
+  "pdf_ok": true,
+  "dash_url": "https://localhost:8443/tests",
+  "site_url": "https://ceniklinuxlogguardian.org/tests",
+  "script": "scripts/demo_rehearsal_gate.sh"
+}

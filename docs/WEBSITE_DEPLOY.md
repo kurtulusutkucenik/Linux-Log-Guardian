@@ -5,9 +5,16 @@ Marketing sitesi `assets/website/` altinda gelistirilir; **internete cikan paket
 ## Tek komut (yerel)
 
 ```bash
-bash scripts/website_deploy_gate.sh   # build + pack + audit
+bash scripts/website_deploy_gate.sh   # build + pack + audit + award ZIP
 bash scripts/website_smoke.sh           # HTTP smoke (domain gerekmez)
 LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
+```
+
+Award / portfolio paketi (Awwwards, FWA, showcase):
+
+```bash
+bash scripts/website_award_pack.sh      # tek basina (deploy sonrasi)
+# -> dist/website-award-pack/ + dist/linux-log-guardian-website-award.zip
 ```
 
 ## Domain almadan cozulen riskler
@@ -32,6 +39,7 @@ LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 6. Deploy sonrasi:
    ```bash
    wrangler pages deploy assets/website-deploy --project-name=linux-log-guardian-website --branch=main --commit-dirty=true
+   LG_CF_PURGE=1 bash scripts/website_cf_purge.sh   # SRI drift — token: LG_CF_API_TOKEN
    bash scripts/website_live_css_check.sh   # curl — CSS drift
    bash scripts/website_live_js_check.sh    # tarayici — JS SRI (curl yetmez)
    ```

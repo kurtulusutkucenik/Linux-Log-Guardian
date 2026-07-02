@@ -35,6 +35,19 @@ sudo cp examples/openapi/petstore-v3.yaml /etc/log-guardian/openapi.yaml
 sudo systemctl restart log-guardian
 ```
 
+## Müşteri şeması (prod)
+
+Kendi OpenAPI 3 dosyanızı kullanın — petstore yalnızca demo:
+
+```bash
+sudo cp /path/to/your-api.yaml /etc/log-guardian/openapi.yaml
+sudo sed -i 's|^OPENAPI_SCHEMA_PATH=.*|OPENAPI_SCHEMA_PATH=/etc/log-guardian/openapi.yaml|' /etc/log-guardian/rules.conf
+sudo sed -i 's|^OPENAPI_STRICT=.*|OPENAPI_STRICT=1|' /etc/log-guardian/rules.conf
+sudo systemctl restart log-guardian
+```
+
+`install_first_run.sh` internet-facing ortamda otomatik strict açar.
+
 ---
 
 ## Doğrulama

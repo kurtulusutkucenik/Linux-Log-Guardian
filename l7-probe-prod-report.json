@@ -1,0 +1,11 @@
+{
+  "date": "2026-06-29",
+  "pass": true,
+  "mode": "live",
+  "ipc": "ok",
+  "l7_probe_active": true,
+  "execve_probe": true,
+  "l7_http_hits": 0,
+  "xdp_mode": "ipset-fallback",
+  "note": "Prod NIC: log-guardian-daemon --iface eth0; laptop: ipset-fallback ile probe ON olabilir"
+}

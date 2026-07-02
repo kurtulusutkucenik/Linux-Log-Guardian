@@ -2,7 +2,7 @@
   "meta.description": "Linux Log Guardian — WAF nginx open source, fabriqué en Turquie. log → ban en ~15 min.",
   "hero.title": "Linux Log Guardian",
   "hero.tag": "nginx access log → WAF/CRS → ban noyau · chaîne unique · self-hosted",
-  "hero.badge_os": "🇹🇷 Fabriqué en Turquie",
+  "hero.badge_os": "Turkey · open source",
   "hero.badge_mit": "Open source · MIT",
   "hero.badge_core": "Core ~15 min d'installation",
   "hero.badge_soak": "72h soak PASS",
@@ -133,5 +133,7 @@
   "contact.title": "Contact et contributions",
   "contact.body": "<p>Questions, collaboration ou contributions — contactez-nous. Bugs et pull requests bienvenus.</p>",
   "contact.email_label": "E-mail :",
-  "footer": "Linux Log Guardian · Fabriqué en Turquie · MIT · open source · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>"
+  "footer": "Linux Log Guardian · Fabriqué en Turquie · MIT · open source · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>",
+  "hero.badge_tr": "TURK",
+  "hero.badge_opensource": "open source"
 }

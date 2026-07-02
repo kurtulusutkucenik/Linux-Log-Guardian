@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  GRAFANA_API_STAT_PANELS,
   GRAFANA_SOC_STAT_PANELS,
   GRAFANA_SOC_TS_PANELS,
   GRAFANA_STAT_PANELS,
   GRAFANA_TABLE_METRICS,
   GRAFANA_TELEGRAM_STAT_PANELS,
   GRAFANA_TS_PANELS,
+  GRAFANA_WEBHOOK_STAT_PANELS,
   tenantExpr,
 } from "@/lib/grafanaPanels";
 import {
@@ -33,6 +35,8 @@ async function liveGuardianStats(): Promise<{
   stats: Record<string, number>;
   socStats: Record<string, number>;
   telegramStats: Record<string, number>;
+  apiStats: Record<string, number>;
+  webhookStats: Record<string, number>;
   alerts_total?: number;
   reachable: boolean;
   hint?: string;
@@ -45,6 +49,9 @@ async function liveGuardianStats(): Promise<{
     if (!res.ok) return null;
     const snap = parseGuardianMetrics(await res.text());
     if (!snap.reachable) return null;
+    const syncTs = snap.threat_last_sync_ts;
+    const syncAgeH =
+      syncTs > 0 ? Math.max(0, (Date.now() / 1000 - syncTs) / 3600) : 0;
     return {
       reachable: true,
       hint: "Canli :9091 metrikleri (Prometheus yok). Gecmis grafikler: bash scripts/dashboard_stack.sh",
@@ -62,18 +69,39 @@ async function liveGuardianStats(): Promise<{
         http_5xx: snap.http_5xx,
       },
       socStats: {
-        ja3_clusters: snap.ja3_clusters_active,
-        ja3_bans: snap.ja3_cluster_bans_total,
+        threat_sync_ts: syncTs,
+        threat_sync_age_h: syncAgeH,
         threat_iocs: snap.threat_total_iocs,
+        threat_applied: snap.threat_last_applied,
+        threat_failed: snap.threat_last_failed,
         fp_trusted: snap.fp_trusted_ips,
+        fp_learn: snap.fp_learn_enabled,
+        fp_suppressed: snap.fp_suppressed_total,
+        bp_ipc: snap.ban_pipeline_ipc,
+        bp_xdp: snap.ban_pipeline_xdp,
         bp_ipset: snap.ban_pipeline_ipset,
         bp_failed: snap.ban_pipeline_failed,
+        ja3_clusters: snap.ja3_clusters_active,
+        ja3_bans: snap.ja3_cluster_bans_total,
       },
       telegramStats: {
         tg_ack: snap.telegram_ack_24h,
         tg_unacked: snap.telegram_unacked_24h,
+        tg_route: snap.webhook_telegram_route,
+        tg_batch: snap.webhook_telegram_batch_sec,
+        tg_queue: snap.webhook_queue_depth,
         quiet_hours: snap.webhook_quiet_hours,
         quiet_active: snap.webhook_quiet_active,
+      },
+      apiStats: {
+        api_requests: snap.api_requests_total,
+        api_auth_fail: snap.api_auth_fail_total,
+        api_rate_limited: snap.api_rate_limited_total,
+      },
+      webhookStats: {
+        wh_sent: snap.webhook_sent_total,
+        wh_fail: snap.webhook_fail_total,
+        wh_drops: snap.webhook_queue_drops_total,
       },
       alerts_total: snap.alerts_total,
     };
@@ -115,6 +143,8 @@ export async function GET(req: NextRequest) {
         stats: live.stats,
         socStats: live.socStats,
         telegramStats: live.telegramStats,
+        apiStats: live.apiStats,
+        webhookStats: live.webhookStats,
         sparklines: {},
         timeseries: {},
         table: [
@@ -136,6 +166,8 @@ export async function GET(req: NextRequest) {
       stats: {},
       socStats: {},
       telegramStats: {},
+      apiStats: {},
+      webhookStats: {},
       sparklines: {},
       timeseries: {},
       table: [],
@@ -146,6 +178,8 @@ export async function GET(req: NextRequest) {
   const stats: Record<string, number> = {};
   const socStats: Record<string, number> = {};
   const telegramStats: Record<string, number> = {};
+  const apiStats: Record<string, number> = {};
+  const webhookStats: Record<string, number> = {};
   const sparklines: Record<string, { t: string; v: number }[]> = {};
 
   const sparkStep = rangeSparkStep(rangeSec);
@@ -183,6 +217,30 @@ export async function GET(req: NextRequest) {
         promRange(q, rangeSec, sparkStep),
       ]);
       telegramStats[p.id] = instant ?? 0;
+      sparklines[p.id] = spark.map((s) => ({ t: s.label, v: s.v }));
+    }),
+  );
+
+  await Promise.all(
+    GRAFANA_API_STAT_PANELS.map(async (p) => {
+      const q = tenantExpr(p.expr, tenant);
+      const [instant, spark] = await Promise.all([
+        promInstant(q),
+        promRange(q, rangeSec, sparkStep),
+      ]);
+      apiStats[p.id] = instant ?? 0;
+      sparklines[p.id] = spark.map((s) => ({ t: s.label, v: s.v }));
+    }),
+  );
+
+  await Promise.all(
+    GRAFANA_WEBHOOK_STAT_PANELS.map(async (p) => {
+      const q = tenantExpr(p.expr, tenant);
+      const [instant, spark] = await Promise.all([
+        promInstant(q),
+        promRange(q, rangeSec, sparkStep),
+      ]);
+      webhookStats[p.id] = instant ?? 0;
       sparklines[p.id] = spark.map((s) => ({ t: s.label, v: s.v }));
     }),
   );
@@ -229,9 +287,26 @@ export async function GET(req: NextRequest) {
     for (const [k, v] of Object.entries(live.telegramStats ?? {})) {
       if ((telegramStats[k] ?? 0) < v) telegramStats[k] = v;
     }
+    for (const [k, v] of Object.entries(live.apiStats ?? {})) {
+      if ((apiStats[k] ?? 0) < v) apiStats[k] = v;
+    }
+    for (const [k, v] of Object.entries(live.webhookStats ?? {})) {
+      if ((webhookStats[k] ?? 0) < v) webhookStats[k] = v;
+    }
+    if (live.socStats.threat_sync_ts && live.socStats.threat_sync_ts > 0) {
+      socStats.threat_sync_ts = live.socStats.threat_sync_ts;
+      socStats.threat_sync_age_h = live.socStats.threat_sync_age_h ?? 0;
+    }
     if ((live.stats.eps ?? 0) > (stats.eps ?? 0)) {
       stats.eps = live.stats.eps ?? 0;
     }
+  }
+
+  if ((socStats.threat_sync_ts ?? 0) > 0) {
+    socStats.threat_sync_age_h = Math.max(
+      0,
+      (Date.now() / 1000 - (socStats.threat_sync_ts ?? 0)) / 3600,
+    );
   }
 
   const body = {
@@ -247,6 +322,8 @@ export async function GET(req: NextRequest) {
     stats,
     socStats,
     telegramStats,
+    apiStats,
+    webhookStats,
     sparklines,
     timeseries,
     table,

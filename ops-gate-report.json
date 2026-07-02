@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-21T23:58:15Z",
+  "date": "2026-06-30T18:42:45Z",
   "pass": true,
   "gates": [
     {
@@ -31,13 +31,13 @@
       "script": "scripts/local_security_audit.sh",
       "pass": true,
       "fail": 0,
-      "warn": 1,
+      "warn": 0,
       "title": "Yerel güvenlik denetimi — IPC, JWT, token sızıntısı",
       "titleEn": "Local security audit — IPC, JWT, secret hygiene",
       "purpose": "Laptop/prod öncesi güvenlik script matrisi; demo parola laptop'ta WARN kabul.",
       "purposeEn": "Pre-prod security script matrix; demo password WARN on laptop is OK.",
-      "verdict": "FAIL: 0 · WARN: 1",
-      "verdictEn": "FAIL: 0 · WARN: 1",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
       "metrics": [
         {
           "label": "FAIL",
@@ -45,7 +45,7 @@
         },
         {
           "label": "WARN",
-          "value": "1"
+          "value": "0"
         }
       ],
       "group": "gate"
@@ -84,6 +84,126 @@
       "titleEn": "auth.log sshd ingest — parse + brute threshold",
       "purpose": "nginx disi SSH failed-password satirlari anomaly hattina girer.",
       "purposeEn": "Non-nginx SSH failed-password lines enter the anomaly path.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "journald-ingest",
+      "script": "scripts/journald_e2e.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "journald export — short-iso + sudo rhost spike",
+      "titleEn": "journald export — short-iso + sudo rhost spike",
+      "purpose": "journald usec timestamp ve sudo rhost brute spike ingest.",
+      "purposeEn": "Journald usec timestamps and sudo rhost brute spike ingest.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "helm-install-smoke",
+      "script": "scripts/helm_install_smoke.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "Helm chart — template smoke",
+      "titleEn": "Helm chart — template smoke",
+      "purpose": "K8s musteri kurulumu icin helm template dogrulamasi.",
+      "purposeEn": "Helm template validation for customer K8s installs.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "marketplace-sig",
+      "script": "scripts/marketplace_sig_gate.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "Wasm marketplace — imzali paket kapisi",
+      "titleEn": "Wasm marketplace — signed package gate",
+      "purpose": "Unsigned marketplace paketlerinin reddedildigini kanitlar.",
+      "purposeEn": "Proves unsigned marketplace packages are rejected.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "mesh-etcd",
+      "script": "scripts/mesh_etcd_e2e.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "Mesh etcd — filo politika",
+      "titleEn": "Mesh etcd — fleet policy",
+      "purpose": "etcd mesh backend ve MESH_PUB_ENABLED=0 dogrulamasi.",
+      "purposeEn": "etcd mesh backend and MESH_PUB_ENABLED=0 validation.",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
+      "metrics": [
+        {
+          "label": "FAIL",
+          "value": "0"
+        },
+        {
+          "label": "WARN",
+          "value": "0"
+        }
+      ],
+      "group": "gate"
+    },
+    {
+      "id": "vm-demo-gate",
+      "script": "scripts/vm_demo_gate.sh",
+      "pass": true,
+      "fail": 0,
+      "warn": 0,
+      "title": "VM demo kapısı — post_install 0 FAIL",
+      "titleEn": "VM demo gate — post_install 0 FAIL",
+      "purpose": "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate).",
+      "purposeEn": "Final check before laptop/VM demo (repair: sudo vm_demo_gate).",
       "verdict": "FAIL: 0 · WARN: 0",
       "verdictEn": "FAIL: 0 · WARN: 0",
       "metrics": [

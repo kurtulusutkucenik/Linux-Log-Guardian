@@ -2,7 +2,7 @@
   "meta.description": "Linux Log Guardian — WAF مفتوح المصدر لـ nginx من تركيا. log → ban في ~15 دقيقة.",
   "hero.title": "Linux Log Guardian",
   "hero.tag": "nginx access log → WAF/CRS → حظر على مستوى النواة · سلسلة واحدة · self-hosted",
-  "hero.badge_os": "🇹🇷 صنع في تركيا",
+  "hero.badge_os": "Turkey · open source",
   "hero.badge_mit": "مفتوح المصدر · MIT",
   "hero.badge_core": "Core ~15 دقيقة للتثبيت",
   "hero.badge_soak": "72h soak PASS",
@@ -133,5 +133,7 @@
   "contact.title": "التواصل والمساهمة",
   "contact.body": "<p>أسئلة أو تعاون أو مساهمة — تواصل معنا. تقارير الأخطاء وpull requests مرحب بها.</p>",
   "contact.email_label": "البريد:",
-  "footer": "Linux Log Guardian · صنع في تركيا · MIT · open source · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>"
+  "footer": "Linux Log Guardian · صنع في تركيا · MIT · open source · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>",
+  "hero.badge_tr": "تورك",
+  "hero.badge_opensource": "مفتوح المصدر"
 }

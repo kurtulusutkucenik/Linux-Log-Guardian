@@ -1,132 +1,132 @@
 {
   "product": "Linux Log Guardian",
-  "generated": "2026-06-15T19:27:39.758663+00:00",
+  "generated": "2026-06-29T13:12:03.218605+00:00",
   "purpose": "Acik kaynak kanit paketi \u2014 benchmark, FP, CRS parite, ban gecikmesi",
   "files": [
     {
       "name": "README.txt",
       "bytes": 693,
-      "modified": "2026-06-11T22:59:30.411825+00:00"
+      "modified": "2026-06-29T07:31:34.978257+00:00"
     },
     {
       "name": "bench-ban-latency.json",
       "bytes": 449,
-      "modified": "2026-06-15T19:27:39.734464+00:00"
+      "modified": "2026-06-29T13:12:03.186809+00:00"
     },
     {
       "name": "bench-vs-modsec.json",
       "bytes": 1001,
-      "modified": "2026-06-15T19:27:39.731643+00:00"
+      "modified": "2026-06-29T13:12:03.184024+00:00"
     },
     {
       "name": "competitive-proof.json",
-      "bytes": 53989,
-      "modified": "2026-06-15T19:27:39.719307+00:00"
+      "bytes": 116208,
+      "modified": "2026-06-29T13:12:03.171234+00:00"
     },
     {
       "name": "competitive-proof.pdf",
-      "bytes": 557305,
-      "modified": "2026-06-15T19:27:39.720271+00:00"
+      "bytes": 560851,
+      "modified": "2026-06-29T13:12:03.172215+00:00"
     },
     {
       "name": "compliance-report.json",
-      "bytes": 4762,
-      "modified": "2026-06-15T19:27:39.737183+00:00"
+      "bytes": 4764,
+      "modified": "2026-06-29T13:12:03.189549+00:00"
     },
     {
       "name": "crs-parity-report.json",
       "bytes": 4862,
-      "modified": "2026-06-15T19:27:39.733487+00:00"
+      "modified": "2026-06-29T13:12:03.185932+00:00"
     },
     {
       "name": "fp-cluster-trust-report.json",
       "bytes": 295,
-      "modified": "2026-06-15T19:27:39.725802+00:00"
+      "modified": "2026-06-29T13:12:03.178166+00:00"
     },
     {
       "name": "fp-report.json",
       "bytes": 505,
-      "modified": "2026-06-15T19:27:39.732560+00:00"
+      "modified": "2026-06-29T13:12:03.184953+00:00"
     },
     {
       "name": "guardian-status.json",
-      "bytes": 1964,
-      "modified": "2026-06-15T19:27:39.736355+00:00"
+      "bytes": 3705,
+      "modified": "2026-06-29T13:12:03.188455+00:00"
     },
     {
       "name": "incidents-snapshot.json",
       "bytes": 85,
-      "modified": "2026-06-15T19:27:39.739413+00:00"
+      "modified": "2026-06-29T13:12:03.192957+00:00"
     },
     {
       "name": "ja3-cluster-ban-live.json",
       "bytes": 548,
-      "modified": "2026-06-15T19:27:39.724850+00:00"
+      "modified": "2026-06-29T13:12:03.177292+00:00"
     },
     {
       "name": "ja3-cluster-report.json",
-      "bytes": 347,
-      "modified": "2026-06-15T19:27:39.723739+00:00"
+      "bytes": 797,
+      "modified": "2026-06-29T13:12:03.176260+00:00"
     },
     {
       "name": "lineage-live-report.json",
       "bytes": 422,
-      "modified": "2026-06-15T19:27:39.726691+00:00"
+      "modified": "2026-06-29T13:12:03.179008+00:00"
     },
     {
       "name": "live-attack-report.json",
-      "bytes": 2231,
-      "modified": "2026-06-15T19:27:39.722753+00:00"
+      "bytes": 2232,
+      "modified": "2026-06-29T13:12:03.175368+00:00"
     },
     {
       "name": "nginx-inline-consult-report.json",
-      "bytes": 594,
-      "modified": "2026-06-15T19:27:39.727673+00:00"
+      "bytes": 720,
+      "modified": "2026-06-29T13:12:03.179922+00:00"
     },
     {
       "name": "owasp-corpus-report.json",
       "bytes": 422,
-      "modified": "2026-06-15T19:27:39.728660+00:00"
+      "modified": "2026-06-29T13:12:03.180902+00:00"
     },
     {
       "name": "real-attack-report-10k.json",
       "bytes": 427,
-      "modified": "2026-06-15T19:27:39.721998+00:00"
+      "modified": "2026-06-29T13:12:03.174581+00:00"
     },
     {
       "name": "real-attack-report.json",
-      "bytes": 2521,
-      "modified": "2026-06-15T19:27:39.721085+00:00"
+      "bytes": 4709,
+      "modified": "2026-06-29T13:12:03.173692+00:00"
     },
     {
       "name": "soak-report.json",
-      "bytes": 8275,
-      "modified": "2026-06-15T19:27:39.737921+00:00"
+      "bytes": 7966,
+      "modified": "2026-06-29T13:12:03.191161+00:00"
     },
     {
       "name": "soak-report.short.json",
-      "bytes": 4219,
-      "modified": "2026-06-15T19:27:39.738606+00:00"
+      "bytes": 4226,
+      "modified": "2026-06-29T13:12:03.192077+00:00"
     },
     {
       "name": "tenant-isolation-report.json",
       "bytes": 947,
-      "modified": "2026-06-15T19:27:39.735448+00:00"
+      "modified": "2026-06-29T13:12:03.187618+00:00"
     },
     {
       "name": "threat-intel-sync-report.json",
-      "bytes": 514,
-      "modified": "2026-06-15T19:27:39.730666+00:00"
+      "bytes": 492,
+      "modified": "2026-06-29T13:12:03.182847+00:00"
     },
     {
       "name": "tr-hosting-corpus-report.json",
       "bytes": 454,
-      "modified": "2026-06-15T19:27:39.729692+00:00"
+      "modified": "2026-06-29T13:12:03.181798+00:00"
     },
     {
       "name": "wasm-status.json",
       "bytes": 213,
-      "modified": "2026-06-15T19:27:39.740220+00:00"
+      "modified": "2026-06-29T13:12:03.193819+00:00"
     }
   ],
   "missingOnDisk": [],

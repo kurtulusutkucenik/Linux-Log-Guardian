@@ -11,6 +11,9 @@ PREFIX="${LG_PREFIX:-/usr/local}"
 CONF_DIR="${LG_CONF:-/etc/log-guardian}"
 
 IFACE="${LG_IFACE:-}"
+if [[ -z "$IFACE" ]]; then
+  IFACE=$(ip -o route show to default 2>/dev/null | awk '{for(i=1;i<=NF;i++) if($i=="dev"){print $(i+1); exit}}')
+fi
 if [[ -z "$IFACE" ]] && [[ -f "$UNIT" ]]; then
   IFACE=$(grep -oP '(?<=--iface )\S+' "$UNIT" 2>/dev/null | head -1 || true)
 fi
@@ -36,8 +39,8 @@ ExecStart=${PREFIX}/bin/log-guardian-daemon \\
     --obj ${CONF_DIR}/xdp_filter.o
 WorkingDirectory=${CONF_DIR}
 User=root
-AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW CAP_PERFMON CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW CAP_PERFMON CAP_SYS_ADMIN
 NoNewPrivileges=yes
 WatchdogSec=60
 NotifyAccess=main
@@ -46,8 +49,8 @@ LimitMEMLOCK=infinity
 RuntimeDirectory=log-guardian
 RuntimeDirectoryMode=0750
 RuntimeDirectoryGroup=log-guardian
-Restart=on-failure
-RestartSec=3
+Restart=always
+RestartSec=5
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes

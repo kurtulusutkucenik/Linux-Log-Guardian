@@ -57,6 +57,16 @@ else
   echo "[laptop_stack_boot] log-guardian-dashboard + caddy ayakta"
 fi
 
+if systemctl --user is-enabled log-guardian-fleet-keepalive.service &>/dev/null; then
+  systemctl --user start log-guardian-fleet-keepalive.service 2>/dev/null \
+    && echo "[laptop_stack_boot] fleet keepalive (user systemd)" \
+    || echo "[laptop_stack_boot] UYARI: fleet keepalive baslatilamadi"
+elif [[ -f "$ROOT/.cache/fleet-host.env" ]]; then
+  bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --bg 2>/dev/null \
+    && echo "[laptop_stack_boot] fleet keepalive (nohup)" \
+    || true
+fi
+
 echo ""
 echo "[OK] laptop_stack_boot"
 echo "  Dashboard: https://${DOMAIN:-localhost}:${HTTPS_PORT:-8443}/"

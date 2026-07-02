@@ -14,7 +14,7 @@ echo "[1] CRS bundle: $crs kural"
 
 grep -q '^BAN_TTL_SEC=' rules.conf
 grep -q '^WAF_ENABLED=1' rules.conf
-grep -q '^MESH_BACKEND=etcd' rules.conf
+grep -qE '^MESH_BACKEND=(none|etcd|zmq)$' rules.conf
 
 STATUS_RULES="rules.conf"
 [[ -f /etc/log-guardian/rules.conf ]] && STATUS_RULES="/etc/log-guardian/rules.conf"

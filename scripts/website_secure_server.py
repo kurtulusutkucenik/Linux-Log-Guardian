@@ -103,6 +103,7 @@ MIME_OVERRIDES = {
     ".md": "text/plain; charset=utf-8",
     ".pdf": "application/pdf",
     ".png": "image/png",
+    ".svg": "image/svg+xml",
     ".ico": "image/x-icon",
     ".txt": "text/plain; charset=utf-8",
 }
@@ -149,8 +150,10 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
     def log_message(self, fmt: str, *args) -> None:
         sys.stderr.write("%s - %s\n" % (self.address_string(), fmt % args))
 
-    def _apply_security_headers(self) -> None:
+    def _apply_security_headers(self, *, skip_corp: bool = False) -> None:
         for name, value in self.security_headers.items():
+            if skip_corp and name == "Cross-Origin-Resource-Policy":
+                continue
             self.send_header(name, value)
 
     def send_error(self, code: int, message: str | None = None, explain: str | None = None) -> None:
@@ -226,11 +229,11 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
         return True
 
     def _fetch_ok(self, key: str) -> bool:
-        if key == "i18n.js":
+        if key in ("i18n.js", "three.min.js", "phoenix-3d.js"):
             dest = self.headers.get("Sec-Fetch-Dest", "")
             if dest and dest not in ("script", "empty"):
                 return False
-        if key == "site.css":
+        if key == "site.css" or (key.startswith("site-") and key.endswith(".css")):
             dest = self.headers.get("Sec-Fetch-Dest", "")
             if dest and dest not in ("style", "empty"):
                 return False
@@ -238,6 +241,12 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
             if self.headers.get("Range"):
                 return False
         return True
+
+    def _preview_extra_allowed(self, key: str) -> bool:
+        """Yerel onizleme: SRI yenileyince allowlist yeniden baslatmadan site-*.css servis et."""
+        if re.fullmatch(r"site-[A-Za-z0-9x]+\.css", key):
+            return (self.root / key).is_file()
+        return False
 
     def _hotlink_blocked(self, parts: list[str]) -> bool:
         if not parts or parts[0] not in HOTLINK_PREFIXES:
@@ -250,7 +259,10 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
     def _public_key(self, parts: list[str]) -> str:
         if not parts:
             return "index.html"
-        return "/".join(parts)
+        key = "/".join(parts)
+        if key == "tests":
+            return "tests.html"
+        return key
 
     def _safe_path(self, raw_path: str) -> Path | None:
         if len(raw_path) > MAX_PATH_LEN or "\0" in raw_path:
@@ -267,14 +279,15 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
         key = self._public_key(parts)
         if key in PROBE_KEYS or key.startswith(PROBE_PREFIXES):
             return None
-        if key not in self.allowed_paths:
+        if key not in self.allowed_paths and not self._preview_extra_allowed(key):
             return None
         if not self._fetch_ok(key):
             return None
         if self._hotlink_blocked(parts):
             return None
 
-        candidate = (self.root.joinpath(*parts) if parts else self.root / "index.html").resolve()
+        key_parts = key.split("/")
+        candidate = (self.root.joinpath(*key_parts) if key_parts else self.root / "index.html").resolve()
         try:
             candidate.relative_to(self.root)
         except ValueError:
@@ -324,7 +337,10 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
         suffix = path.suffix.lower()
         if suffix in ATTACHMENT_SUFFIXES:
             self.send_header("Content-Disposition", f'attachment; filename="{path.name}"')
-        if path.name == "index.html":
+        if path.name in ("index.html", "tests.html", "404.html"):
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate")
+            self.send_header("Pragma", "no-cache")
+        elif path.name == "boot.css":
             self.send_header("Cache-Control", "no-store")
         elif suffix in {".js", ".css"}:
             self.send_header("Cache-Control", "public, max-age=300, must-revalidate")
@@ -333,7 +349,7 @@ class SecureStaticHandler(http.server.SimpleHTTPRequestHandler):
         else:
             self.send_header("Cache-Control", "public, max-age=3600")
 
-        self._apply_security_headers()
+        self._apply_security_headers(skip_corp=suffix == ".js")
         # crossorigin script (i18n.js) + yerel onizleme icin
         origin = self.headers.get("Origin")
         if origin:

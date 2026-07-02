@@ -41,7 +41,7 @@ find_pdf() {
 
 banner
 
-step "1/5 Kanit PDF"
+step "1/7 Kanit PDF"
 PDF=$(find_pdf || true)
 if [[ -n "$PDF" ]]; then
   ok "PDF: $PDF"
@@ -59,7 +59,20 @@ else
   fi
 fi
 
-step "2/5 Webhook dry-run"
+step "2/7 Sprint prod kaniti"
+if [[ -f "$ROOT/sprint-prod-proof.json" ]]; then
+  if python3 -c "import json; exit(0 if json.load(open('$ROOT/sprint-prod-proof.json')).get('pass') else 1)" 2>/dev/null; then
+    ok "sprint-prod-proof.json pass=true"
+  else
+    warn "sprint-prod-proof.json pass=false — sudo bash scripts/sprint_harden_prod.sh"
+  fi
+elif bash scripts/sprint_prod_proof.sh >/dev/null 2>&1; then
+  ok "sprint_prod_proof uretildi"
+else
+  info "sprint_prod_proof atlandi (/etc yok veya prod degil)"
+fi
+
+step "3/7 Webhook dry-run + P2 route"
 if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   if bash scripts/webhook_test_cli.sh alert >/dev/null 2>&1 \
       && bash scripts/webhook_test_cli.sh ban >/dev/null 2>&1; then
@@ -67,11 +80,16 @@ if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   else
     warn "webhook dry-run — SKIP_WEBHOOK=1 veya webhook.env"
   fi
+  if bash scripts/webhook_route_proof.sh >/dev/null 2>&1; then
+    ok "webhook_route_proof (P2 batch)"
+  else
+    warn "webhook_route_proof atlandi"
+  fi
 else
   info "SKIP_WEBHOOK=1"
 fi
 
-step "3/5 Saldiri logu → ban webhook"
+step "4/7 Saldiri logu → ban webhook"
 if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   if bash scripts/webhook_ban_e2e.sh >/dev/null 2>&1; then
     ok "webhook_ban_e2e"
@@ -80,7 +98,20 @@ if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   fi
 fi
 
-step "4/5 Dashboard /tests (opsiyonel)"
+step "5/7 nginx inline consult (opsiyonel)"
+if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
+  info "SKIP_WEBHOOK=1 — nginx_inline_consult_e2e atlandi"
+elif command -v nginx >/dev/null 2>&1; then
+  if bash scripts/nginx_inline_consult_e2e.sh >/dev/null 2>&1; then
+    ok "nginx_inline_consult_e2e"
+  else
+    warn "inline consult — sudo bash scripts/fix_nginx_inline_consult.sh"
+  fi
+else
+  info "nginx yok — inline consult atlandi"
+fi
+
+step "6/7 Dashboard /tests (opsiyonel)"
 dash_ok=0
 if [[ "${SKIP_DASHBOARD:-0}" != "1" ]] && command -v curl >/dev/null 2>&1; then
   if curl -skf "$TESTS_URL" -o /dev/null 2>/dev/null; then
@@ -96,8 +127,12 @@ else
   info "SKIP_DASHBOARD=1 veya curl yok"
 fi
 
-step "5/5 Ban gecikmesi (opsiyonel, root)"
-if [[ $EUID -eq 0 ]]; then
+step "7/7 Ban gecikmesi (opsiyonel, root)"
+if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
+  info "SKIP_WEBHOOK=1 — bench_ban_latency atlandi"
+  [[ -f "$EVIDENCE/bench-ban-latency.json" || -f bench-ban-latency.json ]] \
+    && ok "mevcut bench-ban-latency.json"
+elif [[ $EUID -eq 0 ]]; then
   bash scripts/bench_ban_latency.sh >/dev/null 2>&1 && ok "bench_ban_latency" \
     || warn "bench_ban_latency basarisiz"
 elif sudo -n true 2>/dev/null; then
@@ -109,8 +144,10 @@ else
     && ok "mevcut bench-ban-latency.json"
 fi
 
-bash scripts/sync_dashboard_data.sh >/dev/null 2>&1 || true
-bash scripts/sync_evidence_pack.sh >/dev/null 2>&1 || true
+if [[ "${SKIP_SYNC:-0}" != "1" ]]; then
+  bash scripts/sync_dashboard_data.sh >/dev/null 2>&1 || true
+  bash scripts/sync_evidence_pack.sh >/dev/null 2>&1 || true
+fi
 
 echo ""
 echo "=== demo ozet ==="

@@ -1,0 +1,22 @@
+{
+  "date": "2026-06-30",
+  "pass": true,
+  "context": "host-vbox",
+  "post_install": {
+    "fail": 0,
+    "warn": 0
+  },
+  "taxii_feed_e2e": true,
+  "crowdsec_bouncer_e2e": true,
+  "sprint_harden_gate_available": true,
+  "note": "VPS yerine VM — XDP demo kapali, ipset fallback normal",
+  "scripts": [
+    "scripts/vm_host_prep_gate.sh",
+    "scripts/docs_consistency_gate.sh",
+    "scripts/vm_fleet_gate.sh",
+    "scripts/vm_demo_gate.sh",
+    "scripts/vm_refresh_from_host.sh",
+    "scripts/taxii_feed_e2e.sh",
+    "scripts/crowdsec_bouncer_e2e.sh"
+  ]
+}

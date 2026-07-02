@@ -5,12 +5,52 @@ CONFDIR  = /etc/log-guardian
 UNITDIR  = /etc/systemd/system
 
 CC      = clang
-CFLAGS  = -Wall -Wextra -O2 -pthread -mavx2 \
+ARCH    ?= $(shell uname -m)
+HOST_ARCH := $(shell uname -m)
+# x86_64: AVX2 SIMD; ARM hedeflerinde -mavx2 kullanilmaz
+ARCH_SIMD :=
+ifeq ($(ARCH),x86_64)
+  ARCH_SIMD := -mavx2
+else ifeq ($(ARCH),amd64)
+  ARCH_SIMD := -mavx2
+endif
+# Cross aarch64 smoke (build_arm64.sh): host x86 -> hedef arm64, libbpf/wasm yok
+LG_CROSS_AARCH64 := 0
+ifeq ($(ARCH),aarch64)
+  ifneq ($(filter $(HOST_ARCH),x86_64 amd64),)
+    LG_CROSS_AARCH64 := 1
+  endif
+endif
+CFLAGS  = -Wall -Wextra -O2 -pthread $(ARCH_SIMD) \
           -D_POSIX_C_SOURCE=200809L \
           -DHAVE_LIBBPF
 LDFLAGS = -pthread
 LIBS    = -lsqlite3 -lcurl -lssl -lcrypto -lpcre2-8 \
           -lm -lbpf -lelf -lz -luring -ldl -lseccomp
+
+ifeq ($(LG_CROSS_AARCH64),1)
+  override HAVE_WASM := 0
+  override HAVE_MAXMINDDB := 0
+  override HAVE_ZMQ := 0
+  override HAVE_ETCD := 0
+  CFLAGS := $(filter-out -DHAVE_LIBBPF,$(CFLAGS)) -DLG_NO_URING
+  LIBS := $(filter-out -lbpf -lelf,$(LIBS))
+  CROSS_SYSROOT := /usr/aarch64-linux-gnu
+  CFLAGS += -I$(CROSS_SYSROOT)/include
+  ifneq ($(wildcard /usr/include/aarch64-linux-gnu),)
+    CFLAGS += -I/usr/include/aarch64-linux-gnu
+  endif
+  # --sysroot libm GROUP script'ini bozar; multiarch -L yeterli
+  LDFLAGS += -L$(CROSS_SYSROOT)/lib
+  ifneq ($(wildcard /usr/lib/aarch64-linux-gnu),)
+    LDFLAGS += -L/usr/lib/aarch64-linux-gnu
+  endif
+  # libseccomp/pcre2/sqlite :arm64 -> /usr/include (aarch64-linux-gnu degil)
+  CFLAGS += -idirafter /usr/include
+  ifndef LG_QUIET_BUILD
+    $(info [CROSS] aarch64 hedef — libbpf/wasm kapali (smoke))
+  endif
+endif
 
 # ── ZeroMQ opsiyonel bagimliligi ──────────────────────────────
 HAVE_ZMQ ?= $(shell pkg-config --exists libzmq 2>/dev/null && echo 1 || echo 0)
@@ -23,6 +63,20 @@ ifeq ($(HAVE_ZMQ),1)
 else
   ifndef LG_QUIET_BUILD
     $(info [MESH] ZeroMQ bulunamadi, Mesh Intel devre disi (HAVE_ZMQ=0).)
+  endif
+endif
+
+# ── MaxMind DB opsiyonel (offline GeoIP MMDB) ─────────────────
+HAVE_MAXMINDDB ?= $(shell pkg-config --exists libmaxminddb 2>/dev/null && echo 1 || echo 0)
+ifeq ($(HAVE_MAXMINDDB),1)
+  CFLAGS += -DHAVE_MAXMINDDB
+  LIBS   += $(shell pkg-config --libs libmaxminddb)
+  ifndef LG_QUIET_BUILD
+    $(info [GEOIP] libmaxminddb bulundu, MMDB offline lookup etkin.)
+  endif
+else
+  ifndef LG_QUIET_BUILD
+    $(info [GEOIP] libmaxminddb bulunamadi, MMDB devre disi (HAVE_MAXMINDDB=0).)
   endif
 endif
 
@@ -92,7 +146,7 @@ SRCS = main.c parser.c anomaly.c db.c tui.c webhook.c telegram_bot.c \
        k8s_guard.c k8s_webhook.c tarpit_server.c mesh_intel.c agent_sync.c \
        siem_forwarder.c etcd_mesh.c \
        schema_validator.c attack_tree.c attack_tree_snapshot.c wasm_runtime.c daemon_stats.c mesh_backend.c incident_engine.c rules_fleet.c \
-       falco_host_rules.c endpoint_baseline.c geoip_feed.c geoip_lookup.c tenant_db.c tenant_policy.c fp_trust.c ban_policy.c l7_telemetry.c
+       falco_host_rules.c endpoint_baseline.c geoip_feed.c geoip_lookup.c tenant_db.c tenant_policy.c fp_trust.c ban_policy.c rules_bundle_verify.c l7_telemetry.c
 OBJS = $(SRCS:.c=.o)
 
 # ── eBPF daemon kaynak dosyaları (root prosesi) ──────────────────
@@ -260,6 +314,7 @@ bench-report: all
 # ── Güvenlik testi ───────────────────────────────────────────
 XFF_TEST = tests/parser_xff_test
 AUTH_TEST = tests/parser_auth_test
+FUZZ_TEST = tests/parser_fuzz_test
 FIREWALL_XFF_OBJ = firewall.xff.o
 
 $(FIREWALL_XFF_OBJ): firewall.c
@@ -271,13 +326,19 @@ $(XFF_TEST): tests/parser_xff_test.c parser.o $(FIREWALL_XFF_OBJ)
 $(AUTH_TEST): tests/parser_auth_test.c parser.o $(FIREWALL_XFF_OBJ)
 	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_auth_test.c parser.o $(FIREWALL_XFF_OBJ)
 
+$(FUZZ_TEST): tests/parser_fuzz_test.c parser.o $(FIREWALL_XFF_OBJ)
+	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_fuzz_test.c parser.o $(FIREWALL_XFF_OBJ)
+
 xff-test: $(XFF_TEST)
 	@./$(XFF_TEST)
 
 auth-test: $(AUTH_TEST)
 	@./$(AUTH_TEST)
 
-parser-test: xff-test auth-test
+fuzz-test: $(FUZZ_TEST)
+	@./$(FUZZ_TEST)
+
+parser-test: xff-test auth-test fuzz-test
 
 security-test: $(TARGET) $(TESTER)
 	@echo "--- Security Testleri (Memory & Async Attack) ---"
@@ -304,13 +365,14 @@ check-deps:
 	    if command -v $$cmd >/dev/null 2>&1; then echo "  [ OK ] $$cmd"; \
 	    else echo "  [EKSIK] $$cmd"; DEPS_OK=0; fi; \
 	done; \
-	for lib in liburing libpcre2-8 sqlite3 libcurl; do \
+	for lib in liburing libpcre2-8 sqlite3 libcurl libmaxminddb; do \
 	    if pkg-config --exists $$lib 2>/dev/null; then echo "  [ OK ] lib $$lib"; \
+	    elif [ "$$lib" = "libmaxminddb" ]; then echo "  [INFO] lib $$lib (opsiyonel MMDB offline)"; \
 	    else echo "  [EKSIK] lib $$lib"; DEPS_OK=0; fi; \
 	done; \
 	[ -f /sys/kernel/btf/vmlinux ] && echo "  [ OK ] BTF (CO-RE native)" || echo "  [WARN] BTF yok - fallback kullanilacak"; \
 	echo "  [INFO] Kernel: $$(uname -r)"; \
-	echo "  [INFO] Etcd Mesh: HAVE_ETCD=$(HAVE_ETCD), ZeroMQ: HAVE_ZMQ=$(HAVE_ZMQ)"; \
+	echo "  [INFO] Etcd Mesh: HAVE_ETCD=$(HAVE_ETCD), ZeroMQ: HAVE_ZMQ=$(HAVE_ZMQ), MMDB: HAVE_MAXMINDDB=$(HAVE_MAXMINDDB)"; \
 	[ $$DEPS_OK -eq 1 ] && echo "=== Tum bagimliliklar mevcut ===" || echo "=== EKSIK bagimliliklar var ==="
 
 # ── XDP'siz fallback (eski kernel / BTF yoksa) ───────────────
@@ -326,4 +388,7 @@ release: wasm-release
 	@echo "[release] log-guardian HAVE_WASM=1 hazir — tam kapı:"
 	@echo "  bash scripts/competitive_suite.sh"
 
-.PHONY: all clean install debug bench bench-run bench-report security-test xff-test intel-test check-deps fallback wasm-release release
+print-maxminddb:
+	@echo "$(HAVE_MAXMINDDB)"
+
+.PHONY: all clean install debug bench bench-run bench-report security-test xff-test auth-test fuzz-test intel-test check-deps fallback wasm-release release print-maxminddb

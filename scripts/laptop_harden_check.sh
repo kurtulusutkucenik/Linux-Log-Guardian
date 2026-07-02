@@ -39,8 +39,13 @@ bind="${bind:-?}"
 api_tok=$(lg_rules_kv "API_TOKEN")
 [[ -n "$api_tok" ]] && check "API_TOKEN ayarli" 0 || check "API_TOKEN ayarli (ensure_api_security)" 1
 
-curl -sf --max-time 2 http://127.0.0.1:8090/api/v1/metrics >/dev/null 2>&1 \
-  && check "API localhost yanit" 0 || check "API localhost yanit" 1
+api_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+  http://127.0.0.1:8090/api/v1/metrics 2>/dev/null || echo 000)
+if [[ "$api_code" == "403" || "$api_code" == "200" ]]; then
+  check "API localhost yanit (fail-closed=$([[ "$api_code" == "403" ]] && echo 1 || echo 0))" 0
+else
+  check "API localhost yanit (code=$api_code)" 1
+fi
 
 if [[ -n "$api_tok" ]]; then
   ban_code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \

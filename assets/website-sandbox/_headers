@@ -1,0 +1,103 @@
+/*
+  Strict-Transport-Security: max-age=63072000; includeSubDomains; preload
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: DENY
+  X-Download-Options: noopen
+  X-DNS-Prefetch-Control: off
+  Referrer-Policy: no-referrer
+  Permissions-Policy: accelerometer=(), autoplay=(), camera=(), clipboard-read=(), clipboard-write=(), display-capture=(), encrypted-media=(), fullscreen=(), gamepad=(), geolocation=(), gyroscope=(), hid=(), idle-detection=(), local-fonts=(), magnetometer=(), microphone=(), midi=(), payment=(), picture-in-picture=(), publickey-credentials-get=(), screen-wake-lock=(), serial=(), sync-xhr=(), usb=(), web-share=(), xr-spatial-tracking=(), interest-cohort=()
+  Content-Security-Policy: default-src 'none'; script-src 'sha384-XqPF0mhGoCJl2wfkIXWfjsZUG4De42T2AMFwvbuGt+U1BFWRD8X2SgKJzjh/5++O' 'sha384-g/HN6UPAg97WD0/qOXShWARpjvyWuRlr7VzFEuOqNRi3AOgAVwsWbaNBKzAVj5M6' 'sha384-eD+y6ealBFKAofgdCofrjNV8VRJPCereKoo/hCJ0BhyP/wUAvFxK/JHvarzcdrbi' 'sha384-mWfurX9hFhu/77J1w5uPx+wAgWixWfplW1CPj1pWRzUWG88+WEKKd9YNMMHA4RDJ'; script-src-attr 'none'; style-src 'self' 'sha384-k4CJ/EO/r3C6BPryYv2iuIAjBmBKhmGEX3Coks70zu16Wq8FsxJPUoVJqYCkXR4l'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'self'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script; upgrade-insecure-requests; block-all-mixed-content;
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Resource-Policy: same-origin
+  Origin-Agent-Cluster: ?1
+  Document-Policy: force-load-at-top
+  X-Permitted-Cross-Domain-Policies: none
+
+/index.html
+  Cache-Control: no-store, no-cache, must-revalidate
+
+/tests.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+  Pragma: no-cache
+
+/tests
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+
+/404.html
+  Cache-Control: no-store, no-cache, must-revalidate
+  Pragma: no-cache
+  X-Robots-Tag: noindex
+
+/_headers
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+
+/csp.txt
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+
+/publish.allowlist
+  X-Robots-Tag: noindex
+  Cache-Control: no-store
+
+/i18n.js
+  Content-Type: text/javascript; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: no-store, no-cache, must-revalidate, no-transform
+
+/test-results.js
+  Content-Type: text/javascript; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: no-store, no-cache, must-revalidate, no-transform
+
+/site.css
+  Content-Type: text/css; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=0, must-revalidate
+
+/site-*.css
+  Content-Type: text/css; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=31536000, immutable, no-transform
+
+/*.js
+  Content-Type: text/javascript; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: cross-origin
+  Cache-Control: public, max-age=300, must-revalidate, no-transform
+
+/*.css
+  Content-Type: text/css; charset=utf-8
+  Access-Control-Allow-Origin: *
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=3600, must-revalidate, no-transform
+
+/*.png
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=604800, immutable
+
+/*.ico
+  Cache-Control: public, max-age=604800, immutable
+
+/evidence/*
+  X-Robots-Tag: noindex
+  Content-Disposition: attachment
+  Cache-Control: private, no-store
+
+/screenshots/*
+  Cross-Origin-Resource-Policy: same-origin
+  Cache-Control: public, max-age=604800, immutable
+
+/.well-known/security.txt
+  Content-Type: text/plain; charset=utf-8
+  Cache-Control: public, max-age=86400
+
+/.well-known/gpc.json
+  Content-Type: application/json; charset=utf-8
+  Cache-Control: public, max-age=86400

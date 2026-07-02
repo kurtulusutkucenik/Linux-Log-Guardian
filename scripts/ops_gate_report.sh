@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Kurulum / sunum kapilari -> ops-gate-report.json (website + competitive-proof)
-#   bash scripts/ops_gate_report.sh           # hizli (sudo yok)
-#   bash scripts/ops_gate_report.sh --full    # + vm_demo_gate + website_deploy_gate
+#   bash scripts/ops_gate_report.sh           # kurulum + vm demo kapisi
+#   bash scripts/ops_gate_report.sh --full    # (rezerv) ek kapilar
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
@@ -67,8 +67,17 @@ run_gate() {
   [[ "$ec" -eq 0 && "$fail" == "0" ]] && pass=true
   local verdict_tr="FAIL: ${fail} · WARN: ${warn}"
   local verdict_en="$verdict_tr"
-  [[ "$pass" == false ]] && verdict_tr="Kapı kırmızı — $verdict_tr"
-  [[ "$pass" == false ]] && verdict_en="Gate failed — $verdict_en"
+  if [[ "$pass" == false ]]; then
+    local script_err
+    script_err="$(echo "$out" | grep -E '\[FAIL\]|FAIL:' | tail -1 | sed 's/^[[:space:]]*//')"
+    if [[ -n "$script_err" ]]; then
+      verdict_tr="Kapı kırmızı — $verdict_tr · ${script_err}"
+      verdict_en="Gate failed — $verdict_en · ${script_err}"
+    else
+      verdict_tr="Kapı kırmızı — $verdict_tr"
+      verdict_en="Gate failed — $verdict_en"
+    fi
+  fi
   local gate_json
   gate_json="$(
     GATE_ID="$id" GATE_SCRIPT="$script" GATE_PASS="$pass" GATE_FAIL="$fail" GATE_WARN="$warn" \
@@ -115,6 +124,14 @@ PY
 
 echo "=== ops_gate_report ==="
 
+# Daemon IPC + metrics hazir (guardian_status_export sonrasi kisa yarim saniye)
+for _ in $(seq 1 10); do
+  curl -sf --max-time 2 http://127.0.0.1:9091/metrics >/dev/null 2>&1 \
+    && /usr/local/bin/log-guardian --health 2>/dev/null | grep -q 'daemon IPC: OK' \
+    && break
+  sleep 1
+done
+
 run_gate "post-install-verify" "scripts/post_install_verify.sh" \
   "Kurulum kapısı — servis, IPC, API fail-closed" \
   "Install gate — services, IPC, API fail-closed" \
@@ -139,13 +156,35 @@ run_gate "auth-log-ingest" "scripts/auth_log_e2e.sh" \
   "nginx disi SSH failed-password satirlari anomaly hattina girer." \
   "Non-nginx SSH failed-password lines enter the anomaly path."
 
-if [[ "$FULL" -eq 1 ]]; then
-  run_gate "vm-demo-gate" "scripts/vm_demo_gate.sh" --verify-only \
-    "VM demo kapısı — post_install 0 FAIL" \
-    "VM demo gate — post_install 0 FAIL" \
-    "VirtualBox/VPS sunum öncesi son kontrol." \
-    "Final check before VirtualBox/VPS demo."
-fi
+run_gate "journald-ingest" "scripts/journald_e2e.sh" \
+  "journald export — short-iso + sudo rhost spike" \
+  "journald export — short-iso + sudo rhost spike" \
+  "journald usec timestamp ve sudo rhost brute spike ingest." \
+  "Journald usec timestamps and sudo rhost brute spike ingest."
+
+run_gate "helm-install-smoke" "scripts/helm_install_smoke.sh" \
+  "Helm chart — template smoke" \
+  "Helm chart — template smoke" \
+  "K8s musteri kurulumu icin helm template dogrulamasi." \
+  "Helm template validation for customer K8s installs."
+
+run_gate "marketplace-sig" "scripts/marketplace_sig_gate.sh" \
+  "Wasm marketplace — imzali paket kapisi" \
+  "Wasm marketplace — signed package gate" \
+  "Unsigned marketplace paketlerinin reddedildigini kanitlar." \
+  "Proves unsigned marketplace packages are rejected."
+
+run_gate "mesh-etcd" "scripts/mesh_etcd_e2e.sh" \
+  "Mesh etcd — filo politika" \
+  "Mesh etcd — fleet policy" \
+  "etcd mesh backend ve MESH_PUB_ENABLED=0 dogrulamasi." \
+  "etcd mesh backend and MESH_PUB_ENABLED=0 validation."
+
+run_gate "vm-demo-gate" "scripts/vm_demo_gate.sh" --verify-only \
+  "VM demo kapısı — post_install 0 FAIL" \
+  "VM demo gate — post_install 0 FAIL" \
+  "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate)." \
+  "Final check before laptop/VM demo (repair: sudo vm_demo_gate)."
 
 n="$(python3 -c "import json; print(len(json.load(open('$OUT'))['gates']))")"
 echo "[OK] ops_gate_report -> $OUT ($n gate)"

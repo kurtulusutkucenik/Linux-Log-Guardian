@@ -1,6 +1,6 @@
 {
-  "date": "2026-06-15T19:27:38.648385+00:00",
-  "started": "2026-06-15T22:27:38+03:00",
+  "date": "2026-06-25T06:45:33.518599+00:00",
+  "started": "2026-06-25T09:45:32+03:00",
   "duration_sec": 0,
   "max_sync_sec": 300,
   "sync_ok": true,
@@ -10,11 +10,11 @@
   "ipset_before": 0,
   "ipset_after": 0,
   "ipset_delta": 0,
-  "db_summary_before": 0,
-  "db_summary_after": 0,
-  "last_sync_ts": 1781551658,
-  "threat_feed_enabled": true,
+  "db_summary_before": 495,
+  "db_summary_after": 495,
+  "last_sync_ts": 0,
+  "threat_feed_enabled": false,
   "pass": true,
-  "error": "fixture_only_no_root",
+  "error": null,
   "note": "Firehol/GeoIP sync -> ipset/XDP; fixture modu offline CI icin"
 }

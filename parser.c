@@ -7,7 +7,9 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
+#if defined(__AVX2__)
 #include <immintrin.h>
+#endif
 
 #define IS_DIGIT(c)  ((c) >= '0' && (c) <= '9')
 #define IS_SPACE(c)  ((c) == ' '  || (c) == '\t')
@@ -226,6 +228,7 @@ static int parse_syslog_month(const char *mon)
 
 static time_t parse_auth_timestamp(const char *line, size_t len)
 {
+    /* journald short-iso (+ optional fractional sec): 2026-06-22T02:40:01.123456+03:00 */
     if (len >= 19 && line[4] == '-' && line[7] == '-' && (line[10] == 'T' || line[10] == ' ')) {
         int y, m, d, h, mi, s;
         if (sscanf(line, "%d-%d-%dT%d:%d:%d", &y, &m, &d, &h, &mi, &s) == 6 ||
@@ -267,38 +270,76 @@ static time_t parse_auth_timestamp(const char *line, size_t len)
     return time(NULL);
 }
 
-/* auth.log / journald sshd: ... Failed password ... from IP port ... */
+/* auth.log / journald sshd: Failed password, disconnect, connection closed, ... */
+static const char *skip_to_ip_token(const char *p, const char *end)
+{
+    while (p < end) {
+        if ((*p >= '0' && *p <= '9') || *p == '[')
+            return p;
+        p++;
+    }
+    return NULL;
+}
+
+static int extract_sshd_client_ip(const char *line, size_t line_len,
+                                  const char **ip_ptr, size_t *ip_len)
+{
+    static __thread char auth_ip_buf[IP_STR_LEN];
+    const char *end = line + line_len;
+    static const char *const markers[] = {
+        " from ",
+        "Connection closed by ",
+        "Received disconnect from ",
+        "Disconnected from ",
+        NULL,
+    };
+
+    for (int mi = 0; markers[mi]; mi++) {
+        const char *hit = find_lit(line, line_len, markers[mi]);
+        if (!hit) continue;
+        const char *p = hit + strlen(markers[mi]);
+        while (p < end && *p == ' ') p++;
+        if (mi == 3) {
+            /* Disconnected from [authenticating user X] IP port */
+            p = skip_to_ip_token(p, end);
+            if (!p) continue;
+        }
+        const char *ip_start = p;
+        const char *ip_end = p;
+        if (p < end && *p == '[') {
+            ip_start = p + 1;
+            while (ip_end < end && *ip_end != ']') ip_end++;
+        } else {
+            while (ip_end < end && *ip_end != ' ' && *ip_end != '\t' && *ip_end != ':')
+                ip_end++;
+        }
+        size_t raw_len = (size_t)(ip_end - ip_start);
+        if (raw_len == 0 || raw_len >= IP_STR_LEN) continue;
+
+        size_t clean_len;
+        const char *clean = strip_ipv6_brackets(ip_start, raw_len,
+                                                auth_ip_buf, sizeof(auth_ip_buf),
+                                                &clean_len);
+        char tmp[IP_STR_LEN];
+        size_t tn = clean_len < sizeof(tmp) - 1 ? clean_len : sizeof(tmp) - 1;
+        memcpy(tmp, clean, tn);
+        tmp[tn] = '\0';
+        if (!is_valid_ip(tmp)) continue;
+        *ip_ptr = clean;
+        *ip_len = clean_len;
+        return 0;
+    }
+    return -1;
+}
+
 static int parse_auth_sshd_line(const char *line, size_t line_len, LogEntry *out)
 {
     if (!find_lit(line, line_len, "sshd[")) return -1;
-    const char *from = find_lit(line, line_len, " from ");
-    if (!from) return -1;
 
-    const char *end = line + line_len;
-    from += 6;
-    while (from < end && *from == ' ') from++;
-
-    const char *ip_start = from;
-    const char *ip_end = from;
-    if (from < end && *from == '[') {
-        ip_start = from + 1;
-        while (ip_end < end && *ip_end != ']') ip_end++;
-    } else {
-        while (ip_end < end && *ip_end != ' ' && *ip_end != '\t') ip_end++;
-    }
-    size_t raw_len = (size_t)(ip_end - ip_start);
-    if (raw_len == 0 || raw_len >= IP_STR_LEN) return -1;
-
-    static __thread char auth_ip_buf[IP_STR_LEN];
+    const char *ip_ptr;
     size_t clean_len;
-    const char *ip_ptr = strip_ipv6_brackets(ip_start, raw_len,
-                                             auth_ip_buf, sizeof(auth_ip_buf),
-                                             &clean_len);
-    char tmp[IP_STR_LEN];
-    size_t tn = clean_len < sizeof(tmp) - 1 ? clean_len : sizeof(tmp) - 1;
-    memcpy(tmp, ip_ptr, tn);
-    tmp[tn] = '\0';
-    if (!is_valid_ip(tmp)) return -1;
+    if (extract_sshd_client_ip(line, line_len, &ip_ptr, &clean_len) != 0)
+        return -1;
 
     memset(out, 0, sizeof(*out));
     out->ip.ptr = ip_ptr;
@@ -328,6 +369,13 @@ static int parse_auth_sshd_line(const char *line, size_t line_len, LogEntry *out
         out->url.ptr = path_ok;
         out->url.len = sizeof(path_ok) - 1;
         out->status = 200;
+    } else if (find_lit(line, line_len, "Connection closed by") ||
+               find_lit(line, line_len, "Received disconnect from") ||
+               find_lit(line, line_len, "Disconnected from")) {
+        static const char path_disc[] = "/sshd/disconnect";
+        out->url.ptr = path_disc;
+        out->url.len = sizeof(path_disc) - 1;
+        out->status = 401;
     } else {
         static const char path_other[] = "/sshd/event";
         out->url.ptr = path_other;
@@ -340,6 +388,58 @@ static int parse_auth_sshd_line(const char *line, size_t line_len, LogEntry *out
     return 0;
 }
 
+/* journald sudo spike: pam_unix rhost=IP veya authentication failure */
+static int parse_auth_sudo_line(const char *line, size_t line_len, LogEntry *out)
+{
+    if (!find_lit(line, line_len, "sudo[")) return -1;
+
+    const char *rh = find_lit(line, line_len, "rhost=");
+    if (!rh) return -1;
+
+    const char *p = rh + 6;
+    const char *end = line + line_len;
+    while (p < end && *p == ' ') p++;
+
+    const char *ip_start = p;
+    const char *ip_end = p;
+    if (p < end && *p == '[') {
+        ip_start = p + 1;
+        while (ip_end < end && *ip_end != ']') ip_end++;
+    } else {
+        while (ip_end < end && *ip_end != ' ' && *ip_end != '\t' && *ip_end != ':')
+            ip_end++;
+    }
+
+    size_t raw_len = (size_t)(ip_end - ip_start);
+    if (raw_len == 0) return -1;
+
+    static __thread char sudo_ip_buf[IP_STR_LEN];
+    size_t clean_len;
+    const char *clean = strip_ipv6_brackets(ip_start, raw_len,
+                                            sudo_ip_buf, sizeof(sudo_ip_buf),
+                                            &clean_len);
+    char tmp[IP_STR_LEN];
+    size_t tn = clean_len < sizeof(tmp) - 1 ? clean_len : sizeof(tmp) - 1;
+    memcpy(tmp, clean, tn);
+    tmp[tn] = '\0';
+    if (!is_valid_ip(tmp)) return -1;
+
+    memset(out, 0, sizeof(*out));
+    out->ip.ptr = clean;
+    out->ip.len = clean_len;
+    out->ts = parse_auth_timestamp(line, line_len);
+    static const char method_auth[] = "AUTH";
+    out->method.ptr = method_auth;
+    out->method.len = sizeof(method_auth) - 1;
+    static const char path_fail[] = "/sudo/auth-failure";
+    out->url.ptr = path_fail;
+    out->url.len = sizeof(path_fail) - 1;
+    out->status = 403;
+    out->bytes = 0;
+    out->resp_bytes = 0;
+    return 0;
+}
+
 int parse_log_line(const char *line, size_t line_len, LogEntry *out) {
     if (!line || !line_len || !out) return -1;
     memset(out, 0, sizeof(*out));
@@ -347,9 +447,14 @@ int parse_log_line(const char *line, size_t line_len, LogEntry *out) {
     /* Log tampering koruması */
     if (log_line_is_tampered(line, line_len)) return -2;
 
-    if (find_lit(line, line_len, "sshd[") && find_lit(line, line_len, " from ")) {
+    if (find_lit(line, line_len, "sshd[")) {
         int auth_rc = parse_auth_sshd_line(line, line_len, out);
         if (auth_rc == 0) return 0;
+    }
+
+    if (find_lit(line, line_len, "sudo[")) {
+        int sudo_rc = parse_auth_sudo_line(line, line_len, out);
+        if (sudo_rc == 0) return 0;
     }
 
     ParserState state    = ST_IP_START;
@@ -572,6 +677,7 @@ int parse_log_line(const char *line, size_t line_len, LogEntry *out) {
 }
 
 const char *find_newline_avx2(const char *ptr, const char *end) {
+#if defined(__AVX2__)
     __m256i newline = _mm256_set1_epi8('\n');
 
     while (ptr + 32 <= end) {
@@ -584,7 +690,7 @@ const char *find_newline_avx2(const char *ptr, const char *end) {
         }
         ptr += 32;
     }
-    
+#endif
     while (ptr < end) {
         if (*ptr == '\n') return ptr;
         ptr++;

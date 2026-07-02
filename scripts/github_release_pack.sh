@@ -28,6 +28,11 @@ for f in competitive-proof.json competitive-proof.pdf real-attack-report.json \
   nginx-inline-consult-report.json live-attack-report.json data-room.zip; do
   [[ -f "$ROOT/$f" ]] && cp -f "$ROOT/$f" "$OUT/$f"
 done
+if compgen -G "$ROOT/dist/log-guardian_*.deb" >/dev/null; then
+  mkdir -p "$OUT/deb"
+  cp -f "$ROOT"/dist/log-guardian_*.deb "$OUT/deb/"
+  echo "[github_release_pack] deb -> $OUT/deb/"
+fi
 
 python3 - "$OUT" <<'PY'
 import json
@@ -80,6 +85,7 @@ lines = [
     "## Files",
     "- `competitive-proof.pdf` — summary brief",
     "- `data-room.zip` — full JSON artefacts",
+    "- `deb/log-guardian_*.deb` — amd64 paket (dist/ mevcutsa)",
     "- `lineage-live-report.json` / `fp-cluster-trust-report.json` / `ja3-cluster-ban-live.json`",
     "",
     "Reproduce: `bash scripts/local_proof_refresh.sh` (GitHub push ayri adim)",

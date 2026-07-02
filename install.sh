@@ -591,8 +591,8 @@ ExecStart=$PREFIX/bin/log-guardian-daemon \\
     --obj $CONF_DIR/xdp_filter.o
 WorkingDirectory=$CONF_DIR
 User=root
-AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
-CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW
+AmbientCapabilities=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW CAP_PERFMON CAP_SYS_ADMIN
+CapabilityBoundingSet=CAP_NET_ADMIN CAP_BPF CAP_NET_RAW CAP_PERFMON CAP_SYS_ADMIN
 NoNewPrivileges=yes
 WatchdogSec=60
 NotifyAccess=main

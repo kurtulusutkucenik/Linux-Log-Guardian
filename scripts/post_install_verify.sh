@@ -81,17 +81,24 @@ _run_health() {
 _run_health_sg() {
   sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1
 }
-if [[ -x "$HEALTH_BIN" ]]; then
-  if _run_health; then
-    health_ok=1
-  elif getent group log-guardian >/dev/null 2>&1 && _run_health_sg; then
-    health_ok=1
-  elif [[ $EUID -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]] \
-      && runuser -u "$SUDO_USER" -- sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1; then
-    health_ok=1
-  elif [[ $EUID -eq 0 ]] && _run_health_sg; then
-    health_ok=1
+_try_health_once() {
+  if _run_health; then return 0; fi
+  if getent group log-guardian >/dev/null 2>&1 && _run_health_sg; then return 0; fi
+  if [[ $EUID -eq 0 && -n "${SUDO_USER:-}" && "${SUDO_USER}" != root ]]; then
+    runuser -u "$SUDO_USER" -- sg log-guardian -c "exec \"$HEALTH_BIN\" --health --db \"$DB\"" >/dev/null 2>&1 \
+      && return 0
   fi
+  [[ $EUID -eq 0 ]] && _run_health_sg && return 0
+  return 1
+}
+if [[ -x "$HEALTH_BIN" ]]; then
+  for _h in $(seq 1 8); do
+    if _try_health_once; then
+      health_ok=1
+      break
+    fi
+    [[ "$_h" -lt 8 ]] && sleep 1
+  done
 fi
 [[ "$health_ok" -eq 1 ]] && ok "--health IPC" \
   || bad "--health (sudo bash scripts/fix_ipc_perms.sh; usermod -aG log-guardian \$USER)"
@@ -215,8 +222,11 @@ else
   ok "soak kilidi yok"
 fi
 
-if id -nG 2>/dev/null | tr ' ' '\n' | grep -qx log-guardian; then
-  ok "kullanici log-guardian grubunda"
+lg_group_user="${SUDO_USER:-${USER:-}}"
+[[ -z "$lg_group_user" || "$lg_group_user" == root ]] && lg_group_user="${LOG_GUARDIAN_OPERATOR:-}"
+if [[ -n "$lg_group_user" ]] \
+    && id -nG "$lg_group_user" 2>/dev/null | tr ' ' '\n' | grep -qx log-guardian; then
+  ok "kullanici log-guardian grubunda ($lg_group_user)"
 else
   warn "log-guardian grubu yok — arka plan soak icin: sudo usermod -aG log-guardian \$USER"
 fi

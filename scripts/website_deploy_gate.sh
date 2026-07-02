@@ -49,10 +49,12 @@ fi
 
 bash "$ROOT/scripts/website_smoke.sh"
 bash "$ROOT/scripts/website_i18n_browser_smoke.sh"
+bash "$ROOT/scripts/website_award_pack.sh"
 
 echo ""
 echo "[OK] website_deploy_gate"
 echo "  Cloudflare Pages output: assets/website-deploy"
+echo "  Award ZIP: dist/linux-log-guardian-website-award.zip"
 echo "  Prod onizleme: LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh"
 echo "  Rehber: docs/WEBSITE_DEPLOY.md"
 echo "  Canli kontrol (domain sonrasi): curl -sI https://DOMAIN/csp.txt  # 404"

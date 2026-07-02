@@ -2,7 +2,7 @@
   "meta.description": "Linux Log Guardian — 土耳其开源 nginx WAF。log → ban 约 15 分钟。",
   "hero.title": "Linux Log Guardian",
   "hero.tag": "nginx access log → WAF/CRS → 内核封禁 · 单链 · self-hosted",
-  "hero.badge_os": "🇹🇷 土耳其制造",
+  "hero.badge_os": "Turkey · open source",
   "hero.badge_mit": "开源 · MIT",
   "hero.badge_core": "Core 约 15 分钟安装",
   "hero.badge_soak": "72h soak PASS",
@@ -133,5 +133,7 @@
   "contact.title": "联系与贡献",
   "contact.body": "<p>问题、合作或贡献 — 欢迎联系。Bug 与 pull request 欢迎。</p>",
   "contact.email_label": "邮箱：",
-  "footer": "Linux Log Guardian · 土耳其制造 · MIT · 开源 · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>"
+  "footer": "Linux Log Guardian · 土耳其制造 · MIT · 开源 · <a href=\"mailto:kurtulusutkucenikcontact@gmail.com\">kurtulusutkucenikcontact@gmail.com</a>",
+  "hero.badge_tr": "TURK",
+  "hero.badge_opensource": "开源"
 }

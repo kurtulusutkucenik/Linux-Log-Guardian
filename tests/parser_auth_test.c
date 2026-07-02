@@ -61,6 +61,44 @@ int main(void)
     expect(e.status == 200, "accepted status 200");
     sv_from_entry("accepted path", e.url, "/sshd/accepted");
 
+    const char *closed_line =
+        "2026-06-22T02:40:05+03:00 host sshd[1]: "
+        "Connection closed by 203.0.113.221 port 22 [preauth]";
+    const char *disc_line =
+        "2026-06-22T02:40:06+03:00 host sshd[2]: "
+        "Received disconnect from 203.0.113.222 port 22:11: Bye [preauth]";
+    const char *auth_disc_line =
+        "2026-06-22T02:40:07+03:00 host sshd[3]: "
+        "Disconnected from authenticating user root 203.0.113.223 port 22 [preauth]";
+
+    expect(parse_log_line(closed_line, strlen(closed_line), &e) == 0, "parse connection closed");
+    ip_from_entry(&e, ip, sizeof(ip));
+    expect(strcmp(ip, "203.0.113.221") == 0, "connection closed IP");
+    sv_from_entry("connection closed path", e.url, "/sshd/disconnect");
+
+    expect(parse_log_line(disc_line, strlen(disc_line), &e) == 0, "parse received disconnect");
+    ip_from_entry(&e, ip, sizeof(ip));
+    expect(strcmp(ip, "203.0.113.222") == 0, "received disconnect IP");
+
+    expect(parse_log_line(auth_disc_line, strlen(auth_disc_line), &e) == 0, "parse auth disconnect");
+    ip_from_entry(&e, ip, sizeof(ip));
+    expect(strcmp(ip, "203.0.113.223") == 0, "auth disconnect IP");
+
+    const char *sudo_line =
+        "2026-06-22T02:41:01+03:00 kurtulus sudo[45001]: "
+        "pam_unix(sudo:auth): authentication failure; rhost=203.0.113.225 user=root";
+    expect(parse_log_line(sudo_line, strlen(sudo_line), &e) == 0, "parse sudo rhost");
+    ip_from_entry(&e, ip, sizeof(ip));
+    expect(strcmp(ip, "203.0.113.225") == 0, "sudo rhost IP");
+    sv_from_entry("sudo path", e.url, "/sudo/auth-failure");
+
+    const char *usec_line =
+        "2026-06-22T02:40:01.123456+03:00 kurtulus sshd[44001]: "
+        "Failed password for root from 203.0.113.224 port 22 ssh2";
+    expect(parse_log_line(usec_line, strlen(usec_line), &e) == 0, "parse journald usec timestamp");
+    ip_from_entry(&e, ip, sizeof(ip));
+    expect(strcmp(ip, "203.0.113.224") == 0, "usec line IP");
+
     if (g_fail == 0)
         fprintf(stderr, "[OK] parser_auth_test\n");
     else

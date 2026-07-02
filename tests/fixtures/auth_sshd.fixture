@@ -1,0 +1,7 @@
+2026-06-22T02:40:01+03:00 kurtulus sshd[44001]: Failed password for invalid user admin from 203.0.113.220 port 22 ssh2
+2026-06-22T02:40:02+03:00 kurtulus sshd[44001]: Failed password for root from 203.0.113.220 port 22 ssh2
+2026-06-22T02:40:03+03:00 kurtulus sshd[44001]: Failed password for root from 203.0.113.220 port 22 ssh2
+Jun 22 02:40:04 kurtulus sshd[44002]: Accepted publickey for deploy from 192.168.1.50 port 22 ssh2
+2026-06-22T02:40:05+03:00 kurtulus sshd[44003]: Connection closed by 203.0.113.221 port 22 [preauth]
+2026-06-22T02:40:06+03:00 kurtulus sshd[44004]: Received disconnect from 203.0.113.222 port 22:11: Bye Bye [preauth]
+2026-06-22T02:40:07+03:00 kurtulus sshd[44005]: Disconnected from authenticating user root 203.0.113.223 port 22 [preauth]

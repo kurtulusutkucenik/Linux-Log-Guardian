@@ -4,7 +4,7 @@
 
 **İlgili belgeler:** [CUSTOMER_REQUIREMENTS.md](CUSTOMER_REQUIREMENTS.md) · [PROD_ROADMAP.md](PROD_ROADMAP.md) · [Log_Guardian_Enterprise_Roadmap.md](Log_Guardian_Enterprise_Roadmap.md) · [TEST_MATRIX.md](TEST_MATRIX.md)
 
-**Son güncelleme:** 2026-06-09
+**Son güncelleme:** 2026-06-29 (laptop + VM filo 2 node; `/tests` **60 kart**; VPS XDP bilinçli skip)
 
 ---
 
@@ -85,45 +85,45 @@ flowchart TB
 | C1 | nginx access log parse | `parser.c`, `examples/nginx-log-guardian.conf` | ✅ | `./log-guardian test_access.log --no-tui --json` | Birincil log kaynağı |
 | C2 | WAF + CRS kuralları | `waf_rules.c`, `rules/crs-*.rules` | ✅ | `bash scripts/phase1_e2e.sh` | |
 | C3 | Ban pipeline (IPC) | `ban_pipeline.c`, `daemon_ipc.c` | ✅ | `sudo log-guardian ban IP --reason test` | |
-| C4 | Kernel ban (ipset/XDP) | `firewall.c`, `xdp_filter.c` | 🟡 | Prod NIC: `sudo log-guardian-daemon --iface eth0` | Dev Wi‑Fi: XDP OFF, ipset fallback |
+| C4 | Kernel ban (ipset/XDP) | `firewall.c`, `xdp_filter.c` | ✅ laptop | `ipset` ban + `vps-xdp` skip ⚠ | VPS `eth0` → kernel-XDP |
 | C5 | SQLite olay DB + TUI | `db.c`, `tui.c` | ✅ | `./log-guardian --status --db events.db` | |
 | C6 | Prometheus metrikler | `metrics.c`, port 9091 | ✅ | `curl -s http://127.0.0.1:9091/metrics \| head` | Prefix: `loganalyzer_*` |
 | C7 | Kurulum + systemd | `install.sh`, unit dosyaları | ✅ | `sudo log-guardian --health` | |
 | C8 | OpenAPI / BOLA strict | `schema_validator.c` | ✅ | `bash scripts/bola_idor_e2e.sh` | Şema açıkken |
-| C9 | **ssh / auth / journald log** | `parser.c`, `test_auth.log` | 🟡 | `bash scripts/auth_log_e2e.sh` | sshd satirlari; journald spike sonraki |
-| C10 | **ARM / embedded Linux** | — | 🔴 | — | Yalnızca x86_64 hedefleniyor |
+| C9 | **ssh / auth / journald log** | `parser.c`, `test_auth.log`, `tests/fixtures/` | ✅ | `bash scripts/auth_log_e2e.sh` · `bash scripts/journald_e2e.sh` | journald usec + sudo rhost |
+| C10 | **ARM / embedded Linux** | `Makefile`, `scripts/build_arm64.sh` | ✅ | `bash scripts/build_arm64.sh` | Laptop: cross-gnu aarch64 |
 
 ### 2.2 Pro — SOC, eBPF, filo
 
 | # | Alan | Modül / dosya | Durum | Doğrulama | Not |
 |---|------|---------------|-------|-----------|-----|
-| P1 | eBPF daemon | `ebpf_daemon.c` | 🟡 | `sudo log-guardian-daemon --iface eth0` | Root + uygun kernel |
-| P2 | execve / RCE probe | `syscall_uprobe.c` | 🟡 | `bash scripts/incident_e2e.sh` | |
-| P3 | Lineage (openat/connect) | `lineage_probe.c`, `attack_tree.c` | 🟡 | `./log-guardian lineage-stats --demo` veya canlı daemon | Demo vs `data_mode: live` |
-| P4 | L7 HTTP probe | `http_l7_probe.c`, `l7_telemetry.c` | 🟡 | `--status` → `l7_http`, `probe_active=true` | Daemon gerekli |
+| P1 | eBPF daemon | `ebpf_daemon.c` | ✅ laptop | `log-guardian-daemon` active, ipset-fallback | VPS NIC: `--iface eth0` |
+| P2 | execve / RCE probe | `syscall_uprobe.c` | ✅ | `bash scripts/incident_e2e.sh` | |
+| P3 | Lineage (openat/connect) | `lineage_probe.c`, `attack_tree.c` | ✅ | `lineage-live-report.json` + dashboard CANLI | `data_mode: live` |
+| P4 | L7 HTTP probe | `http_l7_probe.c`, `l7_telemetry.c` | ✅ | `l7-probe-prod-report.json`, `probe_active=true` | ipset-fallback laptop |
 | P5 | Incident korelasyon | `incident_engine.c` | ✅ | `bash scripts/incident_e2e.sh` | |
 | P6 | Falco host eşleme | `falco_host_rules.c` | ✅ | `bash scripts/falco_host_e2e.sh` | |
-| P7 | Dashboard (Next.js) | `dashboard/` | 🟡 | `cd dashboard && npm run dev` | Prod: TLS + JWT |
-| P8 | Fleet telemetry + komut | `agent_sync.c`, `/fleet` | 🟡 | `bash scripts/fleet_e2e.sh` | Dashboard + `SAAS_ENABLED=1` |
+| P7 | Dashboard (Next.js) | `dashboard/` | ✅ | `https://localhost:8443` + `/tests` **60 kart** | Prod: Caddy TLS + JWT |
+| P8 | Fleet telemetry + komut | `agent_sync.c`, `/fleet` | ✅ | `fleet_multi_node_e2e.sh` + VM `node-vm-02` keepalive | Dashboard :8443; 2 node canlı demo |
 | P9 | Grafana panelleri | `grafana-dashboard.json`, `grafana-alerts.json` | ✅ | `bash scripts/grafana_provision.sh` | `$tenant` label |
 | P10 | Webhook + Telegram ops | `webhook.c` | ✅ | laptop: tunnel setWebhook + `grafana_alert_e2e.sh` | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
 | P11 | Threat feed (AbuseIPDB/OTX) | `threat_feed.c` | ✅ | `bash scripts/threat_feed_live_proof.sh` | `--status` → `threat_feed_stats.json` |
-| P12 | K8s operator | `k8s-operator/main.go` | 🟡 | `helm install lg ./helm/log-guardian` | |
-| P13 | TLS prod stack | `docker-compose.prod.yml` | 🟡 | [TLS_PRODUCTION.md](TLS_PRODUCTION.md) | Caddy |
+| P12 | K8s operator | `k8s-operator/main.go` | 🟡 | `helm_install_smoke.sh` + `go build` | Gerçek cluster deploy opsiyonel |
+| P13 | TLS prod stack | `docker-compose.prod.yml` | ✅ laptop | `https://localhost:8443` Caddy | Müşteri domain ayrı |
 
 ### 2.3 Enterprise — ekosistem ve SLA
 
 | # | Alan | Modül / dosya | Durum | Doğrulama | Not |
 |---|------|---------------|-------|-----------|-----|
 | E1 | Wasm runtime (stub) | `wasm_runtime.c` | ✅ | `bash scripts/phase5_e2e.sh` | Kapı testi |
-| E2 | Wasm **native** prod | Wasmtime + plugin build | 🟡 | `bash scripts/wasm_release.sh` | [WASM_PROD_CHECKLIST.md](WASM_PROD_CHECKLIST.md) |
-| E3 | İmzalı marketplace API | dashboard tier middleware | 🔴 | `LOG_GUARDIAN_TIER=enterprise` | |
+| E2 | Wasm **native** prod | Wasmtime + plugin build | ✅ | `bash scripts/wasm_release.sh` | [WASM_PROD_CHECKLIST.md](WASM_PROD_CHECKLIST.md) |
+| E3 | İmzalı marketplace API | dashboard tier middleware | ✅ | `LOG_GUARDIAN_TIER=enterprise` | `marketplace_signed_api_e2e.sh` |
 | E4 | Copilot (kural tabanlı) | `dashboard/src/app/copilot/` | ✅ | `/copilot` Ollama olmadan | |
-| E5 | Copilot LLM (Ollama) | Copilot API | ⏭ | [COPILOT_LLM.md](COPILOT_LLM.md) | |
-| E6 | Mesh (etcd) | `etcd_mesh.c`, `mesh_intel.c` | 🟡 | `MESH_BACKEND=etcd` | ZMQ opsiyonel |
-| E7 | Compliance PDF export | dashboard Pro tier | 🟡 | Pro tier 403/200 gate | |
-| E8 | 72h soak / air-gap runbook | `scripts/soak_test.sh` | 🟡 | [SOAK_TEST.md](SOAK_TEST.md) | |
-| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) | 🟡 | Dokümantasyon | |
+| E5 | Copilot LLM (Ollama) | Copilot API | ✅ laptop | `copilot_ollama_e2e.sh` | Opsiyonel tier; fallback zorunlu değil |
+| E6 | Mesh (etcd) | `etcd_mesh.c`, `mesh_intel.c` | ✅ | `mesh_etcd_e2e.sh` + `mesh_etcd_live_e2e.sh` | Laptop docker PUT/GET; VPS cluster opsiyonel |
+| E7 | Compliance PDF export | dashboard Pro tier | ✅ | `bash scripts/compliance_export_e2e.sh` | `/api/reports/export` Pro gate |
+| E8 | 72h soak / air-gap runbook | `scripts/soak_test.sh` | ✅ | `soak-report.json` 864 örnek, 0 fail (2026-06-16→19) | Laptop kanıt; VPS tekrar opsiyonel |
+| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 75 test vitrin |
 
 ### 2.4 Kalite ve rekabet kapıları (tüm tier'lar)
 
@@ -131,10 +131,10 @@ flowchart TB
 |---|------|-------|-----------|-------|
 | Q1 | Faz 0–5 dosya + E2E gate | ✅ | `bash scripts/phase_gate.sh` | PASSED |
 | Q2 | Faz 0–6 tam paket | ✅ | `PHASE100_FAST=1 bash scripts/phase100.sh` | Tam: `phase100.sh` |
-| Q3 | False positive oranı | 🟡 | `bash scripts/fp_report.sh` | benign fp_rate < %5 |
+| Q3 | False positive oranı | ✅ | `bash scripts/fp_report.sh` | benign fp_rate 0.2% (< %5) |
 | Q4 | Throughput bench | ✅ | `bash scripts/bench_report.sh` | EPS + µs/satır |
-| Q5 | Competitive merge gate | 🟡 | `bash scripts/competitive_gate.sh` | CI blocker |
-| Q6 | Prod stack (Wasm+lineage+L7) | 🟡 | `bash scripts/prod_stack_e2e.sh` | Tek komut |
+| Q5 | Competitive merge gate | ✅ | `bash scripts/competitive_gate.sh` | CI blocker |
+| Q6 | Prod stack (Wasm+lineage+L7) | ✅ | `bash scripts/prod_stack_e2e.sh` | Tek komut |
 | Q7 | Güvenlik sertleştirme | ✅ | `bash scripts/security_hardening_test.sh` | IPC token, XFF, Wasm sandbox |
 | Q8 | BOLA/IDOR E2E | ✅ | `bash scripts/bola_idor_e2e.sh` | idor_score ≥ 80 |
 
@@ -144,13 +144,13 @@ flowchart TB
 
 | Faz | Kapsam | Kod kapısı | Prod kanıt |
 |-----|--------|------------|------------|
-| 0 | Güvenilirlik, kurulum | ✅ | 🟡 soak / 7×24 |
-| 1 | WAF, CRS, ban | ✅ | ✅ nginx PoC |
-| 2 | XDR, lineage, incident | ✅ | 🟡 canlı daemon |
-| 3 | API, GraphQL, K8s | ✅ | 🟡 operator deploy |
-| 4 | Fleet, Grafana | ✅ | 🟡 dashboard sürekli açık |
-| 5 | Wasm, Copilot, mesh | ✅ | 🟡 Wasm native |
-| 6 | Rekabet suite | 🟡 | bench + FP raporu |
+| 0 | Güvenilirlik, kurulum | ✅ | ✅ `post_install_verify` 0 FAIL |
+| 1 | WAF, CRS, ban | ✅ | ✅ nginx + live harness |
+| 2 | XDR, lineage, incident | ✅ | ✅ laptop live (`prod_stack_e2e`) |
+| 3 | API, GraphQL, K8s | ✅ | ✅ API; K8s helm smoke |
+| 4 | Fleet, Grafana | ✅ | ✅ 2 node + Grafana provision |
+| 5 | Wasm, Copilot, mesh | ✅ | ✅ Wasm native + Ollama opsiyonel |
+| 6 | Rekabet suite | ✅ | ✅ FP 0.2%, competitive_gate |
 
 **Tek komut (geliştirici):**
 
@@ -297,12 +297,14 @@ export LOGANALYZER_PASSWORD='DegistirBeni!123'
 
 ## 6. Bilinen boşluklar (öncelik sırası)
 
-1. **nginx dışı log kaynakları** (ssh, auth, journald) — Core mesajını genişletmek için C9
-2. **Wasm stub → native** — prod yayın öncesi zorunlu (E2)
-3. **Fleet/dashboard sürekli telemetry** — Pro demo için P8
-4. **XDP prod NIC** — gerçek ban performansı C4
-5. **FP tuning** — benign corpus kuralları Q3
-6. **Enterprise imzalı marketplace** — E3 uzun vadeli
+1. **XDP prod NIC (VPS)** — gerçek kernel-XDP; laptop/VM `vps-xdp-kernel` skip bilinçli
+2. **GitHub push / release** — `release_prep_no_github.sh` hazır; push kullanıcı kararı
+3. **Mesh etcd VPS cluster** — laptop docker live-rw ✅; multi-node VPS opsiyonel
+4. **K8s gerçek cluster deploy** — helm smoke ✅
+
+**Laptop mükemmellik kapısı:** `bash scripts/laptop_excellence_gate.sh` · reboot: `laptop_reboot_ready.sh`
+
+**Kapalı (2026-06-29):** `.deb` + VM install ✅ · C9 auth/journald ✅ · E2 Wasm native ✅ · E5 Ollama ✅ · E7 compliance PDF ✅ · E8 72h soak ✅ · P8 filo multi-host (VM+host) ✅ · Q3 FP %0.2 ✅ · `phase100_fast_gate` ✅ · site/dashboard **57 test** ✅ · VM demo gate ✅ · attack map ✅ · k8s kind live-ready ✅ · Sprint O (fuzz/TAXII/lineage) ✅ · Sprint W (Telegram undo) ✅
 
 ---
 
@@ -328,4 +330,4 @@ Bu belgedeki durum sütununu güncellerken:
 2. Prod ortam notunu ekle (NIC adı, kernel, dashboard URL)
 3. `Son güncelleme` tarihini değiştir
 
-**Tam kapsam tanımı:** Core (C1–C8) prod ✅ + Pro (P1–P9) canlı demo ✅ + Q1–Q8 kalite kapıları ✅ + Enterprise (E1–E2) Wasm native ✅.
+**Tam kapsam tanımı (laptop demo):** Core (C1–C10) ✅ + Pro (P1–P11, P13) canlı demo ✅ + Q1–Q8 ✅ + Enterprise (E1–E3, E7–E8) ✅. VPS kernel-XDP ve `.deb` dağıtım paketi ayrı kapı.

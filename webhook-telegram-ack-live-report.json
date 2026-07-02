@@ -1,0 +1,12 @@
+{
+  "date": "2026-06-30T17:30:54.418278+00:00",
+  "pass": true,
+  "db": "/etc/log-guardian/events.db",
+  "ack_key": "E2E-ACK-1782840653-2582796",
+  "ack_before": 3,
+  "ack_after": 4,
+  "unacked_before": 0,
+  "unacked_after": 0,
+  "metrics_ack_24h": 4,
+  "script": "scripts/webhook_ack_e2e.sh"
+}

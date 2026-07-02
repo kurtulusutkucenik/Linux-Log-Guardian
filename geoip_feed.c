@@ -24,8 +24,16 @@ void geoip_feed_set_rules_path(const char *path)
         strncpy(g_rules_conf, path, sizeof(g_rules_conf) - 1);
 }
 
+static int geoip_feed_skipped(void)
+{
+    const char *v = getenv("GEOIP_FEED_SKIP");
+    return (v && v[0] && strcmp(v, "0") != 0);
+}
+
 static int rules_has_block_countries(void)
 {
+    if (geoip_feed_skipped())
+        return 0;
     FILE *f = fopen(g_rules_conf, "r");
     if (!f) {
         f = fopen("rules.conf", "r");

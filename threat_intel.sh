@@ -75,12 +75,16 @@ if [[ -f "$DB_PATH" ]]; then
         log "ban-db-prune: $pruned eski threat-intel satiri silindi"
     fi
     summary="threat-intel-summary:${IP_COUNT} IPs"
-    if sqlite3 "$DB_PATH" \
-        "INSERT INTO ban_events (ts, ip, action, reason) VALUES (strftime('%s','now'), 'system', 'info', '${summary}');" \
-        2>/dev/null; then
-        log "DB ozet kaydi: $summary"
+    if command -v sqlite3 >/dev/null 2>&1; then
+        if sqlite3 "$DB_PATH" \
+            "INSERT INTO ban_events (ts, ip, action, reason) VALUES (strftime('%s','now'), 'system', 'info', '${summary}');" \
+            2>/dev/null; then
+            log "DB ozet kaydi: $summary"
+        else
+            warn "DB ozet kaydi basarisiz: $DB_PATH"
+        fi
     else
-        warn "DB ozet kaydi basarisiz: $DB_PATH"
+        log "DB ozet atlandi — sqlite3 CLI yok (opsiyonel: apt install sqlite3)"
     fi
 else
     warn "Veritabani bulunamadi: $DB_PATH — DB guncelleme atlanıyor."

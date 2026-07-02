@@ -1,0 +1,11 @@
+{
+  "date": "2026-06-30T18:42:43.228274+00:00",
+  "pass": true,
+  "packages_signed": 2,
+  "package_ids": [
+    "core-detection",
+    "sigma-web"
+  ],
+  "require_sig_enforced": true,
+  "script": "scripts/marketplace_sig_gate.sh"
+}

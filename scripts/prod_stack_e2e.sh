@@ -66,6 +66,47 @@ elif ipc=='fail':
 "
 fi
 
+OUT="${ROOT}/prod-stack-e2e-report.json"
+python3 - "$OUT" <<'PY'
+import json, sys
+from datetime import datetime, timezone
+from pathlib import Path
+
+root = Path(sys.argv[1]).resolve().parent
+out = Path(sys.argv[1])
+
+def load(name):
+    p = root / name
+    return json.loads(p.read_text()) if p.is_file() else {}
+
+wasm = load("wasm-status.json")
+lineage = load("lineage-live-report.json")
+status = load("guardian-status.json")
+daemon = status.get("daemon") or {}
+l7 = status.get("l7_http") or {}
+
+wasm_ok = wasm.get("pass") and wasm.get("mode") == "native"
+lineage_ok = lineage.get("pass") is True
+l7_ok = l7.get("probe_active") is True or daemon.get("l7_probe") is True
+ipc = status.get("ipc", "?")
+xdp_mode = status.get("xdp_mode", "?")
+
+out.write_text(json.dumps({
+    "date": datetime.now(timezone.utc).isoformat(),
+    "pass": wasm_ok and lineage_ok and l7_ok,
+    "wasm_mode": wasm.get("mode"),
+    "wasm_plugins_native": wasm.get("plugins_native", 0),
+    "lineage_risk": lineage.get("chain_risk") or lineage.get("max_risk"),
+    "lineage_resolver": lineage.get("resolver_source"),
+    "l7_probe_active": l7_ok,
+    "ipc": ipc,
+    "xdp_mode": xdp_mode,
+    "lineage_probe": daemon.get("lineage_probe"),
+    "script": "scripts/prod_stack_e2e.sh",
+}, indent=2) + "\n", encoding="utf-8")
+print(f"[OK] report -> {out.name}")
+PY
+
 echo ""
 echo "[prod_stack_e2e] Tamam. Canli eBPF icin:"
 echo "  sudo log-guardian-daemon --iface eth0   # veya wlo1 (Wi-Fi'de XDP OFF beklenir)"

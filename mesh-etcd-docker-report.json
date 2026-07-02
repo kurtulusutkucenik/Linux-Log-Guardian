@@ -1,0 +1,9 @@
+{
+  "date": "2026-06-29T14:45:15.569667+00:00",
+  "pass": true,
+  "mode": "docker-live",
+  "endpoint": "http://127.0.0.1:12379",
+  "container": "lg-etcd-smoke",
+  "policy": "fleet_rules_sync",
+  "script": "scripts/mesh_etcd_docker_smoke.sh"
+}

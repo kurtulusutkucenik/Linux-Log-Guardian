@@ -31,6 +31,8 @@ type Payload = {
   stats?: Record<string, number>;
   socStats?: Record<string, number>;
   telegramStats?: Record<string, number>;
+  apiStats?: Record<string, number>;
+  webhookStats?: Record<string, number>;
   sparklines?: Record<string, Spark[]>;
   timeseries?: Record<string, TsRow[]>;
   table?: { metric: string; value: number }[];
@@ -50,7 +52,19 @@ const STAT_COLORS: Record<string, string> = {
   threat_iocs: "#f59e0b",
   fp_trusted: "#34d399",
   bp_ipset: "#16a34a",
-  bp_failed: "#f87171",
+  bp_ipc: "#6366f1",
+  bp_xdp: "#a78bfa",
+  threat_applied: "#22c55e",
+  threat_failed: "#f87171",
+  threat_sync_age_h: "#fbbf24",
+  fp_learn: "#34d399",
+  fp_suppressed: "#94a3b8",
+  api_requests: "#38bdf8",
+  api_auth_fail: "#fb923c",
+  api_rate_limited: "#f472b6",
+  wh_sent: "#5794f2",
+  wh_fail: "#be123c",
+  wh_drops: "#f97316",
   tg_ack: "#5794f2",
   tg_unacked: "#be123c",
   quiet_hours: "#34d399",
@@ -71,18 +85,43 @@ const EXTRA_STATS: { id: string; labelKey: MessageKey }[] = [
   { id: "ringbuf", labelKey: "grafanaStatRingbuf" },
 ];
 
-const SOC_STATS: { id: string; labelKey: MessageKey }[] = [
-  { id: "ja3_clusters", labelKey: "grafanaSocJa3Clusters" },
-  { id: "ja3_bans", labelKey: "grafanaSocJa3Bans" },
+const SOC_THREAT_STATS: { id: string; labelKey: MessageKey }[] = [
+  { id: "threat_sync_age_h", labelKey: "grafanaSocThreatSyncAge" },
   { id: "threat_iocs", labelKey: "grafanaSocThreatIocs" },
+  { id: "threat_applied", labelKey: "grafanaSocThreatApplied" },
+  { id: "threat_failed", labelKey: "grafanaSocThreatFailed" },
   { id: "fp_trusted", labelKey: "grafanaSocFpTrusted" },
+  { id: "fp_learn", labelKey: "grafanaSocFpLearn" },
+  { id: "fp_suppressed", labelKey: "grafanaSocFpSuppressed" },
+];
+
+const SOC_BAN_STATS: { id: string; labelKey: MessageKey }[] = [
+  { id: "bp_ipc", labelKey: "grafanaSocBpIpc" },
+  { id: "bp_xdp", labelKey: "grafanaSocBpXdp" },
   { id: "bp_ipset", labelKey: "grafanaSocBpIpset" },
   { id: "bp_failed", labelKey: "grafanaSocBpFailed" },
+  { id: "ja3_clusters", labelKey: "grafanaSocJa3Clusters" },
+  { id: "ja3_bans", labelKey: "grafanaSocJa3Bans" },
+];
+
+const API_STATS: { id: string; labelKey: MessageKey }[] = [
+  { id: "api_requests", labelKey: "grafanaApiRequests" },
+  { id: "api_auth_fail", labelKey: "grafanaApiAuthFail" },
+  { id: "api_rate_limited", labelKey: "grafanaApiRateLimited" },
+];
+
+const WEBHOOK_STATS: { id: string; labelKey: MessageKey }[] = [
+  { id: "wh_sent", labelKey: "grafanaWebhookSent" },
+  { id: "wh_fail", labelKey: "grafanaWebhookFail" },
+  { id: "wh_drops", labelKey: "grafanaWebhookDrops" },
 ];
 
 const TELEGRAM_STATS: { id: string; labelKey: MessageKey }[] = [
   { id: "tg_ack", labelKey: "grafanaTelegramAck" },
   { id: "tg_unacked", labelKey: "grafanaTelegramUnacked" },
+  { id: "tg_route", labelKey: "grafanaTelegramRoute" },
+  { id: "tg_batch", labelKey: "grafanaTelegramBatch" },
+  { id: "tg_queue", labelKey: "grafanaTelegramQueue" },
   { id: "quiet_hours", labelKey: "grafanaQuietHours" },
   { id: "quiet_active", labelKey: "grafanaQuietActive" },
 ];
@@ -156,10 +195,10 @@ function appendLiveHist(
     parse_rate: pushTs(hist.parse_rate, { t, parse_s: stats.parse_err ?? 0 }),
     ban_pipeline_rate: pushTs(hist.ban_pipeline_rate, {
       t,
-      ipc: 0,
-      xdp: stats.xdp ?? 0,
+      ipc: stats.bp_ipc ?? 0,
+      xdp: stats.bp_xdp ?? stats.xdp ?? 0,
       ipset: stats.bp_ipset ?? 0,
-      ja3: stats.ja3_clusters ?? 0,
+      ja3: stats.ja3_bans ?? stats.ja3_clusters ?? 0,
     }),
     sparks,
   };
@@ -287,9 +326,12 @@ function MiniTs({
 
 function fmtStat(id: string, v: number): string {
   if (id === "eps") return v.toFixed(1);
-  if (id === "xdp") return v >= 1 ? "ON" : "OFF";
+  if (id === "xdp" || id === "tg_route") return v >= 1 ? "ON" : "OFF";
   if (id === "quiet_hours") return v >= 1 ? "ON" : "OFF";
   if (id === "quiet_active") return v >= 1 ? "ACTIVE" : "no";
+  if (id === "tg_batch") return v > 0 ? `${v}s` : "off";
+  if (id === "fp_learn") return v >= 1 ? "ON" : "OFF";
+  if (id === "threat_sync_age_h") return v > 0 ? `${v.toFixed(1)}h` : "—";
   return v.toLocaleString(undefined, { maximumFractionDigits: 0 });
 }
 
@@ -300,6 +342,9 @@ function telegramValueClass(id: string, v: number): string {
     if (v >= 5) return "text-amber-300";
     return "text-green-400";
   }
+  if (id === "tg_route") return v >= 1 ? "text-emerald-400" : "text-white/40";
+  if (id === "tg_batch") return v > 0 ? "text-violet-300" : "text-white/40";
+  if (id === "tg_queue") return v > 0 ? "text-amber-300" : "text-green-400";
   if (id === "quiet_hours") return v >= 1 ? "text-amber-300" : "text-green-400";
   if (id === "quiet_active") return v >= 1 ? "text-purple-300" : "text-green-400";
   return "text-white";
@@ -341,7 +386,10 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           liveHistRef.current = appendLiveHist(liveHistRef.current, {
             ...merged.stats,
             bp_ipset: soc.bp_ipset,
+            bp_ipc: soc.bp_ipc,
+            bp_xdp: soc.bp_xdp,
             ja3_clusters: soc.ja3_clusters,
+            ja3_bans: soc.ja3_bans,
           });
           merged.timeseries = liveHistTimeseries(liveHistRef.current);
           merged.sparklines = { ...liveHistRef.current.sparks };
@@ -372,6 +420,8 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
 
   const stats = data?.stats ?? {};
   const socStats = data?.socStats ?? {};
+  const apiStats = data?.apiStats ?? {};
+  const webhookStats = data?.webhookStats ?? {};
   const telegramStats = data?.telegramStats ?? {};
   const sparks = chartsReady ? (data?.sparklines ?? {}) : {};
   const ts = chartsReady ? (data?.timeseries ?? {}) : {};
@@ -536,12 +586,34 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
         />
       </div>
 
+      {/* Webhook delivery */}
+      <div className="pt-2 border-t border-white/10">
+        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3">
+          {t("grafanaWebhookSection")}
+        </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+          {WEBHOOK_STATS.map(({ id, labelKey }) => {
+            const v = webhookStats[id] ?? 0;
+            return (
+              <MiniStat
+                key={id}
+                title={t(labelKey)}
+                value={fmtStat(id, v)}
+                spark={sparks[id] ?? []}
+                color={STAT_COLORS[id] ?? "#5794f2"}
+                alert={(id === "wh_fail" || id === "wh_drops") && v > 0}
+              />
+            );
+          })}
+        </div>
+      </div>
+
       {/* Telegram operator — Ack row */}
       <div className="pt-2 border-t border-white/10">
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3">
           {t("grafanaTelegramSection")}
         </h3>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2">
           {TELEGRAM_STATS.map(({ id, labelKey }) => {
             const v = telegramStats[id] ?? 0;
             return (
@@ -557,6 +629,19 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
             );
           })}
         </div>
+        <p className="text-[10px] text-white/30 mt-2 flex flex-wrap gap-x-2 gap-y-1">
+          <a href="#webhook-ops" className="text-violet-400/70 hover:text-violet-300 hover:underline">
+            {t("grafanaTelegramLinkOps")}
+          </a>
+          <span>·</span>
+          <a href="/bans" className="text-red-400/70 hover:text-red-300 hover:underline">
+            {t("navBans")}
+          </a>
+          <span>·</span>
+          <a href="#soc-timeline" className="text-cyan-400/70 hover:text-cyan-300 hover:underline">
+            {t("attackMapSocLink")}
+          </a>
+        </p>
       </div>
 
       {/* SOC row — threat / FP / ban pipeline / JA3 */}
@@ -564,8 +649,23 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
         <h3 className="text-xs font-semibold uppercase tracking-wider text-white/45 mb-3">
           {t("grafanaSocSection")}
         </h3>
+        <div className="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2 mb-2">
+          {SOC_THREAT_STATS.map(({ id, labelKey }) => {
+            const v = socStats[id] ?? 0;
+            return (
+              <MiniStat
+                key={id}
+                title={t(labelKey)}
+                value={fmtStat(id, v)}
+                spark={sparks[id] ?? []}
+                color={STAT_COLORS[id] ?? "#0891b2"}
+                alert={id === "threat_failed" && v > 0}
+              />
+            );
+          })}
+        </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2 mb-2">
-          {SOC_STATS.map(({ id, labelKey }) => {
+          {SOC_BAN_STATS.map(({ id, labelKey }) => {
             const v = socStats[id] ?? 0;
             return (
               <MiniStat
@@ -575,6 +675,21 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
                 spark={sparks[id] ?? []}
                 color={STAT_COLORS[id] ?? "#0891b2"}
                 alert={id === "bp_failed" && v > 0}
+              />
+            );
+          })}
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-2">
+          {API_STATS.map(({ id, labelKey }) => {
+            const v = apiStats[id] ?? 0;
+            return (
+              <MiniStat
+                key={id}
+                title={t(labelKey)}
+                value={fmtStat(id, v)}
+                spark={sparks[id] ?? []}
+                color={STAT_COLORS[id] ?? "#38bdf8"}
+                alert={id === "api_auth_fail" && v >= 10}
               />
             );
           })}

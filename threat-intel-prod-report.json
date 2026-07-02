@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-09T21:33:55.305103+00:00",
+  "date": "2026-06-29T17:33:57.193575+00:00",
   "mode": "threat_intel_prod",
   "checks": {
     "intel_ban_db_ttl_days_7": true,
@@ -7,9 +7,9 @@
     "timer_enabled": true,
     "timer_active": true,
     "ipset_hash_net": true,
-    "ipset_entries": 11,
+    "ipset_entries": 24708,
     "sync_pass": true,
-    "db_summary_rows": 285,
+    "db_summary_rows": 1097,
     "threat_intel_prod_enabled": true
   },
   "threat_feed_enabled": true,

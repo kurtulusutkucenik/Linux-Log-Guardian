@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-15T19:27:26.159817+00:00",
+  "date": "2026-06-26T11:04:11.685805+00:00",
   "host": "127.0.0.1",
   "port": 80,
   "nginx_up": false,
@@ -68,15 +68,15 @@
   "ban_proof": {
     "ip": "203.0.113.77",
     "alerts": 1,
-    "bans_active_before": 26,
-    "bans_active_after": 26,
+    "bans_active_before": 23,
+    "bans_active_after": 23,
     "ban_pipeline": {
       "ipc": 0,
       "xdp": 0,
       "ipset": 0,
       "failed": 0
     },
-    "ipset_hit": true,
+    "ipset_hit": false,
     "waf_pass": true,
     "kernel_pass": true,
     "pass": true,
@@ -92,8 +92,8 @@
     "ban_evidence_live": false,
     "ban_evidence_replay_waf": true,
     "ban_evidence_replay_kernel": true,
-    "bans_active_before": 26,
-    "bans_active_after": 26,
+    "bans_active_before": 23,
+    "bans_active_after": 23,
     "metrics_alerts": 0.0,
     "ipc": "ok",
     "ban_pipeline": {

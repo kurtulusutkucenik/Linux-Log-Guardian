@@ -29,9 +29,20 @@ for f in \
   guardian-status.json \
   crs-parity-report.json \
   compliance-report.json \
-  soak-report.json; do
+  soak-report.json \
+  sprint-prod-proof.json \
+  siem-export-report.json \
+  taxii-feed-report.json \
+  parser-fuzz-report.json \
+  ban-policy-audit-report.json \
+  lineage-incident-report.json \
+  vm-sprint-proof.json \
+  geoip-mmdb-report.json \
+  webhook-route-proof-report.json \
+  webhook-telegram-live-report.json; do
   copy_first "$f" \
     "$ROOT/$f" \
+    "$ROOT/.cache/$f" \
     "$ROOT/data-room/$f" \
     "$ROOT/release-pack/$f"
 done
@@ -46,6 +57,13 @@ WEB_EVIDENCE_ALLOW=(
   bench-ban-latency.json
   soak-report.json
   SOAK_SUMMARY.md
+  sprint-prod-proof.json
+  siem-export-report.json
+  taxii-feed-report.json
+  vm-sprint-proof.json
+  geoip-mmdb-report.json
+  webhook-route-proof-report.json
+  webhook-telegram-live-report.json
 )
 if [[ -d "$ROOT/assets/website" ]]; then
   mkdir -p "$WEB_EVIDENCE"

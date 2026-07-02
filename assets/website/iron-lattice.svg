@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="96" height="96" viewBox="0 0 96 96">
+  <defs>
+    <linearGradient id="lg-gold-h" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8d9a8"/>
+      <stop offset="40%" stop-color="#b8942e"/>
+      <stop offset="100%" stop-color="#6b5018"/>
+    </linearGradient>
+    <linearGradient id="lg-gold-v" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#e8d9a8"/>
+      <stop offset="40%" stop-color="#b8942e"/>
+      <stop offset="100%" stop-color="#6b5018"/>
+    </linearGradient>
+    <linearGradient id="lg-reactor-red" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#ff5050" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#a01010"/>
+      <stop offset="100%" stop-color="#ff5050" stop-opacity="0"/>
+    </linearGradient>
+    <pattern id="lg-iron-lattice" width="96" height="96" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="96" height="96" fill="#030304"/>
+      <rect x="0" y="0" width="96" height="9" fill="url(#lg-gold-h)"/>
+      <rect x="0" y="28.33" width="96" height="9" fill="url(#lg-gold-h)"/>
+      <rect x="0" y="56.66" width="96" height="9" fill="url(#lg-gold-h)"/>
+      <rect x="0" y="86" width="96" height="9" fill="url(#lg-gold-h)"/>
+      <rect x="0" y="0" width="9" height="96" fill="url(#lg-gold-v)"/>
+      <rect x="28.33" y="0" width="9" height="96" fill="url(#lg-gold-v)"/>
+      <rect x="56.66" y="0" width="9" height="96" fill="url(#lg-gold-v)"/>
+      <rect x="86" y="0" width="9" height="96" fill="url(#lg-gold-v)"/>
+      <rect x="0" y="4" width="96" height="0.6" fill="url(#lg-reactor-red)" opacity="0.42"/>
+      <rect x="0" y="32.33" width="96" height="0.6" fill="url(#lg-reactor-red)" opacity="0.42"/>
+      <rect x="0" y="60.66" width="96" height="0.6" fill="url(#lg-reactor-red)" opacity="0.42"/>
+      <rect x="0" y="89" width="96" height="0.6" fill="url(#lg-reactor-red)" opacity="0.42"/>
+      <rect x="4" y="0" width="0.6" height="96" fill="url(#lg-reactor-red)" opacity="0.32"/>
+      <rect x="32.33" y="0" width="0.6" height="96" fill="url(#lg-reactor-red)" opacity="0.32"/>
+      <rect x="60.66" y="0" width="0.6" height="96" fill="url(#lg-reactor-red)" opacity="0.32"/>
+      <rect x="89" y="0" width="0.6" height="96" fill="url(#lg-reactor-red)" opacity="0.32"/>
+    </pattern>
+  </defs>
+  <rect width="96" height="96" fill="url(#lg-iron-lattice)"/>
+</svg>

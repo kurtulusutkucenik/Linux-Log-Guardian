@@ -1,0 +1,10 @@
+{
+  "date": "2026-06-29T14:45:15.385251+00:00",
+  "pass": true,
+  "mode": "dry-run-server",
+  "cluster": "lg",
+  "chart": "helm/log-guardian",
+  "namespace": "log-guardian",
+  "reason": null,
+  "script": "scripts/k8s_kind_e2e.sh"
+}

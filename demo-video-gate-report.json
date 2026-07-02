@@ -1,0 +1,19 @@
+{
+  "date": "2026-06-30T17:49:03.917775+00:00",
+  "pass": true,
+  "demo_video_script_ok": true,
+  "pdf_ok": true,
+  "dashboard_ok": true,
+  "presentation_ship_ok": true,
+  "siem_export_ok": true,
+  "siem_skipped": false,
+  "webhook_ok": null,
+  "webhook_skipped": true,
+  "telegram_soc_ok": true,
+  "proof_tests": 72,
+  "proof_pass": 72,
+  "site_url": "https://ceniklinuxlogguardian.org/tests",
+  "dash_url": "https://localhost:8443/tests",
+  "video_script": "scripts/demo_video.sh",
+  "script": "scripts/demo_video_gate.sh"
+}

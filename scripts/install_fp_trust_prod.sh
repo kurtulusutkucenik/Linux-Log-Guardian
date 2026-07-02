@@ -23,9 +23,17 @@ resolve_store() {
 
 SRC="${1:-}"
 if [[ -z "$SRC" ]]; then
-  for c in "$ROOT/data/fp-trust-warmup.lst" "$ROOT/data/fp-trust.lst"; do
-    [[ -f "$c" ]] && SRC="$c" && break
+  best=""
+  best_n=0
+  for c in "$ROOT/data/fp-trust.lst" "$ROOT/data/fp-trust-warmup.lst"; do
+    [[ -f "$c" ]] || continue
+    n=$(wc -l <"$c" | tr -d ' ')
+    if [[ "$n" -gt "$best_n" ]]; then
+      best="$c"
+      best_n="$n"
+    fi
   done
+  SRC="$best"
 fi
 [[ -n "$SRC" && -f "$SRC" ]] || {
   echo "[install_fp_trust] FAIL: kaynak yok" >&2

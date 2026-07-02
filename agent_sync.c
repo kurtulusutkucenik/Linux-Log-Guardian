@@ -416,3 +416,7 @@ void agent_sync_stop(void) {
         g_sync_thread_started = 0;
     }
 }
+
+void agent_sync_request_stop(void) {
+    g_sync_running = 0;
+}

@@ -27,6 +27,9 @@ fi
 
 export LG_VERBOSE_BUILD="${LG_VERBOSE_BUILD:-0}"
 bash "$ROOT/scripts/upgrade_log_guardian_binary.sh"
+if [[ -x "$ROOT/scripts/vm_install_runtime_deps.sh" ]]; then
+  bash "$ROOT/scripts/vm_install_runtime_deps.sh"
+fi
 echo ""
 echo "[OK] vm_build_binary — binary kuruldu"
 echo "  bash scripts/vm_demo_gate.sh --verify-only"

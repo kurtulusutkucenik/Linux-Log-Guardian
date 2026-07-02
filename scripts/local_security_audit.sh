@@ -86,7 +86,11 @@ if [[ -f "$CONF" ]] || sudo test -f "$CONF" 2>/dev/null; then
 
   kdf=$(lg_rules_kv "ACCESS_PASSWORD_KDF")
   if [[ "$kdf" == "pbkdf2\$100000\$6560e0aa800d47957280cab9a1038847\$"* ]]; then
-    warn "varsayilan demo parolasi (/etc) — laptop OK, internete acik sunucuda degistirin"
+    if bash "$ROOT/scripts/detect_internet_facing.sh" >/dev/null 2>&1; then
+      warn "varsayilan demo parolasi (/etc) — internet-facing: sudo env LG_NEW_PASSWORD='...' bash scripts/laptop_harden.sh"
+    else
+      ok "ACCESS_PASSWORD_KDF demo (community laptop — bilincli, ucretsiz tier)"
+    fi
   else
     ok "ACCESS_PASSWORD_KDF ozel"
   fi

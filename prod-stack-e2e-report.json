@@ -1,0 +1,13 @@
+{
+  "date": "2026-06-29T07:50:27.189467+00:00",
+  "pass": true,
+  "wasm_mode": "native",
+  "wasm_plugins_native": 2,
+  "lineage_risk": 91.2,
+  "lineage_resolver": "daemon_file",
+  "l7_probe_active": true,
+  "ipc": "ok",
+  "xdp_mode": "ipset-fallback",
+  "lineage_probe": true,
+  "script": "scripts/prod_stack_e2e.sh"
+}

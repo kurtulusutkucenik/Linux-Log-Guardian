@@ -2,10 +2,10 @@
 FROM golang:1.21-alpine AS builder
 
 WORKDIR /app
-COPY go.mod ./
-# RUN go mod download # Omitting since we use modules locally, but good practice
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY main.go ./
+COPY main.go admission.go ./
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o k8s-operator .
 
 # Final stage

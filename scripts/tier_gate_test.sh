@@ -25,17 +25,23 @@ def resolve_tier():
 def tier_at_least(required):
     return TIER_ORDER[resolve_tier()] >= TIER_ORDER[required]
 
-PRO_PREFIXES = (
-    "/fleet", "/reports", "/api/fleet", "/api/reports", "/api/tenants/isolation"
-)
-
 def is_pro_route(path):
-    return any(path == p or path.startswith(p + "/") for p in PRO_PREFIXES)
+    if path == "/fleet" or path.startswith("/fleet/"):
+        return True
+    if path.startswith("/api/fleet"):
+        return True
+    if path.startswith("/api/tenants/isolation"):
+        return True
+    if path == "/api/reports/export" or path.startswith("/api/reports/export/"):
+        return True
+    return False
 
 os.environ["LOG_GUARDIAN_TIER"] = "community"
 assert not tier_at_least("pro")
 assert is_pro_route("/fleet")
 assert is_pro_route("/api/reports/export")
+assert not is_pro_route("/reports")
+assert not is_pro_route("/api/reports")
 
 os.environ["LOG_GUARDIAN_TIER"] = "pro"
 assert tier_at_least("pro")

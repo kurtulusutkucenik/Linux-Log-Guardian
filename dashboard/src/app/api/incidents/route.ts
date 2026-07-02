@@ -56,7 +56,10 @@ export async function GET(request: Request) {
   }
 
   const snap = await readSnapshot();
-  if (snap) {
+  const allowSnapshot =
+    process.env.INCIDENTS_ALLOW_SNAPSHOT === "1" ||
+    process.env.NODE_ENV !== "production";
+  if (snap && allowSnapshot) {
     const risk = 72;
     return NextResponse.json({
       incidents: [

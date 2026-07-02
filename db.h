@@ -27,6 +27,7 @@ void db_log_ban_event_ex(const char *ip, const char *action,
 
 #define DB_STATUS_MAX_ALERTS 10
 #define DB_STATUS_MAX_BANS   5
+#define DB_STATUS_MAX_ACKS   8
 
 typedef struct {
     time_t ts;
@@ -44,12 +45,21 @@ typedef struct {
 } DbRecentBan;
 
 typedef struct {
+    time_t ts;
+    char   ack_key[64];
+    char   operator_name[64];
+    char   operator_id[64];
+} DbRecentAck;
+
+typedef struct {
     long alerts_total;
     long bans_active;
     int  recent_count;
     DbRecentAlert recent[DB_STATUS_MAX_ALERTS];
     int  recent_ban_count;
     DbRecentBan recent_bans[DB_STATUS_MAX_BANS];
+    int  recent_ack_count;
+    DbRecentAck recent_acks[DB_STATUS_MAX_ACKS];
 } DbStatusSnapshot;
 
 /* Read-only snapshot (analyzer calismasa da --status icin) */

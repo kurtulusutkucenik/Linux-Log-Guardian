@@ -1,0 +1,14 @@
+{
+  "date": "2026-06-30T18:42:43.031008+00:00",
+  "pass": true,
+  "mode": "dry-run-server",
+  "chart": "helm/log-guardian",
+  "namespace": "log-guardian",
+  "tenant": "demo",
+  "resources": [
+    "DaemonSet",
+    "Deployment",
+    "ConfigMap"
+  ],
+  "script": "scripts/helm_install_smoke.sh"
+}

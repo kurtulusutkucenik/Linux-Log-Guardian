@@ -2,7 +2,7 @@
 
 **Linux Log Guardian** ModSecurity/CrowdSec ile aynı kategoride değil; **log → WAF → kernel ban** hattı. Bu belge kanıt paketinin ne iddia ettiğini ve etmediğini ayırır.
 
-**Son güncelleme:** 2026-06-19 · Kanıt: `bash scripts/sprint_a.sh` · `competitive-proof.json` · VPS 72h soak (VM)
+**Son güncelleme:** 2026-06-29 · Kanıt: `bash scripts/tests_reports_refresh.sh` · laptop `/tests` **60 kart**
 
 ---
 
@@ -12,7 +12,8 @@
 |---------------|-----|
 | Inline ModSec (~12K EPS replay) | Log-tailing mimari; bench ~6.5K EPS (1500 satır) |
 | Her saldırıda anında kernel drop | Önce log + WAF; ban IPC/ipset |
-| CrowdSec bouncer uyumu | Yok (P2) |
+| CrowdSec bouncer uyumu | ✅ laptop LAPI `:8081` + ban API (`crowdsec_bouncer_e2e.sh`, `live_lapi_ok`) |
+| STIX/TAXII IOC pull | ✅ community fixture + confidence gate (`taxii_feed_e2e.sh`); canlı URL opsiyonel |
 | 72h VPS soak demo | ✅ VM kanıtı (`72.0h`, `failures=0/864`) — laptop `docs/evidence/` henüz 1h ise VM raporunu kopyala |
 
 ---
@@ -71,7 +72,7 @@
 | # | Madde | Durum |
 |---|-------|-------|
 | 5 | JA3/UA cluster prod | ✅ `ja3_cluster_ban_live.sh` — `pipe_delta=7` `ja3_bans_delta=3` (RFC5737) |
-| 6 | Inline + log hibrit | 🟡 API kanıtı; prod default değil |
+| 6 | Inline + log hibrit | ✅ | `nginx-hybrid-report.json` + `auth_request` snippet; prod default hâlâ log-tailing |
 | 7 | Threat intel hızı | ✅ | Firehol+API ipset; `threat_feed_live_proof` pass |
 | 8 | FP_LEARN ısınması | ✅ `fp_learn_warmup.sh` overlay (WAF kapalı replay) |
 
@@ -81,10 +82,10 @@
 
 | # | Madde | Durum |
 |---|-------|-------|
-| 9 | VPS eth0 + kernel-XDP | ⏸️ ertelendi (sunucu yok) |
-| 10 | L7 eBPF probe prod | ❌ |
-| 11 | CrowdSec bouncer | ❌ |
-| 12 | Honeypot feed | ❌ |
+| 9 | VPS eth0 + kernel-XDP | ⏸️ ertelendi (sunucu yok) · laptop `vps-xdp-kernel` ⚠ |
+| 10 | L7 eBPF probe prod | ✅ laptop | `l7_probe_prod_e2e.sh` — IPC ok, ipset-fallback |
+| 11 | CrowdSec bouncer | ✅ laptop | LAPI `:8081` + ban API; `live_lapi_ok` |
+| 12 | Honeypot / deception feed | ✅ | `honeypot_feed_e2e.sh` — prometheus counter |
 
 ---
 
@@ -96,21 +97,34 @@
 | T1 | 10K corpus | ✅ sentetik genişletme |
 | T1 | VPS 72h soak | ✅ VM (`72.0h`, `0/864`) — `docs/evidence/` sync için scp |
 | T1 | README EDGE_PROTECTION | ✅ |
-| T2 | Tek zincir dashboard SOC | 🟡 kısmi |
-| T2 | JA3 + ASN cluster | 🟡 JA3 var |
-| T2 | Incident timeline UI | 🟡 demo/sim |
+| T2 | Tek zincir dashboard SOC | ✅ | SOC timeline + attack map + lineage live-first |
+| T2 | JA3 + ASN cluster | ✅ JA3 live | `ja3_cluster_ban_live.sh` |
+| T2 | Incident timeline UI | ✅ | live badge; snapshot prod kapalı |
 | T2 | TR operatör runbook | ✅ `HOSTING_RUNBOOK_TR.md` |
 | T3 | Inline consult sub-ms prod | ✅ API + nginx auth_request (`nginx-hybrid-report.json`) |
-| T3 | OpenAPI strict prod | 🟡 doküman |
-| T3 | Adaptive FP dashboard | 🟡 EMA kodda |
+| T3 | OpenAPI strict prod | ✅ | `ban_policy_audit_e2e.sh` + `OPENAPI_STRICT_PROD.md` |
+| T3 | Adaptive FP dashboard | ✅ | `FpMetricsPanel` + `fp_learn_warmup.sh` |
 
 ---
 
-## Sonraki geliştirme önceliği
+## Sonraki geliştirme önceliği (2026-06-29)
 
-1. **VPS soak / P2** — 72h prod edge + satın alma (laptop sprint + EPS/corpus tamam)
+**72h soak laptop ✅** · **Canlı site 75 test ✅** · **Dashboard 75/75 ✅** · **Filo host+VM ONLINE ✅** · **k8s kind live-ready ✅** · **local_proof PASS ✅** · **Sprint O kapalı ✅**
+
+**Git / GitHub / VPS** bilinçli ertelendi.
+
+| # | Madde | Neden | Durum |
+|---|--------|--------|--------|
+| 1 | Fleet stale prune | OFFLINE gürültü | ✅ |
+| 2 | VM keepalive + demo gate | reboot-safe filo | ✅ |
+| 3 | Kanıt + excellence gate | 57 test, 0 FAIL | ✅ |
+| 4 | VPS kernel-XDP | Tek ⚠ kart (sunucu gelince) | ⏸️ |
+| 5 | GitHub push / release | kullanıcı onayı | ⏸️ |
+
+**Tamamlanan (2026-06-29):** prod **57 test** · SRI live · Sprint O/P/S/W/X · VM demo gate FAIL=0 · `laptop_excellence_gate` 0 FAIL
 
 **P1-6 tamam (2026-06-09):** inline+log hibrit — `nginx-hybrid-report.json`  
-**P1-7 tamam (2026-06-09):** `enable_threat_intel_prod.sh` → timer + TTL + fixture/live sync; kanıt: `threat-intel-prod-report.json`
+**P1-7 tamam (2026-06-09):** `enable_threat_intel_prod.sh` → timer + TTL + fixture/live sync; kanıt: `threat-intel-prod-report.json`  
+**P2 laptop tamam (2026-06-28):** L7 + CrowdSec + honeypot + attack map `/tests` yeşil
 
 İlgili: [DATA_ROOM.md](DATA_ROOM.md) · [SCOPE_COVERAGE.md](SCOPE_COVERAGE.md) · [EDGE_PROTECTION.md](EDGE_PROTECTION.md)

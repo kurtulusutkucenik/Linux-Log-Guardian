@@ -128,9 +128,22 @@ SQLi modu nginx :80'e vurur; birkac saniye icinde `ban_pipeline` veya ipset'te b
 ## Kontrol listesi
 
 - [ ] `sudo bash scripts/prod_edge_setup.sh` → `[OK] prod_edge_setup`
+- [x] `bash scripts/edge_protection_gate.sh` → laptop/prod kapı raporu (`edge-protection-gate-report.json`)
+- [x] `bash scripts/laptop_core_gate.sh` → Core operatör (edge + SOC + ban, VPS/GitHub yok)
 - [ ] CDN proxied + origin real_ip (Cloudflare ise)
 - [ ] nginx snippet aktif, `nginx -t` OK
 - [ ] `prod_nic_xdp_check.sh` — XDP veya ipset-fallback bilincli
 - [ ] threat_intel ozet DB (517K satir yok) — `ban-db-prune` + ipset dynamic rezerv 12K
 - [ ] WHITELIST ofis/monitoring IP'leri
 - [ ] `nginx_attack_test.sh` — REFUSED veya ban > 0
+
+### Laptop / lab (XDP kapali — bilincli)
+
+Wi‑Fi / VirtualBox ortaminda XDP OFF + **ipset ban** normal. Asagidaki maddeler laptop demo icin yeterli:
+
+- [x] `sudo bash scripts/ensure_daemon_env.sh` — `LG_DISABLE_URING=1` (IPC kararliligi)
+- [x] `sudo bash scripts/repair_no_xdp_stack.sh` — daemon unit + metrics
+- [x] Cloudflare Pages: `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` → `website_live_gate` **68 kart**
+- [x] Filo NAT: VM `vm_fleet_agent_setup.sh` + host `host_fleet_agent_setup.sh` · doğrulama: `vm_fleet_gate.sh`
+- [x] `bash scripts/nginx_attack_test.sh` — SQLi alarm ingest OK (`127.0.0.1` whitelist → ban atlanir, beklenen)
+- [ ] VPS gelince: `prod_nic_xdp_check.sh` → kernel-XDP maddesi

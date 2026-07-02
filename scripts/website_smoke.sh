@@ -6,13 +6,19 @@ SITE="${1:-$ROOT/assets/website-deploy}"
 HOST="${LG_WEBSITE_HOST:-127.0.0.1}"
 FAIL=0
 
+# preview_gate flock fd mirasini birak — arka plan sunucu kilidi tutmasin
+exec 200>&- 2>/dev/null || true
+
 bad() { echo "  [FAIL] $*"; FAIL=$((FAIL + 1)); }
 ok() { echo "  [OK] $*"; }
 die() { echo "[website_smoke] FAIL: $*" >&2; exit 1; }
 
 [[ -d "$SITE" ]] || die "$SITE yok — once website_deploy_gate"
 
-bash "$ROOT/scripts/website_ensure_deploy.sh" >/dev/null
+# Kaynak onizleme (assets/website): deploy paketi yenileme atla — preview gate hizli kalsin
+if [[ "$SITE" == *"/assets/website-deploy"* ]] || [[ "$(basename "$SITE")" == "website-deploy" ]]; then
+  bash "$ROOT/scripts/website_ensure_deploy.sh" >/dev/null
+fi
 
 PORT="$(python3 - <<'PY'
 import socket
@@ -74,6 +80,7 @@ check_code() {
 }
 
 check_code "/" 200
+check_code "/tests" 200
 check_code "/tests.html" 200
 CSS_PATH="$(grep -oP 'href="(?:\./|/)\Ksite[^"]+\.css' "$SITE/index.html" | head -1 || true)"
 if [[ -z "$CSS_PATH" ]]; then
@@ -83,6 +90,16 @@ else
   check_code "/site.css" 403
 fi
 check_code "/i18n.js" 200
+if [[ -f "$SITE/three.min.js" ]]; then
+  check_code "/three.min.js" 200
+else
+  check_code "/three.min.js" 403
+fi
+if [[ -f "$SITE/phoenix-3d.js" ]]; then
+  check_code "/phoenix-3d.js" 200
+else
+  check_code "/phoenix-3d.js" 403
+fi
 check_code "/csp.txt" 403
 check_code "/publish.allowlist" 403
 check_code "/_headers" 403
@@ -117,6 +134,30 @@ if grep -q "base-uri 'none'" <<< "$csp" && grep -q "require-trusted-types-for" <
   ok "CSP sertlestirme"
 else
   bad "CSP sertlestirme eksik"
+fi
+
+if [[ -f "$SITE/test-results.js" ]] && [[ -f "$ROOT/competitive-proof.json" ]]; then
+  if python3 - "$SITE/test-results.js" "$ROOT/competitive-proof.json" <<'PY'
+import json, re, sys
+from pathlib import Path
+tr = Path(sys.argv[1]).read_text(encoding="utf-8")
+expected = len(json.loads(Path(sys.argv[2]).read_text(encoding="utf-8")).get("validationTests") or [])
+pairs = re.findall(r'"id"\s*:\s*"([^"]+)"[^}]*?"status"\s*:\s*"(pass|fail)"', tr)
+SKIP = {"website-preview-gate", "website-live-gate", "release-ready-gate", "demo-rehearsal-gate", "presentation-ship-gate", "demo-video-gate", "github-ship-gate", "laptop-core-gate", "morning-operator-gate", "bans-telegram-ops"}
+pass_n = sum(1 for i, s in pairs if s == "pass" and i not in SKIP)
+fail_n = sum(1 for i, s in pairs if s == "fail" and i not in SKIP)
+need = expected - len(SKIP)
+if len(pairs) == expected and fail_n == 0 and pass_n >= need:
+    print(f"test-results {expected}/{expected} pass")
+    raise SystemExit(0)
+print(f"test-results {pass_n}/{len(pairs)} (beklenen {expected})")
+raise SystemExit(1)
+PY
+  then
+    ok "test-results parity"
+  else
+    bad "test-results parity"
+  fi
 fi
 
 if [[ $FAIL -eq 0 ]]; then

@@ -11,6 +11,46 @@ REPORT="${SOAK_REPORT:-soak-report.json}"
 
 [[ -f "$JSONL" ]] || { echo "[soak_recompute] FAIL: $JSONL yok" >&2; exit 1; }
 
+# Kisa jsonl (ornegin 10 ornek) gecerli 72h soak-report.json'i ezmesin
+if [[ -f "$REPORT" && "${SOAK_RECOMPUTE_FORCE:-0}" != "1" ]]; then
+  dur=$(python3 - <<PY
+import json
+from pathlib import Path
+try:
+    j = json.loads(Path("$JSONL").read_text(encoding="utf-8").splitlines()[0])
+    k = json.loads(Path("$JSONL").read_text(encoding="utf-8").strip().splitlines()[-1])
+    from datetime import datetime
+    h = (datetime.fromisoformat(k["ts"]) - datetime.fromisoformat(j["ts"])).total_seconds() / 3600
+    print(f"{h:.2f}")
+except Exception:
+    print("0")
+PY
+)
+  prev_h=$(python3 - <<PY
+import json
+from pathlib import Path
+try:
+    o = json.loads(Path("$REPORT").read_text(encoding="utf-8"))
+    print(o.get("duration_hours", 0))
+except Exception:
+    print("0")
+PY
+)
+  if python3 - <<PY
+import sys
+dur, prev = float("$dur"), float("$prev_h")
+sys.exit(0 if dur >= 70.0 or prev < 70.0 else 1)
+PY
+  then
+    :
+  else
+    echo "[soak_recompute] WARN: jsonl ~${dur}h — mevcut rapor ${prev_h}h korunuyor" >&2
+    echo "  72h jsonl yoksa: cp docs/evidence/soak-report.json soak-report.json" >&2
+    echo "  zorla: SOAK_RECOMPUTE_FORCE=1 bash scripts/soak_recompute_report.sh" >&2
+    exit 0
+  fi
+fi
+
 python3 - "$JSONL" "$REPORT" <<'PY'
 import json, sys
 from collections import Counter

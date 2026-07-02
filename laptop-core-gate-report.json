@@ -1,0 +1,16 @@
+{
+  "date": "2026-06-30T18:45:30.035981+00:00",
+  "pass": true,
+  "health_ok": true,
+  "edge_protection_ok": null,
+  "edge_skipped": true,
+  "telegram_soc_ok": true,
+  "ban_ops_ok": true,
+  "dashboard_ok": true,
+  "xdp_mode": "ipset-fallback",
+  "ipc": "ok",
+  "proof_tests": 75,
+  "proof_pass": 75,
+  "dash_url": "https://localhost:8443/tests",
+  "script": "scripts/laptop_core_gate.sh"
+}

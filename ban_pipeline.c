@@ -90,6 +90,14 @@ int ban_pipeline_ban(const char *ip, const char *reason, BanPath *path_out)
         return 0;
     }
 
+    if (is_reserved_ban_target(ip)) {
+        log_rl(LOG_INFO, "[BAN-PIPE] skip reserved/local: %s", ip);
+        path = BAN_PATH_WHITELIST_SKIP;
+        atomic_fetch_add(&g_stat_skip_wl, 1);
+        if (path_out) *path_out = path;
+        return 0;
+    }
+
     if (try_ipc_ban(ip) == 0) {
         path = BAN_PATH_IPC_XDP;
         atomic_fetch_add(&g_stat_ipc, 1);

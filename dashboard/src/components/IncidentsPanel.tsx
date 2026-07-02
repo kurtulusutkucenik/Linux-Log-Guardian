@@ -107,7 +107,13 @@ export function IncidentsPanel() {
     void openDetailById(deep);
   }, [searchParams, openDetailById]);
 
-  if (incidents.length === 0 && source !== "demo" && !selected) return null;
+
+  const sourceLabel =
+    source === "guardian_api"
+      ? t("incidentsLive")
+      : source === "snapshot"
+        ? t("incidentsSnapshot")
+        : source || t("incidentsEmptySource");
 
   const detailSignals = decodeSignals(selected?.signals);
   const ebpfSignals = detailSignals.filter((s) => s.startsWith("ebpf_"));
@@ -116,9 +122,22 @@ export function IncidentsPanel() {
   return (
     <>
       <div className="glass-panel p-4 border-l-4 border-l-amber-500/40">
-        <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50 mb-3">
-          {t("incidentsTitle")}
-        </h3>
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
+          <h3 className="text-xs font-semibold uppercase tracking-wider text-white/50">
+            {t("incidentsTitle")}
+          </h3>
+          <span
+            className={`text-[10px] px-2 py-0.5 rounded border ${
+              source === "guardian_api"
+                ? "border-emerald-500/30 text-emerald-300 bg-emerald-500/10"
+                : source === "snapshot"
+                  ? "border-amber-500/30 text-amber-300 bg-amber-500/10"
+                  : "border-white/15 text-white/40"
+            }`}
+          >
+            {sourceLabel}
+          </span>
+        </div>
         {incidents.length === 0 ? (
           <p className="text-sm text-white/45">{t("incidentsEmpty")}</p>
         ) : (

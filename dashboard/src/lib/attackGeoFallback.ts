@@ -106,5 +106,33 @@ export async function fetchFallbackAttackIps(dataDir: string): Promise<FallbackI
   }
   if (cp?.banLatency?.test_ip) addIp(out, cp.banLatency.test_ip, "competitive-proof bench", "ban");
 
-  return [...out.values()].slice(0, 24);
+  const ja3Report = (await readJsonFile(dataDir, "ja3-cluster-report.json")) as {
+    sample_ips?: string[];
+    category?: string;
+  } | null;
+  if (ja3Report?.sample_ips?.length) {
+    for (const ip of ja3Report.sample_ips) {
+      addIp(out, ip, `JA3 ${ja3Report.category ?? "distributed"}`, "incident");
+    }
+  }
+
+  const proofReplay = (await readJsonFile(dataDir, "proof-replay-webhook-ban.json")) as {
+    ip_block?: string;
+  } | null;
+  if (proofReplay?.ip_block) {
+    for (const ip of expandIpBlock(proofReplay.ip_block)) {
+      addIp(out, ip, "proof-replay WAF ban", "ban");
+    }
+  }
+
+  const authLog = (await readJsonFile(dataDir, "auth-log-report.json")) as {
+    sample_ips?: string[];
+  } | null;
+  if (authLog?.sample_ips?.length) {
+    for (const ip of authLog.sample_ips) {
+      addIp(out, ip, "auth.log brute SSH", "incident");
+    }
+  }
+
+  return [...out.values()].slice(0, 48);
 }

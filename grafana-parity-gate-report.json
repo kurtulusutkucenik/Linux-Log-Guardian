@@ -1,0 +1,10 @@
+{
+  "date": "2026-06-29T18:27:32.900364+00:00",
+  "pass": true,
+  "panel_metrics": 36,
+  "dashboard_metrics": 36,
+  "missing_in_dashboard": [],
+  "missing_in_panels": [],
+  "core_missing": [],
+  "script": "scripts/grafana_parity_gate.sh"
+}

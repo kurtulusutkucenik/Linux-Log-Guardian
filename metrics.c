@@ -67,6 +67,14 @@ void metrics_refresh_fp_trust(long trusted, long partial, long enabled, long sup
     pthread_mutex_unlock(&g_snap_lock);
 }
 
+void metrics_refresh_telegram_ack(long ack_24h, long unacked_24h)
+{
+    pthread_mutex_lock(&g_snap_lock);
+    g_snap.telegram_ack_24h     = ack_24h;
+    g_snap.telegram_unacked_24h = unacked_24h;
+    pthread_mutex_unlock(&g_snap_lock);
+}
+
 static void write_all(int fd, const char *buf, size_t len) {
     while (len > 0) {
         ssize_t n = write(fd, buf, len);

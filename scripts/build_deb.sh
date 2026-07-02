@@ -16,6 +16,10 @@ fi
 VERSION="${VERSION#v}"
 # dpkg semver: harf/rakam/nokta/tire
 VERSION=$(echo "$VERSION" | sed 's/[^a-zA-Z0-9.+~:-]/-/g')
+# dpkg Version rakamla baslamali (git kisa hash: c9b9af1)
+if [[ ! "$VERSION" =~ ^[0-9] ]]; then
+  VERSION="0.${VERSION}"
+fi
 
 DIST="$ROOT/dist"
 STAGE="$DIST/deb-stage"
@@ -86,6 +90,11 @@ done
 install -d "$SHARE/deploy"
 [[ -d deploy/log-guardian.service.d ]] && \
   rsync -a deploy/log-guardian.service.d "$SHARE/deploy/" || true
+for df in deploy/log-guardian-crowdsec-bouncer.service \
+          deploy/log-guardian-crowdsec-bouncer.timer \
+          deploy/crowdsec.env.example; do
+  [[ -f "$df" ]] && install -m 644 "$df" "$SHARE/deploy/" || true
+done
 
 if [[ -f examples/openapi-mini.json ]]; then
   install -d "$STAGE/etc/log-guardian/examples"
@@ -142,3 +151,9 @@ echo "  sudo apt-get install -f   # bagimlilik eksikse"
 echo "  sudo bash /usr/local/share/log-guardian/scripts/install_first_run.sh"
 echo "  bash /usr/local/share/log-guardian/scripts/post_install_verify.sh"
 echo "  # --no-xdp / servis FAIL: sudo bash .../repair_no_xdp_stack.sh"
+echo ""
+echo "VM (VirtualBox):"
+echo "  HOST: bash scripts/build_deb.sh   # dist/*.deb olusturur"
+echo "  VM:   sudo bash scripts/vm_sync_from_host.sh"
+echo "  VM:   sudo bash scripts/vm_install_deb.sh"
+echo "  # veya paylasimdan: sudo bash /mnt/lg/scripts/vm_install_deb.sh"

@@ -1,0 +1,19 @@
+{
+  "date": "2026-06-30T18:30:04.504685+00:00",
+  "pass": true,
+  "ipc": "ok",
+  "xdp_mode": "ipset-fallback",
+  "xdp_active": false,
+  "default_nic": "wlo1",
+  "wifi_nic": true,
+  "nginx_log_format": true,
+  "nginx_snippets": true,
+  "nginx_live": true,
+  "whitelist_count": 2,
+  "ipset_entries": 0,
+  "bans_active": 23,
+  "threat_intel_legacy_rows": 0,
+  "threat_intel_summary_rows": 1384,
+  "ban_pipeline_ipset": 0,
+  "script": "scripts/edge_protection_gate.sh"
+}

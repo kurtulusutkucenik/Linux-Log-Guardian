@@ -39,11 +39,13 @@ export function tierStatus() {
   };
 }
 
-/** Pro+ routes blocked for Community tier (compliance /reports demo icin acik) */
+/** Pro+ routes blocked for Community tier (/reports sayfasi demo icin acik; export Pro) */
 export function isProRoute(pathname: string): boolean {
   if (pathname === "/fleet" || pathname.startsWith("/fleet/")) return true;
   if (pathname.startsWith("/api/fleet")) return true;
   if (pathname.startsWith("/api/tenants/isolation")) return true;
+  if (pathname === "/api/reports/export" || pathname.startsWith("/api/reports/export/"))
+    return true;
   return false;
 }
 

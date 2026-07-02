@@ -34,11 +34,27 @@ export type LiveMetricsSnapshot = {
   threat_total_iocs: number;
   fp_trusted_ips: number;
   ban_pipeline_ipset: number;
+  ban_pipeline_ipc: number;
+  ban_pipeline_xdp: number;
   ban_pipeline_failed: number;
+  threat_last_sync_ts: number;
+  threat_last_applied: number;
+  threat_last_failed: number;
+  fp_learn_enabled: number;
+  fp_suppressed_total: number;
+  api_requests_total: number;
+  api_auth_fail_total: number;
+  api_rate_limited_total: number;
+  webhook_sent_total: number;
+  webhook_fail_total: number;
+  webhook_queue_drops_total: number;
   telegram_ack_24h: number;
   telegram_unacked_24h: number;
   webhook_quiet_hours: number;
   webhook_quiet_active: number;
+  webhook_telegram_route: number;
+  webhook_telegram_batch_sec: number;
+  webhook_queue_depth: number;
   http_4xx: number;
   http_5xx: number;
   reachable: boolean;
@@ -65,11 +81,27 @@ export function parseGuardianMetrics(body: string): LiveMetricsSnapshot {
     threat_total_iocs: num("loganalyzer_threat_total_iocs"),
     fp_trusted_ips: num("loganalyzer_fp_trusted_ips"),
     ban_pipeline_ipset: num("loganalyzer_ban_pipeline_ipset"),
+    ban_pipeline_ipc: num("loganalyzer_ban_pipeline_ipc"),
+    ban_pipeline_xdp: num("loganalyzer_ban_pipeline_xdp"),
     ban_pipeline_failed: num("loganalyzer_ban_pipeline_failed"),
+    threat_last_sync_ts: num("loganalyzer_threat_last_sync_ts"),
+    threat_last_applied: num("loganalyzer_threat_last_applied"),
+    threat_last_failed: num("loganalyzer_threat_last_failed"),
+    fp_learn_enabled: num("loganalyzer_fp_learn_enabled"),
+    fp_suppressed_total: num("loganalyzer_fp_suppressed_total"),
+    api_requests_total: num("loganalyzer_api_requests_total"),
+    api_auth_fail_total: num("loganalyzer_api_auth_fail_total"),
+    api_rate_limited_total: num("loganalyzer_api_rate_limited_total"),
+    webhook_sent_total: num("loganalyzer_webhook_sent_total"),
+    webhook_fail_total: num("loganalyzer_webhook_fail_total"),
+    webhook_queue_drops_total: num("loganalyzer_webhook_queue_drops_total"),
     telegram_ack_24h: num("loganalyzer_telegram_ack_24h"),
     telegram_unacked_24h: num("loganalyzer_telegram_unacked_24h"),
     webhook_quiet_hours: num("loganalyzer_webhook_quiet_hours"),
     webhook_quiet_active: num("loganalyzer_webhook_quiet_active"),
+    webhook_telegram_route: num("loganalyzer_webhook_telegram_route"),
+    webhook_telegram_batch_sec: num("loganalyzer_webhook_telegram_batch_sec"),
+    webhook_queue_depth: num("loganalyzer_webhook_queue_depth"),
     http_4xx:
       parsePrometheusGauge(body, "loganalyzer_http_status_total", "code", "4xx") ?? 0,
     http_5xx:

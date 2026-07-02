@@ -1023,7 +1023,7 @@ int webhook_destinations_configured(void) {
     return n;
 }
 
-void webhook_status_json(FILE *out) {
+void webhook_status_json(FILE *out, long ack_24h, long unacked_24h) {
     long qd = 0;
     webhook_metrics_snapshot(NULL, NULL, NULL, &qd);
     fprintf(out,
@@ -1037,7 +1037,8 @@ void webhook_status_json(FILE *out) {
             "\"telegram_mirror_warn\":%s,"
             "\"telegram_rich_card\":%s,\"telegram_disable_preview\":%s,"
             "\"dashboard_base\":%s,"
-            "\"quiet_hours\":%s,\"quiet_active\":%s,\"queue_depth\":%ld}",
+            "\"quiet_hours\":%s,\"quiet_active\":%s,\"queue_depth\":%ld,"
+            "\"ack_24h\":%ld,\"unacked_24h\":%ld}",
             g_webhook.enabled ? "true" : "false",
             webhook_is_dry_run() ? "true" : "false",
             (g_webhook.token[0] && telegram_has_any_chat()) ? "true" : "false",
@@ -1061,7 +1062,8 @@ void webhook_status_json(FILE *out) {
             g_webhook.dashboard_base_url[0] ? "true" : "false",
             g_webhook.quiet_hours_enabled ? "true" : "false",
             webhook_quiet_hours_active() ? "true" : "false",
-            qd);
+            qd,
+            ack_24h, unacked_24h);
 }
 
 static int cooldown_check_and_set(const char *ip, time_t now) {
@@ -1167,6 +1169,24 @@ void webhook_operator_mute_ip(const char *ip, int sec)
     memcpy(g_op_mute_table[slot].ip, ip, sizeof(g_op_mute_table[slot].ip) - 1);
     g_op_mute_table[slot].ip[sizeof(g_op_mute_table[slot].ip) - 1] = '\0';
     g_op_mute_table[slot].mute_until = until;
+    pthread_mutex_unlock(&g_cooldown_mutex);
+}
+
+void webhook_operator_unmute_ip(const char *ip)
+{
+    if (!ip || !ip[0])
+        return;
+    pthread_mutex_lock(&g_cooldown_mutex);
+    for (unsigned int i = 0; i < COOLDOWN_TABLE_SIZE; i++) {
+        unsigned int slot = cooldown_hash_slot(ip, i);
+        if (g_op_mute_table[slot].ip[0] == '\0')
+            break;
+        if (strcmp(g_op_mute_table[slot].ip, ip) == 0) {
+            g_op_mute_table[slot].ip[0] = '\0';
+            g_op_mute_table[slot].mute_until = 0;
+            break;
+        }
+    }
     pthread_mutex_unlock(&g_cooldown_mutex);
 }
 

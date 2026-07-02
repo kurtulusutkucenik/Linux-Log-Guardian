@@ -38,7 +38,9 @@ corpus_lines = (ROOT / "corpus/real_attack_corpus.access").read_text().splitline
 cat = "distributed"
 idxs = manifest["categories"].get(cat, {}).get("line_indices", [])
 subset = [corpus_lines[i] for i in idxs if i < len(corpus_lines)]
-unique_ips = len({ln.split()[0] for ln in subset if ln.strip()})
+ip_set = {ln.split()[0] for ln in subset if ln.strip()}
+unique_ips = len(ip_set)
+sample_ips = sorted(ip_set)[:24]
 
 lg = ROOT / "log-guardian"
 rules = ROOT / "rules.conf"
@@ -105,6 +107,7 @@ report = {
     "date": datetime.now(timezone.utc).isoformat(),
     "category": cat,
     "unique_ips": unique_ips,
+    "sample_ips": sample_ips,
     "lines_total": n,
     "alerts_total": alerts,
     "recall_pct": recall,

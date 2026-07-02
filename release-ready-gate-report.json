@@ -1,0 +1,18 @@
+{
+  "date": "2026-06-30T18:46:47.237367+00:00",
+  "pass": true,
+  "release_ready_ok": true,
+  "docs_consistency_ok": true,
+  "website_live_ok": null,
+  "website_live_skipped": true,
+  "vm_fleet_ok": null,
+  "vm_fleet_skipped": true,
+  "proof_tests": 75,
+  "proof_pass": 75,
+  "artifacts": {
+    "competitive_proof_pdf": true,
+    "data_room_zip": true,
+    "release_pack_zip": true
+  },
+  "script": "scripts/release_ready_gate.sh"
+}

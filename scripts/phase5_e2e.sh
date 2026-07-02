@@ -8,9 +8,11 @@ DASH_URL="${DASH_URL:-http://127.0.0.1:3000}"
 
 make -s log-guardian
 
-echo "[1] MESH_BACKEND=etcd (ZMQ kapali)"
-grep -q '^MESH_BACKEND=etcd' rules.conf
+echo "[1] Mesh config (none=laptop prod; etcd=aktif filo)"
+grep -qE '^MESH_BACKEND=(none|etcd|zmq)$' rules.conf
 grep -q '^MESH_PUB_ENABLED=0' rules.conf
+mesh=$(grep -E '^MESH_BACKEND=' rules.conf | head -1 | cut -d= -f2-)
+[[ "$mesh" == "none" ]] && echo "[INFO] MESH_BACKEND=none — mesh_etcd_e2e kod+helm kaniti ayri"
 
 echo "[2] Wasm plugin dizini + analiz"
 grep -q '^WASM_ENABLED=1' rules.conf

@@ -18,6 +18,8 @@ type BannedIpsContextValue = {
   totalCount: number;
   truncated: boolean;
   source: string;
+  dataMode: "live" | "preview";
+  preview: boolean;
   loading: boolean;
   refresh: () => Promise<void>;
 };
@@ -35,6 +37,8 @@ export function BannedIpsProvider({
   const [totalCount, setTotalCount] = useState(0);
   const [truncated, setTruncated] = useState(false);
   const [source, setSource] = useState("");
+  const [dataMode, setDataMode] = useState<"live" | "preview">("live");
+  const [preview, setPreview] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
@@ -46,9 +50,13 @@ export function BannedIpsProvider({
       setTotalCount(res.data.count ?? 0);
       setTruncated(Boolean(res.data.truncated));
       setSource(res.data.source || "");
+      setDataMode(res.data.data_mode === "preview" ? "preview" : "live");
+      setPreview(Boolean(res.data.preview));
     } catch {
       setTotalCount(0);
       setTruncated(false);
+      setDataMode("live");
+      setPreview(false);
     } finally {
       setLoading(false);
     }
@@ -57,8 +65,8 @@ export function BannedIpsProvider({
   useVisibleInterval(refresh, pollMs, pollMs > 0);
 
   const value = useMemo(
-    () => ({ totalCount, truncated, source, loading, refresh }),
-    [totalCount, truncated, source, loading, refresh],
+    () => ({ totalCount, truncated, source, dataMode, preview, loading, refresh }),
+    [totalCount, truncated, source, dataMode, preview, loading, refresh],
   );
 
   return (
@@ -76,10 +84,12 @@ export function useBannedIps(): BannedIpsContextValue {
 
 /** Ban onizleme listesi — yalnizca panel/sayfa mount olunca (max 15 IP). */
 export function useBanPreview(limit = 15) {
-  const { totalCount, truncated: globalTrunc, refresh: refreshCount } = useBannedIps();
+  const { totalCount, truncated: globalTrunc, refresh: refreshCount, preview: globalPreview } =
+    useBannedIps();
   const [bans, setBans] = useState<BanRow[]>([]);
   const [truncated, setTruncated] = useState(false);
   const [source, setSource] = useState("");
+  const [preview, setPreview] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -92,6 +102,7 @@ export function useBanPreview(limit = 15) {
       setBans(res.data.bans || []);
       setTruncated(Boolean(res.data.truncated));
       setSource(res.data.source || "");
+      setPreview(Boolean(res.data.preview));
       await refreshCount();
     } catch {
       setBans([]);
@@ -108,6 +119,7 @@ export function useBanPreview(limit = 15) {
     totalCount,
     truncated: truncated || globalTrunc,
     source,
+    preview: preview || globalPreview,
     loading,
     refreshing,
     refresh,

@@ -15,6 +15,8 @@ static int  g_db_ready = 0;
 static pthread_mutex_t g_db_mutex = PTHREAD_MUTEX_INITIALIZER;
 static sqlite3 *g_db = NULL;
 
+static void telegram_acks_migrate_conn(sqlite3 *db);
+
 /* Asenkron DB Loglama Ring Buffer (Lock-Free) */
 #define ASYNC_QUEUE_SIZE 4096
 
@@ -373,6 +375,34 @@ int db_status_snapshot(const char *path, DbStatusSnapshot *out)
             if (rsn) {
                 strncpy(b->reason, rsn, sizeof(b->reason) - 1);
                 b->reason[sizeof(b->reason) - 1] = '\0';
+            }
+        }
+        sqlite3_finalize(stmt);
+    }
+
+    telegram_acks_migrate_conn(db);
+    if (sqlite3_prepare_v2(db,
+            "SELECT ts, ack_key, COALESCE(operator_name,''), COALESCE(operator_id,'') "
+            "FROM telegram_acks ORDER BY id DESC LIMIT ?;", -1, &stmt, NULL) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, DB_STATUS_MAX_ACKS);
+        while (sqlite3_step(stmt) == SQLITE_ROW &&
+               out->recent_ack_count < DB_STATUS_MAX_ACKS) {
+            DbRecentAck *a = &out->recent_acks[out->recent_ack_count++];
+            a->ts = (time_t)sqlite3_column_int64(stmt, 0);
+            const char *key = (const char *)sqlite3_column_text(stmt, 1);
+            const char *name = (const char *)sqlite3_column_text(stmt, 2);
+            const char *op = (const char *)sqlite3_column_text(stmt, 3);
+            if (key) {
+                strncpy(a->ack_key, key, sizeof(a->ack_key) - 1);
+                a->ack_key[sizeof(a->ack_key) - 1] = '\0';
+            }
+            if (name) {
+                strncpy(a->operator_name, name, sizeof(a->operator_name) - 1);
+                a->operator_name[sizeof(a->operator_name) - 1] = '\0';
+            }
+            if (op) {
+                strncpy(a->operator_id, op, sizeof(a->operator_id) - 1);
+                a->operator_id[sizeof(a->operator_id) - 1] = '\0';
             }
         }
         sqlite3_finalize(stmt);

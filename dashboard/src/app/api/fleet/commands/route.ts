@@ -36,6 +36,7 @@ export async function GET(request: Request) {
       where: {
         tenantId: apiKey.tenantId,
         executed: false,
+        status: 'pending',
         OR: [
           { targetAgentId: agentId },
           { targetAgentId: null }
@@ -50,7 +51,7 @@ export async function GET(request: Request) {
           id: { in: commands.map((c) => c.id) },
           status: 'pending',
         },
-        data: { status: 'delivered', executed: false },
+        data: { status: 'delivered' },
       });
     }
 

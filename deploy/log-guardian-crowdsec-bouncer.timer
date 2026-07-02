@@ -1,0 +1,14 @@
+# CrowdSec bouncer — 5 dk periyot (LAPI karar cekme)
+# Enable: sudo systemctl enable --now log-guardian-crowdsec-bouncer.timer
+[Unit]
+Description=Log Guardian CrowdSec bouncer sync (timer)
+Documentation=file://docs/CROWDSEC_INTEGRATION.md
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=5min
+AccuracySec=30s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

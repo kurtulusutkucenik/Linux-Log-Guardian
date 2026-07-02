@@ -29,7 +29,7 @@ Dürüst liste: ne bitti, ne açık.
 | 1 | Kurulum sürtünmesi ≈ 0 | ✅ kod | `install_first_run.sh` + `post_install_verify.sh` |
 | 2 | İlk 5 dk “vay be” | ✅ | `demo_3min.sh` + dashboard `/tests` |
 | 3 | Yanlış beklenti yok | ✅ | README — DDoS / ModSec dürüstlüğü |
-| 4 | 72h stabilite kanıtı | 🔄 | 1h PASS ✅ · 72h bekliyor |
+| 4 | 72h stabilite kanıtı | ✅ | `soak-report.json` 72.0h, 864 örnek, 0 fail |
 | 5 | FP ısınma varsayılan | ✅ | `fp_learn_warmup.sh` + prod store |
 | 6 | nginx format tek komut | ✅ | `enforce_*` |
 | 7 | XDP farkı | 📄 VPS | [VPS_SETUP.md](VPS_SETUP.md) §2 |

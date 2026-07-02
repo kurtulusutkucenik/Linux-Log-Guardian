@@ -93,18 +93,42 @@ export const GRAFANA_TABLE_METRICS: { id: string; label: string; expr: string }[
 export const GRAFANA_TELEGRAM_STAT_PANELS: GrafanaStatPanel[] = [
   { id: "tg_ack", title: "Telegram Ack (24h)", expr: 'loganalyzer_telegram_ack_24h{tenant_id="$tenant"}' },
   { id: "tg_unacked", title: "Telegram Unacked (24h)", expr: 'loganalyzer_telegram_unacked_24h{tenant_id="$tenant"}' },
+  { id: "tg_route", title: "Telegram route", expr: 'loganalyzer_webhook_telegram_route{tenant_id="$tenant"}' },
+  { id: "tg_batch", title: "Telegram batch (s)", expr: 'loganalyzer_webhook_telegram_batch_sec{tenant_id="$tenant"}' },
+  { id: "tg_queue", title: "Webhook queue", expr: 'loganalyzer_webhook_queue_depth{tenant_id="$tenant"}' },
   { id: "quiet_hours", title: "Quiet hours", expr: 'loganalyzer_webhook_quiet_hours{tenant_id="$tenant"}' },
   { id: "quiet_active", title: "Quiet active now", expr: 'loganalyzer_webhook_quiet_active{tenant_id="$tenant"}' },
 ];
 
 /** Grafana row: Threat intel + FP + ban pipeline + JA3 cluster */
 export const GRAFANA_SOC_STAT_PANELS: GrafanaStatPanel[] = [
-  { id: "ja3_clusters", title: "JA3 cluster buckets", expr: 'loganalyzer_ja3_clusters_active{tenant_id="$tenant"}' },
-  { id: "ja3_bans", title: "JA3 cluster bans", expr: 'loganalyzer_ja3_cluster_bans_total{tenant_id="$tenant"}' },
+  { id: "threat_sync_ts", title: "Threat last sync", expr: 'loganalyzer_threat_last_sync_ts{tenant_id="$tenant"}' },
   { id: "threat_iocs", title: "Threat IOCs", expr: 'loganalyzer_threat_total_iocs{tenant_id="$tenant"}' },
+  { id: "threat_applied", title: "Threat applied (last sync)", expr: 'loganalyzer_threat_last_applied{tenant_id="$tenant"}' },
+  { id: "threat_failed", title: "Threat failed (last sync)", expr: 'loganalyzer_threat_last_failed{tenant_id="$tenant"}' },
   { id: "fp_trusted", title: "FP trusted IPs", expr: 'loganalyzer_fp_trusted_ips{tenant_id="$tenant"}' },
+  { id: "fp_learn", title: "FP learn", expr: 'loganalyzer_fp_learn_enabled{tenant_id="$tenant"}' },
+  { id: "fp_suppressed", title: "FP suppressed", expr: 'loganalyzer_fp_suppressed_total{tenant_id="$tenant"}' },
+  { id: "bp_ipc", title: "Ban path IPC", expr: 'loganalyzer_ban_pipeline_ipc{tenant_id="$tenant"}' },
+  { id: "bp_xdp", title: "Ban path XDP", expr: 'loganalyzer_ban_pipeline_xdp{tenant_id="$tenant"}' },
   { id: "bp_ipset", title: "Ban path ipset", expr: 'loganalyzer_ban_pipeline_ipset{tenant_id="$tenant"}' },
   { id: "bp_failed", title: "Ban pipeline fail", expr: 'loganalyzer_ban_pipeline_failed{tenant_id="$tenant"}' },
+  { id: "ja3_clusters", title: "JA3 cluster buckets", expr: 'loganalyzer_ja3_clusters_active{tenant_id="$tenant"}' },
+  { id: "ja3_bans", title: "JA3 cluster bans", expr: 'loganalyzer_ja3_cluster_bans_total{tenant_id="$tenant"}' },
+];
+
+/** Grafana row: REST API security */
+export const GRAFANA_API_STAT_PANELS: GrafanaStatPanel[] = [
+  { id: "api_requests", title: "API requests", expr: 'loganalyzer_api_requests_total{tenant_id="$tenant"}' },
+  { id: "api_auth_fail", title: "API auth fail (403)", expr: 'loganalyzer_api_auth_fail_total{tenant_id="$tenant"}' },
+  { id: "api_rate_limited", title: "API rate limited", expr: 'loganalyzer_api_rate_limited_total{tenant_id="$tenant"}' },
+];
+
+/** Grafana row: Webhook delivery (Telegram ack row is separate) */
+export const GRAFANA_WEBHOOK_STAT_PANELS: GrafanaStatPanel[] = [
+  { id: "wh_sent", title: "Webhook sent", expr: 'loganalyzer_webhook_sent_total{tenant_id="$tenant"}' },
+  { id: "wh_fail", title: "Webhook fail", expr: 'loganalyzer_webhook_fail_total{tenant_id="$tenant"}' },
+  { id: "wh_drops", title: "Webhook queue drops", expr: 'loganalyzer_webhook_queue_drops_total{tenant_id="$tenant"}' },
 ];
 
 export const GRAFANA_SOC_TS_PANELS: GrafanaTsPanel[] = [

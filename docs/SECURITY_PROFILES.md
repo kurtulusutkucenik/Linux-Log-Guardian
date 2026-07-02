@@ -2,7 +2,7 @@
 
 Linux Log Guardian iki kurulum profili ile gelir. **Demo parolalar bilinçlidir** — topluluk testi için; internete açık sunucuda kullanılmaz.
 
-Detay: [LAPTOP_OPS.md](LAPTOP_OPS.md) · [SECURITY.md](../SECURITY.md)
+Detay: [LAPTOP_OPS.md](LAPTOP_OPS.md) · [SECURITY.md](../SECURITY.md) · [SECURITY_EXCELLENCE.md](SECURITY_EXCELLENCE.md)
 
 ---
 
