@@ -15,6 +15,9 @@ bash "$ROOT/scripts/landing_sync_assets.sh"
 
 # 2) Next.js statik export
 cd "$LANDING"
+if [[ -f "$LANDING/.env.local" ]]; then
+  echo "  [OK] landing/.env.local yüklenecek (analytics / GSC)"
+fi
 if [[ -n "${CI:-}" || ! -d node_modules ]]; then
   npm ci
 fi

@@ -14,8 +14,21 @@ LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 **Canli yayin:** Cloudflare Pages bu repoda Git bagli degil — `git push` siteyi guncellemez.
 `bash scripts/website_publish.sh` (repo kokunden; `landing/` icinden degil).
 
-**Analytics (opsiyonel):** Cloudflare Web Analytics token'i `landing/.env` veya Pages env:
-`NEXT_PUBLIC_CF_BEACON=<token>` — token yoksa script eklenmez.
+**Analytics + Search Console (tek seferlik):**
+```bash
+# Otomatik (Cloudflare API token ile analytics + isteğe bağlı GSC DNS):
+LG_CF_API_TOKEN=<token> bash scripts/website_search_setup.sh
+
+# veya sadece GSC meta tag (API gerekmez):
+GSC_META_TOKEN=<google-content> bash scripts/website_search_setup.sh
+
+bash scripts/website_publish.sh
+```
+Şablon: `landing/env.example` → `landing/.env.local` (commit edilmez).
+
+GSC sitemap (doğrulama sonrası tarayıcıda): Search Console → Site haritaları → `https://ceniklinuxlogguardian.org/sitemap.xml`
+
+**Analytics (manuel):** Cloudflare Dashboard → Web Analytics → token → `NEXT_PUBLIC_CF_BEACON` in `landing/.env.local`
 
 Award / portfolio paketi (Awwwards, FWA, showcase):
 

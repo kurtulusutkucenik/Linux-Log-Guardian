@@ -69,11 +69,20 @@ export function buildPageMetadata(opts: {
   };
 }
 
-export const HOME_METADATA = buildPageMetadata({
-  title: "Linux Log Guardian | nginx log → WAF → kernel ban",
-  description: DEFAULT_DESCRIPTION,
-  path: "/",
-});
+export const HOME_METADATA: Metadata = {
+  ...buildPageMetadata({
+    title: "Linux Log Guardian | nginx log → WAF → kernel ban",
+    description: DEFAULT_DESCRIPTION,
+    path: "/",
+  }),
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
+};
 
 export const JSON_LD = {
   "@context": "https://schema.org",
