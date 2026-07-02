@@ -14,6 +14,9 @@ LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 **Canli yayin:** Cloudflare Pages bu repoda Git bagli degil — `git push` siteyi guncellemez.
 `bash scripts/website_publish.sh` (repo kokunden; `landing/` icinden degil).
 
+**Analytics (opsiyonel):** Cloudflare Web Analytics token'i `landing/.env` veya Pages env:
+`NEXT_PUBLIC_CF_BEACON=<token>` — token yoksa script eklenmez.
+
 Award / portfolio paketi (Awwwards, FWA, showcase):
 
 ```bash

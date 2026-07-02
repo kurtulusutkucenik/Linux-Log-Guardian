@@ -180,14 +180,14 @@ const EN: SectionCopy = {
   hero_chips: ["open source · MIT", "72h soak PASS"],
   hero_reach: "2.3k+ visits · 4k+ pages · 54 countries · proof PDF",
   hero_praise_lead:
-    "Turkey's measurable-proof, single-chain self-hosted security stack — rivals are piecemeal, we are all-in-one.",
+    "Turkey's measurable-proof, single-chain self-hosted security stack — rivals are piecemeal; we ship one integrated chain.",
   hero_praise_highlights: [
     "~17 ms median ban — measured 5 samples vs Fail2ban's hours-long iptables path",
     "100% real attack recall + 100% OWASP CRS parity — 121 rules, 1500-line corpus",
     "0.2% false positive — 1 alarm in 500 benign lines; rivals higher/medium",
     "72h VM soak — 864 samples, 0 errors; no automatic proof in rivals",
     "75 automated tests + 14-file evidence pack — PDF/JSON, reproducible",
-    "3 tool stacks in one product: Fail2ban + ModSecurity + CrowdSec — ~15 min setup",
+    "Fail2ban + ModSecurity + CrowdSec in one chain — ~15 min setup",
   ],
   hero_praise_bold: [
     { v: "~17ms", l: "kernel ban" },

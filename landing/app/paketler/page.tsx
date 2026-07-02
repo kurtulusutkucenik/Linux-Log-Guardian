@@ -4,12 +4,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/ui/Reveal";
 import { PACKAGES } from "@/lib/content";
+import { buildPageMetadata } from "@/lib/seo";
 
-export const metadata: Metadata = {
-  title: "3 Paket Birleşimi — Linux Log Guardian",
+export const metadata: Metadata = buildPageMetadata({
+  title: "3 Packages, One Chain — Linux Log Guardian",
   description:
-    "Log Guardian: Fail2ban ban motoru + ModSecurity WAF/CRS + SOC/kanıt katmanını tek self-hosted zincirde birleştirir. Core · Pro · Opsiyonel.",
-};
+    "Log Guardian merges Fail2ban ban engine, ModSecurity WAF/CRS and SOC/proof layers into one self-hosted chain. Core · Pro · Optional.",
+  path: "/paketler/",
+});
 
 const COLOR: Record<string, string> = {
   neon: "border-neon/40 text-neon",
@@ -164,7 +166,7 @@ export default function PaketlerPage() {
                 href="/testler"
                 className="rounded-md border border-neutral-700 px-8 py-3.5 text-sm font-medium text-neutral-300 hover:text-white"
               >
-                68 testi gör
+                75 testi gör
               </Link>
             </div>
           </div>
