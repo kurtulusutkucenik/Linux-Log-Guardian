@@ -1,12 +1,12 @@
 {
-  "date": "2026-06-30T18:47:22.849921+00:00",
+  "date": "2026-07-03T22:57:02.235508+00:00",
   "pass": true,
   "laptop_core_ok": true,
-  "laptop_core_refreshed": false,
+  "laptop_core_refreshed": true,
   "presentation_ship_ok": true,
   "dashboard_ok": true,
   "proof_tests": 75,
-  "proof_pass": 75,
+  "proof_pass": 74,
   "dash_url": "https://localhost:8443/tests",
   "script": "scripts/morning_operator_gate.sh"
 }
