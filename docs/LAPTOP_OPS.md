@@ -3,6 +3,21 @@
 VPS veya GitHub olmadan **Linux Log Guardian** kurulum, güvenlik ve test.  
 Core quickstart: [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md)
 
+## Scriptleri nereden çalıştır?
+
+Tüm `scripts/*.sh` komutları **repo kökünden** çalıştırılır (`Linux Log Guardian/`), `landing/` veya `dashboard/` içinden değil.
+
+```bash
+cd ~/Masaüstü/Linux\ Log\ Guardian    # veya: cd "$(git rev-parse --show-toplevel)"
+bash scripts/quick_proof_refresh.sh
+bash scripts/local_proof_refresh.sh
+bash scripts/dashboard_refresh.sh
+```
+
+`landing/` içindeysen: `bash ../scripts/quick_proof_refresh.sh` · `cd ..` sonra normal komut.
+
+`cd landing && npm run dev` yalnızca `:3001` önizleme içindir; kanıt/kapı scriptleri repo kökünden koşulur.
+
 ## Script matrisi (hangi iş ne yapar?)
 
 | Script | Ne zaman | Parolaya dokunur? |

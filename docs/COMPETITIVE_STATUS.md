@@ -2,7 +2,7 @@
 
 **Linux Log Guardian** ModSecurity/CrowdSec ile aynı kategoride değil; **log → WAF → kernel ban** hattı. Bu belge kanıt paketinin ne iddia ettiğini ve etmediğini ayırır.
 
-**Son güncelleme:** 2026-06-29 · Kanıt: `bash scripts/tests_reports_refresh.sh` · laptop `/tests` **60 kart**
+**Son güncelleme:** 2026-07-04 · Kanıt: `bash scripts/local_proof_refresh.sh` · laptop `/tests` **75 kart** · corpus **23 kategori**
 
 ---
 
@@ -25,6 +25,7 @@
 | Ban ~17 ms | ✅ | `bench-ban-latency.json` → 16.92 ms |
 | FP %0.5 hedef | ✅ (daha iyi) | Bu koşuda %0.2 (500 benign) |
 | CRS parite %100 | ✅ | 121 pattern, test corpus |
+| C-WAF modern RCE (CRS kapalı) | ✅ | `java_rce` · `modern_rce` · `enterprise_ognl` — 23 kategori corpus %100 |
 | ban_policy + incident | ✅ kod | Prod tune ayrı |
 | Adaptive threshold | ✅ kod | Isınma gerekir |
 | Telegram ops (#1–32) | ✅ laptop | `WEBHOOK_SETUP.md` — setWebhook tunnel, Grafana DM #30 |
