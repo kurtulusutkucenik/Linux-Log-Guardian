@@ -219,10 +219,10 @@ const CO_TR: PageCopy = {
     title: HONEST.title,
     items: HONEST.items,
     layersEyebrow: "//:Layers",
-    layersTitle: "Katmanlar",
+    layersTitle: "Sürümler",
     layers: LAYERS,
     layersNote:
-      "XDR, Wasm marketplace ve LLM Copilot uzun vadeli opsiyonel katmanlardır — Core tek başına üretimde kullanılabilir.",
+      "Pro ve Pro Plus koruma seviyesini değiştirmez; yalnızca görünürlük ve entegrasyon kanıtı ekler. XDR, Wasm ve LLM Copilot Pro Plus'ın uzun vadeli opsiyonel roadmap'idir — Core tek başına üretimde kullanılabilir.",
   },
   setup: {
     eyebrow: SETUP.eyebrow,
@@ -318,7 +318,7 @@ const CO_TR: PageCopy = {
 /* -------------------------------- ENGLISH -------------------------------- */
 
 const SELECTED_BODIES_EN = [
-  "Single chain: nginx log → OWASP CRS → ~17 ms kernel ban. Production in ~15 minutes.",
+  "Single chain: nginx log → OWASP CRS → ~20 ms kernel ban. Production in ~15 minutes.",
   "Fleet, SOC timeline, dashboards — an optional layer on your own server after install.",
   "75 automated tests, competitive PDF, 72h soak — the same matrix as dashboard /tests.",
   "Tenant-labeled Prometheus metrics, dashboards and alert rules — self-hosted observability.",
@@ -334,6 +334,7 @@ const SELECTED_BODIES_EN = [
 
 const VS_ROWS_EN_0: string[][] = [
   ["Log → WAF → kernel ban", "Single chain", "Ban only", "Piecemeal", "WAF separate"],
+  ["WAF/CRS throughput (same corpus)", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
   ["OWASP CRS parity", "100% (121 rules)", "—", "—", "Reference (100%)"],
   ["Real attack recall", "100% (1K+10K)", "—", "—", "100%"],
   ["Distributed / JA3 cluster ban", "100% (80 IP)", "—", "Signal-based", "—"],
@@ -341,7 +342,7 @@ const VS_ROWS_EN_0: string[][] = [
   ["L7 application protection", "WAF + consult + eBPF", "—", "—", "CRS inline"],
   ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
   ["False positive", "0.2% (measured)", "High", "Medium", "CRS-dependent"],
-  ["Ban latency", "~17 ms", "sec–min", "sec", "Separate integration"],
+  ["Ban latency", "~20 ms", "sec–min", "sec", "Separate integration"],
   ["Short stability (5 min)", "PASS (0 fail)", "—", "—", "—"],
   ["72h soak", "PASS (864/0)", "—", "—", "—"],
   ["Evidence pack PDF+JSON", "Automatic (14 files)", "None", "Partial", "Module by module"],
@@ -352,7 +353,6 @@ const VS_ROWS_EN_0: string[][] = [
 ];
 
 const VS_ROWS_EN_1: string[][] = [
-  ["Inline regex EPS", "~5,357 EPS (log replay)", "—", "—", "~14,300 EPS inline"],
   ["Block the first request instantly", "Reactive (log line)", "Reactive", "Partly", "Inline (instant)"],
   ["Volumetric L3/L4 scrub", "None — CDN recommended", "None", "None", "None"],
   ["Community signal network", "Self-hosted", "—", "Yes (global)", "—"],
@@ -432,7 +432,7 @@ const CO_EN: PageCopy = {
     "nginx log → WAF → kernel ban",
     "75 automated tests",
     "72h soak PASS",
-    "~17 ms kernel ban",
+    "~20 ms kernel ban",
     "false positive 0.2%",
     "real attack recall 100%",
     "OWASP CRS parity 100%",
@@ -442,14 +442,14 @@ const CO_EN: PageCopy = {
   pipeline: {
     eyebrow: "//:Pipeline",
     title: "Single chain: from log to kernel ban",
-    sub: "~17 ms from an nginx access log line to ipset ban — rivals have piecemeal architecture.",
+    sub: "~20 ms from an nginx access log line to ipset ban — rivals have piecemeal architecture.",
     note: "XDR, Wasm marketplace and LLM Copilot are long-term optional layers — Core is production-ready on its own.",
     steps: [
       { n: "1", label: "nginx access log", hint: "writable access log, log_guardian format" },
       { n: "2", label: "Parser + normalize", hint: "URI, method, XFF, body — one schema" },
       { n: "3", label: "CRS / WAF engine", hint: "OWASP CRS, PCRE2 JIT, schema/BOLA" },
       { n: "4", label: "Ban pipeline", hint: "policy + tenant + FP trust decision" },
-      { n: "5", label: "ipset / XDP kernel", hint: "~17 ms kernel ban" },
+      { n: "5", label: "ipset / XDP kernel", hint: "~20 ms kernel ban" },
       { n: "6", label: "Metrics + dashboard", hint: "Prometheus tenant + SOC timeline" },
     ],
   },
@@ -476,7 +476,8 @@ const CO_EN: PageCopy = {
       "Fail2ban only bans, ModSecurity WAF is a separate module, CrowdSec needs a piecemeal stack. Log Guardian merges these three jobs in one chain — with measured proof.",
     advantages: [
       { k: "One install, one chain", v: "You don't install and integrate Fail2ban + ModSecurity + CrowdSec separately. nginx log → WAF/CRS → kernel ban in one product, ~15 min setup." },
-      { k: "~17 ms kernel ban", v: "Median ~17 ms from log line to ipset/XDP ban. Fail2ban/CrowdSec stay in seconds–minutes; proven with 5 measured samples." },
+      { k: "~20 ms kernel ban", v: "Median ~20 ms from log line to ipset/XDP ban. Fail2ban/CrowdSec stay in seconds–minutes; proven with 21 measured samples." },
+      { k: "280,373 EPS · 16.93× ModSec", v: "On the same corpus with the same 121 OWASP CRS patterns (PCRE2 JIT), WAF/CRS throughput is 280,373 EPS — 16.93× faster than ModSec's 16,560 EPS. Measured and reproducible (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS parity", v: "121 OWASP CRS rules, 100% real-attack recall on a 1500-line corpus and full parity with ModSec — at 0.2% false positive." },
       { k: "Distributed attack coverage", v: "JA3 cluster detection + per-IP ban — 100% on an 80-IP live test. Fail2ban is single-IP; CrowdSec needs a separate signal network." },
       { k: "Transparent, reproducible proof", v: "75 automated tests + a 14-file PDF/JSON evidence pack + 72h soak (864 samples, 0 errors). Rivals have no automatic proof or it's fragmented." },
@@ -488,7 +489,7 @@ const CO_EN: PageCopy = {
       { label: "Honest limits", honest: true, winners: VS.groups[1].winners, rows: VS_ROWS_EN_1 },
     ],
     note:
-      "Honest limit: in some areas rivals are clearly better (red cells). ModSec + CRS leads in inline throughput (~14,300 EPS, measured) and instant first-request blocking; CrowdSec is strong in its distributed community signal network and managed SaaS console. Our strength is single-chain integration + ~17 ms ban speed + transparent, reproducible proof.",
+      "Honest limit: in some areas rivals are clearly better (red cells). ModSec + CRS blocks the first request inline instantly (we're reactive — the first request may pass until the log line drops); CrowdSec is strong in its distributed community signal network and managed SaaS console. In return, on the same corpus with the same 121 CRS patterns our WAF/CRS throughput is 280,373 EPS — 16.93× ModSec's 16,560 EPS (bench-vs-modsec.json).",
     legend: "Red = the winner in that row",
   },
   charts: {
@@ -500,13 +501,13 @@ const CO_EN: PageCopy = {
     profile: {
       ...CHARTS.profile,
       title: "Performance profile (9 axes)",
-      hint: "Higher = better · 0–100 normalized · Log Guardian turquoise line",
+      hint: "Higher = better · 0–100 normalized · Throughput: bench-vs-modsec.json EPS ratio (280k vs 16.5k) — LG not scored 100",
       categories: ["Single chain", "Recall", "Low FP", "Ban speed", "Proof", "Throughput", "Distributed", "Docs", "Setup"],
     },
     latency: {
       ...CHARTS.latency,
       title: "Ban latency — measurement samples",
-      hint: "Lower = better · 5 samples (bench-ban-latency.json) · target 75 ms",
+      hint: "Lower = better · 21 samples (bench-ban-latency.json) · target 75 ms",
     },
     soak: {
       ...CHARTS.soak,
@@ -520,8 +521,8 @@ const CO_EN: PageCopy = {
     },
     eps: {
       ...CHARTS.eps,
-      title: "Throughput (EPS) — same corpus",
-      hint: "Higher = better · bench-vs-modsec.json · honest limit",
+      title: "WAF/CRS throughput (EPS) — same corpus",
+      hint: "Higher = better · bench-vs-modsec.json · same 121 CRS patterns, PCRE2 JIT · 16.93× ModSec",
     },
     recall: {
       ...CHARTS.recall,
@@ -553,20 +554,20 @@ const CO_EN: PageCopy = {
     eyebrow: "//:Honest",
     title: "Honest limits",
     items: [
-      "Reactive architecture — the first request may pass until the log line drops; we're not at inline ModSec speed.",
+      "Reactive architecture — the first request may pass until the log line drops; ModSec blocks the first request inline while we're reactive.",
       "We don't absorb L3/L4 DDoS — we sit behind a CDN.",
       "Distributed botnet — per-IP ban; no CrowdSec signal network.",
-      "Does: log → CRS/WAF → ~17 ms kernel ban, proof PDF, Telegram ops, MIT self-hosted.",
+      "Does: log → CRS/WAF → ~20 ms kernel ban, proof PDF, Telegram ops, MIT self-hosted.",
     ],
     layersEyebrow: "//:Layers",
-    layersTitle: "Layers",
+    layersTitle: "Editions",
     layers: [
       { tag: "Core", body: "log → WAF → ipset ban (~15 min)" },
       { tag: "Pro", body: "eBPF daemon, dashboard, metrics, fleet" },
-      { tag: "Optional", body: "XDR, Wasm marketplace, LLM Copilot" },
+      { tag: "Pro Plus", body: "K8s/Helm proof (kind), fleet showcase, optional Wasm/mesh (XDR/Copilot roadmap)" },
     ],
     layersNote:
-      "XDR, Wasm marketplace and LLM Copilot are long-term optional layers — Core is production-ready on its own.",
+      "Pro and Pro Plus do not change the protection level; they only add visibility and integration proof. XDR, Wasm and LLM Copilot are Pro Plus's long-term optional roadmap — Core is production-ready on its own.",
   },
   setup: {
     eyebrow: "//:Setup",
@@ -688,7 +689,7 @@ type SectionOverride = {
 const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   de: {
     pipelineTitle: "Eine Kette: vom Log zum Kernel-Ban",
-    pipelineSub: "~17 ms von der nginx-Access-Log-Zeile bis zum ipset-Ban — Konkurrenten haben eine stückweise Architektur.",
+    pipelineSub: "~20 ms von der nginx-Access-Log-Zeile bis zum ipset-Ban — Konkurrenten haben eine stückweise Architektur.",
     selectedTitle: "Ausgewählte Nachweise",
     selectedLead: "Core · Pro · Proof — messbare Ergebnisse in einer Kette.",
     vsTitle: "Vergleich mit Konkurrenten",
@@ -707,7 +708,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   fr: {
     pipelineTitle: "Une seule chaîne : du log au ban noyau",
-    pipelineSub: "~17 ms de la ligne de log d'accès nginx au ban ipset — les rivaux ont une architecture fragmentée.",
+    pipelineSub: "~20 ms de la ligne de log d'accès nginx au ban ipset — les rivaux ont une architecture fragmentée.",
     selectedTitle: "Preuves sélectionnées",
     selectedLead: "Core · Pro · Proof — des résultats mesurables en une seule chaîne.",
     vsTitle: "Comparaison avec les rivaux",
@@ -726,7 +727,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   es: {
     pipelineTitle: "Una sola cadena: del log al ban de kernel",
-    pipelineSub: "~17 ms desde la línea de log de acceso de nginx hasta el ban de ipset — los rivales tienen arquitectura fragmentada.",
+    pipelineSub: "~20 ms desde la línea de log de acceso de nginx hasta el ban de ipset — los rivales tienen arquitectura fragmentada.",
     selectedTitle: "Pruebas seleccionadas",
     selectedLead: "Core · Pro · Proof — resultados medibles en una sola cadena.",
     vsTitle: "Comparación con rivales",
@@ -745,7 +746,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ru: {
     pipelineTitle: "Одна цепочка: от лога до бана в ядре",
-    pipelineSub: "~17 мс от строки access-лога nginx до бана ipset — у конкурентов фрагментарная архитектура.",
+    pipelineSub: "~20 мс от строки access-лога nginx до бана ipset — у конкурентов фрагментарная архитектура.",
     selectedTitle: "Избранные доказательства",
     selectedLead: "Core · Pro · Proof — измеримые результаты в одной цепочке.",
     vsTitle: "Сравнение с конкурентами",
@@ -764,7 +765,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   pt: {
     pipelineTitle: "Uma só cadeia: do log ao ban de kernel",
-    pipelineSub: "~17 ms da linha de log de acesso do nginx ao ban de ipset — os rivais têm arquitetura fragmentada.",
+    pipelineSub: "~20 ms da linha de log de acesso do nginx ao ban de ipset — os rivais têm arquitetura fragmentada.",
     selectedTitle: "Provas selecionadas",
     selectedLead: "Core · Pro · Proof — resultados mensuráveis numa só cadeia.",
     vsTitle: "Comparação com rivais",
@@ -783,7 +784,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   nl: {
     pipelineTitle: "Eén keten: van log naar kernel-ban",
-    pipelineSub: "~17 ms van de nginx-accesslogregel tot de ipset-ban — concurrenten hebben een versnipperde architectuur.",
+    pipelineSub: "~20 ms van de nginx-accesslogregel tot de ipset-ban — concurrenten hebben een versnipperde architectuur.",
     selectedTitle: "Geselecteerde bewijzen",
     selectedLead: "Core · Pro · Proof — meetbare resultaten in één keten.",
     vsTitle: "Vergelijking met concurrenten",
@@ -802,7 +803,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   zh: {
     pipelineTitle: "单一链路：从日志到内核封禁",
-    pipelineSub: "从 nginx 访问日志行到 ipset 封禁约 17 毫秒——竞品架构零散。",
+    pipelineSub: "从 nginx 访问日志行到 ipset 封禁约 20 毫秒——竞品架构零散。",
     selectedTitle: "精选证据",
     selectedLead: "Core · Pro · Proof——单一链路中的可衡量结果。",
     vsTitle: "与竞品对比",
@@ -821,7 +822,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ja: {
     pipelineTitle: "単一チェーン：ログからカーネルBANまで",
-    pipelineSub: "nginx アクセスログの行から ipset BAN まで約17ms——競合は断片的なアーキテクチャ。",
+    pipelineSub: "nginx アクセスログの行から ipset BAN まで約20ms——競合は断片的なアーキテクチャ。",
     selectedTitle: "厳選された証拠",
     selectedLead: "Core · Pro · Proof——単一チェーンでの測定可能な結果。",
     vsTitle: "競合との比較",
@@ -840,7 +841,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ko: {
     pipelineTitle: "단일 체인: 로그에서 커널 밴까지",
-    pipelineSub: "nginx 액세스 로그 줄에서 ipset 밴까지 약 17ms — 경쟁사는 조각난 아키텍처.",
+    pipelineSub: "nginx 액세스 로그 줄에서 ipset 밴까지 약 20ms — 경쟁사는 조각난 아키텍처.",
     selectedTitle: "선별된 증거",
     selectedLead: "Core · Pro · Proof — 단일 체인의 측정 가능한 결과.",
     vsTitle: "경쟁사와 비교",
@@ -878,7 +879,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   az: {
     pipelineTitle: "Tək zəncir: logdan kernel bana",
-    pipelineSub: "nginx giriş log sətirindən ipset bana ~17 ms — rəqiblərdə parçalı memarlıq.",
+    pipelineSub: "nginx giriş log sətirindən ipset bana ~20 ms — rəqiblərdə parçalı memarlıq.",
     selectedTitle: "Seçilmiş sübutlar",
     selectedLead: "Core · Pro · Proof — tək zəncirdə ölçülə bilən nəticələr.",
     vsTitle: "Rəqiblərlə müqayisə",
@@ -897,7 +898,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   kk: {
     pipelineTitle: "Бір тізбек: логтан kernel банға",
-    pipelineSub: "nginx кіру журналы жолынан ipset банға ~17 мс — бәсекелестерде бөлшек архитектура.",
+    pipelineSub: "nginx кіру журналы жолынан ipset банға ~20 мс — бәсекелестерде бөлшек архитектура.",
     selectedTitle: "Таңдаулы дәлелдер",
     selectedLead: "Core · Pro · Proof — бір тізбекте өлшенетін нәтижелер.",
     vsTitle: "Бәсекелестермен салыстыру",
@@ -916,7 +917,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   uz: {
     pipelineTitle: "Yagona zanjir: logdan kernel banga",
-    pipelineSub: "nginx kirish logi qatoridan ipset banga ~17 ms — raqiblarda bo'lak arxitektura.",
+    pipelineSub: "nginx kirish logi qatoridan ipset banga ~20 ms — raqiblarda bo'lak arxitektura.",
     selectedTitle: "Tanlangan dalillar",
     selectedLead: "Core · Pro · Proof — yagona zanjirda o'lchanadigan natijalar.",
     vsTitle: "Raqiblar bilan taqqoslash",
@@ -935,7 +936,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ky: {
     pipelineTitle: "Бирдиктүү чынжыр: логдон kernel банга",
-    pipelineSub: "nginx кирүү логу сабынан ipset банга ~17 мс — атаандаштарда бөлүк архитектура.",
+    pipelineSub: "nginx кирүү логу сабынан ipset банга ~20 мс — атаандаштарда бөлүк архитектура.",
     selectedTitle: "Тандалган далилдер",
     selectedLead: "Core · Pro · Proof — бир чынжырда өлчөнгөн натыйжалар.",
     vsTitle: "Атаандаштар менен салыштыруу",
@@ -954,7 +955,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   tk: {
     pipelineTitle: "Ýeke zynjyr: logdan kernel bana",
-    pipelineSub: "nginx giriş logy setirinden ipset bana ~17 ms — bäsdeşlerde bölek arhitektura.",
+    pipelineSub: "nginx giriş logy setirinden ipset bana ~20 ms — bäsdeşlerde bölek arhitektura.",
     selectedTitle: "Saýlanan subutnamalar",
     selectedLead: "Core · Pro · Proof — ýeke zynjyrda ölçäp bolýan netijeler.",
     vsTitle: "Bäsdeşler bilen deňeşdirme",
@@ -973,7 +974,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   crh: {
     pipelineTitle: "Tek zıncır: logdan kernel banğa",
-    pipelineSub: "nginx kirim logu satırından ipset banğa ~17 ms — raqiplerde parça mimarlıq.",
+    pipelineSub: "nginx kirim logu satırından ipset banğa ~20 ms — raqiplerde parça mimarlıq.",
     selectedTitle: "Saylanğan deliller",
     selectedLead: "Core · Pro · Proof — tek zıncırda ölçele bilgen neticeler.",
     vsTitle: "Raqiplernen qıyaslav",
@@ -992,7 +993,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   gag: {
     pipelineTitle: "Tek zincir: logdan kernel bana",
-    pipelineSub: "nginx giriş logu satırından ipset bana ~17 ms — rakiplärdä parça mimarlık.",
+    pipelineSub: "nginx giriş logu satırından ipset bana ~20 ms — rakiplärdä parça mimarlık.",
     selectedTitle: "Seçili deliller",
     selectedLead: "Core · Pro · Proof — tek zincirdä ölçülebilän sonuçlar.",
     vsTitle: "Rakiplärlän karşılaştırma",
@@ -1011,7 +1012,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   tt: {
     pipelineTitle: "Бер чылбыр: логтан kernel банга",
-    pipelineSub: "nginx керү журналы юлыннан ipset банга ~17 мс — көндәшләрдә өлешле архитектура.",
+    pipelineSub: "nginx керү журналы юлыннан ipset банга ~20 мс — көндәшләрдә өлешле архитектура.",
     selectedTitle: "Сайланган дәлилләр",
     selectedLead: "Core · Pro · Proof — бер чылбырда үлчәнә торган нәтиҗәләр.",
     vsTitle: "Көндәшләр белән чагыштыру",
@@ -1030,7 +1031,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ba: {
     pipelineTitle: "Бер сылбыр: логтан kernel банға",
-    pipelineSub: "nginx инеү журналы юлынан ipset банға ~17 мс — көндәштәрҙә өлөшлө архитектура.",
+    pipelineSub: "nginx инеү журналы юлынан ipset банға ~20 мс — көндәштәрҙә өлөшлө архитектура.",
     selectedTitle: "Һайланған дәлилдәр",
     selectedLead: "Core · Pro · Proof — бер сылбырҙа үлсәнә торған һөҙөмтәләр.",
     vsTitle: "Көндәштәр менән сағыштырыу",
@@ -1049,7 +1050,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   cv: {
     pipelineTitle: "Пӗр сӑнчӑр: логран kernel бан патне",
-    pipelineSub: "nginx кӗрӳ журналӗ йӗркинчен ipset бана ~17 мс — конкурентсенче пайланнӑ архитектура.",
+    pipelineSub: "nginx кӗрӳ журналӗ йӗркинчен ipset бана ~20 мс — конкурентсенче пайланнӑ архитектура.",
     selectedTitle: "Суйласа илнӗ кӑтартусем",
     selectedLead: "Core · Pro · Proof — пӗр сӑнчӑрта виҫме пулакан результатсем.",
     vsTitle: "Конкурентсемпе танлаштарни",
@@ -1068,7 +1069,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   ug: {
     pipelineTitle: "بىرلا زەنجىر: خاتىرىدىن يادرو چەكلىشىگىچە",
-    pipelineSub: "nginx كىرىش خاتىرىسى قۇرىدىن ipset چەكلەشكىچە ~17 مىللىسېكۇنت — رەقىبلەردە پارچە قۇرۇلما.",
+    pipelineSub: "nginx كىرىش خاتىرىسى قۇرىدىن ipset چەكلەشكىچە ~20 مىللىسېكۇنت — رەقىبلەردە پارچە قۇرۇلما.",
     selectedTitle: "تاللانغان ئىسپاتلار",
     selectedLead: "Core · Pro · Proof — بىرلا زەنجىردە ئۆلچىگىلى بولىدىغان نەتىجىلەر.",
     vsTitle: "رەقىبلەر بىلەن سېلىشتۇرۇش",
@@ -1087,7 +1088,7 @@ const SECTION_OVERRIDES: Partial<Record<Locale, SectionOverride>> = {
   },
   sah: {
     pipelineTitle: "Биир сиэп: логтан kernel бан диэки",
-    pipelineSub: "nginx киирии сурунаал строкатыттан ipset бан диэки ~17 мс — күрэхтэһээччилэргэ аҥаардас архитектура.",
+    pipelineSub: "nginx киирии сурунаал строкатыттан ipset бан диэки ~20 мс — күрэхтэһээччилэргэ аҥаардас архитектура.",
     selectedTitle: "Талыллыбыт туоһулар",
     selectedLead: "Core · Pro · Proof — биир сиэпкэ кээмэйдэнэр түмүктэр.",
     vsTitle: "Күрэхтэһээччилэри тэҥнээһин",
@@ -1153,7 +1154,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm-Marktplatz und LLM-Copilot sind langfristige optionale Schichten — Core ist allein produktionsreif.",
     selectedBodies: [
-      "Eine Kette: nginx-Log → OWASP CRS → ~17 ms Kernel-Ban. Produktion in ~15 Minuten.",
+      "Eine Kette: nginx-Log → OWASP CRS → ~20 ms Kernel-Ban. Produktion in ~15 Minuten.",
       "Flotte, SOC-Timeline, Dashboards — eine optionale Schicht auf Ihrem eigenen Server nach der Installation.",
       "75 automatische Tests, Vergleichs-PDF, 72h-Soak — dieselbe Matrix wie dashboard /tests.",
       "Tenant-markierte Prometheus-Metriken, Dashboards und Alarmregeln — self-hosted Observability.",
@@ -1170,25 +1171,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban bannt nur, ModSecurity-WAF ist ein separates Modul, CrowdSec braucht einen stückweisen Stack. Log Guardian vereint diese drei Aufgaben in einer Kette — mit gemessenem Nachweis.",
     advantages: [
       { k: "Eine Installation, eine Kette", v: "Sie installieren und integrieren Fail2ban + ModSecurity + CrowdSec nicht separat. nginx-Log → WAF/CRS → Kernel-Ban in einem Produkt, ~15 Min Setup." },
-      { k: "~17 ms Kernel-Ban", v: "Median ~17 ms von der Logzeile bis zum ipset/XDP-Ban. Fail2ban/CrowdSec bleiben im Sekunden-Minuten-Bereich; belegt mit 5 gemessenen Proben." },
+      { k: "~20 ms Kernel-Ban", v: "Median ~20 ms von der Logzeile bis zum ipset/XDP-Ban. Fail2ban/CrowdSec bleiben im Sekunden-Minuten-Bereich; belegt mit 21 gemessenen Proben." },
       { k: "100% Recall + 100% CRS-Parität", v: "121 OWASP-CRS-Regeln, 100% Recall echter Angriffe auf einem 1500-Zeilen-Korpus und volle Parität mit ModSec — bei 0,2% False Positives." },
       { k: "Abdeckung verteilter Angriffe", v: "JA3-Cluster-Erkennung + Ban pro IP — 100% in einem Live-Test mit 80 IPs. Fail2ban ist Einzel-IP; CrowdSec braucht ein separates Signalnetz." },
       { k: "Transparenter, reproduzierbarer Nachweis", v: "75 automatische Tests + ein 14-Dateien-Nachweispaket + 72h-Soak (864 Proben, 0 Fehler). Rivalen haben keinen automatischen Nachweis oder er ist fragmentiert." },
       { k: "Self-hosted · MIT · aus der Türkei", v: "Ihre Daten bleiben bei Ihnen, kein Vendor-Lock-in, voll Open Source. SOC-Timeline, Prometheus-Metriken und Telegram-Betrieb in einem Panel (:8443)." },
     ],
     vsNote:
-      "Ehrliche Grenze: In manchen Bereichen sind Rivalen klar besser (rote Zellen). ModSec + CRS führt beim Inline-Durchsatz (~14.300 EPS, gemessen) und beim sofortigen Blockieren der ersten Anfrage; CrowdSec ist stark bei seinem verteilten Community-Signalnetz und der Managed-SaaS-Konsole. Unsere Stärke ist die Einketten-Integration + ~17 ms Ban-Tempo + transparenter, reproduzierbarer Nachweis.",
+      "Ehrliche Grenze: In manchen Bereichen sind Rivalen klar besser (rote Zellen). ModSec + CRS führt beim sofortigen Blockieren der ersten Anfrage; CrowdSec ist stark bei seinem verteilten Community-Signalnetz und der Managed-SaaS-Konsole. Unsere Stärke ist die Einketten-Integration + ~20 ms Ban-Tempo + transparenter, reproduzierbarer Nachweis.",
     vsLegend: "Rot = der Sieger in dieser Zeile",
     honestItems: [
       "Reaktive Architektur — die erste Anfrage kann durchgehen, bis die Logzeile fällt; wir erreichen nicht die Inline-Geschwindigkeit von ModSec.",
       "Wir absorbieren kein L3/L4-DDoS — wir sitzen hinter einem CDN.",
       "Verteiltes Botnetz — Ban pro IP; kein CrowdSec-Signalnetz.",
-      "Leistet: Log → CRS/WAF → ~17 ms Kernel-Ban, Nachweis-PDF, Telegram-Betrieb, MIT self-hosted.",
+      "Leistet: Log → CRS/WAF → ~20 ms Kernel-Ban, Nachweis-PDF, Telegram-Betrieb, MIT self-hosted.",
     ],
     layersBodies: [
       "Log → WAF → ipset-Ban (~15 Min)",
       "eBPF-Daemon, Dashboard, Metriken, Flotte",
-      "XDR, Wasm-Marktplatz, LLM-Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm-Marktplatz und LLM-Copilot sind langfristige optionale Schichten — Core ist allein produktionsreif.",
@@ -1214,7 +1215,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7-Anwendungsschutz", "WAF + Consult + eBPF", "—", "—", "CRS inline"],
       ["Kernel / eBPF (XDP) Ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["False Positive", "0,2% (gemessen)", "Hoch", "Mittel", "CRS-abhängig"],
-      ["Ban-Latenz", "~17 ms", "Sek–Min", "Sek", "Separate Integration"],
+      ["Ban-Latenz", "~20 ms", "Sek–Min", "Sek", "Separate Integration"],
       ["Kurze Stabilität (5 Min)", "PASS (0 Fehler)", "—", "—", "—"],
       ["72h-Soak", "PASS (864/0)", "—", "—", "—"],
       ["Nachweispaket PDF+JSON", "Automatisch (14 Dateien)", "Keines", "Teilweise", "Modul für Modul"],
@@ -1224,7 +1225,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Einrichtungszeit", "~15 Min", "Minuten", "Minuten", "Stunden (Tuning)"],
     ],
     vsRows1: [
-      ["Inline-Regex-EPS", "~5.357 EPS (Log-Replay)", "—", "—", "~14.300 EPS inline"],
       ["Erste Anfrage sofort blocken", "Reaktiv (Logzeile)", "Reaktiv", "Teilweise", "Inline (sofort)"],
       ["Volumetrisches L3/L4-Scrubbing", "Keines — CDN empfohlen", "Keines", "Keines", "Keines"],
       ["Community-Signalnetz", "Self-hosted", "—", "Ja (global)", "—"],
@@ -1276,7 +1276,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, la marketplace Wasm et le Copilot LLM sont des couches optionnelles à long terme — Core est prêt pour la production à lui seul.",
     selectedBodies: [
-      "Une seule chaîne : log nginx → OWASP CRS → ban noyau ~17 ms. En production en ~15 minutes.",
+      "Une seule chaîne : log nginx → OWASP CRS → ban noyau ~20 ms. En production en ~15 minutes.",
       "Flotte, timeline SOC, tableaux de bord — une couche optionnelle sur votre propre serveur après l'installation.",
       "75 tests automatiques, PDF comparatif, soak 72h — la même matrice que dashboard /tests.",
       "Métriques Prometheus par tenant, tableaux de bord et règles d'alerte — observabilité auto-hébergée.",
@@ -1293,25 +1293,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban ne fait que bannir, le WAF ModSecurity est un module séparé, CrowdSec exige une pile fragmentée. Log Guardian réunit ces trois tâches en une seule chaîne — avec preuve mesurée.",
     advantages: [
       { k: "Une installation, une chaîne", v: "Vous n'installez et n'intégrez pas Fail2ban + ModSecurity + CrowdSec séparément. log nginx → WAF/CRS → ban noyau en un seul produit, ~15 min d'installation." },
-      { k: "Ban noyau ~17 ms", v: "Médiane ~17 ms de la ligne de log au ban ipset/XDP. Fail2ban/CrowdSec restent à l'échelle secondes–minutes ; prouvé avec 5 échantillons mesurés." },
+      { k: "Ban noyau ~20 ms", v: "Médiane ~20 ms de la ligne de log au ban ipset/XDP. Fail2ban/CrowdSec restent à l'échelle secondes–minutes ; prouvé avec 21 échantillons mesurés." },
       { k: "100% de rappel + 100% de parité CRS", v: "121 règles OWASP CRS, 100% de rappel d'attaques réelles sur un corpus de 1500 lignes et parité complète avec ModSec — à 0,2% de faux positifs." },
       { k: "Couverture des attaques distribuées", v: "Détection de cluster JA3 + ban par IP — 100% sur un test en direct de 80 IP. Fail2ban est mono-IP ; CrowdSec exige un réseau de signaux séparé." },
       { k: "Preuve transparente et reproductible", v: "75 tests automatiques + un pack de preuves de 14 fichiers + soak 72h (864 échantillons, 0 erreur). Les rivaux n'ont pas de preuve automatique ou elle est fragmentée." },
       { k: "Auto-hébergé · MIT · conçu en Turquie", v: "Vos données restent chez vous, aucun verrouillage fournisseur, entièrement open source. Timeline SOC, métriques Prometheus et exploitation Telegram dans un seul panneau (:8443)." },
     ],
     vsNote:
-      "Limite honnête : dans certains domaines, les rivaux sont clairement meilleurs (cellules rouges). ModSec + CRS mène en débit inline (~14 300 EPS, mesuré) et en blocage instantané de la première requête ; CrowdSec est fort sur son réseau de signaux communautaire distribué et sa console SaaS managée. Notre force : l'intégration en une chaîne + la vitesse de ban ~17 ms + une preuve transparente et reproductible.",
+      "Limite honnête : dans certains domaines, les rivaux sont clairement meilleurs (cellules rouges). ModSec + CRS mène en blocage instantané de la première requête ; CrowdSec est fort sur son réseau de signaux communautaire distribué et sa console SaaS managée. Notre force : l'intégration en une chaîne + la vitesse de ban ~20 ms + une preuve transparente et reproductible.",
     vsLegend: "Rouge = le gagnant de cette ligne",
     honestItems: [
       "Architecture réactive — la première requête peut passer jusqu'à la chute de la ligne de log ; nous n'atteignons pas la vitesse inline de ModSec.",
       "Nous n'absorbons pas les DDoS L3/L4 — nous sommes derrière un CDN.",
       "Botnet distribué — ban par IP ; pas de réseau de signaux CrowdSec.",
-      "Fait : log → CRS/WAF → ban noyau ~17 ms, PDF de preuve, exploitation Telegram, MIT auto-hébergé.",
+      "Fait : log → CRS/WAF → ban noyau ~20 ms, PDF de preuve, exploitation Telegram, MIT auto-hébergé.",
     ],
     layersBodies: [
       "log → WAF → ban ipset (~15 min)",
       "démon eBPF, tableau de bord, métriques, flotte",
-      "XDR, marketplace Wasm, Copilot LLM",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, la marketplace Wasm et le Copilot LLM sont des couches optionnelles à long terme — Core est prêt pour la production à lui seul.",
@@ -1337,7 +1337,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Protection applicative L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ban noyau / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Faux positif", "0,2% (mesuré)", "Élevé", "Moyen", "Selon CRS"],
-      ["Latence de ban", "~17 ms", "sec–min", "sec", "Intégration séparée"],
+      ["Latence de ban", "~20 ms", "sec–min", "sec", "Intégration séparée"],
       ["Stabilité courte (5 min)", "PASS (0 échec)", "—", "—", "—"],
       ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
       ["Pack de preuves PDF+JSON", "Automatique (14 fichiers)", "Aucun", "Partiel", "Module par module"],
@@ -1347,7 +1347,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Temps d'installation", "~15 min", "minutes", "minutes", "heures (réglage)"],
     ],
     vsRows1: [
-      ["EPS regex inline", "~5 357 EPS (rejeu log)", "—", "—", "~14 300 EPS inline"],
       ["Bloquer la 1re requête instantanément", "Réactif (ligne de log)", "Réactif", "En partie", "Inline (instantané)"],
       ["Scrubbing volumétrique L3/L4", "Aucun — CDN recommandé", "Aucun", "Aucun", "Aucun"],
       ["Réseau de signaux communautaire", "Auto-hébergé", "—", "Oui (global)", "—"],
@@ -1399,7 +1398,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, el marketplace Wasm y el Copilot LLM son capas opcionales a largo plazo — Core está listo para producción por sí solo.",
     selectedBodies: [
-      "Una sola cadena: log de nginx → OWASP CRS → ban de kernel ~17 ms. En producción en ~15 minutos.",
+      "Una sola cadena: log de nginx → OWASP CRS → ban de kernel ~20 ms. En producción en ~15 minutos.",
       "Flota, timeline SOC, paneles — una capa opcional en tu propio servidor tras la instalación.",
       "75 pruebas automáticas, PDF comparativo, soak 72h — la misma matriz que dashboard /tests.",
       "Métricas Prometheus por tenant, paneles y reglas de alerta — observabilidad autoalojada.",
@@ -1416,25 +1415,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban solo banea, el WAF ModSecurity es un módulo aparte, CrowdSec necesita un stack fragmentado. Log Guardian une estas tres tareas en una sola cadena — con prueba medida.",
     advantages: [
       { k: "Una instalación, una cadena", v: "No instalas ni integras Fail2ban + ModSecurity + CrowdSec por separado. log de nginx → WAF/CRS → ban de kernel en un solo producto, ~15 min de instalación." },
-      { k: "Ban de kernel ~17 ms", v: "Mediana ~17 ms desde la línea de log al ban de ipset/XDP. Fail2ban/CrowdSec se quedan en segundos–minutos; probado con 5 muestras medidas." },
+      { k: "Ban de kernel ~20 ms", v: "Mediana ~20 ms desde la línea de log al ban de ipset/XDP. Fail2ban/CrowdSec se quedan en segundos–minutos; probado con 21 muestras medidas." },
       { k: "100% de recall + 100% de paridad CRS", v: "121 reglas OWASP CRS, 100% de recall de ataques reales en un corpus de 1500 líneas y paridad total con ModSec — con 0,2% de falsos positivos." },
       { k: "Cobertura de ataques distribuidos", v: "Detección de clúster JA3 + ban por IP — 100% en una prueba en vivo de 80 IP. Fail2ban es de una sola IP; CrowdSec necesita una red de señales aparte." },
       { k: "Prueba transparente y reproducible", v: "75 pruebas automáticas + un pack de evidencias de 14 archivos + soak 72h (864 muestras, 0 errores). Los rivales no tienen prueba automática o está fragmentada." },
       { k: "Autoalojado · MIT · hecho en Turquía", v: "Tus datos se quedan contigo, sin bloqueo de proveedor, totalmente open source. Timeline SOC, métricas Prometheus y operación Telegram en un solo panel (:8443)." },
     ],
     vsNote:
-      "Límite honesto: en algunas áreas los rivales son claramente mejores (celdas rojas). ModSec + CRS lidera en throughput inline (~14.300 EPS, medido) y en bloqueo instantáneo de la primera petición; CrowdSec es fuerte en su red de señales comunitaria distribuida y su consola SaaS gestionada. Nuestra fuerza es la integración en una cadena + velocidad de ban ~17 ms + prueba transparente y reproducible.",
+      "Límite honesto: en algunas áreas los rivales son claramente mejores (celdas rojas). ModSec + CRS lidera en bloqueo instantáneo de la primera petición; CrowdSec es fuerte en su red de señales comunitaria distribuida y su consola SaaS gestionada. Nuestra fuerza es la integración en una cadena + velocidad de ban ~20 ms + prueba transparente y reproducible.",
     vsLegend: "Rojo = el ganador de esa fila",
     honestItems: [
       "Arquitectura reactiva — la primera petición puede pasar hasta que caiga la línea de log; no llegamos a la velocidad inline de ModSec.",
       "No absorbemos DDoS L3/L4 — estamos detrás de un CDN.",
       "Botnet distribuida — ban por IP; sin red de señales de CrowdSec.",
-      "Hace: log → CRS/WAF → ban de kernel ~17 ms, PDF de prueba, operación Telegram, MIT autoalojado.",
+      "Hace: log → CRS/WAF → ban de kernel ~20 ms, PDF de prueba, operación Telegram, MIT autoalojado.",
     ],
     layersBodies: [
       "log → WAF → ban ipset (~15 min)",
       "demonio eBPF, panel, métricas, flota",
-      "XDR, marketplace Wasm, Copilot LLM",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, el marketplace Wasm y el Copilot LLM son capas opcionales a largo plazo — Core está listo para producción por sí solo.",
@@ -1460,7 +1459,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Protección de aplicación L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ban de kernel / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Falso positivo", "0,2% (medido)", "Alto", "Medio", "Según CRS"],
-      ["Latencia de ban", "~17 ms", "seg–min", "seg", "Integración aparte"],
+      ["Latencia de ban", "~20 ms", "seg–min", "seg", "Integración aparte"],
       ["Estabilidad corta (5 min)", "PASS (0 fallos)", "—", "—", "—"],
       ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
       ["Pack de evidencias PDF+JSON", "Automático (14 archivos)", "Ninguno", "Parcial", "Módulo por módulo"],
@@ -1470,7 +1469,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Tiempo de instalación", "~15 min", "minutos", "minutos", "horas (ajuste)"],
     ],
     vsRows1: [
-      ["EPS regex inline", "~5.357 EPS (replay de log)", "—", "—", "~14.300 EPS inline"],
       ["Bloquear la 1ª petición al instante", "Reactivo (línea de log)", "Reactivo", "En parte", "Inline (instantáneo)"],
       ["Scrubbing volumétrico L3/L4", "Ninguno — se recomienda CDN", "Ninguno", "Ninguno", "Ninguno"],
       ["Red de señales comunitaria", "Autoalojado", "—", "Sí (global)", "—"],
@@ -1522,7 +1520,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, маркетплейс Wasm и LLM Copilot — долгосрочные опциональные слои; Core сам по себе готов к продакшену.",
     selectedBodies: [
-      "Одна цепочка: лог nginx → OWASP CRS → бан в ядре ~17 мс. В продакшене за ~15 минут.",
+      "Одна цепочка: лог nginx → OWASP CRS → бан в ядре ~20 мс. В продакшене за ~15 минут.",
       "Флот, SOC-таймлайн, дашборды — опциональный слой на вашем сервере после установки.",
       "75 автотестов, сравнительный PDF, 72-часовой soak — та же матрица, что dashboard /tests.",
       "Метрики Prometheus с меткой tenant, дашборды и правила алертов — self-hosted наблюдаемость.",
@@ -1539,25 +1537,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban только банит, WAF ModSecurity — отдельный модуль, CrowdSec требует фрагментарного стека. Log Guardian объединяет эти три задачи в одну цепочку — с измеренным доказательством.",
     advantages: [
       { k: "Одна установка, одна цепочка", v: "Вы не ставите и не интегрируете Fail2ban + ModSecurity + CrowdSec по отдельности. лог nginx → WAF/CRS → бан в ядре в одном продукте, установка ~15 мин." },
-      { k: "Бан в ядре ~17 мс", v: "Медиана ~17 мс от строки лога до бана ipset/XDP. Fail2ban/CrowdSec остаются в секундах–минутах; подтверждено 5 измеренными образцами." },
+      { k: "Бан в ядре ~20 мс", v: "Медиана ~20 мс от строки лога до бана ipset/XDP. Fail2ban/CrowdSec остаются в секундах–минутах; подтверждено 21 измеренными образцами." },
       { k: "100% recall + 100% паритет CRS", v: "121 правило OWASP CRS, 100% recall реальных атак на корпусе из 1500 строк и полный паритет с ModSec — при 0,2% ложных срабатываний." },
       { k: "Покрытие распределённых атак", v: "Обнаружение кластера JA3 + бан по IP — 100% в живом тесте на 80 IP. Fail2ban работает по одному IP; CrowdSec требует отдельной сети сигналов." },
       { k: "Прозрачное, воспроизводимое доказательство", v: "75 автотестов + пакет доказательств из 14 файлов + 72-часовой soak (864 образца, 0 ошибок). У конкурентов нет автоматического доказательства или оно фрагментарно." },
       { k: "Self-hosted · MIT · сделано в Турции", v: "Ваши данные остаются у вас, без привязки к вендору, полностью открытый код. SOC-таймлайн, метрики Prometheus и управление через Telegram в одной панели (:8443)." },
     ],
     vsNote:
-      "Честная граница: в некоторых областях конкуренты явно лучше (красные ячейки). ModSec + CRS впереди по inline-пропускной способности (~14 300 EPS, измерено) и мгновенной блокировке первого запроса; CrowdSec силён распределённой сетью сигналов сообщества и управляемой SaaS-консолью. Наша сила — интеграция в одну цепочку + скорость бана ~17 мс + прозрачное, воспроизводимое доказательство.",
+      "Честная граница: в некоторых областях конкуренты явно лучше (красные ячейки). ModSec + CRS впереди по мгновенной блокировке первого запроса; CrowdSec силён распределённой сетью сигналов сообщества и управляемой SaaS-консолью. Наша сила — интеграция в одну цепочку + скорость бана ~20 мс + прозрачное, воспроизводимое доказательство.",
     vsLegend: "Красный = победитель в этой строке",
     honestItems: [
       "Реактивная архитектура — первый запрос может пройти, пока не упадёт строка лога; мы не на inline-скорости ModSec.",
       "Мы не поглощаем L3/L4 DDoS — мы стоим за CDN.",
       "Распределённый ботнет — бан по IP; без сети сигналов CrowdSec.",
-      "Делает: лог → CRS/WAF → бан в ядре ~17 мс, PDF-доказательство, управление Telegram, MIT self-hosted.",
+      "Делает: лог → CRS/WAF → бан в ядре ~20 мс, PDF-доказательство, управление Telegram, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → бан ipset (~15 мин)",
       "eBPF-демон, дашборд, метрики, флот",
-      "XDR, маркетплейс Wasm, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, маркетплейс Wasm и LLM Copilot — долгосрочные опциональные слои; Core сам по себе готов к продакшену.",
@@ -1583,7 +1581,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Защита приложений L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Бан в ядре / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Ложное срабатывание", "0,2% (измерено)", "Высокое", "Среднее", "Зависит от CRS"],
-      ["Задержка бана", "~17 мс", "сек–мин", "сек", "Отдельная интеграция"],
+      ["Задержка бана", "~20 мс", "сек–мин", "сек", "Отдельная интеграция"],
       ["Короткая стабильность (5 мин)", "PASS (0 сбоев)", "—", "—", "—"],
       ["72ч soak", "PASS (864/0)", "—", "—", "—"],
       ["Пакет доказательств PDF+JSON", "Автоматически (14 файлов)", "Нет", "Частично", "Модуль за модулем"],
@@ -1593,7 +1591,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Время установки", "~15 мин", "минуты", "минуты", "часы (тюнинг)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (реплей лога)", "—", "—", "~14 300 EPS inline"],
       ["Мгновенно блокировать 1-й запрос", "Реактивно (строка лога)", "Реактивно", "Частично", "Inline (мгновенно)"],
       ["Объёмная очистка L3/L4", "Нет — рекомендуется CDN", "Нет", "Нет", "Нет"],
       ["Сеть сигналов сообщества", "Self-hosted", "—", "Да (глобально)", "—"],
@@ -1645,7 +1642,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, o marketplace Wasm e o Copilot LLM são camadas opcionais de longo prazo — o Core está pronto para produção por si só.",
     selectedBodies: [
-      "Uma só cadeia: log do nginx → OWASP CRS → ban de kernel ~17 ms. Em produção em ~15 minutos.",
+      "Uma só cadeia: log do nginx → OWASP CRS → ban de kernel ~20 ms. Em produção em ~15 minutos.",
       "Frota, timeline SOC, painéis — uma camada opcional no seu próprio servidor após a instalação.",
       "75 testes automáticos, PDF comparativo, soak 72h — a mesma matriz que dashboard /tests.",
       "Métricas Prometheus por tenant, painéis e regras de alerta — observabilidade self-hosted.",
@@ -1662,25 +1659,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "O Fail2ban só bane, o WAF ModSecurity é um módulo à parte, o CrowdSec precisa de um stack fragmentado. O Log Guardian junta estas três tarefas numa só cadeia — com prova medida.",
     advantages: [
       { k: "Uma instalação, uma cadeia", v: "Não instala nem integra Fail2ban + ModSecurity + CrowdSec separadamente. log do nginx → WAF/CRS → ban de kernel num só produto, ~15 min de instalação." },
-      { k: "Ban de kernel ~17 ms", v: "Mediana ~17 ms da linha de log ao ban ipset/XDP. Fail2ban/CrowdSec ficam na escala de segundos–minutos; comprovado com 5 amostras medidas." },
+      { k: "Ban de kernel ~20 ms", v: "Mediana ~20 ms da linha de log ao ban ipset/XDP. Fail2ban/CrowdSec ficam na escala de segundos–minutos; comprovado com 21 amostras medidas." },
       { k: "100% de recall + 100% de paridade CRS", v: "121 regras OWASP CRS, 100% de recall de ataques reais num corpus de 1500 linhas e paridade total com o ModSec — a 0,2% de falsos positivos." },
       { k: "Cobertura de ataques distribuídos", v: "Deteção de cluster JA3 + ban por IP — 100% num teste ao vivo de 80 IP. O Fail2ban é de IP único; o CrowdSec precisa de uma rede de sinais à parte." },
       { k: "Prova transparente e reproduzível", v: "75 testes automáticos + um pacote de provas de 14 ficheiros + soak 72h (864 amostras, 0 erros). Os rivais não têm prova automática ou é fragmentada." },
       { k: "Self-hosted · MIT · feito na Turquia", v: "Os seus dados ficam consigo, sem lock-in de fornecedor, totalmente open source. Timeline SOC, métricas Prometheus e operação Telegram num só painel (:8443)." },
     ],
     vsNote:
-      "Limite honesto: em algumas áreas os rivais são claramente melhores (células vermelhas). ModSec + CRS lidera no throughput inline (~14.300 EPS, medido) e no bloqueio instantâneo do primeiro pedido; o CrowdSec é forte na sua rede de sinais comunitária distribuída e na consola SaaS gerida. A nossa força é a integração numa cadeia + velocidade de ban ~17 ms + prova transparente e reproduzível.",
+      "Limite honesto: em algumas áreas os rivais são claramente melhores (células vermelhas). ModSec + CRS lidera no bloqueio instantâneo do primeiro pedido; o CrowdSec é forte na sua rede de sinais comunitária distribuída e na consola SaaS gerida. A nossa força é a integração numa cadeia + velocidade de ban ~20 ms + prova transparente e reproduzível.",
     vsLegend: "Vermelho = o vencedor dessa linha",
     honestItems: [
       "Arquitetura reativa — o primeiro pedido pode passar até a linha de log cair; não estamos à velocidade inline do ModSec.",
       "Não absorvemos DDoS L3/L4 — ficamos atrás de um CDN.",
       "Botnet distribuída — ban por IP; sem rede de sinais do CrowdSec.",
-      "Faz: log → CRS/WAF → ban de kernel ~17 ms, PDF de prova, operação Telegram, MIT self-hosted.",
+      "Faz: log → CRS/WAF → ban de kernel ~20 ms, PDF de prova, operação Telegram, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ban ipset (~15 min)",
       "daemon eBPF, painel, métricas, frota",
-      "XDR, marketplace Wasm, Copilot LLM",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, o marketplace Wasm e o Copilot LLM são camadas opcionais de longo prazo — o Core está pronto para produção por si só.",
@@ -1706,7 +1703,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Proteção de aplicação L7", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ban de kernel / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Falso positivo", "0,2% (medido)", "Alto", "Médio", "Depende do CRS"],
-      ["Latência de ban", "~17 ms", "seg–min", "seg", "Integração à parte"],
+      ["Latência de ban", "~20 ms", "seg–min", "seg", "Integração à parte"],
       ["Estabilidade curta (5 min)", "PASS (0 falhas)", "—", "—", "—"],
       ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
       ["Pacote de evidências PDF+JSON", "Automático (14 ficheiros)", "Nenhum", "Parcial", "Módulo a módulo"],
@@ -1716,7 +1713,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Tempo de instalação", "~15 min", "minutos", "minutos", "horas (ajuste)"],
     ],
     vsRows1: [
-      ["EPS regex inline", "~5.357 EPS (replay de log)", "—", "—", "~14.300 EPS inline"],
       ["Bloquear o 1º pedido instantaneamente", "Reativo (linha de log)", "Reativo", "Em parte", "Inline (instantâneo)"],
       ["Scrubbing volumétrico L3/L4", "Nenhum — CDN recomendado", "Nenhum", "Nenhum", "Nenhum"],
       ["Rede de sinais da comunidade", "Auto-hospedado", "—", "Sim (global)", "—"],
@@ -1768,7 +1764,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, de Wasm-marketplace en LLM-Copilot zijn optionele lagen op lange termijn — Core is op zichzelf productieklaar.",
     selectedBodies: [
-      "Eén keten: nginx-log → OWASP CRS → kernel-ban ~17 ms. In productie in ~15 minuten.",
+      "Eén keten: nginx-log → OWASP CRS → kernel-ban ~20 ms. In productie in ~15 minuten.",
       "Fleet, SOC-timeline, dashboards — een optionele laag op je eigen server na installatie.",
       "75 automatische tests, vergelijkings-PDF, 72h-soak — dezelfde matrix als dashboard /tests.",
       "Prometheus-metrics met tenant-label, dashboards en alertregels — self-hosted observability.",
@@ -1785,25 +1781,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban bant alleen, de ModSecurity-WAF is een aparte module, CrowdSec vraagt een versnipperde stack. Log Guardian voegt deze drie taken samen in één keten — met gemeten bewijs.",
     advantages: [
       { k: "Eén installatie, één keten", v: "Je installeert en integreert Fail2ban + ModSecurity + CrowdSec niet apart. nginx-log → WAF/CRS → kernel-ban in één product, ~15 min installatie." },
-      { k: "Kernel-ban ~17 ms", v: "Mediaan ~17 ms van logregel tot ipset/XDP-ban. Fail2ban/CrowdSec blijven op seconden–minuten; bewezen met 5 gemeten monsters." },
+      { k: "Kernel-ban ~20 ms", v: "Mediaan ~20 ms van logregel tot ipset/XDP-ban. Fail2ban/CrowdSec blijven op seconden–minuten; bewezen met 21 gemeten monsters." },
       { k: "100% recall + 100% CRS-pariteit", v: "121 OWASP-CRS-regels, 100% recall van echte aanvallen op een corpus van 1500 regels en volledige pariteit met ModSec — bij 0,2% false positives." },
       { k: "Dekking van gedistribueerde aanvallen", v: "JA3-clusterdetectie + ban per IP — 100% in een live test met 80 IP's. Fail2ban is per enkel IP; CrowdSec vraagt een apart signaalnetwerk." },
       { k: "Transparant, reproduceerbaar bewijs", v: "75 automatische tests + een bewijspakket van 14 bestanden + 72h-soak (864 monsters, 0 fouten). Concurrenten hebben geen automatisch bewijs of het is versnipperd." },
       { k: "Self-hosted · MIT · gemaakt in Turkije", v: "Je data blijft bij jou, geen vendor lock-in, volledig open source. SOC-timeline, Prometheus-metrics en Telegram-beheer in één paneel (:8443)." },
     ],
     vsNote:
-      "Eerlijke grens: op sommige vlakken zijn concurrenten duidelijk beter (rode cellen). ModSec + CRS leidt in inline-doorvoer (~14.300 EPS, gemeten) en in het direct blokkeren van het eerste verzoek; CrowdSec is sterk in zijn gedistribueerde community-signaalnetwerk en beheerde SaaS-console. Onze kracht is de integratie in één keten + ban-snelheid ~17 ms + transparant, reproduceerbaar bewijs.",
+      "Eerlijke grens: op sommige vlakken zijn concurrenten duidelijk beter (rode cellen). ModSec + CRS leidt in het direct blokkeren van het eerste verzoek; CrowdSec is sterk in zijn gedistribueerde community-signaalnetwerk en beheerde SaaS-console. Onze kracht is de integratie in één keten + ban-snelheid ~20 ms + transparant, reproduceerbaar bewijs.",
     vsLegend: "Rood = de winnaar in die rij",
     honestItems: [
       "Reactieve architectuur — het eerste verzoek kan door tot de logregel valt; we halen niet de inline-snelheid van ModSec.",
       "We absorberen geen L3/L4-DDoS — we zitten achter een CDN.",
       "Gedistribueerd botnet — ban per IP; geen CrowdSec-signaalnetwerk.",
-      "Doet: log → CRS/WAF → kernel-ban ~17 ms, bewijs-PDF, Telegram-beheer, MIT self-hosted.",
+      "Doet: log → CRS/WAF → kernel-ban ~20 ms, bewijs-PDF, Telegram-beheer, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset-ban (~15 min)",
       "eBPF-daemon, dashboard, metrics, fleet",
-      "XDR, Wasm-marketplace, LLM-Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, de Wasm-marketplace en LLM-Copilot zijn optionele lagen op lange termijn — Core is op zichzelf productieklaar.",
@@ -1829,7 +1825,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7-applicatiebescherming", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["False positive", "0,2% (gemeten)", "Hoog", "Gemiddeld", "CRS-afhankelijk"],
-      ["Ban-latency", "~17 ms", "sec–min", "sec", "Aparte integratie"],
+      ["Ban-latency", "~20 ms", "sec–min", "sec", "Aparte integratie"],
       ["Korte stabiliteit (5 min)", "PASS (0 fouten)", "—", "—", "—"],
       ["72u soak", "PASS (864/0)", "—", "—", "—"],
       ["Bewijspakket PDF+JSON", "Automatisch (14 bestanden)", "Geen", "Gedeeltelijk", "Module voor module"],
@@ -1839,7 +1835,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Installatietijd", "~15 min", "minuten", "minuten", "uren (tuning)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5.357 EPS (log-replay)", "—", "—", "~14.300 EPS inline"],
       ["Eerste verzoek direct blokkeren", "Reactief (logregel)", "Reactief", "Deels", "Inline (direct)"],
       ["Volumetrische L3/L4-scrubbing", "Geen — CDN aanbevolen", "Geen", "Geen", "Geen"],
       ["Community-signaalnetwerk", "Zelf gehost", "—", "Ja (globaal)", "—"],
@@ -1891,7 +1886,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR、Wasm 市场和 LLM Copilot 是长期可选层——Core 本身即可用于生产。",
     selectedBodies: [
-      "单一链路：nginx 日志 → OWASP CRS → 约 17 毫秒内核封禁。约 15 分钟即可投产。",
+      "单一链路：nginx 日志 → OWASP CRS → 约 20 毫秒内核封禁。约 15 分钟即可投产。",
       "机群、SOC 时间线、仪表盘——安装后在你自己服务器上的可选层。",
       "75 项自动化测试、竞品对比 PDF、72 小时 soak——与 dashboard /tests 相同的矩阵。",
       "带 tenant 标签的 Prometheus 指标、仪表盘和告警规则——自托管可观测性。",
@@ -1908,25 +1903,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban 只做封禁，ModSecurity WAF 是独立模块，CrowdSec 需要零散的技术栈。Log Guardian 将这三项工作合并到一条链路中——并附实测证据。",
     advantages: [
       { k: "一次安装，一条链路", v: "无需分别安装和集成 Fail2ban + ModSecurity + CrowdSec。nginx 日志 → WAF/CRS → 内核封禁，一个产品，约 15 分钟安装。" },
-      { k: "约 17 毫秒内核封禁", v: "从日志行到 ipset/XDP 封禁中位数约 17 毫秒。Fail2ban/CrowdSec 停留在秒—分钟级；由 5 个实测样本证明。" },
+      { k: "约 20 毫秒内核封禁", v: "从日志行到 ipset/XDP 封禁中位数约 20 毫秒。Fail2ban/CrowdSec 停留在秒—分钟级；由 21 个实测样本证明。" },
       { k: "100% 召回 + 100% CRS 对等", v: "121 条 OWASP CRS 规则，在 1500 行语料上对真实攻击 100% 召回，与 ModSec 完全对等——误报率 0.2%。" },
       { k: "覆盖分布式攻击", v: "JA3 集群检测 + 按 IP 封禁——80 IP 实测 100%。Fail2ban 是单 IP；CrowdSec 需要独立的信号网络。" },
       { k: "透明、可复现的证据", v: "75 项自动化测试 + 14 个文件的证据包 + 72 小时 soak（864 样本，0 错误）。竞品没有自动化证据或证据零散。" },
       { k: "自托管 · MIT · 土耳其制造", v: "数据留在你手中，无供应商锁定，完全开源。SOC 时间线、Prometheus 指标和 Telegram 运维统一在一个面板（:8443）。" },
     ],
     vsNote:
-      "诚实边界：在某些方面竞品明显更强（红色单元格）。ModSec + CRS 在内联吞吐（约 14,300 EPS，实测）和瞬时拦截首个请求上领先；CrowdSec 在其分布式社区信号网络和托管 SaaS 控制台上强大。我们的优势是单链路集成 + 约 17 毫秒封禁速度 + 透明可复现的证据。",
+      "诚实边界：在某些方面竞品明显更强（红色单元格）。ModSec + CRS 在瞬时拦截首个请求上领先；CrowdSec 在其分布式社区信号网络和托管 SaaS 控制台上强大。我们的优势是单链路集成 + 约 20 毫秒封禁速度 + 透明可复现的证据。",
     vsLegend: "红色 = 该行的优胜者",
     honestItems: [
       "反应式架构——在日志行落下前首个请求可能通过；我们达不到 ModSec 的内联速度。",
       "我们不吸收 L3/L4 DDoS——我们位于 CDN 之后。",
       "分布式僵尸网络——按 IP 封禁；没有 CrowdSec 信号网络。",
-      "能做：日志 → CRS/WAF → 约 17 毫秒内核封禁、证据 PDF、Telegram 运维、MIT 自托管。",
+      "能做：日志 → CRS/WAF → 约 20 毫秒内核封禁、证据 PDF、Telegram 运维、MIT 自托管。",
     ],
     layersBodies: [
       "日志 → WAF → ipset 封禁（约 15 分钟）",
       "eBPF 守护进程、仪表盘、指标、机群",
-      "XDR、Wasm 市场、LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR、Wasm 市场和 LLM Copilot 是长期可选层——Core 本身即可用于生产。",
@@ -1952,7 +1947,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 应用防护", "WAF + 咨询 + eBPF", "—", "—", "CRS 内联"],
       ["内核 / eBPF (XDP) 封禁", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["误报", "0.2%（实测）", "高", "中", "取决于 CRS"],
-      ["封禁延迟", "~17 毫秒", "秒–分", "秒", "独立集成"],
+      ["封禁延迟", "~20 毫秒", "秒–分", "秒", "独立集成"],
       ["短时稳定性（5 分钟）", "PASS（0 失败）", "—", "—", "—"],
       ["72 小时 soak", "PASS（864/0）", "—", "—", "—"],
       ["证据包 PDF+JSON", "自动（14 个文件）", "无", "部分", "逐模块"],
@@ -1962,7 +1957,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["安装时间", "~15 分钟", "分钟", "分钟", "小时（调优）"],
     ],
     vsRows1: [
-      ["内联正则 EPS", "~5,357 EPS（日志回放）", "—", "—", "~14,300 EPS 内联"],
       ["瞬时拦截首个请求", "被动（日志行）", "被动", "部分", "内联（瞬时）"],
       ["体量型 L3/L4 清洗", "无 — 建议 CDN", "无", "无", "无"],
       ["社区信号网络", "自托管", "—", "是（全球）", "—"],
@@ -2014,7 +2008,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR、Wasm マーケットプレイス、LLM Copilot は長期的なオプション層です——Core 単体で本番運用が可能です。",
     selectedBodies: [
-      "単一チェーン：nginx ログ → OWASP CRS → 約17msのカーネルBAN。約15分で本番投入。",
+      "単一チェーン：nginx ログ → OWASP CRS → 約20msのカーネルBAN。約15分で本番投入。",
       "フリート、SOC タイムライン、ダッシュボード——導入後、自前サーバー上のオプション層。",
       "75件の自動テスト、比較PDF、72時間ソーク——dashboard /tests と同じマトリクス。",
       "テナント別ラベルの Prometheus メトリクス、ダッシュボード、アラートルール——セルフホストの可観測性。",
@@ -2031,25 +2025,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban は BAN のみ、ModSecurity WAF は別モジュール、CrowdSec は断片的なスタックを要します。Log Guardian はこの3つの仕事を1本のチェーンに統合します——実測の証拠付きで。",
     advantages: [
       { k: "一度の導入、一本のチェーン", v: "Fail2ban + ModSecurity + CrowdSec を個別に導入・統合する必要はありません。nginx ログ → WAF/CRS → カーネルBAN が1製品で、約15分の導入。" },
-      { k: "約17msのカーネルBAN", v: "ログ行から ipset/XDP BAN まで中央値 約17ms。Fail2ban/CrowdSec は秒〜分単位；5件の実測サンプルで証明。" },
+      { k: "約20msのカーネルBAN", v: "ログ行から ipset/XDP BAN まで中央値 約20ms。Fail2ban/CrowdSec は秒〜分単位；21件の実測サンプルで証明。" },
       { k: "リコール100% + CRS 100%整合", v: "121件の OWASP CRS ルール、1500行コーパスで実攻撃リコール100%、ModSec と完全整合——誤検知0.2%。" },
       { k: "分散攻撃のカバー", v: "JA3 クラスタ検知 + IP ごとの BAN——80 IP のライブテストで100%。Fail2ban は単一IP；CrowdSec は別の信号ネットワークが必要。" },
       { k: "透明で再現可能な証拠", v: "75件の自動テスト + 14ファイルの証拠パック + 72時間ソーク（864サンプル、0エラー）。競合は自動証拠が無いか断片的。" },
       { k: "セルフホスト · MIT · トルコ製", v: "データは手元に残り、ベンダーロックインなし、完全オープンソース。SOC タイムライン、Prometheus メトリクス、Telegram 運用が一つのパネル（:8443）に。" },
     ],
     vsNote:
-      "正直な限界：一部の領域では競合が明らかに優れています（赤いセル）。ModSec + CRS はインラインスループット（約14,300 EPS、実測）と最初のリクエストの即時ブロックで先行；CrowdSec は分散コミュニティ信号ネットワークとマネージド SaaS コンソールが強力。私たちの強みは単一チェーン統合 + 約17msのBAN速度 + 透明で再現可能な証拠。",
+      "正直な限界：一部の領域では競合が明らかに優れています（赤いセル）。ModSec + CRS は最初のリクエストの即時ブロックで先行；CrowdSec は分散コミュニティ信号ネットワークとマネージド SaaS コンソールが強力。私たちの強みは単一チェーン統合 + 約20msのBAN速度 + 透明で再現可能な証拠。",
     vsLegend: "赤 = その行の勝者",
     honestItems: [
       "リアクティブなアーキテクチャ——ログ行が落ちるまで最初のリクエストは通り得ます；ModSec のインライン速度には及びません。",
       "L3/L4 DDoS は吸収しません——CDN の背後に置きます。",
       "分散ボットネット——IP ごとの BAN；CrowdSec の信号ネットワークはありません。",
-      "できること：ログ → CRS/WAF → 約17msのカーネルBAN、証拠PDF、Telegram 運用、MIT セルフホスト。",
+      "できること：ログ → CRS/WAF → 約20msのカーネルBAN、証拠PDF、Telegram 運用、MIT セルフホスト。",
     ],
     layersBodies: [
       "ログ → WAF → ipset BAN（約15分）",
       "eBPF デーモン、ダッシュボード、メトリクス、フリート",
-      "XDR、Wasm マーケットプレイス、LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR、Wasm マーケットプレイス、LLM Copilot は長期的なオプション層です——Core 単体で本番運用が可能です。",
@@ -2075,7 +2069,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 アプリ保護", "WAF + consult + eBPF", "—", "—", "CRS インライン"],
       ["カーネル / eBPF (XDP) BAN", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["誤検知", "0.2%（実測）", "高", "中", "CRS 依存"],
-      ["BAN レイテンシ", "~17 ms", "秒〜分", "秒", "別統合"],
+      ["BAN レイテンシ", "~20 ms", "秒〜分", "秒", "別統合"],
       ["短時間安定性（5 分）", "PASS（失敗 0）", "—", "—", "—"],
       ["72 時間ソーク", "PASS（864/0）", "—", "—", "—"],
       ["証拠パック PDF+JSON", "自動（14 ファイル）", "なし", "部分的", "モジュールごと"],
@@ -2085,7 +2079,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["セットアップ時間", "~15 分", "分", "分", "時間（チューニング）"],
     ],
     vsRows1: [
-      ["インライン正規表現 EPS", "~5,357 EPS（ログ再生）", "—", "—", "~14,300 EPS インライン"],
       ["最初のリクエストを即座にブロック", "リアクティブ（ログ行）", "リアクティブ", "一部", "インライン（即時）"],
       ["ボリューム型 L3/L4 スクラブ", "なし — CDN 推奨", "なし", "なし", "なし"],
       ["コミュニティシグナル網", "セルフホスト", "—", "あり（グローバル）", "—"],
@@ -2137,7 +2130,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm 마켓플레이스, LLM Copilot은 장기 선택 계층입니다 — Core 자체로 프로덕션 준비가 되어 있습니다.",
     selectedBodies: [
-      "단일 체인: nginx 로그 → OWASP CRS → 약 17ms 커널 밴. 약 15분 만에 프로덕션.",
+      "단일 체인: nginx 로그 → OWASP CRS → 약 20ms 커널 밴. 약 15분 만에 프로덕션.",
       "플릿, SOC 타임라인, 대시보드 — 설치 후 자체 서버에서의 선택 계층.",
       "75개 자동 테스트, 비교 PDF, 72시간 soak — dashboard /tests와 동일한 매트릭스.",
       "tenant 라벨이 붙은 Prometheus 메트릭, 대시보드, 알림 규칙 — 셀프호스팅 관측성.",
@@ -2154,25 +2147,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban은 밴만 하고, ModSecurity WAF는 별도 모듈이며, CrowdSec은 조각난 스택이 필요합니다. Log Guardian은 이 세 가지 작업을 하나의 체인으로 통합합니다 — 측정된 증거와 함께.",
     advantages: [
       { k: "한 번 설치, 하나의 체인", v: "Fail2ban + ModSecurity + CrowdSec을 따로 설치·통합하지 않습니다. nginx 로그 → WAF/CRS → 커널 밴을 한 제품으로, 약 15분 설치." },
-      { k: "약 17ms 커널 밴", v: "로그 라인에서 ipset/XDP 밴까지 중앙값 약 17ms. Fail2ban/CrowdSec은 초~분 단위; 5개 측정 샘플로 입증." },
+      { k: "약 20ms 커널 밴", v: "로그 라인에서 ipset/XDP 밴까지 중앙값 약 20ms. Fail2ban/CrowdSec은 초~분 단위; 21개 측정 샘플로 입증." },
       { k: "100% 재현율 + 100% CRS 동등성", v: "121개 OWASP CRS 규칙, 1500줄 코퍼스에서 실제 공격 100% 재현율, ModSec과 완전 동등 — 오탐 0.2%." },
       { k: "분산 공격 커버리지", v: "JA3 클러스터 탐지 + IP별 밴 — 80 IP 실시간 테스트에서 100%. Fail2ban은 단일 IP; CrowdSec은 별도 신호 네트워크가 필요." },
       { k: "투명하고 재현 가능한 증거", v: "75개 자동 테스트 + 14개 파일 증거 팩 + 72시간 soak(864 샘플, 0 오류). 경쟁사는 자동 증거가 없거나 조각나 있음." },
       { k: "셀프호스팅 · MIT · 튀르키예 제작", v: "데이터는 당신에게 남고, 벤더 종속 없음, 완전 오픈소스. SOC 타임라인, Prometheus 메트릭, Telegram 운영을 하나의 패널(:8443)에." },
     ],
     vsNote:
-      "정직한 한계: 일부 영역에서는 경쟁사가 분명히 더 낫습니다(빨간 셀). ModSec + CRS는 인라인 처리량(약 14,300 EPS, 측정)과 첫 요청 즉시 차단에서 앞서고, CrowdSec은 분산 커뮤니티 신호 네트워크와 관리형 SaaS 콘솔에서 강합니다. 우리의 강점은 단일 체인 통합 + 약 17ms 밴 속도 + 투명하고 재현 가능한 증거.",
+      "정직한 한계: 일부 영역에서는 경쟁사가 분명히 더 낫습니다(빨간 셀). ModSec + CRS는 첫 요청 즉시 차단에서 앞서고, CrowdSec은 분산 커뮤니티 신호 네트워크와 관리형 SaaS 콘솔에서 강합니다. 우리의 강점은 단일 체인 통합 + 약 20ms 밴 속도 + 투명하고 재현 가능한 증거.",
     vsLegend: "빨강 = 해당 행의 승자",
     honestItems: [
       "반응형 아키텍처 — 로그 라인이 떨어질 때까지 첫 요청은 통과할 수 있음; ModSec의 인라인 속도에는 미치지 못함.",
       "L3/L4 DDoS는 흡수하지 않음 — CDN 뒤에 위치.",
       "분산 봇넷 — IP별 밴; CrowdSec 신호 네트워크 없음.",
-      "수행: 로그 → CRS/WAF → 약 17ms 커널 밴, 증거 PDF, Telegram 운영, MIT 셀프호스팅.",
+      "수행: 로그 → CRS/WAF → 약 20ms 커널 밴, 증거 PDF, Telegram 운영, MIT 셀프호스팅.",
     ],
     layersBodies: [
       "로그 → WAF → ipset 밴(약 15분)",
       "eBPF 데몬, 대시보드, 메트릭, 플릿",
-      "XDR, Wasm 마켓플레이스, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm 마켓플레이스, LLM Copilot은 장기 선택 계층입니다 — Core 자체로 프로덕션 준비가 되어 있습니다.",
@@ -2198,7 +2191,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 애플리케이션 보호", "WAF + consult + eBPF", "—", "—", "CRS 인라인"],
       ["커널 / eBPF (XDP) 밴", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["오탐", "0.2%(측정됨)", "높음", "중간", "CRS 의존"],
-      ["밴 지연", "~17 ms", "초~분", "초", "별도 통합"],
+      ["밴 지연", "~20 ms", "초~분", "초", "별도 통합"],
       ["짧은 안정성(5분)", "PASS(실패 0)", "—", "—", "—"],
       ["72시간 soak", "PASS(864/0)", "—", "—", "—"],
       ["증거 패키지 PDF+JSON", "자동(14개 파일)", "없음", "부분", "모듈별"],
@@ -2208,7 +2201,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["설치 시간", "~15분", "분", "분", "시간(튜닝)"],
     ],
     vsRows1: [
-      ["인라인 정규식 EPS", "~5,357 EPS(로그 재생)", "—", "—", "~14,300 EPS 인라인"],
       ["첫 요청을 즉시 차단", "반응형(로그 라인)", "반응형", "일부", "인라인(즉시)"],
       ["대용량 L3/L4 스크러빙", "없음 — CDN 권장", "없음", "없음", "없음"],
       ["커뮤니티 신호 네트워크", "셀프 호스팅", "—", "예(글로벌)", "—"],
@@ -2284,7 +2276,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       { k: "ذاتي الاستضافة · MIT · صُنع في تركيا", v: "بياناتك تبقى لديك، بلا احتكار مورّد، مفتوح المصدر بالكامل. خط زمني SOC ومقاييس Prometheus وتشغيل Telegram في لوحة واحدة (:8443)." },
     ],
     vsNote:
-      "حدّ صادق: في بعض المجالات المنافسون أفضل بوضوح (الخلايا الحمراء). يتصدّر ModSec + CRS في الإنتاجية المضمّنة (نحو 14,300 EPS، مقاسة) وفي الحظر الفوري لأول طلب؛ وCrowdSec قوي في شبكة إشارات المجتمع الموزّعة وكونسول SaaS المُدار. قوّتنا هي التكامل في سلسلة واحدة + سرعة حظر نحو 17 مللي ثانية + دليل شفّاف قابل لإعادة الإنتاج.",
+      "حدّ صادق: في بعض المجالات المنافسون أفضل بوضوح (الخلايا الحمراء). يتصدّر ModSec + CRS في الحظر الفوري لأول طلب؛ وCrowdSec قوي في شبكة إشارات المجتمع الموزّعة وكونسول SaaS المُدار. قوّتنا هي التكامل في سلسلة واحدة + سرعة حظر نحو 20 مللي ثانية + دليل شفّاف قابل لإعادة الإنتاج.",
     vsLegend: "الأحمر = الفائز في ذلك الصف",
     honestItems: [
       "بنية تفاعلية — قد يمرّ الطلب الأول حتى يسقط سطر السجل؛ لسنا بسرعة ModSec المضمّنة.",
@@ -2295,7 +2287,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     layersBodies: [
       "سجل ← WAF ← حظر ipset (نحو 15 دقيقة)",
       "خفيّ eBPF، لوحة، مقاييس، أسطول",
-      "XDR، سوق Wasm، مساعد LLM",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR وسوق Wasm ومساعد LLM طبقات اختيارية طويلة المدى — أما Core فجاهز للإنتاج بمفرده.",
@@ -2321,7 +2313,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["حماية تطبيقات L7", "WAF + استشارة + eBPF", "—", "—", "CRS مضمّن"],
       ["حظر النواة / eBPF (XDP)", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["إيجابية كاذبة", "0.2% (مقاس)", "مرتفع", "متوسط", "حسب CRS"],
-      ["زمن الحظر", "~17 ms", "ثانية–دقيقة", "ثانية", "تكامل منفصل"],
+      ["زمن الحظر", "~20 ms", "ثانية–دقيقة", "ثانية", "تكامل منفصل"],
       ["استقرار قصير (5 دقائق)", "PASS (0 فشل)", "—", "—", "—"],
       ["soak 72 ساعة", "PASS (864/0)", "—", "—", "—"],
       ["حزمة أدلة PDF+JSON", "تلقائي (14 ملفًا)", "لا شيء", "جزئي", "وحدة بوحدة"],
@@ -2331,7 +2323,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["زمن التثبيت", "~15 دقيقة", "دقائق", "دقائق", "ساعات (ضبط)"],
     ],
     vsRows1: [
-      ["EPS regex مضمّن", "~5,357 EPS (إعادة تشغيل السجل)", "—", "—", "~14,300 EPS مضمّن"],
       ["حظر أول طلب فورًا", "تفاعلي (سطر سجل)", "تفاعلي", "جزئيًا", "مضمّن (فوري)"],
       ["تنظيف حجمي L3/L4", "لا شيء — يُنصح بـ CDN", "لا شيء", "لا شيء", "لا شيء"],
       ["شبكة إشارات مجتمعية", "استضافة ذاتية", "—", "نعم (عالمي)", "—"],
@@ -2383,7 +2374,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm marketi və LLM Copilot uzunmüddətli opsional qatlardır — Core tək başına istehsala hazırdır.",
     selectedBodies: [
-      "Tək zəncir: nginx logu → OWASP CRS → ~17 ms kernel ban. ~15 dəqiqəyə istehsalda.",
+      "Tək zəncir: nginx logu → OWASP CRS → ~20 ms kernel ban. ~15 dəqiqəyə istehsalda.",
       "Filo, SOC zaman xətti, panellər — quraşdırmadan sonra öz serverinizdə opsional qat.",
       "75 avtomatik test, müqayisə PDF-i, 72 saat soak — dashboard /tests ilə eyni matris.",
       "Tenant etiketli Prometheus metrikləri, panellər və alert qaydaları — self-hosted müşahidə.",
@@ -2400,25 +2391,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban yalnız banlayır, ModSecurity WAF ayrıca moduldur, CrowdSec parçalı stek tələb edir. Log Guardian bu üç işi bir zəncirdə birləşdirir — ölçülmüş sübutla.",
     advantages: [
       { k: "Bir quraşdırma, bir zəncir", v: "Fail2ban + ModSecurity + CrowdSec-i ayrıca quraşdırıb inteqrasiya etmirsiniz. nginx logu → WAF/CRS → kernel ban tək məhsulda, ~15 dəq quraşdırma." },
-      { k: "~17 ms kernel ban", v: "Log sətrindən ipset/XDP bana median ~17 ms. Fail2ban/CrowdSec saniyə–dəqiqə səviyyəsində qalır; 5 ölçülmüş nümunə ilə sübut olunub." },
+      { k: "~20 ms kernel ban", v: "Log sətrindən ipset/XDP bana median ~20 ms. Fail2ban/CrowdSec saniyə–dəqiqə səviyyəsində qalır; 21 ölçülmüş nümunə ilə sübut olunub." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qaydası, 1500 sətirlik korpusda real hücum recall 100% və ModSec ilə tam paritet — 0.2% yanlış pozitivdə." },
       { k: "Paylanmış hücum əhatəsi", v: "JA3 klaster aşkarlanması + IP başına ban — 80 IP canlı testdə 100%. Fail2ban tək IP-lidir; CrowdSec ayrıca siqnal şəbəkəsi tələb edir." },
       { k: "Şəffaf, təkrar istehsal edilə bilən sübut", v: "75 avtomatik test + 14 fayllıq sübut paketi + 72 saat soak (864 nümunə, 0 xəta). Rəqiblərdə avtomatik sübut yoxdur və ya parçalıdır." },
       { k: "Self-hosted · MIT · Türkiyə istehsalı", v: "Məlumatınız sizdə qalır, vendor asılılığı yoxdur, tam açıq mənbə. SOC zaman xətti, Prometheus metrikləri və Telegram idarəetməsi bir paneldə (:8443)." },
     ],
     vsNote:
-      "Dürüst hədd: bəzi sahələrdə rəqiblər açıq şəkildə daha yaxşıdır (qırmızı xanalar). ModSec + CRS inline ötürmə qabiliyyətində (~14.300 EPS, ölçülmüş) və ilk sorğunun ani bloklanmasında öndədir; CrowdSec paylanmış icma siqnal şəbəkəsində və idarə olunan SaaS konsolunda güclüdür. Bizim gücümüz tək zəncir inteqrasiyası + ~17 ms ban sürəti + şəffaf, təkrar istehsal edilə bilən sübutdur.",
+      "Dürüst hədd: bəzi sahələrdə rəqiblər açıq şəkildə daha yaxşıdır (qırmızı xanalar). ModSec + CRS ilk sorğunun ani bloklanmasında öndədir; CrowdSec paylanmış icma siqnal şəbəkəsində və idarə olunan SaaS konsolunda güclüdür. Bizim gücümüz tək zəncir inteqrasiyası + ~20 ms ban sürəti + şəffaf, təkrar istehsal edilə bilən sübutdur.",
     vsLegend: "Qırmızı = həmin sətirdə qalib",
     honestItems: [
       "Reaktiv memarlıq — log sətri düşənə qədər ilk sorğu keçə bilər; ModSec-in inline sürətində deyilik.",
       "L3/L4 DDoS-u udmuruq — CDN arxasında dayanırıq.",
       "Paylanmış botnet — IP başına ban; CrowdSec siqnal şəbəkəsi yoxdur.",
-      "Edir: log → CRS/WAF → ~17 ms kernel ban, sübut PDF-i, Telegram idarəetmə, MIT self-hosted.",
+      "Edir: log → CRS/WAF → ~20 ms kernel ban, sübut PDF-i, Telegram idarəetmə, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset ban (~15 dəq)",
       "eBPF demonu, panel, metriklər, filo",
-      "XDR, Wasm marketi, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm marketi və LLM Copilot uzunmüddətli opsional qatlardır — Core tək başına istehsala hazırdır.",
@@ -2444,7 +2435,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 tətbiq qoruması", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Yanlış pozitiv", "0,2% (ölçülmüş)", "Yüksək", "Orta", "CRS-dən asılı"],
-      ["Ban gecikməsi", "~17 ms", "san–dəq", "san", "Ayrı inteqrasiya"],
+      ["Ban gecikməsi", "~20 ms", "san–dəq", "san", "Ayrı inteqrasiya"],
       ["Qısa sabitlik (5 dəq)", "PASS (0 uğursuzluq)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Sübut paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoxdur", "Qismən", "Modul-modul"],
@@ -2454,7 +2445,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Quraşdırma vaxtı", "~15 dəq", "dəqiqə", "dəqiqə", "saat (tənzimləmə)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5.357 EPS (log replay)", "—", "—", "~14.300 EPS inline"],
       ["İlk sorğunu dərhal blokla", "Reaktiv (log sətri)", "Reaktiv", "Qismən", "Inline (dərhal)"],
       ["Volumetrik L3/L4 scrub", "Yoxdur — CDN tövsiyə", "Yoxdur", "Yoxdur", "Yoxdur"],
       ["İcma siqnal şəbəkəsi", "Öz-hostinq", "—", "Bəli (qlobal)", "—"],
@@ -2506,7 +2496,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркеті және LLM Copilot — ұзақ мерзімді қосымша қабаттар; Core өздігінен өнімге дайын.",
     selectedBodies: [
-      "Бір тізбек: nginx логы → OWASP CRS → ~17 мс kernel ban. ~15 минутта өнімде.",
+      "Бір тізбек: nginx логы → OWASP CRS → ~20 мс kernel ban. ~15 минутта өнімде.",
       "Флот, SOC уақыт сызығы, панельдер — орнатудан кейін өз серверіңіздегі қосымша қабат.",
       "75 автоматты тест, салыстыру PDF, 72 сағат soak — dashboard /tests-пен бірдей матрица.",
       "Tenant белгісі бар Prometheus метрикалары, панельдер және ескерту ережелері — self-hosted бақылау.",
@@ -2523,25 +2513,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban тек бан салады, ModSecurity WAF бөлек модуль, CrowdSec бөлшек стек қажет етеді. Log Guardian осы үш жұмысты бір тізбекте біріктіреді — өлшенген дәлелмен.",
     advantages: [
       { k: "Бір орнату, бір тізбек", v: "Fail2ban + ModSecurity + CrowdSec-ті бөлек орнатып, біріктірмейсіз. nginx логы → WAF/CRS → kernel ban бір өнімде, ~15 мин орнату." },
-      { k: "~17 мс kernel ban", v: "Лог жолынан ipset/XDP банға медиана ~17 мс. Fail2ban/CrowdSec секунд–минут деңгейінде қалады; 5 өлшенген үлгімен дәлелденген." },
+      { k: "~20 мс kernel ban", v: "Лог жолынан ipset/XDP банға медиана ~20 мс. Fail2ban/CrowdSec секунд–минут деңгейінде қалады; 21 өлшенген үлгімен дәлелденген." },
       { k: "100% recall + 100% CRS паритеті", v: "121 OWASP CRS ережесі, 1500 жолдық корпуста нақты шабуыл recall 100% және ModSec-пен толық паритет — 0.2% жалған позитивте." },
       { k: "Таратылған шабуылды қамту", v: "JA3 кластерін анықтау + IP бойынша бан — 80 IP тікелей тесте 100%. Fail2ban жалғыз IP-лік; CrowdSec бөлек сигнал желісін қажет етеді." },
       { k: "Ашық, қайта жаңғыртылатын дәлел", v: "75 автоматты тест + 14 файлдық дәлел пакеті + 72 сағат soak (864 үлгі, 0 қате). Бәсекелестерде автоматты дәлел жоқ немесе бөлшектелген." },
       { k: "Self-hosted · MIT · Түркияда жасалған", v: "Деректеріңіз сізде қалады, вендорға тәуелділік жоқ, толық ашық код. SOC уақыт сызығы, Prometheus метрикалары және Telegram басқаруы бір панельде (:8443)." },
     ],
     vsNote:
-      "Адал шек: кейбір салаларда бәсекелестер анық жақсырақ (қызыл ұяшықтар). ModSec + CRS inline өткізу қабілетінде (~14 300 EPS, өлшенген) және бірінші сұранысты лезде бұғаттауда алда; CrowdSec таратылған қауымдастық сигнал желісінде және басқарылатын SaaS консолінде мықты. Біздің күшіміз — бір тізбек интеграциясы + ~17 мс бан жылдамдығы + ашық, қайта жаңғыртылатын дәлел.",
+      "Адал шек: кейбір салаларда бәсекелестер анық жақсырақ (қызыл ұяшықтар). ModSec + CRS бірінші сұранысты лезде бұғаттауда алда; CrowdSec таратылған қауымдастық сигнал желісінде және басқарылатын SaaS консолінде мықты. Біздің күшіміз — бір тізбек интеграциясы + ~20 мс бан жылдамдығы + ашық, қайта жаңғыртылатын дәлел.",
     vsLegend: "Қызыл = сол жолдағы жеңімпаз",
     honestItems: [
       "Реактивті архитектура — лог жолы түскенше бірінші сұраныс өтуі мүмкін; біз ModSec-тің inline жылдамдығында емеспіз.",
       "L3/L4 DDoS-ты сіңірмейміз — CDN артында тұрамыз.",
       "Таратылған ботнет — IP бойынша бан; CrowdSec сигнал желісі жоқ.",
-      "Істейді: лог → CRS/WAF → ~17 мс kernel ban, дәлел PDF, Telegram басқару, MIT self-hosted.",
+      "Істейді: лог → CRS/WAF → ~20 мс kernel ban, дәлел PDF, Telegram басқару, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset бан (~15 мин)",
       "eBPF демоны, панель, метрикалар, флот",
-      "XDR, Wasm маркеті, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркеті және LLM Copilot — ұзақ мерзімді қосымша қабаттар; Core өздігінен өнімге дайын.",
@@ -2567,7 +2557,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 қолданба қорғауы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Жалған позитив", "0,2% (өлшенген)", "Жоғары", "Орташа", "CRS-ке тәуелді"],
-      ["Бан кідірісі", "~17 мс", "сек–мин", "сек", "Бөлек интеграция"],
+      ["Бан кідірісі", "~20 мс", "сек–мин", "сек", "Бөлек интеграция"],
       ["Қысқа тұрақтылық (5 мин)", "PASS (0 сәтсіздік)", "—", "—", "—"],
       ["72с soak", "PASS (864/0)", "—", "—", "—"],
       ["Дәлел пакеті PDF+JSON", "Автоматты (14 файл)", "Жоқ", "Ішінара", "Модуль-модуль"],
@@ -2577,7 +2567,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Орнату уақыты", "~15 мин", "минут", "минут", "сағат (баптау)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог қайталау)", "—", "—", "~14 300 EPS inline"],
       ["Бірінші сұрауды бірден бөгеу", "Реактивті (лог жолы)", "Реактивті", "Ішінара", "Inline (лезде)"],
       ["Көлемдік L3/L4 тазалау", "Жоқ — CDN ұсынылады", "Жоқ", "Жоқ", "Жоқ"],
       ["Қауымдастық сигнал желісі", "Өзін-өзі хостинг", "—", "Иә (жаһандық)", "—"],
@@ -2629,7 +2618,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm marketi va LLM Copilot — uzoq muddatli ixtiyoriy qatlamlar; Core o'zi ishlab chiqarishga tayyor.",
     selectedBodies: [
-      "Yagona zanjir: nginx logi → OWASP CRS → ~17 ms kernel ban. ~15 daqiqada ishlab chiqarishda.",
+      "Yagona zanjir: nginx logi → OWASP CRS → ~20 ms kernel ban. ~15 daqiqada ishlab chiqarishda.",
       "Flot, SOC vaqt chizig'i, panellar — o'rnatishdan keyin o'z serveringizdagi ixtiyoriy qatlam.",
       "75 avtomatik test, taqqoslash PDF, 72 soat soak — dashboard /tests bilan bir xil matritsa.",
       "Tenant yorlig'li Prometheus metrikalar, panellar va alert qoidalari — self-hosted kuzatuv.",
@@ -2646,25 +2635,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban faqat ban qiladi, ModSecurity WAF alohida modul, CrowdSec bo'lak stek talab qiladi. Log Guardian bu uch ishni bitta zanjirda birlashtiradi — o'lchangan dalil bilan.",
     advantages: [
       { k: "Bitta o'rnatish, bitta zanjir", v: "Fail2ban + ModSecurity + CrowdSec'ni alohida o'rnatib, integratsiya qilmaysiz. nginx logi → WAF/CRS → kernel ban bitta mahsulotda, ~15 daq o'rnatish." },
-      { k: "~17 ms kernel ban", v: "Log qatoridan ipset/XDP banga median ~17 ms. Fail2ban/CrowdSec soniya–daqiqa darajasida qoladi; 5 o'lchangan namuna bilan isbotlangan." },
+      { k: "~20 ms kernel ban", v: "Log qatoridan ipset/XDP banga median ~20 ms. Fail2ban/CrowdSec soniya–daqiqa darajasida qoladi; 21 o'lchangan namuna bilan isbotlangan." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qoidasi, 1500 qatorli korpusda haqiqiy hujum recall 100% va ModSec bilan to'liq paritet — 0.2% noto'g'ri pozitivda." },
       { k: "Taqsimlangan hujum qamrovi", v: "JA3 klaster aniqlash + IP bo'yicha ban — 80 IP jonli testda 100%. Fail2ban yagona IP'li; CrowdSec alohida signal tarmog'ini talab qiladi." },
       { k: "Shaffof, qayta ishlab chiqariladigan dalil", v: "75 avtomatik test + 14 fayllik dalil to'plami + 72 soat soak (864 namuna, 0 xato). Raqiblarda avtomatik dalil yo'q yoki bo'lak-bo'lak." },
       { k: "Self-hosted · MIT · Turkiyada ishlab chiqilgan", v: "Ma'lumotingiz sizda qoladi, vendor qaramligi yo'q, to'liq ochiq kod. SOC vaqt chizig'i, Prometheus metrikalari va Telegram boshqaruvi bitta panelda (:8443)." },
     ],
     vsNote:
-      "Halol chegara: ba'zi sohalarda raqiblar aniq yaxshiroq (qizil kataklar). ModSec + CRS inline o'tkazuvchanlikda (~14 300 EPS, o'lchangan) va birinchi so'rovni bir zumda bloklashda oldinda; CrowdSec taqsimlangan hamjamiyat signal tarmog'ida va boshqariladigan SaaS konsolida kuchli. Bizning kuchimiz — yagona zanjir integratsiyasi + ~17 ms ban tezligi + shaffof, qayta ishlab chiqariladigan dalil.",
+      "Halol chegara: ba'zi sohalarda raqiblar aniq yaxshiroq (qizil kataklar). ModSec + CRS birinchi so'rovni bir zumda bloklashda oldinda; CrowdSec taqsimlangan hamjamiyat signal tarmog'ida va boshqariladigan SaaS konsolida kuchli. Bizning kuchimiz — yagona zanjir integratsiyasi + ~20 ms ban tezligi + shaffof, qayta ishlab chiqariladigan dalil.",
     vsLegend: "Qizil = shu qatordagi g'olib",
     honestItems: [
       "Reaktiv arxitektura — log qatori tushguncha birinchi so'rov o'tishi mumkin; biz ModSec'ning inline tezligida emasmiz.",
       "L3/L4 DDoS'ni yutmaymiz — CDN orqasida turamiz.",
       "Taqsimlangan botnet — IP bo'yicha ban; CrowdSec signal tarmog'i yo'q.",
-      "Qiladi: log → CRS/WAF → ~17 ms kernel ban, dalil PDF, Telegram boshqaruvi, MIT self-hosted.",
+      "Qiladi: log → CRS/WAF → ~20 ms kernel ban, dalil PDF, Telegram boshqaruvi, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset ban (~15 daq)",
       "eBPF demoni, panel, metrikalar, flot",
-      "XDR, Wasm marketi, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm marketi va LLM Copilot — uzoq muddatli ixtiyoriy qatlamlar; Core o'zi ishlab chiqarishga tayyor.",
@@ -2690,7 +2679,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 ilova himoyasi", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Yadro / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Noto'g'ri pozitiv", "0,2% (o'lchangan)", "Yuqori", "O'rta", "CRS-ga bog'liq"],
-      ["Ban kechikishi", "~17 ms", "son–daq", "son", "Alohida integratsiya"],
+      ["Ban kechikishi", "~20 ms", "son–daq", "son", "Alohida integratsiya"],
       ["Qisqa barqarorlik (5 daq)", "PASS (0 nosozlik)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Dalil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yo'q", "Qisman", "Modul-modul"],
@@ -2700,7 +2689,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["O'rnatish vaqti", "~15 daq", "daqiqa", "daqiqa", "soat (sozlash)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
       ["Birinchi so'rovni darhol bloklash", "Reaktiv (log qatori)", "Reaktiv", "Qisman", "Inline (darhol)"],
       ["Hajmli L3/L4 tozalash", "Yo'q — CDN tavsiya", "Yo'q", "Yo'q", "Yo'q"],
       ["Jamoa signal tarmog'i", "O'zini xosting", "—", "Ha (global)", "—"],
@@ -2752,7 +2740,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркети жана LLM Copilot — узак мөөнөттүү кошумча катмарлар; Core өзү өндүрүшкө даяр.",
     selectedBodies: [
-      "Бирдиктүү чынжыр: nginx логу → OWASP CRS → ~17 мс kernel ban. ~15 мүнөттө өндүрүштө.",
+      "Бирдиктүү чынжыр: nginx логу → OWASP CRS → ~20 мс kernel ban. ~15 мүнөттө өндүрүштө.",
       "Флот, SOC убакыт сызыгы, панелдер — орнотуудан кийин өз серверыңыздагы кошумча катмар.",
       "75 автоматтык тест, салыштыруу PDF, 72 саат soak — dashboard /tests менен бирдей матрица.",
       "Tenant белгиси бар Prometheus метрикалары, панелдер жана эскертүү эрежелери — self-hosted байкоо.",
@@ -2769,25 +2757,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban бир гана ban салат, ModSecurity WAF өзүнчө модуль, CrowdSec бөлүк стек талап кылат. Log Guardian бул үч ишти бир чынжырда бириктирет — өлчөнгөн далил менен.",
     advantages: [
       { k: "Бир орнотуу, бир чынжыр", v: "Fail2ban + ModSecurity + CrowdSec'ти өзүнчө орнотуп, интеграциялабайсыз. nginx логу → WAF/CRS → kernel ban бир продуктта, ~15 мүн орнотуу." },
-      { k: "~17 мс kernel ban", v: "Лог сабынан ipset/XDP банга медиана ~17 мс. Fail2ban/CrowdSec секунд–мүнөт деңгээлинде калат; 5 өлчөнгөн үлгү менен далилденген." },
+      { k: "~20 мс kernel ban", v: "Лог сабынан ipset/XDP банга медиана ~20 мс. Fail2ban/CrowdSec секунд–мүнөт деңгээлинде калат; 21 өлчөнгөн үлгү менен далилденген." },
       { k: "100% recall + 100% CRS паритети", v: "121 OWASP CRS эрежеси, 1500 саптык корпуста чыныгы чабуул recall 100% жана ModSec менен толук паритет — 0.2% жалган позитивде." },
       { k: "Бөлүштүрүлгөн чабуулду камтуу", v: "JA3 кластерин аныктоо + IP боюнча ban — 80 IP түз тестте 100%. Fail2ban жалгыз IP'лик; CrowdSec өзүнчө сигнал тармагын талап кылат." },
       { k: "Ачык, кайра чыгарылуучу далил", v: "75 автоматтык тест + 14 файлдык далил топтому + 72 саат soak (864 үлгү, 0 ката). Атаандаштарда автоматтык далил жок же бөлүк-бөлүк." },
       { k: "Self-hosted · MIT · Түркияда жасалган", v: "Маалыматыңыз сизде калат, вендорго көз карандылык жок, толук ачык код. SOC убакыт сызыгы, Prometheus метрикалары жана Telegram башкаруусу бир панелде (:8443)." },
     ],
     vsNote:
-      "Чынчыл чек: кээ бир тармактарда атаандаштар ачык жакшыраак (кызыл уячалар). ModSec + CRS inline өткөрүү жөндөмдүүлүгүндө (~14 300 EPS, өлчөнгөн) жана биринчи сурамды заматта бөгөттөөдө алдыда; CrowdSec бөлүштүрүлгөн коомдук сигнал тармагында жана башкарылуучу SaaS консолунда күчтүү. Биздин күчүбүз — бир чынжыр интеграциясы + ~17 мс ban ылдамдыгы + ачык, кайра чыгарылуучу далил.",
+      "Чынчыл чек: кээ бир тармактарда атаандаштар ачык жакшыраак (кызыл уячалар). ModSec + CRS биринчи сурамды заматта бөгөттөөдө алдыда; CrowdSec бөлүштүрүлгөн коомдук сигнал тармагында жана башкарылуучу SaaS консолунда күчтүү. Биздин күчүбүз — бир чынжыр интеграциясы + ~20 мс ban ылдамдыгы + ачык, кайра чыгарылуучу далил.",
     vsLegend: "Кызыл = ошол саптагы жеңүүчү",
     honestItems: [
       "Реактивдүү архитектура — лог сабы түшкөнгө чейин биринчи сурам өтүшү мүмкүн; биз ModSec'тин inline ылдамдыгында эмеспиз.",
       "L3/L4 DDoS'ту сиңирбейбиз — CDN артында турабыз.",
       "Бөлүштүрүлгөн ботнет — IP боюнча ban; CrowdSec сигнал тармагы жок.",
-      "Кылат: лог → CRS/WAF → ~17 мс kernel ban, далил PDF, Telegram башкаруу, MIT self-hosted.",
+      "Кылат: лог → CRS/WAF → ~20 мс kernel ban, далил PDF, Telegram башкаруу, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset ban (~15 мүн)",
       "eBPF демону, панель, метрикалар, флот",
-      "XDR, Wasm маркети, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркети жана LLM Copilot — узак мөөнөттүү кошумча катмарлар; Core өзү өндүрүшкө даяр.",
@@ -2813,7 +2801,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 колдонмо коргоосу", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Жалган позитив", "0,2% (өлчөнгөн)", "Жогорку", "Орточо", "CRS-ке көз каранды"],
-      ["Бан кечигүүсү", "~17 мс", "сек–мүн", "сек", "Өзүнчө интеграция"],
+      ["Бан кечигүүсү", "~20 мс", "сек–мүн", "сек", "Өзүнчө интеграция"],
       ["Кыска туруктуулук (5 мүн)", "PASS (0 ката)", "—", "—", "—"],
       ["72с soak", "PASS (864/0)", "—", "—", "—"],
       ["Далил топтому PDF+JSON", "Автоматтык (14 файл)", "Жок", "Жарым-жартылай", "Модуль-модуль"],
@@ -2823,7 +2811,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Орнотуу убактысы", "~15 мүн", "мүнөт", "мүнөт", "саат (тууралоо)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог кайталоо)", "—", "—", "~14 300 EPS inline"],
       ["Биринчи сурамды дароо бөгөө", "Реактивдүү (лог сабы)", "Реактивдүү", "Жарым-жартылай", "Inline (дароо)"],
       ["Көлөмдүк L3/L4 тазалоо", "Жок — CDN сунушталат", "Жок", "Жок", "Жок"],
       ["Коомчулук сигнал тармагы", "Өз-хостинг", "—", "Ооба (глобалдык)", "—"],
@@ -2875,7 +2862,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm marketi we LLM Copilot uzak möhletli goşmaça gatlaklardyr — Core ýeke özi önümçilige taýýar.",
     selectedBodies: [
-      "Ýeke zynjyr: nginx logy → OWASP CRS → ~17 ms kernel ban. ~15 minutda önümçilikde.",
+      "Ýeke zynjyr: nginx logy → OWASP CRS → ~20 ms kernel ban. ~15 minutda önümçilikde.",
       "Flot, SOC wagt çyzygy, panellar — gurnamadan soň öz serweriňizdäki goşmaça gatlak.",
       "75 awtomatik test, deňeşdirme PDF, 72 sagat soak — dashboard /tests bilen birmeňzeş matrisa.",
       "Tenant belgili Prometheus metrikalary, panellar we duýduryş düzgünleri — self-hosted gözegçilik.",
@@ -2892,25 +2879,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban diňe ban edýär, ModSecurity WAF aýratyn modul, CrowdSec bölek stek talap edýär. Log Guardian bu üç işi bir zynjyrda birleşdirýär — ölçelen subutnama bilen.",
     advantages: [
       { k: "Bir gurnama, bir zynjyr", v: "Fail2ban + ModSecurity + CrowdSec-i aýratyn gurnap, birleşdirmeýärsiňiz. nginx logy → WAF/CRS → kernel ban bir önümde, ~15 min gurnama." },
-      { k: "~17 ms kernel ban", v: "Log setirinden ipset/XDP bana mediana ~17 ms. Fail2ban/CrowdSec sekunt–minut derejesinde galýar; 5 ölçelen nusga bilen subut edildi." },
+      { k: "~20 ms kernel ban", v: "Log setirinden ipset/XDP bana mediana ~20 ms. Fail2ban/CrowdSec sekunt–minut derejesinde galýar; 5 ölçelen nusga bilen subut edildi." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS düzgüni, 1500 setirli korpusda hakyky hüjüm recall 100% we ModSec bilen doly paritet — 0.2% ýalňyş pozitiwde." },
       { k: "Paýlanan hüjümi gurşap almak", v: "JA3 klaster ýüze çykarmak + IP boýunça ban — 80 IP göni testde 100%. Fail2ban ýeke IP'li; CrowdSec aýratyn signal ulgamyny talap edýär." },
       { k: "Aýdyň, gaýtadan öndürilýän subutnama", v: "75 awtomatik test + 14 faýlly subutnama paketi + 72 sagat soak (864 nusga, 0 ýalňyşlyk). Bäsdeşlerde awtomatik subutnama ýok ýa-da bölek-bölek." },
       { k: "Self-hosted · MIT · Türkiýede öndürilen", v: "Maglumatyňyz sizde galýar, wendor garaşlylygy ýok, doly açyk kod. SOC wagt çyzygy, Prometheus metrikalary we Telegram dolandyryşy bir panelde (:8443)." },
     ],
     vsNote:
-      "Dogruçyl çäk: käbir ugurlarda bäsdeşler aýdyň has gowy (gyzyl öýjükler). ModSec + CRS inline geçirijilikde (~14 300 EPS, ölçelen) we ilkinji soragy derrew bloklamakda öňde; CrowdSec paýlanan jemgyýet signal ulgamynda we dolandyrylýan SaaS konsolynda güýçli. Biziň güýjümiz — ýeke zynjyr integrasiýasy + ~17 ms ban tizligi + aýdyň, gaýtadan öndürilýän subutnama.",
+      "Dogruçyl çäk: käbir ugurlarda bäsdeşler aýdyň has gowy (gyzyl öýjükler). ModSec + CRS ilkinji soragy derrew bloklamakda öňde; CrowdSec paýlanan jemgyýet signal ulgamynda we dolandyrylýan SaaS konsolynda güýçli. Biziň güýjümiz — ýeke zynjyr integrasiýasy + ~20 ms ban tizligi + aýdyň, gaýtadan öndürilýän subutnama.",
     vsLegend: "Gyzyl = şol setirdäki ýeňiji",
     honestItems: [
       "Reaktiw arhitektura — log setiri düşýänçä ilkinji sorag geçip biler; biz ModSec-iň inline tizliginde däl.",
       "L3/L4 DDoS-y siňdirmeýäris — CDN arkasynda durýarys.",
       "Paýlanan botnet — IP boýunça ban; CrowdSec signal ulgamy ýok.",
-      "Edýär: log → CRS/WAF → ~17 ms kernel ban, subutnama PDF, Telegram dolandyryş, MIT self-hosted.",
+      "Edýär: log → CRS/WAF → ~20 ms kernel ban, subutnama PDF, Telegram dolandyryş, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset ban (~15 min)",
       "eBPF demony, panel, metrikalar, flot",
-      "XDR, Wasm marketi, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm marketi we LLM Copilot uzak möhletli goşmaça gatlaklardyr — Core ýeke özi önümçilige taýýar.",
@@ -2936,7 +2923,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 programma goragy", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ýadro / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Ýalňyş pozitiw", "0,2% (ölçelen)", "Ýokary", "Orta", "CRS-e bagly"],
-      ["Ban gijikdirmesi", "~17 ms", "sek–min", "sek", "Aýry integrasiýa"],
+      ["Ban gijikdirmesi", "~20 ms", "sek–min", "sek", "Aýry integrasiýa"],
       ["Gysga durnuklylyk (5 min)", "PASS (0 şowsuzlyk)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Subutnama paketi PDF+JSON", "Awtomatik (14 faýl)", "Ýok", "Kismen", "Modul-modul"],
@@ -2946,7 +2933,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Gurnama wagty", "~15 min", "minut", "minut", "sagat (sazlama)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
       ["Ilkinji islegi derrew blokla", "Reaktiw (log setiri)", "Reaktiw", "Kismen", "Inline (derrew)"],
       ["Wolýumetrik L3/L4 arassalaýyş", "Ýok — CDN maslahat berilýär", "Ýok", "Ýok", "Ýok"],
       ["Jemgyýet signal ulgamy", "Öz-hosting", "—", "Hawa (global)", "—"],
@@ -2998,7 +2984,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркеты һәм LLM Copilot — озын сроклы өстәмә катламнар; Core үзе генә җитештерүгә әзер.",
     selectedBodies: [
-      "Бер чылбыр: nginx логы → OWASP CRS → ~17 мс kernel ban. ~15 минутта җитештерүдә.",
+      "Бер чылбыр: nginx логы → OWASP CRS → ~20 мс kernel ban. ~15 минутта җитештерүдә.",
       "Флот, SOC вакыт сызыгы, панельләр — урнаштыргач үз сервереңдәге өстәмә катлам.",
       "75 автоматик тест, чагыштыру PDF, 72 сәгать soak — dashboard /tests белән бердәй матрица.",
       "Tenant билгеле Prometheus метрикалары, панельләр һәм искәртү кагыйдәләре — self-hosted күзәтү.",
@@ -3015,25 +3001,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban бары тик ban сала, ModSecurity WAF аерым модуль, CrowdSec өлешле стек таләп итә. Log Guardian бу өч эшне бер чылбырда берләштерә — үлчәнгән дәлил белән.",
     advantages: [
       { k: "Бер урнаштыру, бер чылбыр", v: "Fail2ban + ModSecurity + CrowdSec'ны аерым урнаштырып, берләштермисез. nginx логы → WAF/CRS → kernel ban бер продуктта, ~15 мин урнаштыру." },
-      { k: "~17 мс kernel ban", v: "Лог юлыннан ipset/XDP банга медиана ~17 мс. Fail2ban/CrowdSec секунд–минут дәрәҗәсендә кала; 5 үлчәнгән үрнәк белән расланган." },
+      { k: "~20 мс kernel ban", v: "Лог юлыннан ipset/XDP банга медиана ~20 мс. Fail2ban/CrowdSec секунд–минут дәрәҗәсендә кала; 5 үлчәнгән үрнәк белән расланган." },
       { k: "100% recall + 100% CRS паритеты", v: "121 OWASP CRS кагыйдәсе, 1500 юллык корпуста чын һөҗүм recall 100% һәм ModSec белән тулы паритет — 0.2% ялган позитивта." },
       { k: "Таратылган һөҗүмне каплау", v: "JA3 кластерын ачыклау + IP буенча ban — 80 IP туры тестта 100%. Fail2ban ялгыз IP'лы; CrowdSec аерым сигнал челтәрен таләп итә." },
       { k: "Ачык, кабат җитештерелә торган дәлил", v: "75 автоматик тест + 14 файллы дәлил пакеты + 72 сәгать soak (864 үрнәк, 0 хата). Көндәшләрдә автоматик дәлил юк яки өлешле." },
       { k: "Self-hosted · MIT · Төркиядә ясалган", v: "Мәгълүматыгыз сездә кала, вендорга бәйлелек юк, тулысынча ачык код. SOC вакыт сызыгы, Prometheus метрикалары һәм Telegram идарәсе бер панельдә (:8443)." },
     ],
     vsNote:
-      "Намуслы чик: кайбер өлкәләрдә көндәшләр ачык яхшырак (кызыл күзәнәкләр). ModSec + CRS inline үткәрүчәнлектә (~14 300 EPS, үлчәнгән) һәм беренче соравны шунда ук блоклауда алда; CrowdSec таратылган җәмгыять сигнал челтәрендә һәм идарә ителә торган SaaS консолендә көчле. Безнең көч — бер чылбыр интеграциясе + ~17 мс ban тизлеге + ачык, кабат җитештерелә торган дәлил.",
+      "Намуслы чик: кайбер өлкәләрдә көндәшләр ачык яхшырак (кызыл күзәнәкләр). ModSec + CRS беренче соравны шунда ук блоклауда алда; CrowdSec таратылган җәмгыять сигнал челтәрендә һәм идарә ителә торган SaaS консолендә көчле. Безнең көч — бер чылбыр интеграциясе + ~20 мс ban тизлеге + ачык, кабат җитештерелә торган дәлил.",
     vsLegend: "Кызыл = шул юлдагы җиңүче",
     honestItems: [
       "Реактив архитектура — лог юлы төшкәнче беренче сорау үтә ала; без ModSec'ның inline тизлегендә түгел.",
       "L3/L4 DDoS'ны сеңдермибез — CDN артында торабыз.",
       "Таратылган ботнет — IP буенча ban; CrowdSec сигнал челтәре юк.",
-      "Эшли: лог → CRS/WAF → ~17 мс kernel ban, дәлил PDF, Telegram идарә, MIT self-hosted.",
+      "Эшли: лог → CRS/WAF → ~20 мс kernel ban, дәлил PDF, Telegram идарә, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset ban (~15 мин)",
       "eBPF демоны, панель, метрикалар, флот",
-      "XDR, Wasm маркеты, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркеты һәм LLM Copilot — озын сроклы өстәмә катламнар; Core үзе генә җитештерүгә әзер.",
@@ -3059,7 +3045,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 кушымта саклавы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Ялган позитив", "0,2% (үлчәнгән)", "Югары", "Урта", "CRS-ка бәйле"],
-      ["Бан тоткарлыгы", "~17 мс", "сек–мин", "сек", "Аерым интеграция"],
+      ["Бан тоткарлыгы", "~20 мс", "сек–мин", "сек", "Аерым интеграция"],
       ["Кыска тотрыклылык (5 мин)", "PASS (0 хата)", "—", "—", "—"],
       ["72с soak", "PASS (864/0)", "—", "—", "—"],
       ["Дәлил тупламы PDF+JSON", "Автомат (14 файл)", "Юк", "Өлешчә", "Модуль-модуль"],
@@ -3069,7 +3055,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Урнаштыру вакыты", "~15 мин", "минут", "минут", "сәгать (көйләү)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог кабатлау)", "—", "—", "~14 300 EPS inline"],
       ["Беренче сорауны шунда ук блоклау", "Реактив (лог юлы)", "Реактив", "Өлешчә", "Inline (шунда ук)"],
       ["Күләмле L3/L4 чистарту", "Юк — CDN тәкъдим ителә", "Юк", "Юк", "Юк"],
       ["Җәмгыять сигнал челтәре", "Үз-хостинг", "—", "Әйе (глобаль)", "—"],
@@ -3121,7 +3106,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркеты һәм LLM Copilot — оҙаҡ мөҙҙәтле өҫтәмә ҡатламдар; Core үҙе генә етештереүгә әҙер.",
     selectedBodies: [
-      "Бер сылбыр: nginx логы → OWASP CRS → ~17 мс kernel ban. ~15 минутта етештереүҙә.",
+      "Бер сылбыр: nginx логы → OWASP CRS → ~20 мс kernel ban. ~15 минутта етештереүҙә.",
       "Флот, SOC ваҡыт һыҙығы, панелдәр — урынлаштырғас үҙ серверыңдағы өҫтәмә ҡатлам.",
       "75 автоматик тест, сағыштырыу PDF, 72 сәғәт soak — dashboard /tests менән бердәй матрица.",
       "Tenant билдәле Prometheus метрикалары, панелдәр һәм иҫкәртеү ҡағиҙәләре — self-hosted күҙәтеү.",
@@ -3138,25 +3123,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban бары тик ban һала, ModSecurity WAF айырым модуль, CrowdSec өлөшлө стек талап итә. Log Guardian был өс эште бер сылбырҙа берләштерә — үлсәнгән дәлил менән.",
     advantages: [
       { k: "Бер урынлаштырыу, бер сылбыр", v: "Fail2ban + ModSecurity + CrowdSec'ты айырым урынлаштырып, берләштермәйһегеҙ. nginx логы → WAF/CRS → kernel ban бер продуктта, ~15 мин урынлаштырыу." },
-      { k: "~17 мс kernel ban", v: "Лог юлынан ipset/XDP банға медиана ~17 мс. Fail2ban/CrowdSec секунд–минут кимәлендә ҡала; 5 үлсәнгән өлгө менән раҫланған." },
+      { k: "~20 мс kernel ban", v: "Лог юлынан ipset/XDP банға медиана ~20 мс. Fail2ban/CrowdSec секунд–минут кимәлендә ҡала; 5 үлсәнгән өлгө менән раҫланған." },
       { k: "100% recall + 100% CRS паритеты", v: "121 OWASP CRS ҡағиҙәһе, 1500 юллыҡ корпуста ысын һөжүм recall 100% һәм ModSec менән тулы паритет — 0.2% ялған позитивта." },
       { k: "Таратылған һөжүмде ҡаплау", v: "JA3 кластерын асыҡлау + IP буйынса ban — 80 IP тура тестта 100%. Fail2ban яңғыҙ IP'лы; CrowdSec айырым сигнал селтәрен талап итә." },
       { k: "Асыҡ, ҡабат етештерелә торған дәлил", v: "75 автоматик тест + 14 файллы дәлил пакеты + 72 сәғәт soak (864 өлгө, 0 хата). Көндәштәрҙә автоматик дәлил юҡ йәки өлөшлө." },
       { k: "Self-hosted · MIT · Төркиәлә яһалған", v: "Мәғлүмәтегеҙ һеҙҙә ҡала, вендорға бәйлелек юҡ, тулыһынса асыҡ код. SOC ваҡыт һыҙығы, Prometheus метрикалары һәм Telegram идараһы бер панелдә (:8443)." },
     ],
     vsNote:
-      "Намыҫлы сик: ҡайһы бер өлкәләрҙә көндәштәр асыҡ яҡшыраҡ (ҡыҙыл күҙәнәктәр). ModSec + CRS inline үткәреүсәнлектә (~14 300 EPS, үлсәнгән) һәм беренсе һорауҙы шунда уҡ блоклауҙа алда; CrowdSec таратылған йәмғиәт сигнал селтәрендә һәм идара ителгән SaaS консолендә көслө. Беҙҙең көс — бер сылбыр интеграцияһы + ~17 мс ban тиҙлеге + асыҡ, ҡабат етештерелә торған дәлил.",
+      "Намыҫлы сик: ҡайһы бер өлкәләрҙә көндәштәр асыҡ яҡшыраҡ (ҡыҙыл күҙәнәктәр). ModSec + CRS беренсе һорауҙы шунда уҡ блоклауҙа алда; CrowdSec таратылған йәмғиәт сигнал селтәрендә һәм идара ителгән SaaS консолендә көслө. Беҙҙең көс — бер сылбыр интеграцияһы + ~20 мс ban тиҙлеге + асыҡ, ҡабат етештерелә торған дәлил.",
     vsLegend: "Ҡыҙыл = шул юлдағы еңеүсе",
     honestItems: [
       "Реактив архитектура — лог юлы төшкәнсе беренсе һорау үтә ала; беҙ ModSec'тың inline тиҙлегендә түгел.",
       "L3/L4 DDoS'ты һеңдермәйбеҙ — CDN артында торабыҙ.",
       "Таратылған ботнет — IP буйынса ban; CrowdSec сигнал селтәре юҡ.",
-      "Эшләй: лог → CRS/WAF → ~17 мс kernel ban, дәлил PDF, Telegram идара, MIT self-hosted.",
+      "Эшләй: лог → CRS/WAF → ~20 мс kernel ban, дәлил PDF, Telegram идара, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset ban (~15 мин)",
       "eBPF демоны, панель, метрикалар, флот",
-      "XDR, Wasm маркеты, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркеты һәм LLM Copilot — оҙаҡ мөҙҙәтле өҫтәмә ҡатламдар; Core үҙе генә етештереүгә әҙер.",
@@ -3182,7 +3167,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 ҡушымта һаҡлауы", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Ялған позитив", "0,2% (үлсәнгән)", "Юғары", "Урта", "CRS-ҡа бәйле"],
-      ["Бан тотҡарлығы", "~17 мс", "сек–мин", "сек", "Айырым интеграция"],
+      ["Бан тотҡарлығы", "~20 мс", "сек–мин", "сек", "Айырым интеграция"],
       ["Ҡыҫҡа тотороҡлолоҡ (5 мин)", "PASS (0 хата)", "—", "—", "—"],
       ["72с soak", "PASS (864/0)", "—", "—", "—"],
       ["Дәлил тупламы PDF+JSON", "Автомат (14 файл)", "Юҡ", "Өлөшләтә", "Модуль-модуль"],
@@ -3192,7 +3177,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Урынлаштырыу ваҡыты", "~15 мин", "минут", "минут", "сәғәт (көйләү)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог ҡабатлау)", "—", "—", "~14 300 EPS inline"],
       ["Беренсе һорауҙы шунда уҡ блоклау", "Реактив (лог юлы)", "Реактив", "Өлөшләтә", "Inline (шунда уҡ)"],
       ["Күләмле L3/L4 таҙартыу", "Юҡ — CDN тәҡдим ителә", "Юҡ", "Юҡ", "Юҡ"],
       ["Йәмғиәт сигнал селтәре", "Үҙ-хостинг", "—", "Эйе (глобаль)", "—"],
@@ -3244,7 +3228,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркечӗ тата LLM Copilot — вӑрӑм вӑхӑтлӑ хушма сийсем; Core хӑй тӗллӗн продакшена хатӗр.",
     selectedBodies: [
-      "Пӗр сӑнчӑр: nginx логӗ → OWASP CRS → ~17 мс kernel бан. ~15 минутра продакшенра.",
+      "Пӗр сӑнчӑр: nginx логӗ → OWASP CRS → ~20 мс kernel бан. ~15 минутра продакшенра.",
       "Флот, SOC вӑхӑт линийӗ, панельсем — вырнаҫтарнӑ хыҫҫӑн хӑвӑн серверунти хушма сий.",
       "75 автомат тест, танлаштару PDF, 72 сехет soak — dashboard /tests пекех матрица.",
       "Tenant паллӑллӑ Prometheus метрикисем, панельсем тата асӑрхаттару правилисем — self-hosted сӑнав.",
@@ -3261,25 +3245,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban тӳрех бан ҫеҫ тӑвать, ModSecurity WAF уйрӑм модуль, CrowdSec татӑк-татӑк стек ыйтать. Log Guardian ку виҫӗ ӗҫе пӗр сӑнчӑрта пӗрлештерет — виҫнӗ кӑтартупа.",
     advantages: [
       { k: "Пӗр вырнаҫтару, пӗр сӑнчӑр", v: "Fail2ban + ModSecurity + CrowdSec-а уйрӑммӑн вырнаҫтарса пӗрлештерместӗр. nginx логӗ → WAF/CRS → kernel бан пӗр продуктра, ~15 мин вырнаҫтару." },
-      { k: "~17 мс kernel бан", v: "Лог йӗркинчен ipset/XDP бана медиана ~17 мс. Fail2ban/CrowdSec ҫекунт–минут шайӗнче юлаҫҫӗ; 5 виҫнӗ тӗслӗхпе ҫирӗплетнӗ." },
+      { k: "~20 мс kernel бан", v: "Лог йӗркинчен ipset/XDP бана медиана ~20 мс. Fail2ban/CrowdSec ҫекунт–минут шайӗнче юлаҫҫӗ; 5 виҫнӗ тӗслӗхпе ҫирӗплетнӗ." },
       { k: "100% recall + 100% CRS паритечӗ", v: "121 OWASP CRS правили, 1500 йӗркеллӗ корпусра чӑн тапӑну recall 100% тата ModSec-па тулли паритет — 0.2% суя позитивра." },
       { k: "Сарӑлнӑ тапӑнӑва хуплани", v: "JA3 кластерне тупни + IP тӑрӑх бан — 80 IP чӗрӗ тестра 100%. Fail2ban пӗр IP-лӑ; CrowdSec уйрӑм сигнал тетелне ыйтать." },
       { k: "Уҫӑ, тепӗр хут тӑвакан кӑтарту", v: "75 автомат тест + 14 файллӑ кӑтарту пакечӗ + 72 сехет soak (864 тӗслӗх, 0 йӑнӑш). Конкурентсен автомат кӑтарту ҫук е татӑк-татӑк." },
       { k: "Self-hosted · MIT · Турцире тунӑ", v: "Сирӗн даннӑйсем сирӗнте юлаҫҫӗ, вендора ҫыхӑнни ҫук, пӗтӗмпех уҫӑ код. SOC вӑхӑт линийӗ, Prometheus метрикисем тата Telegram майлашӑвӗ пӗр панельре (:8443)." },
     ],
     vsNote:
-      "Тӳрӗ чикӗ: хӑш-пӗр енре конкурентсем уҫҫӑнах лайӑхрах (хӗрлӗ клеткӑсем). ModSec + CRS inline виҫерен (~14 300 EPS, виҫнӗ) тата пӗрремӗш ыйтӑва самантрах пӳлнинче мала тухать; CrowdSec сарӑлнӑ обществӑ сигнал тетелӗнче тата майлаштарнӑ SaaS консольте вӑйлӑ. Пирӗн вӑй — пӗр сӑнчӑр интеграцийӗ + ~17 мс бан хӑвӑртлӑхӗ + уҫӑ, тепӗр хут тӑвакан кӑтарту.",
+      "Тӳрӗ чикӗ: хӑш-пӗр енре конкурентсем уҫҫӑнах лайӑхрах (хӗрлӗ клеткӑсем). ModSec + CRS пӗрремӗш ыйтӑва самантрах пӳлнинче мала тухать; CrowdSec сарӑлнӑ обществӑ сигнал тетелӗнче тата майлаштарнӑ SaaS консольте вӑйлӑ. Пирӗн вӑй — пӗр сӑнчӑр интеграцийӗ + ~20 мс бан хӑвӑртлӑхӗ + уҫӑ, тепӗр хут тӑвакан кӑтарту.",
     vsLegend: "Хӗрлӗ = ҫав йӗркери ҫӗнтерекен",
     honestItems: [
       "Реактивлӑ архитектура — лог йӗрки ӳкиччен пӗрремӗш ыйту иртме пултарать; эпир ModSec inline хӑвӑртлӑхӗнче мар.",
       "L3/L4 DDoS-а ҫӑтмастпӑр — CDN хыҫӗнче тӑратпӑр.",
       "Сарӑлнӑ ботнет — IP тӑрӑх бан; CrowdSec сигнал тетелӗ ҫук.",
-      "Тӑвать: лог → CRS/WAF → ~17 мс kernel бан, кӑтарту PDF, Telegram майлашу, MIT self-hosted.",
+      "Тӑвать: лог → CRS/WAF → ~20 мс kernel бан, кӑтарту PDF, Telegram майлашу, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset бан (~15 мин)",
       "eBPF демонӗ, панель, метрикисем, флот",
-      "XDR, Wasm маркечӗ, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркечӗ тата LLM Copilot — вӑрӑм вӑхӑтлӑ хушма сийсем; Core хӑй тӗллӗн продакшена хатӗр.",
@@ -3305,7 +3289,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 приложени хӳтлӗхӗ", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Суя позитив", "0,2% (виҫнӗ)", "Ҫӳллӗ", "Вӑтам", "CRS ҫине килет"],
-      ["Бан кӗтесси", "~17 мс", "ҫек–мин", "ҫек", "Уйрӑм интеграци"],
+      ["Бан кӗтесси", "~20 мс", "ҫек–мин", "ҫек", "Уйрӑм интеграци"],
       ["Кӗске тӑнӑҫлӑх (5 мин)", "PASS (0 йӑнӑш)", "—", "—", "—"],
       ["72с soak", "PASS (864/0)", "—", "—", "—"],
       ["Кӑтарту пакечӗ PDF+JSON", "Автомат (14 файл)", "Ҫук", "Пайӑн", "Модуль-модуль"],
@@ -3315,7 +3299,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Вырнаҫтару вӑхӑчӗ", "~15 мин", "минут", "минут", "сехет (тӳрлетӳ)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог тепӗр хут)", "—", "—", "~14 300 EPS inline"],
       ["Пӗрремӗш ыйтӑва тӳрех блоклани", "Реактивлӑ (лог йӗрки)", "Реактивлӑ", "Пайӑн", "Inline (тӳрех)"],
       ["Калӑплӑ L3/L4 тасату", "Ҫук — CDN сӗнеҫҫӗ", "Ҫук", "Ҫук", "Ҫук"],
       ["Пӗрлӗх сигнал тетелӗ", "Хӑй-хостинг", "—", "Ҫапла (глобаллӑ)", "—"],
@@ -3367,7 +3350,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm marketi ve LLM Copilot uzun vadeli qoşımca qatlardır — Core tek başına istihsalge azır.",
     selectedBodies: [
-      "Tek zıncır: nginx logu → OWASP CRS → ~17 ms kernel ban. ~15 daqiqada istihsalde.",
+      "Tek zıncır: nginx logu → OWASP CRS → ~20 ms kernel ban. ~15 daqiqada istihsalde.",
       "Filo, SOC vaqıt sızığı, pan'eller — qurulımdan soñ öz serverıñızdaki qoşımca qat.",
       "75 avtomatik test, qıyaslav PDF, 72 saat soak — dashboard /tests ile aynı matritsa.",
       "Tenant belgili Prometheus metrikaları, pan'eller ve tenbih qaideleri — self-hosted közetüv.",
@@ -3384,25 +3367,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban tek ban yapa, ModSecurity WAF ayrı modul, CrowdSec parça-parça stek ister. Log Guardian bu üç işni tek zıncırda birleştire — ölçengen delilnen.",
     advantages: [
       { k: "Bir qurulım, bir zıncır", v: "Fail2ban + ModSecurity + CrowdSec'ni ayrı qurup birleştirmeysiñiz. nginx logu → WAF/CRS → kernel ban tek mahsulda, ~15 daq qurulım." },
-      { k: "~17 ms kernel ban", v: "Log satırından ipset/XDP banğa mediana ~17 ms. Fail2ban/CrowdSec saniye–daqiqa seviyesinde qala; 5 ölçengen örneknen isbatlanğan." },
+      { k: "~20 ms kernel ban", v: "Log satırından ipset/XDP banğa mediana ~20 ms. Fail2ban/CrowdSec saniye–daqiqa seviyesinde qala; 5 ölçengen örneknen isbatlanğan." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qaidesi, 1500 satırlıq korpusta kerçek hücum recall 100% ve ModSec ile tam paritet — 0.2% yañlış pozitivde." },
       { k: "Dağıtıq hücumnı qaplav", v: "JA3 klaster tapuv + IP başına ban — 80 IP canlı testte 100%. Fail2ban tek IP'li; CrowdSec ayrı signal ağını ister." },
       { k: "Şeffaf, tekrar tüzülgen delil", v: "75 avtomatik test + 14 fayllı delil paketi + 72 saat soak (864 örnek, 0 hata). Raqiplerde avtomatik delil yoq ya da parça-parça." },
       { k: "Self-hosted · MIT · Türkiyede yapılğan", v: "Malümatıñız sizde qala, vendor bağlılığı yoq, tamamen açıq kod. SOC vaqıt sızığı, Prometheus metrikaları ve Telegram idaresi bir pan'elde (:8443)." },
     ],
     vsNote:
-      "Doğru sıñır: bazı sahalarda raqipler açıq şekilde daha yahşı (qırmızı hüceyreler). ModSec + CRS inline keçirüvde (~14 300 EPS, ölçengen) ve ilk sorağını hemen bloklavda ögde; CrowdSec dağıtıq cemaat signal ağında ve idare etilgen SaaS konsolunda küçlü. Bizim küç — tek zıncır integratsiyası + ~17 ms ban tezligi + şeffaf, tekrar tüzülgen delil.",
+      "Doğru sıñır: bazı sahalarda raqipler açıq şekilde daha yahşı (qırmızı hüceyreler). ModSec + CRS ilk sorağını hemen bloklavda ögde; CrowdSec dağıtıq cemaat signal ağında ve idare etilgen SaaS konsolunda küçlü. Bizim küç — tek zıncır integratsiyası + ~20 ms ban tezligi + şeffaf, tekrar tüzülgen delil.",
     vsLegend: "Qırmızı = o satırdaki ğalip",
     honestItems: [
       "Reaktiv mimarlıq — log satırı tüşkence ilk soravnıñ keçüvi mümkün; biz ModSec'niñ inline tezliginde degilmiz.",
       "L3/L4 DDoS'nı yutmaymız — CDN artında turamız.",
       "Dağıtıq botnet — IP başına ban; CrowdSec signal ağı yoq.",
-      "Yapa: log → CRS/WAF → ~17 ms kernel ban, delil PDF, Telegram idare, MIT self-hosted.",
+      "Yapa: log → CRS/WAF → ~20 ms kernel ban, delil PDF, Telegram idare, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset ban (~15 daq)",
       "eBPF demonı, pan'el, metrikalar, filo",
-      "XDR, Wasm marketi, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm marketi ve LLM Copilot uzun vadeli qoşımca qatlardır — Core tek başına istihsalge azır.",
@@ -3428,7 +3411,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 uygulama qoruvı", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Yañlış pozitiv", "0,2% (ölçengen)", "Yüksek", "Orta", "CRS-ge bağlı"],
-      ["Ban keçikmesi", "~17 ms", "san–daq", "san", "Ayrı integratsiya"],
+      ["Ban keçikmesi", "~20 ms", "san–daq", "san", "Ayrı integratsiya"],
       ["Qısqa istiqrarlıq (5 daq)", "PASS (0 muvafaqiyetsizlik)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Delil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoq", "Qısmen", "Modul-modul"],
@@ -3438,7 +3421,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Qurulım vaqtı", "~15 daq", "daqqa", "daqqa", "saat (sazlav)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
       ["Birinci istekni deral bloklamaq", "Reaktiv (log satırı)", "Reaktiv", "Qısmen", "Inline (deral)"],
       ["Volumetrik L3/L4 tazalav", "Yoq — CDN tevsiye etile", "Yoq", "Yoq", "Yoq"],
       ["Cemaat signal ağı", "Öz-hosting", "—", "Ebet (global)", "—"],
@@ -3490,7 +3472,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm marketi hem LLM Copilot uzun vadeli seçili katlar — Core tek başına üretimä hazır.",
     selectedBodies: [
-      "Tek zincir: nginx logu → OWASP CRS → ~17 ms kernel ban. ~15 dakikada üretimdä.",
+      "Tek zincir: nginx logu → OWASP CRS → ~20 ms kernel ban. ~15 dakikada üretimdä.",
       "Filo, SOC zaman çizgisi, panellär — kurmadan sora kendi serverindä seçili kat.",
       "75 avtomatik test, karşılaştırma PDF, 72 saat soak — dashboard /tests ilä aynı matritsa.",
       "Tenant nişanlı Prometheus metrikaları, panellär hem sesletmäk kuralları — self-hosted gözlemäk.",
@@ -3507,25 +3489,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban salt ban yapêr, ModSecurity WAF ayırı modül, CrowdSec parça-parça stek ister. Log Guardian bu üç işi tek zincirdä birleştirer — ölçülü delillän.",
     advantages: [
       { k: "Bir kurma, bir zincir", v: "Fail2ban + ModSecurity + CrowdSec'i ayırı kurup birleştirmeersiniz. nginx logu → WAF/CRS → kernel ban tek üründä, ~15 dak kurma." },
-      { k: "~17 ms kernel ban", v: "Log satırından ipset/XDP bana mediana ~17 ms. Fail2ban/CrowdSec saniye–dakika kertindä kalêr; 5 ölçülü örneklän ispatlandı." },
+      { k: "~20 ms kernel ban", v: "Log satırından ipset/XDP bana mediana ~20 ms. Fail2ban/CrowdSec saniye–dakika kertindä kalêr; 5 ölçülü örneklän ispatlandı." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS kuralı, 1500 satırlık korpusta gerçek saldırı recall 100% hem ModSec ilä tam paritet — 0.2% yalancı pozitivdä." },
       { k: "Daalı saldırıyı kaplamak", v: "JA3 klaster bulması + IP başına ban — 80 IP canlı testtä 100%. Fail2ban tek IP'li; CrowdSec ayırı sinyal aa ister." },
       { k: "Açık, tekrar yapılabilän delil", v: "75 avtomatik test + 14 dosyalı delil paketi + 72 saat soak (864 örnek, 0 hata). Rakiplerdä avtomatik delil yok osaydı parça-parça." },
       { k: "Self-hosted · MIT · Türkiyedä yapıldı", v: "Bilgileriniz sizdä kalêr, vendor baalantısı yok, bütünnä açık kod. SOC zaman çizgisi, Prometheus metrikaları hem Telegram işlemesi bir paneldä (:8443)." },
     ],
     vsNote:
-      "Dooru sınır: kimi alannarda rakiplär açık şekildä taa islää (kırmızı üücüklär). ModSec + CRS inline geçirmektä (~14 300 EPS, ölçülü) hem ilk isteyi hemen bloklamakta önnärdä; CrowdSec daalı cümnä sinyal aandä hem işlenän SaaS konsolundä küvetli. Bizim küvet — tek zincir integratsiyası + ~17 ms ban hızı + açık, tekrar yapılabilän delil.",
+      "Dooru sınır: kimi alannarda rakiplär açık şekildä taa islää (kırmızı üücüklär). ModSec + CRS ilk isteyi hemen bloklamakta önnärdä; CrowdSec daalı cümnä sinyal aandä hem işlenän SaaS konsolundä küvetli. Bizim küvet — tek zincir integratsiyası + ~20 ms ban hızı + açık, tekrar yapılabilän delil.",
     vsLegend: "Kırmızı = o satırdaki kazanan",
     honestItems: [
       "Reaktiv mimarlık — log satırı düşenädäk ilk isteyin geçmesi olabilir; biz ModSec'in inline hızındä diiliz.",
       "L3/L4 DDoS'u yutmeeriz — CDN ardında dururuz.",
       "Daalı botnet — IP başına ban; CrowdSec sinyal aa yok.",
-      "Yapêr: log → CRS/WAF → ~17 ms kernel ban, delil PDF, Telegram işlemäk, MIT self-hosted.",
+      "Yapêr: log → CRS/WAF → ~20 ms kernel ban, delil PDF, Telegram işlemäk, MIT self-hosted.",
     ],
     layersBodies: [
       "log → WAF → ipset ban (~15 dak)",
       "eBPF demonu, panel, metrikalar, filo",
-      "XDR, Wasm marketi, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm marketi hem LLM Copilot uzun vadeli seçili katlar — Core tek başına üretimä hazır.",
@@ -3551,7 +3533,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 uygulama koruması", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Yalancı pozitiv", "0,2% (ölçülü)", "Üüsek", "Orta", "CRS-a baalı"],
-      ["Ban gecikmesi", "~17 ms", "san–dak", "san", "Ayrı integratsiya"],
+      ["Ban gecikmesi", "~20 ms", "san–dak", "san", "Ayrı integratsiya"],
       ["Kısa stabillik (5 dak)", "PASS (0 başarısızlık)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Delil paketi PDF+JSON", "Avtomat (14 fayl)", "Yok", "Kısmen", "Modul-modul"],
@@ -3561,7 +3543,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Kuruluş zamanı", "~15 dak", "dakka", "dakka", "saat (ayarlama)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (log replay)", "—", "—", "~14 300 EPS inline"],
       ["İlk isteyi hemen bloklamaa", "Reaktiv (log satırı)", "Reaktiv", "Kısmen", "Inline (hemen)"],
       ["Volumetrik L3/L4 temizleme", "Yok — CDN tavsiye ediler", "Yok", "Yok", "Yok"],
       ["Cemaat signal aa", "Öz-hosting", "—", "Ya (global)", "—"],
@@ -3613,7 +3594,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR، Wasm بازىرى ۋە LLM Copilot ئۇزۇن مۇددەتلىك تاللانما قاتلاملار — Core ئۆزىلا ئىشلەپچىقىرىشقا تەييار.",
     selectedBodies: [
-      "بىرلا زەنجىر: nginx خاتىرىسى → OWASP CRS → ~17 مىللىسېكۇنت يادرو چەكلىشى. ~15 مىنۇتتا ئىشلەپچىقىرىشتا.",
+      "بىرلا زەنجىر: nginx خاتىرىسى → OWASP CRS → ~20 مىللىسېكۇنت يادرو چەكلىشى. ~15 مىنۇتتا ئىشلەپچىقىرىشتا.",
       "فلوت، SOC ۋاقىت سىزىقى، تاختىلار — ئورناتقاندىن كېيىن ئۆز مۇلازىمېتىرىڭىزدىكى تاللانما قاتلام.",
       "75 ئاپتوماتىك سىناق، سېلىشتۇرۇش PDF، 72 سائەت soak — dashboard /tests بىلەن ئوخشاش ماترىتسا.",
       "Tenant بەلگىسى بار Prometheus مېترىكىلىرى، تاختىلار ۋە ئاگاھلاندۇرۇش قائىدىلىرى — self-hosted كۆزىتىش.",
@@ -3630,25 +3611,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban پەقەت چەكلەيدۇ، ModSecurity WAF ئايرىم مودۇل، CrowdSec پارچە-پارچە سىتاك تەلەپ قىلىدۇ. Log Guardian بۇ ئۈچ ئىشنى بىرلا زەنجىرگە بىرلەشتۈرىدۇ — ئۆلچەنگەن ئىسپات بىلەن.",
     advantages: [
       { k: "بىر ئورنىتىش، بىر زەنجىر", v: "Fail2ban + ModSecurity + CrowdSec نى ئايرىم ئورنىتىپ بىرلەشتۈرمەيسىز. nginx خاتىرىسى → WAF/CRS → يادرو چەكلىشى بىر مەھسۇلاتتا، ~15 مىنۇت ئورنىتىش." },
-      { k: "~17 مىللىسېكۇنت يادرو چەكلىشى", v: "خاتىرە قۇرىدىن ipset/XDP چەكلەشكە ئوتتۇرا قىممەت ~17 مىللىسېكۇنت. Fail2ban/CrowdSec سېكۇنت–مىنۇت دەرىجىسىدە قالىدۇ؛ 5 ئۆلچەنگەن نەمۇنە بىلەن ئىسپاتلانغان." },
+      { k: "~20 مىللىسېكۇنت يادرو چەكلىشى", v: "خاتىرە قۇرىدىن ipset/XDP چەكلەشكە ئوتتۇرا قىممەت ~20 مىللىسېكۇنت. Fail2ban/CrowdSec سېكۇنت–مىنۇت دەرىجىسىدە قالىدۇ؛ 21 ئۆلچەنگەن نەمۇنە بىلەن ئىسپاتلانغان." },
       { k: "100% recall + 100% CRS تەڭپۇڭلۇقى", v: "121 OWASP CRS قائىدىسى، 1500 قۇرلۇق كورپۇستا ھەقىقىي ھۇجۇم recall 100% ۋە ModSec بىلەن تولۇق تەڭپۇڭلۇق — 0.2% يالغان مۇسبەتتە." },
       { k: "تارقاق ھۇجۇمنى قاپلاش", v: "JA3 توپلام بايقاش + IP بويىچە چەكلەش — 80 IP جانلىق سىناقتا 100%. Fail2ban يەككە IP لىق؛ CrowdSec ئايرىم سىگنال تورى تەلەپ قىلىدۇ." },
       { k: "ئوچۇق، قايتا ياسىغىلى بولىدىغان ئىسپات", v: "75 ئاپتوماتىك سىناق + 14 ھۆججەتلىك ئىسپات بولىقى + 72 سائەت soak (864 نەمۇنە، 0 خاتالىق). رەقىبلەردە ئاپتوماتىك ئىسپات يوق ياكى پارچە-پارچە." },
       { k: "Self-hosted · MIT · تۈركىيەدە ياسالغان", v: "سانلىق مەلۇماتىڭىز سىزدە قالىدۇ، ساتقۇچىغا باغلىنىش يوق، تولۇق ئوچۇق كود. SOC ۋاقىت سىزىقى، Prometheus مېترىكىلىرى ۋە Telegram باشقۇرۇشى بىر تاختىدا (:8443)." },
     ],
     vsNote:
-      "سەمىمىي چەك: بەزى ساھەلەردە رەقىبلەر ئېنىق ياخشىراق (قىزىل كاتەكچىلەر). ModSec + CRS inline ئۆتكۈزۈش ئىقتىدارىدا (~14 300 EPS، ئۆلچەنگەن) ۋە تۇنجى ئىلتىماسنى دەرھال توسۇشتا ئالدىدا؛ CrowdSec تارقاق جەمئىيەت سىگنال تورىدا ۋە باشقۇرۇلىدىغان SaaS كونسولىدا كۈچلۈك. بىزنىڭ كۈچىمىز — بىرلا زەنجىر بىرلەشتۈرۈش + ~17 مىللىسېكۇنت چەكلەش سۈرئىتى + ئوچۇق، قايتا ياسىغىلى بولىدىغان ئىسپات.",
+      "سەمىمىي چەك: بەزى ساھەلەردە رەقىبلەر ئېنىق ياخشىراق (قىزىل كاتەكچىلەر). ModSec + CRS تۇنجى ئىلتىماسنى دەرھال توسۇشتا ئالدىدا؛ CrowdSec تارقاق جەمئىيەت سىگنال تورىدا ۋە باشقۇرۇلىدىغان SaaS كونسولىدا كۈچلۈك. بىزنىڭ كۈچىمىز — بىرلا زەنجىر بىرلەشتۈرۈش + ~20 مىللىسېكۇنت چەكلەش سۈرئىتى + ئوچۇق، قايتا ياسىغىلى بولىدىغان ئىسپات.",
     vsLegend: "قىزىل = شۇ قۇردىكى غالىب",
     honestItems: [
       "ئىنكاسچان قۇرۇلما — خاتىرە قۇرى چۈشكۈچە تۇنجى ئىلتىماس ئۆتۈپ كېتىشى مۇمكىن؛ بىز ModSec نىڭ inline سۈرئىتىدە ئەمەس.",
       "L3/L4 DDoS نى سىڭدۈرمەيمىز — CDN ئارقىسىدا تۇرىمىز.",
       "تارقاق botnet — IP بويىچە چەكلەش؛ CrowdSec سىگنال تورى يوق.",
-      "قىلىدۇ: خاتىرە → CRS/WAF → ~17 مىللىسېكۇنت يادرو چەكلىشى، ئىسپات PDF، Telegram باشقۇرۇش، MIT self-hosted.",
+      "قىلىدۇ: خاتىرە → CRS/WAF → ~20 مىللىسېكۇنت يادرو چەكلىشى، ئىسپات PDF، Telegram باشقۇرۇش، MIT self-hosted.",
     ],
     layersBodies: [
       "خاتىرە → WAF → ipset چەكلەش (~15 مىنۇت)",
       "eBPF دېمونى، تاختا، مېترىكىلار، فلوت",
-      "XDR، Wasm بازىرى، LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR، Wasm بازىرى ۋە LLM Copilot ئۇزۇن مۇددەتلىك تاللانما قاتلاملار — Core ئۆزىلا ئىشلەپچىقىرىشقا تەييار.",
@@ -3674,7 +3655,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 پروگرامما قوغدىشى", "WAF + consult + eBPF", "—", "—", "CRS ئىچكى"],
       ["يادرو / eBPF (XDP) چەكلەش", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["يالغان مۇسبەت", "0.2% (ئۆلچەنگەن)", "يۇقىرى", "ئوتتۇرا", "CRS غا باغلىق"],
-      ["چەكلەش كېچىكىشى", "~17 ms", "سېكۇنت–مىنۇت", "سېكۇنت", "ئايرىم بىرلەشتۈرۈش"],
+      ["چەكلەش كېچىكىشى", "~20 ms", "سېكۇنت–مىنۇت", "سېكۇنت", "ئايرىم بىرلەشتۈرۈش"],
       ["قىسقا مۇقىملىق (5 مىنۇت)", "PASS (0 مەغلۇبىيەت)", "—", "—", "—"],
       ["72سائەت soak", "PASS (864/0)", "—", "—", "—"],
       ["ئىسپات بوغچىسى PDF+JSON", "ئاپتوماتىك (14 ھۆججەت)", "يوق", "قىسمەن", "مودۇل-مودۇل"],
@@ -3684,7 +3665,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["ئورنىتىش ۋاقتى", "~15 مىنۇت", "مىنۇت", "مىنۇت", "سائەت (تەڭشەش)"],
     ],
     vsRows1: [
-      ["ئىچكى regex EPS", "~5,357 EPS (لوگ قايتىلاش)", "—", "—", "~14,300 EPS ئىچكى"],
       ["تۇنجى ئىلتىماسنى دەرھال توسۇش", "ئىنكاسچان (لوگ قۇرى)", "ئىنكاسچان", "قىسمەن", "ئىچكى (دەرھال)"],
       ["ھەجىملىك L3/L4 تازىلاش", "يوق — CDN تەۋسىيە", "يوق", "يوق", "يوق"],
       ["مەھەللە سىگنال تورى", "ئۆزى ھوستلاش", "—", "ھەئە (گلوباللىق)", "—"],
@@ -3736,7 +3716,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     pipelineNote:
       "XDR, Wasm маркета уонна LLM Copilot — уһун болдьохтоох талыллар слойдар; Core бэйэтэ продакшеҥҥа бэлэм.",
     selectedBodies: [
-      "Биир сиэп: nginx лога → OWASP CRS → ~17 мс kernel бан. ~15 мүнүөтэ продакшеҥҥа.",
+      "Биир сиэп: nginx лога → OWASP CRS → ~20 мс kernel бан. ~15 мүнүөтэ продакшеҥҥа.",
       "Флот, SOC кэм линията, панеллэр — олохтообутуҥ кэнниттэн бэйэҥ серверыҥ талыллар слоя.",
       "75 автомат тест, тэҥнээһин PDF, 72 чаас soak — dashboard /tests кытта биир матрица.",
       "Tenant бэлиэлээх Prometheus метриктэрэ, панеллэр уонна сэрэтии быраабылалара — self-hosted кэтээһин.",
@@ -3753,25 +3733,25 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       "Fail2ban эрэ бан оҥорор, ModSecurity WAF туспа модуль, CrowdSec аҥаардас стеги ирдиир. Log Guardian бу үс үлэни биир сиэпкэ холбуур — кээмэйдэммит туоһунан.",
     advantages: [
       { k: "Биир олохтооһун, биир сиэп", v: "Fail2ban + ModSecurity + CrowdSec-ы туспа олохтоон холбообоккун. nginx лога → WAF/CRS → kernel бан биир бородууксуйаҕа, ~15 мүн олохтооһун." },
-      { k: "~17 мс kernel бан", v: "Лог строкатыттан ipset/XDP баҥҥа медиана ~17 мс. Fail2ban/CrowdSec сөкүүндэ–мүнүөтэ таһымыгар хаалаллар; 5 кээмэйдэммит холобурунан дакаастаммыт." },
+      { k: "~20 мс kernel бан", v: "Лог строкатыттан ipset/XDP баҥҥа медиана ~20 мс. Fail2ban/CrowdSec сөкүүндэ–мүнүөтэ таһымыгар хаалаллар; 5 кээмэйдэммит холобурунан дакаастаммыт." },
       { k: "100% recall + 100% CRS паритета", v: "121 OWASP CRS быраабылата, 1500 строкалаах корпуска чахчы саба түһүү recall 100% уонна ModSec кытта толору паритет — 0.2% сымыйа позитивга." },
       { k: "Тарҕаммыт саба түһүүнү хабыы", v: "JA3 кластеры булуу + IP аайы бан — 80 IP тыыннаах тескэ 100%. Fail2ban биир IP-лаах; CrowdSec туспа сигнал ситимин ирдиир." },
       { k: "Ыраас, хат оҥоһуллар туоһу", v: "75 автомат тест + 14 файллаах туоһу пакета + 72 чаас soak (864 холобур, 0 алҕас). Күрэхтэһээччилэргэ автомат туоһу суох эбэтэр аҥаардас." },
       { k: "Self-hosted · MIT · Турцияҕа оҥоһуллубут", v: "Дааннайдарыҥ эйиэхэ хаалаллар, вендорга сыһыаны суох, толору аһаҕас код. SOC кэм линията, Prometheus метриктэрэ уонна Telegram салайыыта биир панельга (:8443)." },
     ],
     vsNote:
-      "Кырдьык кыраныыс: сорох эйгэлэргэ күрэхтэһээччилэр биллэрдик ордуктар (кыһыл клеткалар). ModSec + CRS inline ааһарыгар (~14 300 EPS, кээмэйдэммит) уонна маҥнайгы көрдөһүүнү тута хаайарыгар инники; CrowdSec тарҕаммыт общество сигнал ситимигэр уонна салайыллар SaaS консолугар күүстээх. Биһиги күүспүт — биир сиэп интеграцията + ~17 мс бан түргэнэ + ыраас, хат оҥоһуллар туоһу.",
+      "Кырдьык кыраныыс: сорох эйгэлэргэ күрэхтэһээччилэр биллэрдик ордуктар (кыһыл клеткалар). ModSec + CRS маҥнайгы көрдөһүүнү тута хаайарыгар инники; CrowdSec тарҕаммыт общество сигнал ситимигэр уонна салайыллар SaaS консолугар күүстээх. Биһиги күүспүт — биир сиэп интеграцията + ~20 мс бан түргэнэ + ыраас, хат оҥоһуллар туоһу.",
     vsLegend: "Кыһыл = ол строкаҕа кыайааччы",
     honestItems: [
       "Реактивнай архитектура — лог строката түһүөр диэри маҥнайгы көрдөһүү ааһыан сөп; биһиги ModSec inline түргэнигэр буолбатахпыт.",
       "L3/L4 DDoS-у ыҥырбаппыт — CDN кэннигэр турабыт.",
       "Тарҕаммыт ботнет — IP аайы бан; CrowdSec сигнал ситимэ суох.",
-      "Оҥорор: лог → CRS/WAF → ~17 мс kernel бан, туоһу PDF, Telegram салайыы, MIT self-hosted.",
+      "Оҥорор: лог → CRS/WAF → ~20 мс kernel бан, туоһу PDF, Telegram салайыы, MIT self-hosted.",
     ],
     layersBodies: [
       "лог → WAF → ipset бан (~15 мүн)",
       "eBPF демон, панель, метриктэр, флот",
-      "XDR, Wasm маркета, LLM Copilot",
+      "K8s/Helm (kind) + fleet + Wasm/mesh",
     ],
     layersNote:
       "XDR, Wasm маркета уонна LLM Copilot — уһун болдьохтоох талыллар слойдар; Core бэйэтэ продакшеҥҥа бэлэм.",
@@ -3797,7 +3777,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["L7 программа харыстабыла", "WAF + consult + eBPF", "—", "—", "CRS inline"],
       ["Ядро / eBPF (XDP) бан", "ipset + XDP", "iptables", "iptables/nft", "—"],
       ["Сымыйа позитив", "0,2% (кээмэйдэммит)", "Үрдүк", "Орто", "CRS-ка тутулуктаах"],
-      ["Бан хойутааһына", "~17 мс", "сөк–мүн", "сөк", "Туспа интеграция"],
+      ["Бан хойутааһына", "~20 мс", "сөк–мүн", "сөк", "Туспа интеграция"],
       ["Кылгас туруктаах (5 мүн)", "PASS (0 сатаммат)", "—", "—", "—"],
       ["72ч soak", "PASS (864/0)", "—", "—", "—"],
       ["Туоһу пакета PDF+JSON", "Автомат (14 файл)", "Суох", "Аҥаардас", "Модуль-модуль"],
@@ -3807,7 +3787,6 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Туруорар кэмэ", "~15 мүн", "мүнүүтэ", "мүнүүтэ", "чаас (туруоруу)"],
     ],
     vsRows1: [
-      ["Inline regex EPS", "~5 357 EPS (лог хат)", "—", "—", "~14 300 EPS inline"],
       ["Бастакы ыйытыыны түргэнник бөҕөрдүү", "Реактивнай (лог устуруока)", "Реактивнай", "Аҥаардас", "Inline (түргэнник)"],
       ["Кээмэйдээх L3/L4 ыраастааһын", "Суох — CDN сүбэлэнэр", "Суох", "Суох", "Суох"],
       ["Общество сигнал ситимэ", "Бэйэ-хостинг", "—", "Сөп (глобальнай)", "—"],

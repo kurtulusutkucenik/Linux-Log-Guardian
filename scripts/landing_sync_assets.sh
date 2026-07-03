@@ -6,7 +6,6 @@ OUT="$ROOT/landing/public/evidence"
 mkdir -p "$OUT"
 
 SOURCES=(
-  "$ROOT/assets/website/evidence"
   "$ROOT/docs/evidence"
   "$ROOT"
 )
@@ -34,7 +33,7 @@ done
 
 # Logo / favicon (opsiyonel)
 for asset in logo.png favicon.ico; do
-  for src_dir in "$ROOT/assets/website" "$ROOT"; do
+  for src_dir in "$ROOT"; do
     if [[ -f "$src_dir/$asset" ]]; then
       cp -f "$src_dir/$asset" "$ROOT/landing/public/$asset"
       echo "[landing_sync_assets] public/$asset"

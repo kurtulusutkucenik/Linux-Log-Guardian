@@ -1,6 +1,5 @@
-// AUTO-DERIVED from the live site test matrix (assets/website/test-results.js).
-// Single source of truth for the /testler proof page. Do not hand-edit rows;
-// regenerate from competitive-proof if the matrix changes.
+// Live site test matrix — single source of truth for the /testler proof page.
+// Kept in parity with competitive-proof.json (see scripts/website_preview_gate.sh).
 
 export type TestStatus = "pass" | "warn" | "fail" | "pending";
 
@@ -353,8 +352,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Tehdit tespitinden kernel ban'a gecen sure",
     "titleEn": "Time from threat detection to kernel ban",
-    "verdict": "Medyan 16.82 ms — hedef <75.0 ms, ipset dogrulandi.",
-    "verdictEn": "Median 16.82 ms — target <75.0 ms, ipset confirmed.",
+    "verdict": "Medyan 20.23 ms — hedef <75.0 ms, ipset dogrulandi.",
+    "verdictEn": "Median 20.23 ms — target <75.0 ms, ipset confirmed.",
     "group": "proof"
   },
   {
@@ -422,8 +421,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Ayni log corpus uzerinde isleme hizi (seffaf referans)",
     "titleEn": "Processing speed on same log corpus (transparent reference)",
-    "verdict": "Guardian 5357 EPS (tek gecis log-WAF); CRS replay 14302 EPS — farkli mimari, hiz iddiasi degil.",
-    "verdictEn": "Guardian 5357 EPS (single-pass log-WAF); CRS replay 14302 EPS — different architecture, not a speed claim.",
+    "verdict": "Ayni corpus + ayni 121 CRS pattern: Guardian 280.373 EPS, ModSec CRS replay 16.560 EPS — 16.93x daha hizli (bench-vs-modsec.json).",
+    "verdictEn": "Same corpus + same 121 CRS patterns: Guardian 280,373 EPS, ModSec CRS replay 16,560 EPS — 16.93x faster (bench-vs-modsec.json).",
     "group": "proof"
   },
   {
@@ -1749,13 +1748,13 @@ export const TESTS: TestEntry[] = [
     "status": "pass",
     "statusLabel": "GECTI",
     "statusLabelEn": "PASS",
-    "title": "Statik site preview — test parity + smoke",
-    "titleEn": "Static site preview — test parity + smoke",
-    "verdict": "Site 75/75 parity; grafana yes; edge yes.",
-    "verdictEn": "Site 75/75 parity; grafana yes; edge yes.",
+    "title": "Site preview — landing test parity",
+    "titleEn": "Site preview — landing test parity",
+    "verdict": "landing/lib/tests.ts 75/75 parity; grafana yes; edge yes.",
+    "verdictEn": "landing/lib/tests.ts 75/75 parity; grafana yes; edge yes.",
     "group": "proof",
-    "purpose": "assets/website test-results.js ile competitive-proof parity.",
-    "purposeEn": "assets/website test-results.js parity with competitive-proof.",
+    "purpose": "landing/lib/tests.ts ile competitive-proof parity (yerel test-kart).",
+    "purposeEn": "landing/lib/tests.ts parity with competitive-proof (local test cards).",
     "metrics": [
       {
         "label": "site",

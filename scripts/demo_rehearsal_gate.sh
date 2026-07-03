@@ -59,8 +59,7 @@ if [[ "${SKIP_LIVE:-0}" == "1" ]]; then
   live_skip=true
   echo "[SKIP] website_live (SKIP_LIVE=1)"
 elif [[ "${LIVE_PUBLISH:-0}" == "1" ]]; then
-  bash "$ROOT/scripts/website_sync_tests.sh" >/dev/null 2>&1 || true
-  publish_rc=0
+    publish_rc=0
   LG_WEBSITE_PUBLISH=1 bash "$ROOT/scripts/website_publish.sh" >/dev/null 2>&1 || publish_rc=$?
   sleep "${LIVE_PUBLISH_WAIT:-4}"
   if bash "$ROOT/scripts/website_live_gate.sh" >/dev/null 2>&1; then
@@ -108,9 +107,8 @@ if [[ "${FULL:-0}" == "1" ]]; then
   fi
 fi
 
-# /tests kartlari — ack API + yerel preview parity
+# /tests kartlari — ack API + landing preview parity
 TEST_IP=203.0.113.198 bash "$ROOT/scripts/bans_telegram_ops_e2e.sh" >/dev/null 2>&1 || true
-bash "$ROOT/scripts/website_sync_tests.sh" >/dev/null 2>&1 || true
 bash "$ROOT/scripts/website_preview_gate.sh" >/dev/null 2>&1 || true
 
 gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$demo_ok" "$dash_ok" "$live_ok" "$live_skip" \

@@ -1,7 +1,7 @@
 # Linux Log Guardian — Website Motion Spec
 
-Statik tanıtım sitesi (`assets/website/`) için süre, easing, bölüm haritası ve perf bütçesi.
-Build: `bash scripts/website_build.sh` · Preview: `bash scripts/preview_website.sh`
+> ⚠️ **EMEKLİ / TARİHSEL:** Emekliye ayrılan eski statik site (`assets/website/`) motion spec'i.
+> Canlı site artık `landing/` (Next.js). Yalnızca tarihsel referans; içindeki script/komutlar artık yoktur.
 
 ## Easing token’ları (`site.css`)
 

@@ -2,17 +2,21 @@
 
 import { useEffect, useState } from "react";
 
+// DOM sırasıyla birebir aynı olmalı (deterministik konum tespiti için).
 const SECTIONS = [
   { id: "hero", label: "Ana" },
   { id: "nedir", label: "Nedir" },
   { id: "birlesim", label: "3 Paket" },
   { id: "sayilar", label: "Sayılar" },
   { id: "pipeline", label: "Pipeline" },
-  { id: "secili", label: "Kanıt" },
+  { id: "secili", label: "Seçili" },
   { id: "neden", label: "Neden" },
   { id: "rakipler", label: "Rakip" },
   { id: "grafikler", label: "Grafik" },
+  { id: "dogrusinir", label: "Sınır" },
+  { id: "proof", label: "Proof" },
   { id: "kurulum", label: "Kurulum" },
+  { id: "kanit", label: "Kanıt" },
   { id: "iletisim", label: "İletişim" },
 ];
 
@@ -21,29 +25,31 @@ export default function SectionNav() {
   const [show, setShow] = useState(false);
 
   useEffect(() => {
-    const onScroll = () => setShow(window.scrollY > 400);
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
-
-  useEffect(() => {
-    const obs = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((e) => {
-          if (e.isIntersecting) {
-            const i = SECTIONS.findIndex((s) => s.id === e.target.id);
-            if (i >= 0) setIdx(i);
-          }
-        });
-      },
-      { threshold: 0.25, rootMargin: "-80px 0px -40% 0px" },
-    );
-    SECTIONS.forEach((s) => {
-      const el = document.getElementById(s.id);
-      if (el) obs.observe(el);
-    });
-    return () => obs.disconnect();
+    // Referans çizgisinin (viewport üst ~%35) üstünü geçen SON bölüm aktiftir.
+    // "En son kesişen kayıt kazanır" mantığından farklı olarak deterministiktir:
+    // kumanda her zaman ekrandaki gerçek bölümle uyuşur.
+    const update = () => {
+      setShow(window.scrollY > 400);
+      const line = window.innerHeight * 0.35;
+      let current = 0;
+      for (let i = 0; i < SECTIONS.length; i++) {
+        const el = document.getElementById(SECTIONS[i].id);
+        if (!el) continue;
+        if (el.getBoundingClientRect().top <= line) current = i;
+      }
+      // Sayfa dibindeysek son bölümü kesin aktif yap (kısa footer kenar durumu).
+      if (window.innerHeight + window.scrollY >= document.body.scrollHeight - 4) {
+        current = SECTIONS.length - 1;
+      }
+      setIdx(current);
+    };
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
   }, []);
 
   const go = (next: number) => {

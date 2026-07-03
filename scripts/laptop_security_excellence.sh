@@ -122,14 +122,6 @@ else
 fi
 
 echo ""
-echo "=== Site CSP/SRI ==="
-if bash "$ROOT/scripts/website_security_check.sh" >/dev/null 2>&1; then
-  gate_ok "website_security_check (hash-only CSP)"
-else
-  gate_warn "website_security_check — bash scripts/website_build.sh"
-fi
-
-echo ""
 echo "=== Tam denetim ==="
 mkdir -p "$(dirname "$AUDIT_LOG")"
 if [[ -e "$AUDIT_LOG" && ! -w "$AUDIT_LOG" ]]; then

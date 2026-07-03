@@ -975,12 +975,12 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         row(
             "website-preview-gate",
             "pass" if ok else "fail",
-            "Statik site preview — test parity + smoke",
+            "Site preview — landing test parity",
             verdict_tr,
-            "Static site preview — test parity + smoke",
+            "Site preview — landing test parity",
             verdict_en,
-            purpose="assets/website test-results.js ile competitive-proof parity.",
-            purpose_en="assets/website test-results.js parity with competitive-proof.",
+            purpose="landing/lib/tests.ts ile competitive-proof parity (yerel test-kart).",
+            purpose_en="landing/lib/tests.ts parity with competitive-proof (local test cards).",
             metrics=[
                 {"label": "site", "value": str(web_preview.get("site_tests") or 0)},
                 {"label": "proof", "value": str(web_preview.get("expected_tests") or 0)},

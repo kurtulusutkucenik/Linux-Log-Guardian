@@ -26,7 +26,7 @@ bash scripts/security_closure_gate.sh                 # tam kapatma kapısı (~1
 | **Rate limit** | Ban/consult throttling | `api_server.c` + `consult_rate_proof.sh` |
 | **Dashboard** | JWT 32+ byte, scrypt login, rate limit | `laptop_jwt_setup.sh` |
 | **Webhook** | `/etc/log-guardian/webhook.env` chmod 600 | `local_security_audit.sh` |
-| **Statik site** | Hash-only CSP, SRI, Trusted Types, `_headers` | `website_security_check.sh` |
+| **Landing site** | CSP, SRI, güvenlik başlıkları (`landing/public/_headers`) | `website_live_css_check.sh` |
 | **Relay** | Docker internal network — LAN sızıntı yok | `relay_lan_exposure_check.sh` |
 | **Proxy** | XFF spoof koruması | `check_proxy_trust.sh` |
 | **Wasm** | Path guard + fuel limit | `wasm_gate.sh` |

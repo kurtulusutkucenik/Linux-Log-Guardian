@@ -175,7 +175,7 @@ sudo log-guardian unban 203.0.113.99
 | nginx consult | **PASS** (union/or1/LFI 403, benign 200) | ModSec inline ayrı |
 | Canlı harness | **525/525 refused** (:80) | Manuel test, tek rapor yok |
 | False positive | **%0.5** (500 benign) | Fail2ban’da WAF yok |
-| Ban gecikmesi | **17,85 ms** → ipset | Genelde saniye–dakika |
+| Ban gecikmesi | **20,23 ms** → ipset | Genelde saniye–dakika |
 | CRS parity | **%100** | ModSec ayrı; ban ayrı entegrasyon |
 | Kanıt paketi | `competitive-proof.pdf` + `release-pack.zip` | Manuel / dağınık |
 
@@ -238,7 +238,7 @@ Detay: [docs/GITHUB_RELEASE.md](docs/GITHUB_RELEASE.md) · [docs/DATA_ROOM.md](d
 | Metrik | Değer |
 |--------|-------|
 | **EPS** | 280.373 |
-| **Ban latency** | 17,85 ms |
+| **Ban latency** | 20,23 ms (medyan, 21 örnek; P90 21,1 ms) |
 
 ### Kaynak kullanımı (ayrı hesap)
 
@@ -360,7 +360,7 @@ An open-source, Linux-native edge security project (MIT). It does not replace Cl
 | Distributed cluster | **100%** (80 IPs, same UA) | Per-IP ban; cluster separate |
 | Live harness | **525/525 refused** (:80) | Manual tests, no single report |
 | False positive | **0.5%** (500 benign lines) | No WAF on fail2ban |
-| Ban latency | **17.85 ms** → ipset | Usually seconds–minutes |
+| Ban latency | **20.23 ms** → ipset | Usually seconds–minutes |
 | CRS parity | **100%** | ModSec separate; ban separate integration |
 | Proof package | `competitive-proof.pdf` + `release-pack.zip` | Manual / scattered |
 
@@ -448,7 +448,7 @@ Details: [docs/GITHUB_RELEASE.md](docs/GITHUB_RELEASE.md) · [docs/DATA_ROOM.md]
 | Metric | Value |
 |--------|-------|
 | **EPS** | 280,373 |
-| **Ban latency** | 17.85 ms |
+| **Ban latency** | 20.23 ms (median, 21 samples; P90 21.1 ms) |
 
 ### Resource usage (separate accounting)
 

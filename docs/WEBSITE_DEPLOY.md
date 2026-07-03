@@ -1,14 +1,17 @@
-# Statik site yayini (domain oncesi hazirlik)
+# Site yayini (landing → Cloudflare Pages)
 
-Marketing sitesi `assets/website/` altinda gelistirilir; **internete cikan paket** `assets/website-deploy/` dir.
+Canli site **`landing/`** (Next.js, 24 dil) projesinden uretilir. Static export ciktisi
+`landing/out`; Cloudflare Pages bu dizini yayinlar. Eski statik `assets/website/`
+pipeline'i emekliye ayrildi.
 
 ## Tek komut (yerel)
 
 ```bash
-bash scripts/website_publish.sh       # landing build + Cloudflare Pages production (canli site)
-bash scripts/website_deploy_gate.sh   # yalnizca build + dogrulama (deploy yok)
-bash scripts/website_smoke.sh           # HTTP smoke (domain gerekmez)
-LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
+cd landing && npm run dev              # hizli onizleme :3001
+bash scripts/website_landing_export.sh # static export -> landing/out
+bash scripts/website_deploy_gate.sh    # build + landing/out + wrangler dogrulama (deploy yok)
+bash scripts/website_publish.sh        # landing/out -> Cloudflare Pages production (canli site)
+bash scripts/website_preview_gate.sh   # /tests parity (landing/lib/tests.ts <-> competitive-proof) 75/75
 ```
 
 **Canli yayin:** Cloudflare Pages bu repoda Git bagli degil — `git push` siteyi guncellemez.
@@ -16,7 +19,7 @@ LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh
 
 **Analytics + Search Console (tek seferlik):**
 ```bash
-# Otomatik (Cloudflare API token ile analytics + isteğe bağlı GSC DNS):
+# Otomatik (Cloudflare API token ile analytics + istege bagli GSC DNS):
 LG_CF_API_TOKEN=<token> bash scripts/website_search_setup.sh
 
 # veya sadece GSC meta tag (API gerekmez):
@@ -24,58 +27,39 @@ GSC_META_TOKEN=<google-content> bash scripts/website_search_setup.sh
 
 bash scripts/website_publish.sh
 ```
-Şablon: `landing/env.example` → `landing/.env.local` (commit edilmez).
+Sablon: `landing/env.example` → `landing/.env.local` (commit edilmez).
 
-GSC sitemap (doğrulama sonrası tarayıcıda): Search Console → Site haritaları → `https://ceniklinuxlogguardian.org/sitemap.xml`
+GSC sitemap (dogrulama sonrasi): Search Console → Site haritalari → `https://ceniklinuxlogguardian.org/sitemap.xml`
 
-**Analytics (manuel):** Cloudflare Dashboard → Web Analytics → token → `NEXT_PUBLIC_CF_BEACON` in `landing/.env.local`
+**Analytics (manuel):** Cloudflare Dashboard → Web Analytics → token → `NEXT_PUBLIC_CF_BEACON` (`landing/.env.local`)
 
-Award / portfolio paketi (Awwwards, FWA, showcase):
+## Cloudflare Pages (domain ayari)
 
-```bash
-bash scripts/website_award_pack.sh      # tek basina (deploy sonrasi)
-# -> dist/website-award-pack/ + dist/linux-log-guardian-website-award.zip
-```
-
-## Domain almadan cozulen riskler
-
-| Risk | Onlem |
-|------|--------|
-| Yanlis build output (`assets/website`) | `wrangler.toml` → `pages_build_output_dir = "assets/website-deploy"` |
-| Hassas dosya sizintisi | Deploy paketinde `csp.txt` / `publish.allowlist` yok; CI kontrol eder |
-| Bayat deploy paketi | `website_ensure_deploy.sh` SRI hash karsilastirir |
-| Regresyon | GitHub Actions `website.yml` her PR/push'ta gate + smoke |
-
-## Cloudflare Pages (domain alinca)
-
-1. Repo bagla (`kurtulusutkucenik/loganalyzer`)
+1. Proje: `linux-log-guardian-website`
 2. **Build command:** `bash scripts/website_deploy_gate.sh`
-3. **Build output directory:** `assets/website-deploy` (veya kok `wrangler.toml` otomatik okur)
+3. **Build output directory:** `landing/out` (kok `wrangler.toml` otomatik okur)
 4. Custom domain ekle → HTTPS otomatik
 5. **Cloudflare Dashboard (zorunlu — SRI kirilir):**
-   - **Speed → Optimization → Auto Minify:** JavaScript **kapalı** (HTML/CSS isteğe bağlı)
-   - **Scrape Shield → Email Address Obfuscation:** kapalı veya JS dosyalarına dokunmuyor olmalı
-   - Rocket Loader **kapalı**
-6. Deploy sonrasi:
+   - **Speed → Optimization → Auto Minify:** JavaScript **kapali**
+   - **Scrape Shield → Email Address Obfuscation:** JS dosyalarina dokunmamali
+   - Rocket Loader **kapali**
+6. Deploy sonrasi dogrulama:
    ```bash
-   wrangler pages deploy assets/website-deploy --project-name=linux-log-guardian-website --branch=main --commit-dirty=true
-   LG_CF_PURGE=1 bash scripts/website_cf_purge.sh   # SRI drift — token: LG_CF_API_TOKEN
-   bash scripts/website_live_css_check.sh   # curl — CSS drift
-   bash scripts/website_live_js_check.sh    # tarayici — JS SRI (curl yetmez)
+   LG_CF_PURGE=1 bash scripts/website_cf_purge.sh   # cache purge — token: LG_CF_API_TOKEN
+   bash scripts/website_live_css_check.sh           # curl — CSS drift
+   bash scripts/website_live_js_check.sh            # tarayici — JS SRI (curl yetmez)
+   bash scripts/website_live_gate.sh                # css + js + /tests parity tek kapi
    ```
 7. Canli dogrulama:
    ```bash
-   curl -sI https://ceniklinuxlogguardian.org/csp.txt          # 404
-   curl -sI https://ceniklinuxlogguardian.org/ | grep -i strict # HSTS
+   curl -sI https://ceniklinuxlogguardian.org/ | grep -i strict   # HSTS
    ```
 
-`website_live_js_check.sh` basarisiz ve konsolda `Failed to find a valid digest in the integrity attribute` gorurseniz: Auto Minify acik — JS minify SRI hash'i bozuluyor.
-
-`/_redirects` icinde `/tests → /tests.html` **eklemeyin** — Cloudflare zaten `/tests` pretty URL kullanir; rewrite redirect dongusu yapar.
+`website_live_js_check.sh` basarisiz ve konsolda `Failed to find a valid digest in the integrity attribute`
+gorurseniz: Auto Minify acik — JS minify SRI hash'i bozuyor.
 
 ## Onemli
 
-- `assets/website-deploy/` git'e **commit edilmez** (`.gitignore`)
-- `i18n.js` veya `site.css` degisince mutlaka `bash scripts/website_build.sh`
-- Prod onizleme deploy paketinden: `LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh`
-- `website_smoke.sh` **bos port** secer (8767 sabit degil); 8767'de baska statik sunucu varsa artik karismaz
+- `landing/out/` ve `landing/.next/` git'e **commit edilmez** (`.gitignore`)
+- Kanit dosyalari: `bash scripts/landing_sync_assets.sh` → `landing/public/evidence/`
+- `/tests` parity: icerik degisince `python3 scripts/competitive_proof_build.py` + `bash scripts/website_preview_gate.sh`

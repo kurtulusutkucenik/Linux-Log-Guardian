@@ -82,8 +82,9 @@ fi
 step "P4 #16 ARM build smoke"
 bash scripts/build_arm64.sh
 
-step "P1 #2 site / kanit sync"
-bash scripts/website_sync_tests.sh
+step "P1 #2 kanit / landing test parity"
+python3 scripts/competitive_proof_build.py -o competitive-proof.json
+bash scripts/website_preview_gate.sh >/dev/null 2>&1 || echo "[WARN] website_preview_gate — landing parity"
 
 step "P7 attack map — /api/attack-geo"
 if bash scripts/attack_map_e2e.sh; then
@@ -101,5 +102,5 @@ n="$(python3 -c "import json; print(len(json.load(open('competitive-proof.json')
 echo ""
 echo "[OK] release_prep_no_github — $n validation test"
 echo "  Dashboard: bash scripts/dashboard_refresh.sh && Ctrl+Shift+R https://localhost:8443"
-echo "  /fleet/dispatch · Grafana :3002 · Site: bash scripts/preview_website.sh"
+  echo "  /fleet/dispatch · Grafana :3002 · Site: cd landing && npm run dev"
 echo "  VPS XDP: sudo bash scripts/vps_xdp_proof.sh  (VPS_XDP_SKIP=0)"

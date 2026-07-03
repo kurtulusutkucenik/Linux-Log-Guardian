@@ -1,0 +1,18 @@
+# ── GitHub Linguist dil istatistiği ───────────────────────────────
+# Ürünün gerçek doğası: Linux Log Guardian bir C güvenlik motorudur
+# (log-guardian daemon + binary). Aşağıdaki dizinler ürünü DESTEKLEYEN
+# katmanlardır; dil çubuğunda çekirdek yazılımı gölgede bırakmasınlar diye
+# "vendored" işaretlenir (kod repoda kalır, sadece istatistikten düşer).
+
+# Pazarlama sitesi (Next.js) — canlı: ceniklinuxlogguardian.org
+landing/**                  linguist-vendored
+
+# Operatör paneli (Next.js) — Pro sürüm görünürlük katmanı
+dashboard/**                linguist-vendored
+
+# Operasyon / build / gate tooling (shell + python glue)
+scripts/**                  linguist-vendored
+
+# Üretilen raporlar/çıktılar — kaynak kod değil
+*-report.json                 linguist-generated
+graphify-out/**               linguist-generated

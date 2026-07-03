@@ -16,7 +16,7 @@ export default function ProofSection() {
     { value: `${total}`, label: proof.statLabels[0], color: "text-white" },
     { value: `${passed}`, label: proof.statLabels[1], color: "text-ok" },
     { value: "72h", label: proof.statLabels[2], color: "text-neon" },
-    { value: "~17ms", label: proof.statLabels[3], color: "text-cyan" },
+    { value: "~20ms", label: proof.statLabels[3], color: "text-cyan" },
   ];
 
   return (

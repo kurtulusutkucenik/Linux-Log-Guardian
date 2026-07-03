@@ -153,7 +153,7 @@ fi
 if bash "$ROOT/scripts/website_preview_gate.sh" >/dev/null 2>&1; then
   gate_ok "website_preview_gate (test parity)"
 else
-  gate_warn "website_preview_gate — bash scripts/website_sync_tests.sh"
+  gate_warn "website_preview_gate — python3 scripts/competitive_proof_build.py"
 fi
 
 if bash "$ROOT/scripts/enterprise_escalation_gate.sh" >/dev/null 2>&1; then

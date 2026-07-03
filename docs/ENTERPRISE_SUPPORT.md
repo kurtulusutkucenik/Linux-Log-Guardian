@@ -40,7 +40,7 @@ bash scripts/release_ready_check.sh    # artefakt kapısı
 bash scripts/release_ready_gate.sh     # ZIP + docs + live + filo zinciri
 ```
 
-Dashboard vitrin: `https://localhost:8443/tests` (**75 kart**) · statik site: `bash scripts/preview_website.sh`
+Dashboard vitrin: `https://localhost:8443/tests` (**75 kart**) · site: `cd landing && npm run dev`
 
 Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · kapı: `bash scripts/enterprise_escalation_gate.sh`
 

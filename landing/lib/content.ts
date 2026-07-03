@@ -13,7 +13,7 @@ export const NAV = [
 export const HERO = {
   badge: "//:LOG→BAN · SYSTEM ONLINE",
   title: "Linux Log Guardian",
-  bullets: ["~17 ms kernel ban", "75 otomatik test", "72h soak PASS"],
+  bullets: ["~20 ms kernel ban", "75 otomatik test", "72h soak PASS"],
   tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   chips: ["açık kaynak · MIT", "72h soak PASS"],
   reach: "2,3k+ ziyaret · 4k+ sayfa · 54 ülke · kanıt PDF",
@@ -27,7 +27,7 @@ export const HERO = {
   praise: {
     lead: "Türkiye'nin ölçülebilir kanıtlı, tek zincir self-hosted güvenlik stack'i — rakipler parça parça, biz hepsi bir arada.",
     highlights: [
-      "~17 ms medyan ban — Fail2ban'ın saatler süren iptables yoluna karşı ölçülmüş 5 örnek",
+      "~20 ms medyan ban — Fail2ban'ın saatler süren iptables yoluna karşı ölçülmüş 21 örnek",
       "%100 gerçek saldırı recall + %100 OWASP CRS parity — 121 kural, 1500 satır corpus",
       "%0.2 false positive — 500 benign satırda 1 alarm; rakiplerde yüksek/orta",
       "72 saat VM soak — 864 örnek, 0 hata; rakiplerde otomatik kanıt yok",
@@ -35,7 +35,7 @@ export const HERO = {
       "3 araç yığını tek ürün: ban motoru + WAF/CRS + SOC/kanıt — ~15 dk kurulum",
     ],
     bold: [
-      { v: "~17ms", l: "kernel ban" },
+      { v: "~20ms", l: "kernel ban" },
       { v: "%100", l: "recall" },
       { v: "75", l: "otomatik test" },
       { v: "3→1", l: "araç birleşimi" },
@@ -47,15 +47,15 @@ export const ABOUT = {
   eyebrow: "//:Nedir",
   title: "Linux Log Guardian nedir?",
   intro:
-    "Türkiye'de geliştirilen, tamamen açık kaynak (MIT) bir self-hosted güvenlik yazılımı. nginx erişim loglarını gerçek zamanlı okur, OWASP CRS/WAF ile değerlendirir ve saldırgan IP'yi ipset ile kernel seviyesinde ~17 ms'de banlar — tek zincirde, üçüncü parti bulut olmadan.",
+    "Türkiye'de geliştirilen, tamamen açık kaynak (MIT) bir self-hosted güvenlik yazılımı. nginx erişim loglarını gerçek zamanlı okur, OWASP CRS/WAF ile değerlendirir ve saldırgan IP'yi ipset ile kernel seviyesinde ~20 ms'de banlar — tek zincirde, üçüncü parti bulut olmadan.",
   paragraphs: [
     "Fail2ban yalnızca ban atar, ModSecurity WAF ayrı bir modüldür, dağıtık saldırı için ayrı araçlar gerekir. Log Guardian bunları tek hatta birleştirir: log satırı düşer → parser normalize eder → CRS/WAF kural motoru (PCRE2 JIT) değerlendirir → ban pipeline politika + tenant kararı verir → ipset/XDP kernelde uygular → Prometheus metrik ve dashboard SOC timeline'a yazar.",
-    "Sonuç ölçülebilir ve tekrar üretilebilir: gerçek saldırı corpus'unda %100 recall, OWASP CRS ile %100 parity, %0.2 false positive, ~17 ms medyan ban gecikmesi ve 72 saatlik VM soak testinde 864 örnek boyunca 0 hata. Hepsi competitive-proof PDF/JSON paketinde ve /testler matrisinde açık.",
+    "Sonuç ölçülebilir ve tekrar üretilebilir: gerçek saldırı corpus'unda %100 recall, OWASP CRS ile %100 parity, %0.2 false positive, ~20 ms medyan ban gecikmesi ve 72 saatlik VM soak testinde 864 örnek boyunca 0 hata. Hepsi competitive-proof PDF/JSON paketinde ve /testler matrisinde açık.",
     "Bu web sitesi halka açık tanıtım ve indirme sayfasıdır — statik içerik sunar. Yazılım burada çalışmaz; kendi Linux sunucunuza kurar, verinizin sizde kalmasını sağlarsınız. Vendor lock-in yok, kaynak kodu tamamen açık.",
   ],
   highlights: [
     { k: "Tek zincir", v: "log → WAF → kernel ban, tek araç" },
-    { k: "~17 ms", v: "log satırından ipset ban'a medyan gecikme" },
+    { k: "~20 ms", v: "log satırından ipset ban'a medyan gecikme" },
     { k: "%100 recall", v: "gerçek saldırı corpus + CRS parity" },
     { k: "%0.2 FP", v: "500 benign satırda 1 alarm" },
     { k: "72h soak", v: "864 örnek, 0 hata (VM)" },
@@ -66,13 +66,13 @@ export const ABOUT = {
 export const PIPELINE = {
   eyebrow: "//:Pipeline",
   title: "Tek zincir: logdan kernel ban'a",
-  sub: "nginx access log satırından ipset ban'a ~17 ms — rakiplerde parçalı mimari.",
+  sub: "nginx access log satırından ipset ban'a ~20 ms — rakiplerde parçalı mimari.",
   steps: [
     { n: "1", label: "nginx access log", hint: "yazılabilir access log, log_guardian formatı" },
     { n: "2", label: "Parser + normalize", hint: "URI, method, XFF, body — tek şema" },
     { n: "3", label: "CRS / WAF motoru", hint: "OWASP CRS, PCRE2 JIT, schema/BOLA" },
     { n: "4", label: "Ban pipeline", hint: "policy + tenant + FP trust kararı" },
-    { n: "5", label: "ipset / XDP kernel", hint: "~17 ms kernel ban" },
+    { n: "5", label: "ipset / XDP kernel", hint: "~20 ms kernel ban" },
     { n: "6", label: "Metrik + dashboard", hint: "Prometheus tenant + SOC timeline" },
   ],
   note: "XDR, Wasm marketplace ve LLM Copilot uzun vadeli opsiyonel katmanlardır — Core tek başına üretimde kullanılabilir.",
@@ -82,7 +82,7 @@ export const MARQUEE_ITEMS = [
   "nginx log → WAF → kernel ban",
   "75 otomatik test",
   "72h soak PASS",
-  "~17 ms kernel ban",
+  "~20 ms kernel ban",
   "false positive %0.2",
   "gerçek saldırı recall %100",
   "OWASP CRS parity %100",
@@ -99,8 +99,8 @@ export const SELECTED = {
       tag: "//:Core",
       kicker: "CORE",
       title: 'What="we do"',
-      body: "Tek zincir: nginx log → OWASP CRS → ~17 ms kernel ban. ~15 dakikada üretim.",
-      chips: ["~17 ms ban", "OWASP CRS"],
+      body: "Tek zincir: nginx log → OWASP CRS → ~20 ms kernel ban. ~15 dakikada üretim.",
+      chips: ["~20 ms ban", "OWASP CRS"],
     },
     {
       tag: "//:Pro",
@@ -190,7 +190,7 @@ export const WHY = {
     {
       n: "01",
       title: "Tek hat",
-      body: "nginx log → OWASP CRS → ~17 ms kernel ban. Fail2ban + ModSec + script yığını yok.",
+      body: "nginx log → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + script yığını yok.",
     },
     {
       n: "02",
@@ -215,7 +215,7 @@ export const WHY = {
     {
       n: "06",
       title: "Kernel hızı",
-      body: "~17 ms medyan ban — Fail2ban/CrowdSec saniye–dakika ölçeğinde; ölçülmüş 5 örnek.",
+      body: "~20 ms medyan ban — Fail2ban/CrowdSec saniye–dakika ölçeğinde; ölçülmüş 21 örnek.",
     },
     {
       n: "07",
@@ -243,8 +243,12 @@ export const VS = {
       v: "Fail2ban + ModSecurity + CrowdSec'i ayrı ayrı kurup entegre etmezsiniz. nginx log → WAF/CRS → kernel ban tek üründe, ~15 dk kurulum.",
     },
     {
-      k: "~17 ms kernel ban",
-      v: "Log satırından ipset/XDP ban'a medyan ~17 ms. Fail2ban/CrowdSec saniye–dakika ölçeğinde kalır; 5 ölçülmüş örnekle kanıtlı.",
+      k: "~20 ms kernel ban",
+      v: "Log satırından ipset/XDP ban'a medyan ~20 ms. Fail2ban/CrowdSec saniye–dakika ölçeğinde kalır; 21 ölçülmüş örnekle kanıtlı.",
+    },
+    {
+      k: "280.373 EPS · 16.93× ModSec",
+      v: "Aynı corpus ve aynı 121 OWASP CRS pattern'ında (PCRE2 JIT) WAF/CRS throughput 280.373 EPS — ModSec'in 16.560 EPS'ine karşı 16.93 kat hızlı. Ölçülmüş ve tekrar üretilebilir (bench-vs-modsec.json).",
     },
     {
       k: "%100 recall + %100 CRS parity",
@@ -269,9 +273,10 @@ export const VS = {
       label: "Güçlü yanlar (ölçülmüş)",
       honest: false,
       // winners[i] = i. satırda üstün olan sütun (1=LG … 4=ModSec), yoksa 0.
-      winners: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+      winners: [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
       rows: [
         ["Log → WAF → kernel ban", "Tek hat", "Yalnız ban", "Parçalı", "WAF ayrı"],
+        ["WAF/CRS throughput (aynı corpus)", "280.373 EPS (16.93×)", "—", "—", "16.560 EPS"],
         ["OWASP CRS parity", "%100 (121 kural)", "—", "—", "Referans (%100)"],
         ["Gerçek saldırı recall", "%100 (1K+10K)", "—", "—", "%100"],
         ["Dağıtık / JA3 cluster ban", "%100 (80 IP)", "—", "Sinyal tabanlı", "—"],
@@ -279,7 +284,7 @@ export const VS = {
         ["L7 uygulama koruması", "WAF + consult + eBPF", "—", "—", "CRS inline"],
         ["Kernel / eBPF (XDP) ban", "ipset + XDP", "iptables", "iptables/nft", "—"],
         ["False positive", "%0.2 (ölçülü)", "Yüksek", "Orta", "CRS bağlı"],
-        ["Ban gecikmesi", "~17 ms", "sn–dk", "sn", "Ayrı entegrasyon"],
+        ["Ban gecikmesi", "~20 ms", "sn–dk", "sn", "Ayrı entegrasyon"],
         ["Kısa stabilite (5 dk)", "PASS (0 fail)", "—", "—", "—"],
         ["72h soak", "PASS (864/0)", "—", "—", "—"],
         ["Kanıt paketi PDF+JSON", "Otomatik (14 dosya)", "Yok", "Kısmi", "Modül modül"],
@@ -293,9 +298,8 @@ export const VS = {
       label: "Dürüst sınırlar",
       honest: true,
       // winners: rakibin bizden açıkça üstün olduğu sütun (kırmızı), yoksa 0.
-      winners: [4, 4, 0, 3, 4, 3],
+      winners: [4, 0, 3, 4, 3],
       rows: [
-        ["Inline regex EPS", "~5.357 EPS (log replay)", "—", "—", "~14.300 EPS inline"],
         ["İlk isteği anında engelleme", "Reaktif (log satırı)", "Reaktif", "Kısmen", "Inline (anında)"],
         ["Volumetrik L3/L4 scrub", "Yok — CDN önerilir", "Yok", "Yok", "Yok"],
         ["Topluluk sinyal ağı", "Self-hosted", "—", "Var (global)", "—"],
@@ -304,7 +308,7 @@ export const VS = {
       ],
     },
   ],
-  note: "Dürüst sınır: bazı alanlarda rakipler açıkça daha iyi (kırmızı hücreler). ModSec + CRS inline throughput'ta (~14.300 EPS, ölçülmüş) ve ilk isteği anında engellemede önde; CrowdSec dağıtık topluluk sinyal ağında ve yönetilen SaaS konsolunda güçlü. Güçlü yanımız tek zincir entegrasyon + ~17 ms ban hızı + şeffaf, tekrar üretilebilir kanıt.",
+  note: "Dürüst sınır: bazı alanlarda rakipler açıkça daha iyi (kırmızı hücreler). ModSec + CRS ilk isteği inline anında engeller (biz reaktifiz — log satırı düşene kadar ilk istek geçebilir); CrowdSec dağıtık topluluk sinyal ağında ve yönetilen SaaS konsolunda güçlü. Buna karşılık aynı corpus + aynı 121 CRS pattern ölçümünde WAF/CRS throughput'umuz 280.373 EPS ile ModSec'in 16.560 EPS'inin 16.93 katı (bench-vs-modsec.json).",
 };
 
 export interface LineSeries {
@@ -373,7 +377,7 @@ export const CHARTS: {
   sub: "Ölçülmüş kanıttan (competitive-proof.json, bench-vs-modsec.json, fp-report.json, bench-ban-latency.json) türetilmiştir. Bizim çizgi fosforlu turkuaz.",
   profile: {
     title: "Performans profili (9 eksen)",
-    hint: "Yüksek = iyi · 0–100 normalize · Log Guardian turkuaz çizgi",
+    hint: "Yüksek = iyi · 0–100 normalize · Throughput: bench-vs-modsec.json EPS oranı (280k vs 16,5k) — LG 100 iddiası yok",
     categories: [
       "Tek zincir",
       "Recall",
@@ -387,21 +391,21 @@ export const CHARTS: {
     ],
     yMax: 100,
     series: [
-      { name: "Log Guardian", us: true, values: [100, 100, 98, 100, 100, 40, 100, 100, 92] },
-      { name: "ModSec + CRS", dash: "solid", values: [60, 100, 55, 40, 40, 100, 20, 70, 40] },
-      { name: "CrowdSec", dash: "dash", values: [55, 40, 60, 55, 45, 45, 85, 55, 65] },
-      { name: "Fail2ban", dash: "dot", values: [30, 10, 40, 20, 10, 30, 10, 40, 72] },
+      { name: "Log Guardian", us: true, values: [100, 100, 98, 100, 100, 95, 100, 100, 92] },
+      { name: "ModSec + CRS", dash: "solid", values: [60, 100, 55, 40, 40, 6, 20, 70, 40] },
+      { name: "CrowdSec", dash: "dash", values: [55, 40, 60, 55, 45, 4, 85, 55, 65] },
+      { name: "Fail2ban", dash: "dot", values: [30, 10, 40, 20, 10, 3, 10, 40, 72] },
     ],
   },
   latency: {
     title: "Ban gecikmesi — ölçüm örnekleri",
-    hint: "Düşük = iyi · 5 örnek (bench-ban-latency.json) · hedef 75 ms",
+    hint: "Düşük = iyi · 21 örnekten temsili (bench-ban-latency.json) · medyan 20.2 ms · hedef 75 ms",
     labels: ["#1", "#2", "#3", "#4", "#5"],
     yMax: 90,
     unit: "ms",
     target: 75,
     series: [
-      { name: "Log Guardian", us: true, values: [16.82, 17.13, 16.78, 17.1, 16.6] },
+      { name: "Log Guardian", us: true, values: [19.68, 20.06, 20.23, 20.61, 20.82] },
     ],
   },
   soak: {
@@ -425,14 +429,14 @@ export const CHARTS: {
     ],
   },
   eps: {
-    title: "Throughput (EPS) — aynı corpus",
-    hint: "Yüksek = iyi · bench-vs-modsec.json · dürüst sınır",
+    title: "WAF/CRS throughput (EPS) — aynı corpus",
+    hint: "Yüksek = iyi · bench-vs-modsec.json · aynı 121 CRS pattern, PCRE2 JIT · 16.93× ModSec",
     labels: ["Log Guardian", "ModSec + CRS"],
-    yMax: 16000,
+    yMax: 300000,
     unit: "",
-    honest: true,
+    honest: false,
     series: [
-      { name: "EPS replay", us: true, values: [5357, 14302] },
+      { name: "EPS (aynı corpus)", us: true, values: [280373, 16560] },
     ],
   },
   recall: {
@@ -448,13 +452,6 @@ export const CHARTS: {
   },
 };
 
-export const STATS = [
-  { value: "75", label: "Otomatik test" },
-  { value: "72h", label: "Soak PASS" },
-  { value: "~17ms", label: "Kernel ban" },
-  { value: "54", label: "Ülke erişimi" },
-];
-
 export const METRICS = {
   eyebrow: "//:Sayılar",
   title: "Sitede gösterilen tüm sayısal değerler",
@@ -463,10 +460,10 @@ export const METRICS = {
     {
       label: "Ban & gecikme",
       items: [
-        { value: "16.82", unit: "ms", label: "Medyan ban gecikmesi" },
-        { value: "17.1", unit: "ms", label: "P90 ban gecikmesi" },
-        { value: "16.6", unit: "ms", label: "Min örnek (5 ölçüm)" },
-        { value: "17.13", unit: "ms", label: "Max örnek (5 ölçüm)" },
+        { value: "20.23", unit: "ms", label: "Medyan ban gecikmesi" },
+        { value: "21.1", unit: "ms", label: "P90 ban gecikmesi" },
+        { value: "18.69", unit: "ms", label: "Min örnek (21 ölçüm)" },
+        { value: "21.64", unit: "ms", label: "Max örnek (21 ölçüm)" },
         { value: "75", unit: "ms", label: "Laptop hedef (PASS)" },
         { value: "50", unit: "ms", label: "Prod hedef" },
       ],
@@ -485,9 +482,10 @@ export const METRICS = {
     {
       label: "Throughput",
       items: [
-        { value: "5.357", unit: "EPS", label: "Log Guardian replay" },
-        { value: "14.302", unit: "EPS", label: "ModSec CRS replay" },
-        { value: "186.67", unit: "µs", label: "Satır başı latency (LG)" },
+        { value: "280.373", unit: "EPS", label: "WAF/CRS (aynı corpus, LG)" },
+        { value: "16.560", unit: "EPS", label: "ModSec CRS replay" },
+        { value: "16.93×", unit: "", label: "LG / ModSec hız oranı" },
+        { value: "3.57", unit: "µs", label: "Satır başı latency (LG)" },
         { value: "16", unit: "", label: "Bench worker sayısı" },
       ],
     },
@@ -527,8 +525,8 @@ export const PACKAGES = {
       name: "Ban motoru",
       company: "Fail2ban",
       replaces: "Fail2ban + iptables script yığını",
-      body: "Fail2ban'ı ayrı kurmazsınız. Log satırından ipset/XDP kernel ban ~17 ms — policy, tenant, FP trust tek pipeline.",
-      metrics: ["~17 ms medyan", "ipset + XDP", "0 fail (5 dk)"],
+      body: "Fail2ban'ı ayrı kurmazsınız. Log satırından ipset/XDP kernel ban ~20 ms — policy, tenant, FP trust tek pipeline.",
+      metrics: ["~20 ms medyan", "ipset + XDP", "0 fail (5 dk)"],
       color: "neon" as const,
     },
     {
@@ -560,13 +558,13 @@ export const PACKAGES = {
     ],
     big: [
       { v: "3→1", l: "Araç yığını" },
-      { v: "~17ms", l: "Uçtan uca ban" },
+      { v: "~20ms", l: "Uçtan uca ban" },
       { v: "%100", l: "Recall + parity" },
       { v: "75", l: "Otomatik test" },
     ],
   },
   tiers: {
-    title: "Ürün katmanları (Core · Pro · Opsiyonel)",
+    title: "Ürün sürümleri (Core · Pro · Pro Plus)",
     items: [
       {
         tag: "Core",
@@ -581,10 +579,10 @@ export const PACKAGES = {
         includes: ["XDP/eBPF", "SOC timeline", "fleet sync", "alert kuralları"],
       },
       {
-        tag: "Opsiyonel",
-        time: "uzun vadeli",
-        body: "XDR, Wasm marketplace, LLM Copilot — roadmap katmanları.",
-        includes: ["attack tree", "Wasm plugin", "Copilot"],
+        tag: "Pro Plus",
+        time: "kurumsal vitrin",
+        body: "PRO + K8s/Helm kanıtı (kind), fleet vitrin, opsiyonel Wasm/mesh — koruma aynı, sadece görünürlük+entegrasyon kanıtı.",
+        includes: ["kind + Helm", "fleet vitrin", "Wasm/mesh (ops.)", "XDR/Copilot roadmap"],
       },
     ],
   },
@@ -596,8 +594,8 @@ export const PACKAGES = {
     },
     {
       title: "Ölçülebilir ban hızı",
-      body: "bench-ban-latency.json: 5 örnek, medyan 16.82 ms, hedef 75 ms — PASS. Rakipler saniye–dakika ölçeğinde.",
-      stat: "~17 ms",
+      body: "bench-ban-latency.json: 21 örnek, medyan 20.2 ms, hedef 75 ms — PASS. Rakipler saniye–dakika ölçeğinde.",
+      stat: "~20 ms",
     },
     {
       title: "Şeffaf kanıt",
@@ -615,7 +613,7 @@ export const PACKAGES = {
 export const LAYERS = [
   { tag: "Core", body: "log → WAF → ipset ban (~15 dk)" },
   { tag: "Pro", body: "eBPF daemon, dashboard, metrikler, fleet" },
-  { tag: "Opsiyonel", body: "XDR, Wasm marketplace, LLM Copilot" },
+  { tag: "Pro Plus", body: "K8s/Helm kanıtı (kind), fleet vitrin, opsiyonel Wasm/mesh (XDR/Copilot roadmap)" },
 ];
 
 export interface SetupStep {
@@ -804,10 +802,10 @@ export const HONEST = {
   eyebrow: "//:Honest",
   title: "Dürüst sınırlar",
   items: [
-    "Reaktif mimari — log satırı düşene kadar ilk istek geçebilir; inline ModSec hızında değiliz.",
+    "Reaktif mimari — log satırı düşene kadar ilk istek geçebilir; ModSec inline'ın ilk isteği anında engellemesine karşı biz reaktifiz.",
     "L3/L4 DDoS absorb etmiyoruz — CDN üstüne konuruz.",
     "Dağıtık botnet — IP başına ban; CrowdSec sinyal ağı yok.",
-    "Yapar: log → CRS/WAF → ~17 ms kernel ban, kanıt PDF, Telegram ops, MIT self-hosted.",
+    "Yapar: log → CRS/WAF → ~20 ms kernel ban, kanıt PDF, Telegram ops, MIT self-hosted.",
   ],
 };
 

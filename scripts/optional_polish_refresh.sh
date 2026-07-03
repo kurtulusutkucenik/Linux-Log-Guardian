@@ -55,8 +55,9 @@ else
 fi
 
 if [[ "${SKIP_WEBSITE:-0}" != "1" ]]; then
-  echo "[4/5] Site test parity (competitive-proof -> website)"
-  bash "$ROOT/scripts/website_sync_tests.sh"
+  echo "[4/5] Kanit JSON + landing test parity"
+  python3 "$ROOT/scripts/competitive_proof_build.py" -o "$ROOT/competitive-proof.json"
+  bash "$ROOT/scripts/website_preview_gate.sh" >/dev/null 2>&1 || echo "[WARN] website_preview_gate — landing parity"
 else
   echo "[4/5] Site sync atlandi (SKIP_WEBSITE=1)"
   python3 "$ROOT/scripts/competitive_proof_build.py" -o "$ROOT/competitive-proof.json"

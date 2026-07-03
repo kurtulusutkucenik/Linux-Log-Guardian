@@ -1,5 +1,0 @@
-Contact: mailto:kurtulusutkucenikcontact@gmail.com
-Expires: 2027-06-15T23:59:59Z
-Preferred-Languages: tr, en
-Canonical: https://ceniklinuxlogguardian.org/.well-known/security.txt
-Policy: https://github.com/kurtulusutkucenik/loganalyzer/blob/main/SECURITY.md

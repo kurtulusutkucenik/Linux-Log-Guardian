@@ -82,7 +82,7 @@ bash scripts/dashboard_refresh.sh
 bash scripts/website_preview_gate.sh
 ```
 
-Dashboard: `https://localhost:8443/tests` · Statik site: `bash scripts/preview_website.sh`
+Dashboard: `https://localhost:8443/tests` · Site: `cd landing && npm run dev`
 
 ---
 

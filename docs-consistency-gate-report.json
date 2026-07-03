@@ -1,10 +1,10 @@
 {
-  "date": "2026-07-02T20:23:32.354916+00:00",
+  "date": "2026-07-03T06:47:31.030498+00:00",
   "pass": true,
   "checks_ok": 37,
   "checks_fail": 0,
   "proof_tests": 75,
-  "proof_pass": 75,
+  "proof_pass": 73,
   "hosting_8b": true,
   "escalation_hosting_link": true,
   "support_64_kart": true,

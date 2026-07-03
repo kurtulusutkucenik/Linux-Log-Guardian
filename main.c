@@ -2917,9 +2917,23 @@ static void *worker_loop(void *arg) {
         if (t >= h) {
             /* Kuyruk boş: done flag'ı kontrol et */
             if (atomic_load_explicit(&g_queue.done, memory_order_acquire)) break;
-            /* Adaptive spin-wait: önce CPU hint, sonra yield */
-            if (++spin_count < 128) { LG_CPU_PAUSE(); }
-            else { spin_count = 0; sched_yield(); }
+            /*
+             * Kademeli backoff (adaptive): kisa sure spin (dusuk gecikme),
+             * sonra yield, uzun bosta beklemede kademeli uyku. Bos/durgun log
+             * dosyasinda worker'lar CPU yakmaz (idle ~0); yeni is gelince
+             * gecikme en fazla ~1 ms. Yuk altinda kuyruk nadiren bosaldigi
+             * icin uyku rejimine hic girilmez -> gecikme etkilenmez.
+             */
+            if (spin_count < 128) {
+                LG_CPU_PAUSE();
+                spin_count++;
+            } else if (spin_count < 256) {
+                sched_yield();
+                spin_count++;
+            } else {
+                usleep(spin_count < 1024 ? 200 : 1000);  /* 0.2 ms -> 1 ms */
+                if (spin_count < 4096) spin_count++;
+            }
             continue;
         }
         spin_count = 0;

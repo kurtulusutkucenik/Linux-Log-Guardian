@@ -1,5 +1,10 @@
 # Linux Log Guardian — Premium 3D Sprint (72 saat)
 
+> ⚠️ **EMEKLİ / TARİHSEL:** Bu doküman emekliye ayrılan eski statik site (`assets/website/`)
+> için yazılmıştı. Canlı site artık `landing/` (Next.js). Yalnızca tarihsel referans;
+> içindeki script/komutlar (`website_build.sh`, `preview_website.sh` vb.) artık yoktur.
+
+
 **Hedef:** [Active Theory](https://activetheory.net/) + [Lusion](https://lusion.co/) seviyesinde immersive hero + scroll-driven 3D dünya.  
 **Kuzey yıldızı:** Lusion mouse-reactive 3D + Active Theory scroll sineması.  
 **Marka:** Iron Man paleti — kırmızı `#E11D24`, altın `#FFB800`, arc cyan `#00E5FF`, taban `#070709`.  

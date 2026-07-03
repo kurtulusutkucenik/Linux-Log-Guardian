@@ -45,13 +45,12 @@ Core quickstart: [QUICKSTART_NGINX.md](QUICKSTART_NGINX.md)
 | `sudo bash scripts/laptop_optional_layers_on.sh` | L7 eBPF + Telegram webhook prod + filo | Kısmen |
 | `bash scripts/test_deb_local.sh` | `.deb` extract doğrulama (dpkg -i değil) | Hayır |
 | `bash scripts/demo_3min.sh` | 3 dk demo (PDF, webhook, dashboard opsiyonel) | Hayır |
-| `bash scripts/preview_website.sh` | Statik landing önizleme `:8765` | Hayır |
-| `bash scripts/website_deploy_gate.sh` | Site build + deploy paketi + audit + smoke | Hayır |
-| `wrangler pages deploy assets/website-deploy --project-name=linux-log-guardian-website --branch=main` | Canlı site güncelleme | Hayır |
+| `cd landing && npm run dev` | Landing önizleme `:3001` (hızlı geliştirme) | Hayır |
+| `bash scripts/website_landing_export.sh` | Landing static export → `landing/out` | Hayır |
+| `bash scripts/website_deploy_gate.sh` | Landing build + `landing/out` + wrangler doğrulama | Hayır |
+| `bash scripts/website_publish.sh` | Canlı site güncelleme (landing/out → Cloudflare Pages) | Hayır |
 | `bash scripts/pre_push_secret_scan.sh` | GitHub öncesi token tarama | Hayır |
-| `bash scripts/website_kill_ports.sh` | 8765/8767 önizleme süreçlerini kapat (Cursor sandbox hariç) | Hayır |
-| `bash scripts/website_smoke.sh` | Deploy HTTP/baslik testi (domain gerekmez) | Hayır |
-| `LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh` | Prod paketi önizleme | Hayır |
+| `bash scripts/website_preview_gate.sh` | Landing /tests parity (75/75, offline) | Hayır |
 | `bash scripts/soak_status.sh` | Soak PID + rapor özeti | Hayır |
 | `bash scripts/dashboard_stack.sh` | Grafana + TLS dashboard + JWT | Hayır |
 | `bash scripts/laptop_stack_boot.sh` | Eksik container’ları ayağa kaldır (reboot sonrası) | Hayır |

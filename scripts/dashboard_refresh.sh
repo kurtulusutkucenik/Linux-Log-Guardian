@@ -26,22 +26,15 @@ if [[ "${SKIP_FLEET_PRUNE:-0}" != "1" ]]; then
     || echo "[WARN] fleet_prune_stale — atlandi" >&2
 fi
 
-if bash "$ROOT/scripts/website_sync_tests.sh"; then
-  echo "[OK] website_sync_tests"
-else
-  echo "[WARN] website_sync_tests — atlandi (preview gate embed dener)" >&2
-fi
-
 run_preview_gate() {
   bash "$ROOT/scripts/website_preview_gate.sh"
 }
 
 if run_preview_gate; then
-  echo "[OK] website_preview_gate"
+  echo "[OK] website_preview_gate (landing parity)"
 else
-  echo "[WARN] website_preview_gate FAIL — test embed + yeniden deneme..."
+  echo "[WARN] website_preview_gate FAIL — competitive-proof tazele + yeniden dene..."
   python3 "$ROOT/scripts/competitive_proof_build.py" || true
-  python3 "$ROOT/scripts/website_embed_tests.py" || true
   if run_preview_gate; then
     echo "[OK] website_preview_gate (retry)"
   else

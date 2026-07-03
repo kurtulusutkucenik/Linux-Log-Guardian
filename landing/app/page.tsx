@@ -11,7 +11,7 @@ import VsTable from "@/components/VsTable";
 import VsCharts from "@/components/VsCharts";
 import HonestLimits from "@/components/HonestLimits";
 import ProofSection from "@/components/ProofSection";
-import SetupGuide from "@/components/SetupGuide";
+import TierGuide from "@/components/TierGuide";
 import EvidencePack from "@/components/EvidencePack";
 import Contact from "@/components/Contact";
 import Footer from "@/components/Footer";
@@ -34,7 +34,7 @@ export default function Home() {
         <VsCharts />
         <HonestLimits />
         <ProofSection />
-        <SetupGuide />
+        <TierGuide />
         <EvidencePack />
         <Contact />
       </main>

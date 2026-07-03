@@ -2059,13 +2059,13 @@ export function evaluateValidationTests(
       status: pass ? "pass" : "fail",
       title: L(
         locale,
-        "Statik site preview — test parity + smoke",
-        "Static site preview — test parity + smoke",
+        "Site preview — landing test parity",
+        "Site preview — landing test parity",
       ),
       purpose: L(
         locale,
-        "assets/website test-results.js ile competitive-proof ve website_smoke uyumunu doğrular.",
-        "Verifies assets/website test-results.js matches competitive-proof and website_smoke.",
+        "landing/lib/tests.ts ile competitive-proof parity (yerel test-kart) doğrular.",
+        "Verifies landing/lib/tests.ts parity with competitive-proof (local test cards).",
       ),
       verdict: pass
         ? L(

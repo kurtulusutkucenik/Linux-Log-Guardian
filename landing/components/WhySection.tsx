@@ -38,13 +38,13 @@ export default function WhySection() {
         ))}
       </div>
 
-      <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <div className="mt-12 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-5">
         {s.stats.map((stat) => (
           <div
             key={stat.label}
-            className="min-w-0 rounded-xl border border-neutral-800 bg-panel p-5 text-center sm:p-8"
+            className="min-w-0 rounded-xl border border-neutral-800 bg-panel p-4 text-center sm:p-6"
           >
-            <p className="font-display text-[clamp(1.5rem,5vw,2.75rem)] font-black leading-none tracking-tight text-neon">
+            <p className="font-display text-[clamp(1.2rem,3.2vw,2.1rem)] font-black leading-none tracking-tight text-neon tabular-nums">
               {stat.value}
             </p>
             <p className="mt-2 font-mono text-[10px] uppercase tracking-wider text-neutral-500 sm:text-[11px]">

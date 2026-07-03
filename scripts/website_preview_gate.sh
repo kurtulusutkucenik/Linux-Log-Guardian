@@ -1,23 +1,13 @@
 #!/usr/bin/env bash
-# Sprint AG — Yerel statik site preview kapisi (test parity, smoke, SRI)
+# Landing site preview parity kapisi — landing/lib/tests.ts <-> competitive-proof.json
 #   bash scripts/website_preview_gate.sh
+# Not: canli site kontrolu website_live_gate.sh; bu kapi yerel test-kart parity'sini dogrular.
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 REPORT="${WEBSITE_PREVIEW_GATE_REPORT:-website-preview-gate-report.json}"
-SITE="${LG_WEBSITE_PREVIEW_DIR:-$ROOT/assets/website}"
-
-# Eski smoke sunucusu lock dosyasini tutuyorsa temizle (fd mirasi onlemi eklendi)
-if [[ -f "$ROOT/.website-preview-gate.lock" ]]; then
-  mapfile -t _stale < <(fuser "$ROOT/.website-preview-gate.lock" 2>/dev/null | tr ' ' '\n' | sort -u)
-  for _pid in "${_stale[@]}"; do
-    [[ -z "$_pid" || ! "$_pid" =~ ^[0-9]+$ ]] && continue
-    _cmd="$(ps -o cmd= -p "$_pid" 2>/dev/null || true)"
-    [[ "$_cmd" == *website_secure_server* ]] && kill -9 "$_pid" 2>/dev/null || true
-  done
-  rm -f "$ROOT/.website-preview-gate.lock"
-fi
+TESTS_SRC="${LG_WEBSITE_PREVIEW_TESTS:-$ROOT/landing/lib/tests.ts}"
 
 write_report() {
   python3 - "$REPORT" "$@" <<'PY'
@@ -48,22 +38,22 @@ print(json.dumps(r))
   exit 1
 }
 
-echo "=== website_preview_gate (Sprint AG) ==="
+echo "=== website_preview_gate (landing parity) ==="
 
-[[ -f "$SITE/test-results.js" ]] || fail "test-results.js yok — bash scripts/website_sync_tests.sh"
-[[ -f "$ROOT/competitive-proof.json" ]] || fail "competitive-proof.json yok"
+[[ -f "$TESTS_SRC" ]] || fail "landing/lib/tests.ts yok"
+[[ -f "$ROOT/competitive-proof.json" ]] || fail "competitive-proof.json yok — python3 scripts/competitive_proof_build.py"
 
-PARITY_JSON="$(python3 - "$SITE/test-results.js" "$ROOT/competitive-proof.json" <<'PY'
+PARITY_JSON="$(python3 - "$TESTS_SRC" "$ROOT/competitive-proof.json" <<'PY'
 import json, re, sys
 from pathlib import Path
 
-tr = Path(sys.argv[1]).read_text(encoding="utf-8")
+src = Path(sys.argv[1]).read_text(encoding="utf-8")
 proof = json.loads(Path(sys.argv[2]).read_text(encoding="utf-8"))
 expected = len(proof.get("validationTests") or [])
 
-ids = re.findall(r'"id"\s*:\s*"([^"]+)"', tr)
-pairs = re.findall(r'"id"\s*:\s*"([^"]+)"[^}]*?"status"\s*:\s*"(pass|fail)"', tr)
-# Self + canlı site ayrı kapılarda; yerel preview bunları saymaz
+ids = re.findall(r'"id"\s*:\s*"([^"]+)"', src)
+pairs = re.findall(r'"id"\s*:\s*"([^"]+)"[^}]*?"status"\s*:\s*"(pass|fail)"', src)
+# Self + canli site ayri kapilarda; yerel preview bunlari saymaz
 SKIP_SELF = {"website-preview-gate"}
 SKIP_EXTERNAL = {"website-live-gate", "release-ready-gate", "demo-rehearsal-gate", "presentation-ship-gate", "demo-video-gate", "github-ship-gate", "laptop-core-gate", "morning-operator-gate", "bans-telegram-ops"}
 pass_n = sum(1 for i, s in pairs if s == "pass" and i not in SKIP_SELF)
@@ -87,7 +77,7 @@ out = {
     "site_fail": fail_n,
     "has_grafana_parity": "grafana-parity-gate" in ids,
     "has_edge_gate": "edge-protection-gate" in ids,
-    "site_dir": str(Path(sys.argv[1]).parent),
+    "site_dir": "landing/lib",
 }
 if not ok:
     out["fail_reason"] = "; ".join(reasons)
@@ -102,30 +92,16 @@ PY
 
 echo "$PARITY_JSON"
 
-bash "$ROOT/scripts/website_security_check.sh" >/dev/null || fail "website_security_check"
-
-smoke_ok=0
-for _ in 1 2; do
-  if bash "$ROOT/scripts/website_smoke.sh" "$SITE" >/dev/null 2>&1; then
-    smoke_ok=1
-    break
-  fi
-  sleep 0.4
-done
-if [[ "$smoke_ok" -ne 1 ]]; then
-  fail "website_smoke (assets/website)"
+# Landing static export ciktisi varsa dogrula (export edilmemisse parity yeterli)
+if [[ -d "$ROOT/landing/out" ]]; then
+  [[ -f "$ROOT/landing/out/index.html" ]] || fail "landing/out/index.html yok (export bozuk — bash scripts/website_landing_export.sh)"
+  echo "[OK] landing/out export mevcut"
+else
+  echo "[SKIP] landing/out yok — parity yeterli (export: bash scripts/website_landing_export.sh)"
 fi
-echo "[OK] website_smoke (assets/website)"
 
 FINAL="$(python3 -c "import json; r=json.loads('''$PARITY_JSON'''); r['pass']=True; r.pop('fail_reason',None); print(json.dumps(r))")"
 write_report "$FINAL"
-
-if [[ "${LG_WEBSITE_BROWSER_SMOKE:-0}" == "1" ]] \
-    && { [[ -x "$ROOT/.venv-website-smoke/bin/python" ]] || python3 -c "import playwright" 2>/dev/null; }; then
-  LG_WEBSITE_SMOKE_DIR="$SITE" python3 "$ROOT/scripts/website_i18n_browser_smoke.py" >/dev/null 2>&1 \
-    && echo "[OK] website_i18n_browser_smoke" \
-    || echo "[WARN] website_i18n_browser_smoke — LG_WEBSITE_BROWSER_SMOKE=1 ama test fail"
-fi
 
 sp="$(python3 - "$REPORT" <<'PY'
 import json, sys

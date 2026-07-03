@@ -24,7 +24,7 @@ def main() -> int:
         from playwright.sync_api import sync_playwright
     except ImportError:
         print(
-            "[website_live_js_check] FAIL: playwright yok — bash scripts/website_i18n_browser_smoke.sh",
+            "[website_live_js_check] FAIL: playwright yok — pip install playwright && playwright install chromium",
             file=sys.stderr,
         )
         return 1

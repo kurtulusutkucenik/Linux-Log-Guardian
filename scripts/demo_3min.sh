@@ -120,7 +120,7 @@ if [[ "${SKIP_DASHBOARD:-0}" != "1" ]] && command -v curl >/dev/null 2>&1; then
   else
     info "dashboard kapali — yerel kanit:"
     info "  file://$EVIDENCE/"
-    info "  bash scripts/preview_website.sh  → http://127.0.0.1:8765/"
+    info "  cd landing && npm run dev  → http://127.0.0.1:3001/"
     info "  bash scripts/dashboard_stack.sh  → $DASH_URL"
   fi
 else
@@ -157,7 +157,7 @@ if [[ "$dash_ok" -eq 1 ]]; then
 else
   echo "  Dashboard: kapali — yerel kanit yeterli"
 fi
-echo "  Website  : bash scripts/preview_website.sh"
+echo "  Website  : cd landing && npm run dev"
 if [[ "$fail" -eq 0 ]]; then
   echo "[OK] demo_3min tamam"
   exit 0

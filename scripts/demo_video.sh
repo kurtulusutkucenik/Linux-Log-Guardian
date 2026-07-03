@@ -114,7 +114,7 @@ step "3 — Ekran kaydı URL'leri (B-roll)"
 info "Site testleri:     ${SITE_URL}/tests"
 info "Dashboard test:    ${DASH_URL}/tests"
 info "Kanıt PDF:         file://${ROOT}/docs/evidence/competitive-proof.pdf"
-info "Yerel site önizle: LG_WEBSITE_PREVIEW=deploy bash scripts/preview_website.sh"
+info "Yerel site önizle: cd landing && npm run dev"
 
 step "4 — Tek komut özet (stajyer / yönetici)"
 echo "  Core: nginx log → WAF/CRS → kernel ban (~17 ms kanıt)"

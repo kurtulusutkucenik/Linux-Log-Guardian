@@ -68,12 +68,10 @@ root = Path("$ROOT")
 pub = root / "dashboard/public"
 app = root / "dashboard/src/app"
 assets = root / "assets"
-website = root / "assets/website"
 
 out.save(pub / "brand-logo-circle.png")
 out512 = out.resize((512, 512), Image.Resampling.LANCZOS)
 out512.save(assets / "pdf-brand.png")
-out512.save(website / "logo.png")
 
 for sz in (16, 32, 48, 64, 180, 512):
     out.resize((sz, sz), Image.Resampling.LANCZOS).save(pub / f"favicon-{sz}.png")
@@ -88,8 +86,6 @@ out180.save(app / "apple-icon.png")
 ico = out.resize((48, 48), Image.Resampling.LANCZOS)
 ico.save(pub / "favicon.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
 ico.save(app / "favicon.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
-ico.save(website / "favicon.ico", format="ICO", sizes=[(16, 16), (32, 32), (48, 48)])
-out32.save(website / "favicon-32.png")
 
 # Eski Next/Vercel favicon kalintisi — app/ altinda birakma
 stale = app / "favicon-32.png"
@@ -97,5 +93,4 @@ if stale.exists():
     stale.unlink()
 
 print(f"[install_logo] OK madalyon {s}x{s} crop=({left},{top})")
-print(f"[install_logo] website -> {website / 'logo.png'}")
 PY

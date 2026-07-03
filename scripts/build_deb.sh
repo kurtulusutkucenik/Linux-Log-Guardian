@@ -69,13 +69,12 @@ chmod 755 "$SHARE/scripts/deb_post_install.sh" 2>/dev/null || true
 rsync -a examples/ "$SHARE/examples/"
 rsync -a corpus/ "$SHARE/corpus/"
 
-# Dokumantasyon + site gorselleri (VM/offline kurulum)
-install -d "$SHARE/docs" "$SHARE/assets/website"
+# Dokumantasyon (VM/offline kurulum). Canli site ayri: landing/ (Next.js).
+install -d "$SHARE/docs"
 for doc in docs/SECURITY_PROFILES.md docs/QUICKSTART_15MIN.md docs/LAPTOP_OPS.md \
            docs/VPS_SETUP.md docs/QUICKSTART_NGINX.md docs/BRANDING.md docs/SOAK_TEST.md; do
   [[ -f "$doc" ]] && install -m 644 "$doc" "$SHARE/docs/" || true
 done
-[[ -d assets/website ]] && rsync -a assets/website/ "$SHARE/assets/website/" || true
 
 install -d "$SHARE/data"
 for df in data/fp-trust-warmup.lst data/fp-trust.lst; do

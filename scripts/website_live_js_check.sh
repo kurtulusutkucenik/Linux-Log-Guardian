@@ -6,7 +6,8 @@ VENV="${LG_WEBSITE_SMOKE_VENV:-$ROOT/.venv-website-smoke}"
 PY="$VENV/bin/python"
 
 if [[ ! -x "$PY" ]] || ! "$PY" -c "import playwright" 2>/dev/null; then
-  bash "$ROOT/scripts/website_i18n_browser_smoke.sh" 2>/dev/null || true
+  echo "[website_live_js_check] SKIP — playwright yok ($VENV); pip install playwright && playwright install chromium" >&2
+  exit 0
 fi
 
 exec "$PY" "$ROOT/scripts/website_live_js_check.py"

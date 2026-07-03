@@ -68,11 +68,11 @@ echo "--- webhook P2 (route + batch) ---"
 [[ -x scripts/webhook_route_proof.sh ]] && ok "webhook_route_proof.sh" || bad "webhook route script"
 bash scripts/webhook_route_proof.sh && ok "webhook P2 dry-run" || bad "webhook P2 E2E"
 
-echo "--- website (build + smoke) ---"
-if bash scripts/website_build.sh && bash scripts/website_pack_deploy.sh && bash scripts/website_smoke.sh; then
-  ok "website build/smoke"
+echo "--- website (landing parity) ---"
+if bash scripts/website_preview_gate.sh >/dev/null 2>&1; then
+  ok "website preview (landing test parity)"
 else
-  bad "website build/smoke"
+  bad "website preview parity"
 fi
 
 if [[ "$fail" -eq 0 ]]; then

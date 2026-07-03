@@ -8,7 +8,7 @@ export default function HonestLimits() {
   const { honest } = getCopy(locale);
 
   return (
-    <section className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
+    <section id="dogrusinir" className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
       <div className="grid gap-12 lg:grid-cols-2 lg:items-start">
         <div>
           <p className="font-mono text-xs uppercase tracking-[0.3em] text-amber-400">
