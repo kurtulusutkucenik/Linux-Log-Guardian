@@ -2,6 +2,9 @@
 
 **Açık kaynak · Türk topluluk · ölçülebilir kanıt.** Her sprint bitince `[x]` işaretle.
 
+> **Not:** Eski sprint satırlarında `website_sync_tests.sh`, `preview_website.sh` vb. geçebilir —
+> bunlar emekli statik site pipeline'ına aitti. Güncel site: `landing/` → [WEBSITE_DEPLOY.md](WEBSITE_DEPLOY.md).
+
 Son güncelleme: 2026-06-29
 
 ---

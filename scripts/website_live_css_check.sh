@@ -30,6 +30,6 @@ fi
 echo "[FAIL] website_live_css_check — site.css cache drift" >&2
 echo "  live body:  sha384-${css_hash}" >&2
 echo "  html meta:  sha384-${meta_hash}" >&2
-echo "  FIX: bash scripts/website_deploy_gate.sh && wrangler pages deploy assets/website-deploy --project-name=linux-log-guardian-website --branch=main --commit-dirty=true" >&2
+echo "  FIX: bash scripts/website_deploy_gate.sh && bash scripts/website_publish.sh" >&2
 echo "  Sonra Cloudflare → Caching → Purge Everything (veya site.css)" >&2
 exit 1

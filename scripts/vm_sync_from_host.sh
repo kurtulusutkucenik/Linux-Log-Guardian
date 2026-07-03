@@ -41,7 +41,7 @@ rsync -a \
   --exclude='dist/log-guardian-vm.zip' \
   --exclude='dist/*.zip' \
   --exclude='graphify-out/' \
-  --exclude='assets/website-deploy/' \
+  --exclude='dist/' \
   --exclude='__pycache__/' \
   --exclude='.env' \
   --exclude='.env.*' \

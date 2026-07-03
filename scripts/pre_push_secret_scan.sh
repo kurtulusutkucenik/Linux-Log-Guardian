@@ -61,7 +61,7 @@ should_skip() {
   [[ -z "$f" || ! -f "$f" ]] && return 0
   case "$f" in
     *.o|*.deb|*.zip|*.pdf|*.db|*.sqlite|*.png|*.jpg|*.gif|*.ico|*.woff*|*.pyc) return 0 ;;
-    data-room/*|graphify-out/*|.cache/*|assets/website-deploy/*|dist/deb-stage/*) return 0 ;;
+    data-room/*|graphify-out/*|.cache/*|dist/deb-stage/*) return 0 ;;
   esac
   return 1
 }
