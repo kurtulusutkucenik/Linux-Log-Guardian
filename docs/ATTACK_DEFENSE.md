@@ -18,6 +18,9 @@ VPS/webhook olmadan yapılabilecekler ve dürüst sınırlar.
 | Saldırı | Durum | Not |
 |---------|-------|-----|
 | URL SQLi / XSS | **İyi** | CRS + `log_guardian` format |
+| Java/template RCE | **İyi** | C-WAF: Spring4Shell, OGNL, Text4Shell, Log4Shell (`java_rce`) |
+| Confluence / Struts OGNL | **İyi** | C-WAF: WebWork stack, `ognl.OgnlUtil` (`enterprise_ognl`) |
+| PHP-CGI / SpEL RCE | **İyi** | C-WAF: CVE-2024-4577 arg injection, Spring SpEL (`modern_rce`) |
 | POST body SQLi | **İyi** (format şart) | `$request_body` yoksa görünmez |
 | Brute login | **İyi** | `limit_req` + `BRUTE_FORCE_ERR` |
 | Slow / low-and-slow | **Orta–İyi** | `ADAPTIVE_THRESHOLD` (ısınma gerekir) |
@@ -111,7 +114,7 @@ Snippet: `examples/nginx/snippets/log-guardian-inline-consult.conf` — `auth_re
 |------|-------|-------|
 | T1 | `real_attack_suite` + corpus + rakip kanıt | ✅ |
 | T1 | `live_attack_harness` + POST SQLi corpus | ✅ |
-| T1 | `bench_mixed` + corpus 1K (19 kategori) | ✅ |
+| T1 | `bench_mixed` + corpus 1K (23 kategori) | ✅ |
 | T2 | JA3/ASN clustering (offline distributed + canlı TLS) | ✅ |
 | T2 | nginx inline consult | ✅ API + snippet |
 | T2 | Corpus 10K recall | ✅ `corpus_10k_proof.sh` |

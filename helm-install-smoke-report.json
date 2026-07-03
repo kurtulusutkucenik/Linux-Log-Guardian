@@ -1,7 +1,7 @@
 {
-  "date": "2026-07-03T06:47:20.993143+00:00",
+  "date": "2026-07-03T22:22:04.890436+00:00",
   "pass": true,
-  "mode": "dry-run-server",
+  "mode": "template-only",
   "chart": "helm/log-guardian",
   "namespace": "log-guardian",
   "tenant": "demo",

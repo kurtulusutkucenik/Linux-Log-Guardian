@@ -63,7 +63,7 @@ Son koşu: `bash scripts/competitive_suite.sh` → `docs/evidence/competitive-pr
 |--------|-------|----------|
 | Olay/saniye (EPS) | **280.373** | Parser + WAF hattı |
 | Ban gecikmesi | **20,23 ms** | Medyan, 21 örnek (ipset/XDP) |
-| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 19 kategori |
+| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 23 kategori (Spring4Shell/OGNL/Text4Shell + PHP-CGI/SpEL + Confluence dahil) |
 | OWASP CRS parity | **%100** | Aynı regex seti (PCRE2 JIT) |
 | False positive | **%0,2** ölçüldü | 500 benign satır · hedef <%0,5 |
 | 72h soak | **PASS** | 864 örnek, 0 hata |
@@ -265,7 +265,7 @@ Open-source Linux edge security with **measurable proof** (PDF + JSON). Reads ng
 |--------|-------|
 | Events/sec (EPS) | **280,373** |
 | Ban latency | **20.23 ms** (median, 21 samples) |
-| Attack recall | **100%** (1K + 10K corpus, 19 categories) |
+| Attack recall | **100%** (1K + 10K corpus, 23 categories incl. Spring4Shell/OGNL + PHP-CGI/SpEL + Confluence) |
 | CRS parity | **100%** |
 | False positive | **0.2%** measured (500 benign) — target <0.5% |
 | 72h soak | **PASS** (864 samples, 0 failures) |

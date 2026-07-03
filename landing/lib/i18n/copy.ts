@@ -1129,12 +1129,12 @@ type BodyOverride = {
   pipelineNote?: string;
   selectedBodies?: string[]; // 12
   advLead?: string;
-  advantages?: { k: string; v: string }[]; // 6
+  advantages?: { k: string; v: string }[]; // 7
   vsNote?: string;
   vsLegend?: string;
   vsCols?: string[]; // 5 (product names stay, first cell translates)
   vsGroupLabels?: [string, string];
-  vsRows0?: string[][]; // 16 rows
+  vsRows0?: string[][]; // 17 rows
   vsRows1?: string[][]; // 6 rows
   requirements?: string[]; // 5
   setup?: SetupL10n;
@@ -1172,13 +1172,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Eine Installation, eine Kette", v: "Sie installieren und integrieren Fail2ban + ModSecurity + CrowdSec nicht separat. nginx-Log → WAF/CRS → Kernel-Ban in einem Produkt, ~15 Min Setup." },
       { k: "~20 ms Kernel-Ban", v: "Median ~20 ms von der Logzeile bis zum ipset/XDP-Ban. Fail2ban/CrowdSec bleiben im Sekunden-Minuten-Bereich; belegt mit 21 gemessenen Proben." },
+      { k: "280.373 EPS · 16,93× ModSec", v: "Auf demselben Korpus mit denselben 121 OWASP-CRS-Patterns (PCRE2 JIT) liegt der WAF/CRS-Durchsatz bei 280.373 EPS — 16,93× schneller als ModSecs 16.560 EPS. Gemessen und reproduzierbar (bench-vs-modsec.json)." },
       { k: "100% Recall + 100% CRS-Parität", v: "121 OWASP-CRS-Regeln, 100% Recall echter Angriffe auf einem 1500-Zeilen-Korpus und volle Parität mit ModSec — bei 0,2% False Positives." },
       { k: "Abdeckung verteilter Angriffe", v: "JA3-Cluster-Erkennung + Ban pro IP — 100% in einem Live-Test mit 80 IPs. Fail2ban ist Einzel-IP; CrowdSec braucht ein separates Signalnetz." },
       { k: "Transparenter, reproduzierbarer Nachweis", v: "75 automatische Tests + ein 14-Dateien-Nachweispaket + 72h-Soak (864 Proben, 0 Fehler). Rivalen haben keinen automatischen Nachweis oder er ist fragmentiert." },
       { k: "Self-hosted · MIT · aus der Türkei", v: "Ihre Daten bleiben bei Ihnen, kein Vendor-Lock-in, voll Open Source. SOC-Timeline, Prometheus-Metriken und Telegram-Betrieb in einem Panel (:8443)." },
     ],
     vsNote:
-      "Ehrliche Grenze: In manchen Bereichen sind Rivalen klar besser (rote Zellen). ModSec + CRS führt beim sofortigen Blockieren der ersten Anfrage; CrowdSec ist stark bei seinem verteilten Community-Signalnetz und der Managed-SaaS-Konsole. Unsere Stärke ist die Einketten-Integration + ~20 ms Ban-Tempo + transparenter, reproduzierbarer Nachweis.",
+      "Ehrliche Grenze: In manchen Bereichen sind Rivalen klar besser (rote Zellen). ModSec + CRS führt beim sofortigen Blockieren der ersten Anfrage; CrowdSec ist stark bei seinem verteilten Community-Signalnetz und der Managed-SaaS-Konsole. Im Gegenzug liegt unser WAF/CRS-Durchsatz auf demselben Korpus mit denselben 121 CRS-Patterns bei 280.373 EPS — 16,93× ModSecs 16.560 EPS (bench-vs-modsec.json).",
     vsLegend: "Rot = der Sieger in dieser Zeile",
     honestItems: [
       "Reaktive Architektur — die erste Anfrage kann durchgehen, bis die Logzeile fällt; wir erreichen nicht die Inline-Geschwindigkeit von ModSec.",
@@ -1208,6 +1209,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Stärken (gemessen)", "Ehrliche Grenzen"],
     vsRows0: [
       ["Log → WAF → Kernel-Ban", "Eine Kette", "Nur Ban", "Stückweise", "WAF separat"],
+      ["WAF/CRS-Durchsatz (gleicher Korpus)", "280.373 EPS (16,93×)", "—", "—", "16.560 EPS"],
       ["OWASP-CRS-Parität", "100% (121 Regeln)", "—", "—", "Referenz (100%)"],
       ["Recall echter Angriffe", "100% (1K+10K)", "—", "—", "100%"],
       ["Verteilter / JA3-Cluster-Ban", "100% (80 IP)", "—", "Signalbasiert", "—"],
@@ -1294,13 +1296,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Une installation, une chaîne", v: "Vous n'installez et n'intégrez pas Fail2ban + ModSecurity + CrowdSec séparément. log nginx → WAF/CRS → ban noyau en un seul produit, ~15 min d'installation." },
       { k: "Ban noyau ~20 ms", v: "Médiane ~20 ms de la ligne de log au ban ipset/XDP. Fail2ban/CrowdSec restent à l'échelle secondes–minutes ; prouvé avec 21 échantillons mesurés." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Sur le même corpus avec les mêmes 121 patterns OWASP CRS (PCRE2 JIT), le débit WAF/CRS atteint 280 373 EPS — 16,93× plus rapide que les 16 560 EPS de ModSec. Mesuré et reproductible (bench-vs-modsec.json)." },
       { k: "100% de rappel + 100% de parité CRS", v: "121 règles OWASP CRS, 100% de rappel d'attaques réelles sur un corpus de 1500 lignes et parité complète avec ModSec — à 0,2% de faux positifs." },
       { k: "Couverture des attaques distribuées", v: "Détection de cluster JA3 + ban par IP — 100% sur un test en direct de 80 IP. Fail2ban est mono-IP ; CrowdSec exige un réseau de signaux séparé." },
       { k: "Preuve transparente et reproductible", v: "75 tests automatiques + un pack de preuves de 14 fichiers + soak 72h (864 échantillons, 0 erreur). Les rivaux n'ont pas de preuve automatique ou elle est fragmentée." },
       { k: "Auto-hébergé · MIT · conçu en Turquie", v: "Vos données restent chez vous, aucun verrouillage fournisseur, entièrement open source. Timeline SOC, métriques Prometheus et exploitation Telegram dans un seul panneau (:8443)." },
     ],
     vsNote:
-      "Limite honnête : dans certains domaines, les rivaux sont clairement meilleurs (cellules rouges). ModSec + CRS mène en blocage instantané de la première requête ; CrowdSec est fort sur son réseau de signaux communautaire distribué et sa console SaaS managée. Notre force : l'intégration en une chaîne + la vitesse de ban ~20 ms + une preuve transparente et reproductible.",
+      "Limite honnête : dans certains domaines, les rivaux sont clairement meilleurs (cellules rouges). ModSec + CRS mène en blocage instantané de la première requête ; CrowdSec est fort sur son réseau de signaux communautaire distribué et sa console SaaS managée. En contrepartie, sur le même corpus avec les mêmes 121 patterns CRS, notre débit WAF/CRS atteint 280 373 EPS — 16,93× les 16 560 EPS de ModSec (bench-vs-modsec.json).",
     vsLegend: "Rouge = le gagnant de cette ligne",
     honestItems: [
       "Architecture réactive — la première requête peut passer jusqu'à la chute de la ligne de log ; nous n'atteignons pas la vitesse inline de ModSec.",
@@ -1330,6 +1333,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Points forts (mesurés)", "Limites honnêtes"],
     vsRows0: [
       ["Log → WAF → ban noyau", "Chaîne unique", "Ban seul", "Fragmenté", "WAF séparé"],
+      ["Débit WAF/CRS (même corpus)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["Parité OWASP CRS", "100% (121 règles)", "—", "—", "Référence (100%)"],
       ["Rappel d'attaques réelles", "100% (1K+10K)", "—", "—", "100%"],
       ["Ban distribué / cluster JA3", "100% (80 IP)", "—", "Basé signal", "—"],
@@ -1416,13 +1420,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Una instalación, una cadena", v: "No instalas ni integras Fail2ban + ModSecurity + CrowdSec por separado. log de nginx → WAF/CRS → ban de kernel en un solo producto, ~15 min de instalación." },
       { k: "Ban de kernel ~20 ms", v: "Mediana ~20 ms desde la línea de log al ban de ipset/XDP. Fail2ban/CrowdSec se quedan en segundos–minutos; probado con 21 muestras medidas." },
+      { k: "280.373 EPS · 16,93× ModSec", v: "En el mismo corpus con los mismos 121 patrones OWASP CRS (PCRE2 JIT), el rendimiento WAF/CRS es de 280.373 EPS — 16,93× más rápido que los 16.560 EPS de ModSec. Medido y reproducible (bench-vs-modsec.json)." },
       { k: "100% de recall + 100% de paridad CRS", v: "121 reglas OWASP CRS, 100% de recall de ataques reales en un corpus de 1500 líneas y paridad total con ModSec — con 0,2% de falsos positivos." },
       { k: "Cobertura de ataques distribuidos", v: "Detección de clúster JA3 + ban por IP — 100% en una prueba en vivo de 80 IP. Fail2ban es de una sola IP; CrowdSec necesita una red de señales aparte." },
       { k: "Prueba transparente y reproducible", v: "75 pruebas automáticas + un pack de evidencias de 14 archivos + soak 72h (864 muestras, 0 errores). Los rivales no tienen prueba automática o está fragmentada." },
       { k: "Autoalojado · MIT · hecho en Turquía", v: "Tus datos se quedan contigo, sin bloqueo de proveedor, totalmente open source. Timeline SOC, métricas Prometheus y operación Telegram en un solo panel (:8443)." },
     ],
     vsNote:
-      "Límite honesto: en algunas áreas los rivales son claramente mejores (celdas rojas). ModSec + CRS lidera en bloqueo instantáneo de la primera petición; CrowdSec es fuerte en su red de señales comunitaria distribuida y su consola SaaS gestionada. Nuestra fuerza es la integración en una cadena + velocidad de ban ~20 ms + prueba transparente y reproducible.",
+      "Límite honesto: en algunas áreas los rivales son claramente mejores (celdas rojas). ModSec + CRS lidera en bloqueo instantáneo de la primera petición; CrowdSec es fuerte en su red de señales comunitaria distribuida y su consola SaaS gestionada. A cambio, en el mismo corpus con los mismos 121 patrones CRS, nuestro rendimiento WAF/CRS es de 280.373 EPS — 16,93× los 16.560 EPS de ModSec (bench-vs-modsec.json).",
     vsLegend: "Rojo = el ganador de esa fila",
     honestItems: [
       "Arquitectura reactiva — la primera petición puede pasar hasta que caiga la línea de log; no llegamos a la velocidad inline de ModSec.",
@@ -1452,6 +1457,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Fortalezas (medidas)", "Límites honestos"],
     vsRows0: [
       ["Log → WAF → ban de kernel", "Cadena única", "Solo ban", "Fragmentado", "WAF aparte"],
+      ["Rendimiento WAF/CRS (mismo corpus)", "280.373 EPS (16,93×)", "—", "—", "16.560 EPS"],
       ["Paridad OWASP CRS", "100% (121 reglas)", "—", "—", "Referencia (100%)"],
       ["Recall de ataques reales", "100% (1K+10K)", "—", "—", "100%"],
       ["Ban distribuido / clúster JA3", "100% (80 IP)", "—", "Basado en señal", "—"],
@@ -1538,13 +1544,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Одна установка, одна цепочка", v: "Вы не ставите и не интегрируете Fail2ban + ModSecurity + CrowdSec по отдельности. лог nginx → WAF/CRS → бан в ядре в одном продукте, установка ~15 мин." },
       { k: "Бан в ядре ~20 мс", v: "Медиана ~20 мс от строки лога до бана ipset/XDP. Fail2ban/CrowdSec остаются в секундах–минутах; подтверждено 21 измеренными образцами." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "На том же корпусе и тех же 121 паттернах OWASP CRS (PCRE2 JIT) пропускная способность WAF/CRS — 280 373 EPS, в 16,93× быстрее, чем 16 560 EPS у ModSec. Измерено и воспроизводимо (bench-vs-modsec.json)." },
       { k: "100% recall + 100% паритет CRS", v: "121 правило OWASP CRS, 100% recall реальных атак на корпусе из 1500 строк и полный паритет с ModSec — при 0,2% ложных срабатываний." },
       { k: "Покрытие распределённых атак", v: "Обнаружение кластера JA3 + бан по IP — 100% в живом тесте на 80 IP. Fail2ban работает по одному IP; CrowdSec требует отдельной сети сигналов." },
       { k: "Прозрачное, воспроизводимое доказательство", v: "75 автотестов + пакет доказательств из 14 файлов + 72-часовой soak (864 образца, 0 ошибок). У конкурентов нет автоматического доказательства или оно фрагментарно." },
       { k: "Self-hosted · MIT · сделано в Турции", v: "Ваши данные остаются у вас, без привязки к вендору, полностью открытый код. SOC-таймлайн, метрики Prometheus и управление через Telegram в одной панели (:8443)." },
     ],
     vsNote:
-      "Честная граница: в некоторых областях конкуренты явно лучше (красные ячейки). ModSec + CRS впереди по мгновенной блокировке первого запроса; CrowdSec силён распределённой сетью сигналов сообщества и управляемой SaaS-консолью. Наша сила — интеграция в одну цепочку + скорость бана ~20 мс + прозрачное, воспроизводимое доказательство.",
+      "Честная граница: в некоторых областях конкуренты явно лучше (красные ячейки). ModSec + CRS впереди по мгновенной блокировке первого запроса; CrowdSec силён распределённой сетью сигналов сообщества и управляемой SaaS-консолью. В ответ на том же корпусе и тех же 121 паттернах CRS наша пропускная способность WAF/CRS — 280 373 EPS, в 16,93× быстрее 16 560 EPS у ModSec (bench-vs-modsec.json).",
     vsLegend: "Красный = победитель в этой строке",
     honestItems: [
       "Реактивная архитектура — первый запрос может пройти, пока не упадёт строка лога; мы не на inline-скорости ModSec.",
@@ -1574,6 +1581,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Сильные стороны (измерено)", "Честные границы"],
     vsRows0: [
       ["Лог → WAF → бан в ядре", "Одна цепочка", "Только бан", "Фрагментарно", "WAF отдельно"],
+      ["Пропускная способность WAF/CRS (тот же корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["Паритет OWASP CRS", "100% (121 правило)", "—", "—", "Эталон (100%)"],
       ["Recall реальных атак", "100% (1K+10K)", "—", "—", "100%"],
       ["Распределённый / бан JA3-кластера", "100% (80 IP)", "—", "По сигналу", "—"],
@@ -1660,13 +1668,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Uma instalação, uma cadeia", v: "Não instala nem integra Fail2ban + ModSecurity + CrowdSec separadamente. log do nginx → WAF/CRS → ban de kernel num só produto, ~15 min de instalação." },
       { k: "Ban de kernel ~20 ms", v: "Mediana ~20 ms da linha de log ao ban ipset/XDP. Fail2ban/CrowdSec ficam na escala de segundos–minutos; comprovado com 21 amostras medidas." },
+      { k: "280.373 EPS · 16,93× ModSec", v: "No mesmo corpus com os mesmos 121 padrões OWASP CRS (PCRE2 JIT), o throughput WAF/CRS é de 280.373 EPS — 16,93× mais rápido que os 16.560 EPS do ModSec. Medido e reproduzível (bench-vs-modsec.json)." },
       { k: "100% de recall + 100% de paridade CRS", v: "121 regras OWASP CRS, 100% de recall de ataques reais num corpus de 1500 linhas e paridade total com o ModSec — a 0,2% de falsos positivos." },
       { k: "Cobertura de ataques distribuídos", v: "Deteção de cluster JA3 + ban por IP — 100% num teste ao vivo de 80 IP. O Fail2ban é de IP único; o CrowdSec precisa de uma rede de sinais à parte." },
       { k: "Prova transparente e reproduzível", v: "75 testes automáticos + um pacote de provas de 14 ficheiros + soak 72h (864 amostras, 0 erros). Os rivais não têm prova automática ou é fragmentada." },
       { k: "Self-hosted · MIT · feito na Turquia", v: "Os seus dados ficam consigo, sem lock-in de fornecedor, totalmente open source. Timeline SOC, métricas Prometheus e operação Telegram num só painel (:8443)." },
     ],
     vsNote:
-      "Limite honesto: em algumas áreas os rivais são claramente melhores (células vermelhas). ModSec + CRS lidera no bloqueio instantâneo do primeiro pedido; o CrowdSec é forte na sua rede de sinais comunitária distribuída e na consola SaaS gerida. A nossa força é a integração numa cadeia + velocidade de ban ~20 ms + prova transparente e reproduzível.",
+      "Limite honesto: em algumas áreas os rivais são claramente melhores (células vermelhas). ModSec + CRS lidera no bloqueio instantâneo do primeiro pedido; o CrowdSec é forte na sua rede de sinais comunitária distribuída e na consola SaaS gerida. Em contrapartida, no mesmo corpus com os mesmos 121 padrões CRS, o nosso throughput WAF/CRS é de 280.373 EPS — 16,93× os 16.560 EPS do ModSec (bench-vs-modsec.json).",
     vsLegend: "Vermelho = o vencedor dessa linha",
     honestItems: [
       "Arquitetura reativa — o primeiro pedido pode passar até a linha de log cair; não estamos à velocidade inline do ModSec.",
@@ -1696,6 +1705,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Pontos fortes (medidos)", "Limites honestos"],
     vsRows0: [
       ["Log → WAF → ban de kernel", "Cadeia única", "Só ban", "Fragmentado", "WAF à parte"],
+      ["Throughput WAF/CRS (mesmo corpus)", "280.373 EPS (16,93×)", "—", "—", "16.560 EPS"],
       ["Paridade OWASP CRS", "100% (121 regras)", "—", "—", "Referência (100%)"],
       ["Recall de ataques reais", "100% (1K+10K)", "—", "—", "100%"],
       ["Ban distribuído / cluster JA3", "100% (80 IP)", "—", "Baseado em sinal", "—"],
@@ -1782,13 +1792,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Eén installatie, één keten", v: "Je installeert en integreert Fail2ban + ModSecurity + CrowdSec niet apart. nginx-log → WAF/CRS → kernel-ban in één product, ~15 min installatie." },
       { k: "Kernel-ban ~20 ms", v: "Mediaan ~20 ms van logregel tot ipset/XDP-ban. Fail2ban/CrowdSec blijven op seconden–minuten; bewezen met 21 gemeten monsters." },
+      { k: "280.373 EPS · 16,93× ModSec", v: "Op dezelfde corpus met dezelfde 121 OWASP CRS-patronen (PCRE2 JIT) is de WAF/CRS-doorvoer 280.373 EPS — 16,93× sneller dan de 16.560 EPS van ModSec. Gemeten en reproduceerbaar (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS-pariteit", v: "121 OWASP-CRS-regels, 100% recall van echte aanvallen op een corpus van 1500 regels en volledige pariteit met ModSec — bij 0,2% false positives." },
       { k: "Dekking van gedistribueerde aanvallen", v: "JA3-clusterdetectie + ban per IP — 100% in een live test met 80 IP's. Fail2ban is per enkel IP; CrowdSec vraagt een apart signaalnetwerk." },
       { k: "Transparant, reproduceerbaar bewijs", v: "75 automatische tests + een bewijspakket van 14 bestanden + 72h-soak (864 monsters, 0 fouten). Concurrenten hebben geen automatisch bewijs of het is versnipperd." },
       { k: "Self-hosted · MIT · gemaakt in Turkije", v: "Je data blijft bij jou, geen vendor lock-in, volledig open source. SOC-timeline, Prometheus-metrics en Telegram-beheer in één paneel (:8443)." },
     ],
     vsNote:
-      "Eerlijke grens: op sommige vlakken zijn concurrenten duidelijk beter (rode cellen). ModSec + CRS leidt in het direct blokkeren van het eerste verzoek; CrowdSec is sterk in zijn gedistribueerde community-signaalnetwerk en beheerde SaaS-console. Onze kracht is de integratie in één keten + ban-snelheid ~20 ms + transparant, reproduceerbaar bewijs.",
+      "Eerlijke grens: op sommige vlakken zijn concurrenten duidelijk beter (rode cellen). ModSec + CRS leidt in het direct blokkeren van het eerste verzoek; CrowdSec is sterk in zijn gedistribueerde community-signaalnetwerk en beheerde SaaS-console. Daartegenover staat dat onze WAF/CRS-doorvoer op dezelfde corpus met dezelfde 121 CRS-patronen 280.373 EPS is — 16,93× de 16.560 EPS van ModSec (bench-vs-modsec.json).",
     vsLegend: "Rood = de winnaar in die rij",
     honestItems: [
       "Reactieve architectuur — het eerste verzoek kan door tot de logregel valt; we halen niet de inline-snelheid van ModSec.",
@@ -1818,6 +1829,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Sterke punten (gemeten)", "Eerlijke grenzen"],
     vsRows0: [
       ["Log → WAF → kernel-ban", "Eén keten", "Alleen ban", "Stukje bij beetje", "WAF apart"],
+      ["WAF/CRS-doorvoer (zelfde corpus)", "280.373 EPS (16,93×)", "—", "—", "16.560 EPS"],
       ["OWASP-CRS-pariteit", "100% (121 regels)", "—", "—", "Referentie (100%)"],
       ["Recall echte aanvallen", "100% (1K+10K)", "—", "—", "100%"],
       ["Gedistribueerde / JA3-cluster-ban", "100% (80 IP)", "—", "Signaalgebaseerd", "—"],
@@ -1904,13 +1916,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "一次安装，一条链路", v: "无需分别安装和集成 Fail2ban + ModSecurity + CrowdSec。nginx 日志 → WAF/CRS → 内核封禁，一个产品，约 15 分钟安装。" },
       { k: "约 20 毫秒内核封禁", v: "从日志行到 ipset/XDP 封禁中位数约 20 毫秒。Fail2ban/CrowdSec 停留在秒—分钟级；由 21 个实测样本证明。" },
+      { k: "280,373 EPS · 16.93× ModSec", v: "在相同语料、相同 121 条 OWASP CRS 规则（PCRE2 JIT）下，WAF/CRS 吞吐量为 280,373 EPS——比 ModSec 的 16,560 EPS 快 16.93 倍。已测量且可复现（bench-vs-modsec.json）。" },
       { k: "100% 召回 + 100% CRS 对等", v: "121 条 OWASP CRS 规则，在 1500 行语料上对真实攻击 100% 召回，与 ModSec 完全对等——误报率 0.2%。" },
       { k: "覆盖分布式攻击", v: "JA3 集群检测 + 按 IP 封禁——80 IP 实测 100%。Fail2ban 是单 IP；CrowdSec 需要独立的信号网络。" },
       { k: "透明、可复现的证据", v: "75 项自动化测试 + 14 个文件的证据包 + 72 小时 soak（864 样本，0 错误）。竞品没有自动化证据或证据零散。" },
       { k: "自托管 · MIT · 土耳其制造", v: "数据留在你手中，无供应商锁定，完全开源。SOC 时间线、Prometheus 指标和 Telegram 运维统一在一个面板（:8443）。" },
     ],
     vsNote:
-      "诚实边界：在某些方面竞品明显更强（红色单元格）。ModSec + CRS 在瞬时拦截首个请求上领先；CrowdSec 在其分布式社区信号网络和托管 SaaS 控制台上强大。我们的优势是单链路集成 + 约 20 毫秒封禁速度 + 透明可复现的证据。",
+      "诚实边界：在某些方面竞品明显更强（红色单元格）。ModSec + CRS 在瞬时拦截首个请求上领先；CrowdSec 在其分布式社区信号网络和托管 SaaS 控制台上强大。作为回报，在相同语料、相同 121 条 CRS 规则下，我们的 WAF/CRS 吞吐量为 280,373 EPS——是 ModSec 的 16,560 EPS 的 16.93 倍（bench-vs-modsec.json）。",
     vsLegend: "红色 = 该行的优胜者",
     honestItems: [
       "反应式架构——在日志行落下前首个请求可能通过；我们达不到 ModSec 的内联速度。",
@@ -1940,6 +1953,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["优势（实测）", "诚实的边界"],
     vsRows0: [
       ["日志 → WAF → 内核封禁", "单一链路", "仅封禁", "零散拼接", "WAF 分离"],
+      ["WAF/CRS 吞吐量（相同语料）", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
       ["OWASP CRS 对等", "100%（121 条规则）", "—", "—", "参考（100%）"],
       ["真实攻击召回", "100%（1K+10K）", "—", "—", "100%"],
       ["分布式 / JA3 集群封禁", "100%（80 IP）", "—", "基于信号", "—"],
@@ -2026,13 +2040,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "一度の導入、一本のチェーン", v: "Fail2ban + ModSecurity + CrowdSec を個別に導入・統合する必要はありません。nginx ログ → WAF/CRS → カーネルBAN が1製品で、約15分の導入。" },
       { k: "約20msのカーネルBAN", v: "ログ行から ipset/XDP BAN まで中央値 約20ms。Fail2ban/CrowdSec は秒〜分単位；21件の実測サンプルで証明。" },
+      { k: "280,373 EPS · 16.93× ModSec", v: "同一コーパス・同一の 121 個の OWASP CRS パターン（PCRE2 JIT）で、WAF/CRS スループットは 280,373 EPS — ModSec の 16,560 EPS より 16.93 倍高速。計測済みで再現可能（bench-vs-modsec.json）。" },
       { k: "リコール100% + CRS 100%整合", v: "121件の OWASP CRS ルール、1500行コーパスで実攻撃リコール100%、ModSec と完全整合——誤検知0.2%。" },
       { k: "分散攻撃のカバー", v: "JA3 クラスタ検知 + IP ごとの BAN——80 IP のライブテストで100%。Fail2ban は単一IP；CrowdSec は別の信号ネットワークが必要。" },
       { k: "透明で再現可能な証拠", v: "75件の自動テスト + 14ファイルの証拠パック + 72時間ソーク（864サンプル、0エラー）。競合は自動証拠が無いか断片的。" },
       { k: "セルフホスト · MIT · トルコ製", v: "データは手元に残り、ベンダーロックインなし、完全オープンソース。SOC タイムライン、Prometheus メトリクス、Telegram 運用が一つのパネル（:8443）に。" },
     ],
     vsNote:
-      "正直な限界：一部の領域では競合が明らかに優れています（赤いセル）。ModSec + CRS は最初のリクエストの即時ブロックで先行；CrowdSec は分散コミュニティ信号ネットワークとマネージド SaaS コンソールが強力。私たちの強みは単一チェーン統合 + 約20msのBAN速度 + 透明で再現可能な証拠。",
+      "正直な限界：一部の領域では競合が明らかに優れています（赤いセル）。ModSec + CRS は最初のリクエストの即時ブロックで先行；CrowdSec は分散コミュニティ信号ネットワークとマネージド SaaS コンソールが強力。その代わり、同一コーパス・同一の 121 個の CRS パターンで、私たちの WAF/CRS スループットは 280,373 EPS — ModSec の 16,560 EPS の 16.93 倍です（bench-vs-modsec.json）。",
     vsLegend: "赤 = その行の勝者",
     honestItems: [
       "リアクティブなアーキテクチャ——ログ行が落ちるまで最初のリクエストは通り得ます；ModSec のインライン速度には及びません。",
@@ -2062,6 +2077,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["強み（実測）", "正直な限界"],
     vsRows0: [
       ["ログ → WAF → カーネル BAN", "単一チェーン", "BAN のみ", "断片的", "WAF は別"],
+      ["WAF/CRS スループット（同一コーパス）", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
       ["OWASP CRS 整合", "100%（121 ルール）", "—", "—", "基準（100%）"],
       ["実攻撃のリコール", "100%（1K+10K）", "—", "—", "100%"],
       ["分散 / JA3 クラスタ BAN", "100%（80 IP）", "—", "シグナルベース", "—"],
@@ -2148,13 +2164,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "한 번 설치, 하나의 체인", v: "Fail2ban + ModSecurity + CrowdSec을 따로 설치·통합하지 않습니다. nginx 로그 → WAF/CRS → 커널 밴을 한 제품으로, 약 15분 설치." },
       { k: "약 20ms 커널 밴", v: "로그 라인에서 ipset/XDP 밴까지 중앙값 약 20ms. Fail2ban/CrowdSec은 초~분 단위; 21개 측정 샘플로 입증." },
+      { k: "280,373 EPS · 16.93× ModSec", v: "동일 코퍼스와 동일한 121개 OWASP CRS 패턴(PCRE2 JIT)에서 WAF/CRS 처리량은 280,373 EPS로, ModSec의 16,560 EPS보다 16.93배 빠릅니다. 측정되고 재현 가능합니다(bench-vs-modsec.json)." },
       { k: "100% 재현율 + 100% CRS 동등성", v: "121개 OWASP CRS 규칙, 1500줄 코퍼스에서 실제 공격 100% 재현율, ModSec과 완전 동등 — 오탐 0.2%." },
       { k: "분산 공격 커버리지", v: "JA3 클러스터 탐지 + IP별 밴 — 80 IP 실시간 테스트에서 100%. Fail2ban은 단일 IP; CrowdSec은 별도 신호 네트워크가 필요." },
       { k: "투명하고 재현 가능한 증거", v: "75개 자동 테스트 + 14개 파일 증거 팩 + 72시간 soak(864 샘플, 0 오류). 경쟁사는 자동 증거가 없거나 조각나 있음." },
       { k: "셀프호스팅 · MIT · 튀르키예 제작", v: "데이터는 당신에게 남고, 벤더 종속 없음, 완전 오픈소스. SOC 타임라인, Prometheus 메트릭, Telegram 운영을 하나의 패널(:8443)에." },
     ],
     vsNote:
-      "정직한 한계: 일부 영역에서는 경쟁사가 분명히 더 낫습니다(빨간 셀). ModSec + CRS는 첫 요청 즉시 차단에서 앞서고, CrowdSec은 분산 커뮤니티 신호 네트워크와 관리형 SaaS 콘솔에서 강합니다. 우리의 강점은 단일 체인 통합 + 약 20ms 밴 속도 + 투명하고 재현 가능한 증거.",
+      "정직한 한계: 일부 영역에서는 경쟁사가 분명히 더 낫습니다(빨간 셀). ModSec + CRS는 첫 요청 즉시 차단에서 앞서고, CrowdSec은 분산 커뮤니티 신호 네트워크와 관리형 SaaS 콘솔에서 강합니다. 그 대신 동일 코퍼스와 동일한 121개 CRS 패턴에서 우리의 WAF/CRS 처리량은 280,373 EPS로, ModSec의 16,560 EPS보다 16.93배 빠릅니다(bench-vs-modsec.json).",
     vsLegend: "빨강 = 해당 행의 승자",
     honestItems: [
       "반응형 아키텍처 — 로그 라인이 떨어질 때까지 첫 요청은 통과할 수 있음; ModSec의 인라인 속도에는 미치지 못함.",
@@ -2184,6 +2201,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["강점(측정됨)", "정직한 한계"],
     vsRows0: [
       ["로그 → WAF → 커널 밴", "단일 체인", "밴만", "단편적", "WAF 별도"],
+      ["WAF/CRS 처리량(동일 코퍼스)", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
       ["OWASP CRS 동등성", "100%(121 규칙)", "—", "—", "기준(100%)"],
       ["실제 공격 재현율", "100%(1K+10K)", "—", "—", "100%"],
       ["분산 / JA3 클러스터 밴", "100%(80 IP)", "—", "신호 기반", "—"],
@@ -2270,13 +2288,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "تثبيت واحد، سلسلة واحدة", v: "لا تثبّت وتدمج Fail2ban + ModSecurity + CrowdSec بشكل منفصل. سجل nginx ← WAF/CRS ← حظر على مستوى النواة في منتج واحد، تثبيت نحو 15 دقيقة." },
       { k: "حظر على مستوى النواة نحو 17 مللي ثانية", v: "الوسيط نحو 17 مللي ثانية من سطر السجل إلى حظر ipset/XDP. يبقى Fail2ban/CrowdSec بمقياس ثوانٍ–دقائق؛ مثبت بخمس عينات مقاسة." },
+      { k: "280,373 EPS · 16.93× ModSec", v: "على نفس المجموعة وبنفس 121 نمط OWASP CRS (PCRE2 JIT)، يبلغ معدل معالجة WAF/CRS ‏280,373 EPS — أسرع بـ 16.93× من 16,560 EPS لدى ModSec. مقيس وقابل لإعادة الإنتاج (bench-vs-modsec.json)." },
       { k: "استرجاع 100% + تكافؤ CRS 100%", v: "121 قاعدة OWASP CRS، استرجاع 100% للهجمات الحقيقية على مجموعة من 1500 سطر وتكافؤ كامل مع ModSec — عند إيجابيات كاذبة 0.2%." },
       { k: "تغطية الهجمات الموزّعة", v: "كشف عنقود JA3 + حظر لكل IP — 100% في اختبار حي على 80 IP. Fail2ban أحادي الـ IP؛ وCrowdSec يتطلّب شبكة إشارات منفصلة." },
       { k: "دليل شفّاف قابل لإعادة الإنتاج", v: "75 اختباراً آلياً + حزمة أدلة من 14 ملفاً + soak لمدة 72 ساعة (864 عينة، 0 خطأ). المنافسون بلا دليل آلي أو دليلهم مجزّأ." },
       { k: "ذاتي الاستضافة · MIT · صُنع في تركيا", v: "بياناتك تبقى لديك، بلا احتكار مورّد، مفتوح المصدر بالكامل. خط زمني SOC ومقاييس Prometheus وتشغيل Telegram في لوحة واحدة (:8443)." },
     ],
     vsNote:
-      "حدّ صادق: في بعض المجالات المنافسون أفضل بوضوح (الخلايا الحمراء). يتصدّر ModSec + CRS في الحظر الفوري لأول طلب؛ وCrowdSec قوي في شبكة إشارات المجتمع الموزّعة وكونسول SaaS المُدار. قوّتنا هي التكامل في سلسلة واحدة + سرعة حظر نحو 20 مللي ثانية + دليل شفّاف قابل لإعادة الإنتاج.",
+      "حدّ صادق: في بعض المجالات المنافسون أفضل بوضوح (الخلايا الحمراء). يتصدّر ModSec + CRS في الحظر الفوري لأول طلب؛ وCrowdSec قوي في شبكة إشارات المجتمع الموزّعة وكونسول SaaS المُدار. في المقابل، على نفس المجموعة وبنفس 121 نمط CRS، يبلغ معدل معالجة WAF/CRS لدينا ‏280,373 EPS — أي 16.93× من 16,560 EPS لدى ModSec (bench-vs-modsec.json).",
     vsLegend: "الأحمر = الفائز في ذلك الصف",
     honestItems: [
       "بنية تفاعلية — قد يمرّ الطلب الأول حتى يسقط سطر السجل؛ لسنا بسرعة ModSec المضمّنة.",
@@ -2306,6 +2325,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["نقاط القوة (مقاسة)", "حدود صادقة"],
     vsRows0: [
       ["سجل → WAF → حظر النواة", "سلسلة واحدة", "حظر فقط", "متجزئ", "WAF منفصل"],
+      ["معدل معالجة WAF/CRS (نفس المجموعة)", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
       ["تكافؤ OWASP CRS", "100% (121 قاعدة)", "—", "—", "مرجع (100%)"],
       ["استرجاع الهجمات الحقيقية", "100% (1K+10K)", "—", "—", "100%"],
       ["حظر موزّع / عنقود JA3", "100% (80 IP)", "—", "قائم على الإشارة", "—"],
@@ -2392,13 +2412,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Bir quraşdırma, bir zəncir", v: "Fail2ban + ModSecurity + CrowdSec-i ayrıca quraşdırıb inteqrasiya etmirsiniz. nginx logu → WAF/CRS → kernel ban tək məhsulda, ~15 dəq quraşdırma." },
       { k: "~20 ms kernel ban", v: "Log sətrindən ipset/XDP bana median ~20 ms. Fail2ban/CrowdSec saniyə–dəqiqə səviyyəsində qalır; 21 ölçülmüş nümunə ilə sübut olunub." },
+      { k: "280.373 EPS · 16,93× ModSec", v: "Eyni korpus və eyni 121 OWASP CRS pattern (PCRE2 JIT) üzərində WAF/CRS ötürmə qabiliyyəti 280.373 EPS — ModSec-in 16.560 EPS-indən 16,93× daha sürətli. Ölçülmüş və təkrar istehsal olunandır (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qaydası, 1500 sətirlik korpusda real hücum recall 100% və ModSec ilə tam paritet — 0.2% yanlış pozitivdə." },
       { k: "Paylanmış hücum əhatəsi", v: "JA3 klaster aşkarlanması + IP başına ban — 80 IP canlı testdə 100%. Fail2ban tək IP-lidir; CrowdSec ayrıca siqnal şəbəkəsi tələb edir." },
       { k: "Şəffaf, təkrar istehsal edilə bilən sübut", v: "75 avtomatik test + 14 fayllıq sübut paketi + 72 saat soak (864 nümunə, 0 xəta). Rəqiblərdə avtomatik sübut yoxdur və ya parçalıdır." },
       { k: "Self-hosted · MIT · Türkiyə istehsalı", v: "Məlumatınız sizdə qalır, vendor asılılığı yoxdur, tam açıq mənbə. SOC zaman xətti, Prometheus metrikləri və Telegram idarəetməsi bir paneldə (:8443)." },
     ],
     vsNote:
-      "Dürüst hədd: bəzi sahələrdə rəqiblər açıq şəkildə daha yaxşıdır (qırmızı xanalar). ModSec + CRS ilk sorğunun ani bloklanmasında öndədir; CrowdSec paylanmış icma siqnal şəbəkəsində və idarə olunan SaaS konsolunda güclüdür. Bizim gücümüz tək zəncir inteqrasiyası + ~20 ms ban sürəti + şəffaf, təkrar istehsal edilə bilən sübutdur.",
+      "Dürüst hədd: bəzi sahələrdə rəqiblər açıq şəkildə daha yaxşıdır (qırmızı xanalar). ModSec + CRS ilk sorğunun ani bloklanmasında öndədir; CrowdSec paylanmış icma siqnal şəbəkəsində və idarə olunan SaaS konsolunda güclüdür. Bunun müqabilində eyni korpus və eyni 121 CRS pattern üzərində WAF/CRS ötürmə qabiliyyətimiz 280.373 EPS — ModSec-in 16.560 EPS-indən 16,93× yüksəkdir (bench-vs-modsec.json).",
     vsLegend: "Qırmızı = həmin sətirdə qalib",
     honestItems: [
       "Reaktiv memarlıq — log sətri düşənə qədər ilk sorğu keçə bilər; ModSec-in inline sürətində deyilik.",
@@ -2428,6 +2449,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Güclü tərəflər (ölçülmüş)", "Dürüst sərhədlər"],
     vsRows0: [
       ["Log → WAF → kernel ban", "Tək zəncir", "Yalnız ban", "Parça-parça", "WAF ayrı"],
+      ["WAF/CRS ötürmə qabiliyyəti (eyni korpus)", "280.373 EPS (16,93×)", "—", "—", "16.560 EPS"],
       ["OWASP CRS pariteti", "100% (121 qayda)", "—", "—", "Referans (100%)"],
       ["Real hücum recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Paylanmış / JA3 klaster ban", "100% (80 IP)", "—", "Siqnal əsaslı", "—"],
@@ -2514,13 +2536,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Бір орнату, бір тізбек", v: "Fail2ban + ModSecurity + CrowdSec-ті бөлек орнатып, біріктірмейсіз. nginx логы → WAF/CRS → kernel ban бір өнімде, ~15 мин орнату." },
       { k: "~20 мс kernel ban", v: "Лог жолынан ipset/XDP банға медиана ~20 мс. Fail2ban/CrowdSec секунд–минут деңгейінде қалады; 21 өлшенген үлгімен дәлелденген." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Сол корпуста және сол 121 OWASP CRS үлгісінде (PCRE2 JIT) WAF/CRS өткізу қабілеті — 280 373 EPS, ModSec-тің 16 560 EPS-інен 16,93× жылдам. Өлшенген әрі қайта жаңғыртылатын (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритеті", v: "121 OWASP CRS ережесі, 1500 жолдық корпуста нақты шабуыл recall 100% және ModSec-пен толық паритет — 0.2% жалған позитивте." },
       { k: "Таратылған шабуылды қамту", v: "JA3 кластерін анықтау + IP бойынша бан — 80 IP тікелей тесте 100%. Fail2ban жалғыз IP-лік; CrowdSec бөлек сигнал желісін қажет етеді." },
       { k: "Ашық, қайта жаңғыртылатын дәлел", v: "75 автоматты тест + 14 файлдық дәлел пакеті + 72 сағат soak (864 үлгі, 0 қате). Бәсекелестерде автоматты дәлел жоқ немесе бөлшектелген." },
       { k: "Self-hosted · MIT · Түркияда жасалған", v: "Деректеріңіз сізде қалады, вендорға тәуелділік жоқ, толық ашық код. SOC уақыт сызығы, Prometheus метрикалары және Telegram басқаруы бір панельде (:8443)." },
     ],
     vsNote:
-      "Адал шек: кейбір салаларда бәсекелестер анық жақсырақ (қызыл ұяшықтар). ModSec + CRS бірінші сұранысты лезде бұғаттауда алда; CrowdSec таратылған қауымдастық сигнал желісінде және басқарылатын SaaS консолінде мықты. Біздің күшіміз — бір тізбек интеграциясы + ~20 мс бан жылдамдығы + ашық, қайта жаңғыртылатын дәлел.",
+      "Адал шек: кейбір салаларда бәсекелестер анық жақсырақ (қызыл ұяшықтар). ModSec + CRS бірінші сұранысты лезде бұғаттауда алда; CrowdSec таратылған қауымдастық сигнал желісінде және басқарылатын SaaS консолінде мықты. Оның есесіне сол корпуста және сол 121 CRS үлгісінде WAF/CRS өткізу қабілетіміз — 280 373 EPS, ModSec-тің 16 560 EPS-інен 16,93× жоғары (bench-vs-modsec.json).",
     vsLegend: "Қызыл = сол жолдағы жеңімпаз",
     honestItems: [
       "Реактивті архитектура — лог жолы түскенше бірінші сұраныс өтуі мүмкін; біз ModSec-тің inline жылдамдығында емеспіз.",
@@ -2550,6 +2573,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Күшті жақтары (өлшенген)", "Адал шектеулер"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Бір тізбек", "Тек бан", "Бөлшектеп", "WAF бөлек"],
+      ["WAF/CRS өткізу қабілеті (сол корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритеті", "100% (121 ереже)", "—", "—", "Эталон (100%)"],
       ["Нақты шабуыл recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Таратылған / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал негізді", "—"],
@@ -2636,13 +2660,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Bitta o'rnatish, bitta zanjir", v: "Fail2ban + ModSecurity + CrowdSec'ni alohida o'rnatib, integratsiya qilmaysiz. nginx logi → WAF/CRS → kernel ban bitta mahsulotda, ~15 daq o'rnatish." },
       { k: "~20 ms kernel ban", v: "Log qatoridan ipset/XDP banga median ~20 ms. Fail2ban/CrowdSec soniya–daqiqa darajasida qoladi; 21 o'lchangan namuna bilan isbotlangan." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Xuddi shu korpus va xuddi shu 121 OWASP CRS pattern (PCRE2 JIT) ustida WAF/CRS o'tkazuvchanligi 280 373 EPS — ModSec'ning 16 560 EPS'idan 16,93× tez. O'lchangan va qayta ishlab chiqariladigan (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qoidasi, 1500 qatorli korpusda haqiqiy hujum recall 100% va ModSec bilan to'liq paritet — 0.2% noto'g'ri pozitivda." },
       { k: "Taqsimlangan hujum qamrovi", v: "JA3 klaster aniqlash + IP bo'yicha ban — 80 IP jonli testda 100%. Fail2ban yagona IP'li; CrowdSec alohida signal tarmog'ini talab qiladi." },
       { k: "Shaffof, qayta ishlab chiqariladigan dalil", v: "75 avtomatik test + 14 fayllik dalil to'plami + 72 soat soak (864 namuna, 0 xato). Raqiblarda avtomatik dalil yo'q yoki bo'lak-bo'lak." },
       { k: "Self-hosted · MIT · Turkiyada ishlab chiqilgan", v: "Ma'lumotingiz sizda qoladi, vendor qaramligi yo'q, to'liq ochiq kod. SOC vaqt chizig'i, Prometheus metrikalari va Telegram boshqaruvi bitta panelda (:8443)." },
     ],
     vsNote:
-      "Halol chegara: ba'zi sohalarda raqiblar aniq yaxshiroq (qizil kataklar). ModSec + CRS birinchi so'rovni bir zumda bloklashda oldinda; CrowdSec taqsimlangan hamjamiyat signal tarmog'ida va boshqariladigan SaaS konsolida kuchli. Bizning kuchimiz — yagona zanjir integratsiyasi + ~20 ms ban tezligi + shaffof, qayta ishlab chiqariladigan dalil.",
+      "Halol chegara: ba'zi sohalarda raqiblar aniq yaxshiroq (qizil kataklar). ModSec + CRS birinchi so'rovni bir zumda bloklashda oldinda; CrowdSec taqsimlangan hamjamiyat signal tarmog'ida va boshqariladigan SaaS konsolida kuchli. Buning evaziga xuddi shu korpus va xuddi shu 121 CRS pattern ustida WAF/CRS o'tkazuvchanligimiz 280 373 EPS — ModSec'ning 16 560 EPS'idan 16,93× yuqori (bench-vs-modsec.json).",
     vsLegend: "Qizil = shu qatordagi g'olib",
     honestItems: [
       "Reaktiv arxitektura — log qatori tushguncha birinchi so'rov o'tishi mumkin; biz ModSec'ning inline tezligida emasmiz.",
@@ -2672,6 +2697,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Kuchli tomonlar (o'lchangan)", "Halol chegaralar"],
     vsRows0: [
       ["Log → WAF → yadro ban", "Yagona zanjir", "Faqat ban", "Bo'lak-bo'lak", "WAF alohida"],
+      ["WAF/CRS o'tkazuvchanligi (xuddi shu korpus)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS pariteti", "100% (121 qoida)", "—", "—", "Etalon (100%)"],
       ["Haqiqiy hujum recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Taqsimlangan / JA3 klaster ban", "100% (80 IP)", "—", "Signal asosli", "—"],
@@ -2758,13 +2784,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Бир орнотуу, бир чынжыр", v: "Fail2ban + ModSecurity + CrowdSec'ти өзүнчө орнотуп, интеграциялабайсыз. nginx логу → WAF/CRS → kernel ban бир продуктта, ~15 мүн орнотуу." },
       { k: "~20 мс kernel ban", v: "Лог сабынан ipset/XDP банга медиана ~20 мс. Fail2ban/CrowdSec секунд–мүнөт деңгээлинде калат; 21 өлчөнгөн үлгү менен далилденген." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Ошол эле корпусто жана ошол эле 121 OWASP CRS үлгүсүндө (PCRE2 JIT) WAF/CRS өткөрүмдүүлүгү — 280 373 EPS, ModSec'тин 16 560 EPS'инен 16,93× тезирээк. Өлчөнгөн жана кайра чыгарылуучу (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритети", v: "121 OWASP CRS эрежеси, 1500 саптык корпуста чыныгы чабуул recall 100% жана ModSec менен толук паритет — 0.2% жалган позитивде." },
       { k: "Бөлүштүрүлгөн чабуулду камтуу", v: "JA3 кластерин аныктоо + IP боюнча ban — 80 IP түз тестте 100%. Fail2ban жалгыз IP'лик; CrowdSec өзүнчө сигнал тармагын талап кылат." },
       { k: "Ачык, кайра чыгарылуучу далил", v: "75 автоматтык тест + 14 файлдык далил топтому + 72 саат soak (864 үлгү, 0 ката). Атаандаштарда автоматтык далил жок же бөлүк-бөлүк." },
       { k: "Self-hosted · MIT · Түркияда жасалган", v: "Маалыматыңыз сизде калат, вендорго көз карандылык жок, толук ачык код. SOC убакыт сызыгы, Prometheus метрикалары жана Telegram башкаруусу бир панелде (:8443)." },
     ],
     vsNote:
-      "Чынчыл чек: кээ бир тармактарда атаандаштар ачык жакшыраак (кызыл уячалар). ModSec + CRS биринчи сурамды заматта бөгөттөөдө алдыда; CrowdSec бөлүштүрүлгөн коомдук сигнал тармагында жана башкарылуучу SaaS консолунда күчтүү. Биздин күчүбүз — бир чынжыр интеграциясы + ~20 мс ban ылдамдыгы + ачык, кайра чыгарылуучу далил.",
+      "Чынчыл чек: кээ бир тармактарда атаандаштар ачык жакшыраак (кызыл уячалар). ModSec + CRS биринчи сурамды заматта бөгөттөөдө алдыда; CrowdSec бөлүштүрүлгөн коомдук сигнал тармагында жана башкарылуучу SaaS консолунда күчтүү. Анын ордуна ошол эле корпусто жана ошол эле 121 CRS үлгүсүндө WAF/CRS өткөрүмдүүлүгүбүз — 280 373 EPS, ModSec'тин 16 560 EPS'инен 16,93× жогору (bench-vs-modsec.json).",
     vsLegend: "Кызыл = ошол саптагы жеңүүчү",
     honestItems: [
       "Реактивдүү архитектура — лог сабы түшкөнгө чейин биринчи сурам өтүшү мүмкүн; биз ModSec'тин inline ылдамдыгында эмеспиз.",
@@ -2794,6 +2821,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Күчтүү жактары (өлчөнгөн)", "Чынчыл чектөөлөр"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Бир чынжыр", "Бан гана", "Бөлүктөп", "WAF өзүнчө"],
+      ["WAF/CRS өткөрүмдүүлүгү (ошол эле корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритети", "100% (121 эреже)", "—", "—", "Эталон (100%)"],
       ["Чыныгы кол салуу recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Бөлүштүрүлгөн / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал негизинде", "—"],
@@ -2880,13 +2908,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Bir gurnama, bir zynjyr", v: "Fail2ban + ModSecurity + CrowdSec-i aýratyn gurnap, birleşdirmeýärsiňiz. nginx logy → WAF/CRS → kernel ban bir önümde, ~15 min gurnama." },
       { k: "~20 ms kernel ban", v: "Log setirinden ipset/XDP bana mediana ~20 ms. Fail2ban/CrowdSec sekunt–minut derejesinde galýar; 5 ölçelen nusga bilen subut edildi." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Şol korpusda we şol 121 OWASP CRS patterninde (PCRE2 JIT) WAF/CRS geçirijiligi 280 373 EPS — ModSec-iň 16 560 EPS-inden 16,93× çalt. Ölçelen we gaýtadan öndürilýän (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS düzgüni, 1500 setirli korpusda hakyky hüjüm recall 100% we ModSec bilen doly paritet — 0.2% ýalňyş pozitiwde." },
       { k: "Paýlanan hüjümi gurşap almak", v: "JA3 klaster ýüze çykarmak + IP boýunça ban — 80 IP göni testde 100%. Fail2ban ýeke IP'li; CrowdSec aýratyn signal ulgamyny talap edýär." },
       { k: "Aýdyň, gaýtadan öndürilýän subutnama", v: "75 awtomatik test + 14 faýlly subutnama paketi + 72 sagat soak (864 nusga, 0 ýalňyşlyk). Bäsdeşlerde awtomatik subutnama ýok ýa-da bölek-bölek." },
       { k: "Self-hosted · MIT · Türkiýede öndürilen", v: "Maglumatyňyz sizde galýar, wendor garaşlylygy ýok, doly açyk kod. SOC wagt çyzygy, Prometheus metrikalary we Telegram dolandyryşy bir panelde (:8443)." },
     ],
     vsNote:
-      "Dogruçyl çäk: käbir ugurlarda bäsdeşler aýdyň has gowy (gyzyl öýjükler). ModSec + CRS ilkinji soragy derrew bloklamakda öňde; CrowdSec paýlanan jemgyýet signal ulgamynda we dolandyrylýan SaaS konsolynda güýçli. Biziň güýjümiz — ýeke zynjyr integrasiýasy + ~20 ms ban tizligi + aýdyň, gaýtadan öndürilýän subutnama.",
+      "Dogruçyl çäk: käbir ugurlarda bäsdeşler aýdyň has gowy (gyzyl öýjükler). ModSec + CRS ilkinji soragy derrew bloklamakda öňde; CrowdSec paýlanan jemgyýet signal ulgamynda we dolandyrylýan SaaS konsolynda güýçli. Munuň öwezine şol korpusda we şol 121 CRS patterninde WAF/CRS geçirijiligimiz 280 373 EPS — ModSec-iň 16 560 EPS-inden 16,93× ýokary (bench-vs-modsec.json).",
     vsLegend: "Gyzyl = şol setirdäki ýeňiji",
     honestItems: [
       "Reaktiw arhitektura — log setiri düşýänçä ilkinji sorag geçip biler; biz ModSec-iň inline tizliginde däl.",
@@ -2916,6 +2945,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Güýçli taraplary (ölçelen)", "Dogruçyl çäkler"],
     vsRows0: [
       ["Log → WAF → ýadro ban", "Ýeke zynjyr", "Diňe ban", "Böleklaýyn", "WAF aýry"],
+      ["WAF/CRS geçirijiligi (şol korpus)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS pariteti", "100% (121 düzgün)", "—", "—", "Etalon (100%)"],
       ["Hakyky hüjüm recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Paýlanan / JA3 klaster ban", "100% (80 IP)", "—", "Signal esasly", "—"],
@@ -3002,13 +3032,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Бер урнаштыру, бер чылбыр", v: "Fail2ban + ModSecurity + CrowdSec'ны аерым урнаштырып, берләштермисез. nginx логы → WAF/CRS → kernel ban бер продуктта, ~15 мин урнаштыру." },
       { k: "~20 мс kernel ban", v: "Лог юлыннан ipset/XDP банга медиана ~20 мс. Fail2ban/CrowdSec секунд–минут дәрәҗәсендә кала; 5 үлчәнгән үрнәк белән расланган." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Шул ук корпуста һәм шул ук 121 OWASP CRS үрнәгендә (PCRE2 JIT) WAF/CRS үткәрүчәнлеге — 280 373 EPS, ModSec-ның 16 560 EPS-ыннан 16,93× тизрәк. Үлчәнгән һәм кабат ясала торган (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритеты", v: "121 OWASP CRS кагыйдәсе, 1500 юллык корпуста чын һөҗүм recall 100% һәм ModSec белән тулы паритет — 0.2% ялган позитивта." },
       { k: "Таратылган һөҗүмне каплау", v: "JA3 кластерын ачыклау + IP буенча ban — 80 IP туры тестта 100%. Fail2ban ялгыз IP'лы; CrowdSec аерым сигнал челтәрен таләп итә." },
       { k: "Ачык, кабат җитештерелә торган дәлил", v: "75 автоматик тест + 14 файллы дәлил пакеты + 72 сәгать soak (864 үрнәк, 0 хата). Көндәшләрдә автоматик дәлил юк яки өлешле." },
       { k: "Self-hosted · MIT · Төркиядә ясалган", v: "Мәгълүматыгыз сездә кала, вендорга бәйлелек юк, тулысынча ачык код. SOC вакыт сызыгы, Prometheus метрикалары һәм Telegram идарәсе бер панельдә (:8443)." },
     ],
     vsNote:
-      "Намуслы чик: кайбер өлкәләрдә көндәшләр ачык яхшырак (кызыл күзәнәкләр). ModSec + CRS беренче соравны шунда ук блоклауда алда; CrowdSec таратылган җәмгыять сигнал челтәрендә һәм идарә ителә торган SaaS консолендә көчле. Безнең көч — бер чылбыр интеграциясе + ~20 мс ban тизлеге + ачык, кабат җитештерелә торган дәлил.",
+      "Намуслы чик: кайбер өлкәләрдә көндәшләр ачык яхшырак (кызыл күзәнәкләр). ModSec + CRS беренче соравны шунда ук блоклауда алда; CrowdSec таратылган җәмгыять сигнал челтәрендә һәм идарә ителә торган SaaS консолендә көчле. Аның каравы шул ук корпуста һәм шул ук 121 CRS үрнәгендә WAF/CRS үткәрүчәнлегебез — 280 373 EPS, ModSec-ның 16 560 EPS-ыннан 16,93× югарырак (bench-vs-modsec.json).",
     vsLegend: "Кызыл = шул юлдагы җиңүче",
     honestItems: [
       "Реактив архитектура — лог юлы төшкәнче беренче сорау үтә ала; без ModSec'ның inline тизлегендә түгел.",
@@ -3038,6 +3069,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Көчле яклары (үлчәнгән)", "Намуслы чикләр"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Бер чылбыр", "Бары бан", "Кисәкләп", "WAF аерым"],
+      ["WAF/CRS үткәрүчәнлеге (шул ук корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритеты", "100% (121 кагыйдә)", "—", "—", "Эталон (100%)"],
       ["Чын һөҗүм recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Таратылган / JA3 кластер бан", "100% (80 IP)", "—", "Сигналга нигезләнгән", "—"],
@@ -3124,13 +3156,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Бер урынлаштырыу, бер сылбыр", v: "Fail2ban + ModSecurity + CrowdSec'ты айырым урынлаштырып, берләштермәйһегеҙ. nginx логы → WAF/CRS → kernel ban бер продуктта, ~15 мин урынлаштырыу." },
       { k: "~20 мс kernel ban", v: "Лог юлынан ipset/XDP банға медиана ~20 мс. Fail2ban/CrowdSec секунд–минут кимәлендә ҡала; 5 үлсәнгән өлгө менән раҫланған." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Шул уҡ корпуста һәм шул уҡ 121 OWASP CRS өлгөһөндә (PCRE2 JIT) WAF/CRS үткәреү һәләтлеге — 280 373 EPS, ModSec-тың 16 560 EPS-ынан 16,93× тиҙерәк. Үлсәнгән һәм ҡабат яһала торған (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритеты", v: "121 OWASP CRS ҡағиҙәһе, 1500 юллыҡ корпуста ысын һөжүм recall 100% һәм ModSec менән тулы паритет — 0.2% ялған позитивта." },
       { k: "Таратылған һөжүмде ҡаплау", v: "JA3 кластерын асыҡлау + IP буйынса ban — 80 IP тура тестта 100%. Fail2ban яңғыҙ IP'лы; CrowdSec айырым сигнал селтәрен талап итә." },
       { k: "Асыҡ, ҡабат етештерелә торған дәлил", v: "75 автоматик тест + 14 файллы дәлил пакеты + 72 сәғәт soak (864 өлгө, 0 хата). Көндәштәрҙә автоматик дәлил юҡ йәки өлөшлө." },
       { k: "Self-hosted · MIT · Төркиәлә яһалған", v: "Мәғлүмәтегеҙ һеҙҙә ҡала, вендорға бәйлелек юҡ, тулыһынса асыҡ код. SOC ваҡыт һыҙығы, Prometheus метрикалары һәм Telegram идараһы бер панелдә (:8443)." },
     ],
     vsNote:
-      "Намыҫлы сик: ҡайһы бер өлкәләрҙә көндәштәр асыҡ яҡшыраҡ (ҡыҙыл күҙәнәктәр). ModSec + CRS беренсе һорауҙы шунда уҡ блоклауҙа алда; CrowdSec таратылған йәмғиәт сигнал селтәрендә һәм идара ителгән SaaS консолендә көслө. Беҙҙең көс — бер сылбыр интеграцияһы + ~20 мс ban тиҙлеге + асыҡ, ҡабат етештерелә торған дәлил.",
+      "Намыҫлы сик: ҡайһы бер өлкәләрҙә көндәштәр асыҡ яҡшыраҡ (ҡыҙыл күҙәнәктәр). ModSec + CRS беренсе һорауҙы шунда уҡ блоклауҙа алда; CrowdSec таратылған йәмғиәт сигнал селтәрендә һәм идара ителгән SaaS консолендә көслө. Уның ҡарауы шул уҡ корпуста һәм шул уҡ 121 CRS өлгөһөндә WAF/CRS үткәреү һәләтебеҙ — 280 373 EPS, ModSec-тың 16 560 EPS-ынан 16,93× юғарыраҡ (bench-vs-modsec.json).",
     vsLegend: "Ҡыҙыл = шул юлдағы еңеүсе",
     honestItems: [
       "Реактив архитектура — лог юлы төшкәнсе беренсе һорау үтә ала; беҙ ModSec'тың inline тиҙлегендә түгел.",
@@ -3160,6 +3193,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Көслө яҡтары (үлсәнгән)", "Намыҫлы сиктәр"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Бер сылбыр", "Тик бан", "Киҫәкләп", "WAF айырым"],
+      ["WAF/CRS үткәреү һәләтлеге (шул уҡ корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритеты", "100% (121 ҡағиҙә)", "—", "—", "Эталон (100%)"],
       ["Ысын һөжүм recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Таратылған / JA3 кластер бан", "100% (80 IP)", "—", "Сигналға нигеҙләнгән", "—"],
@@ -3246,13 +3280,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Пӗр вырнаҫтару, пӗр сӑнчӑр", v: "Fail2ban + ModSecurity + CrowdSec-а уйрӑммӑн вырнаҫтарса пӗрлештерместӗр. nginx логӗ → WAF/CRS → kernel бан пӗр продуктра, ~15 мин вырнаҫтару." },
       { k: "~20 мс kernel бан", v: "Лог йӗркинчен ipset/XDP бана медиана ~20 мс. Fail2ban/CrowdSec ҫекунт–минут шайӗнче юлаҫҫӗ; 5 виҫнӗ тӗслӗхпе ҫирӗплетнӗ." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Ҫав корпусра тата ҫав 121 OWASP CRS үлгинче (PCRE2 JIT) WAF/CRS витӗмлӗхӗ — 280 373 EPS, ModSec 16 560 EPS-ӗнчен 16,93× хӑвӑртрах. Виҫнӗ тата тепӗр хут кӑларма пулакан (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритечӗ", v: "121 OWASP CRS правили, 1500 йӗркеллӗ корпусра чӑн тапӑну recall 100% тата ModSec-па тулли паритет — 0.2% суя позитивра." },
       { k: "Сарӑлнӑ тапӑнӑва хуплани", v: "JA3 кластерне тупни + IP тӑрӑх бан — 80 IP чӗрӗ тестра 100%. Fail2ban пӗр IP-лӑ; CrowdSec уйрӑм сигнал тетелне ыйтать." },
       { k: "Уҫӑ, тепӗр хут тӑвакан кӑтарту", v: "75 автомат тест + 14 файллӑ кӑтарту пакечӗ + 72 сехет soak (864 тӗслӗх, 0 йӑнӑш). Конкурентсен автомат кӑтарту ҫук е татӑк-татӑк." },
       { k: "Self-hosted · MIT · Турцире тунӑ", v: "Сирӗн даннӑйсем сирӗнте юлаҫҫӗ, вендора ҫыхӑнни ҫук, пӗтӗмпех уҫӑ код. SOC вӑхӑт линийӗ, Prometheus метрикисем тата Telegram майлашӑвӗ пӗр панельре (:8443)." },
     ],
     vsNote:
-      "Тӳрӗ чикӗ: хӑш-пӗр енре конкурентсем уҫҫӑнах лайӑхрах (хӗрлӗ клеткӑсем). ModSec + CRS пӗрремӗш ыйтӑва самантрах пӳлнинче мала тухать; CrowdSec сарӑлнӑ обществӑ сигнал тетелӗнче тата майлаштарнӑ SaaS консольте вӑйлӑ. Пирӗн вӑй — пӗр сӑнчӑр интеграцийӗ + ~20 мс бан хӑвӑртлӑхӗ + уҫӑ, тепӗр хут тӑвакан кӑтарту.",
+      "Тӳрӗ чикӗ: хӑш-пӗр енре конкурентсем уҫҫӑнах лайӑхрах (хӗрлӗ клеткӑсем). ModSec + CRS пӗрремӗш ыйтӑва самантрах пӳлнинче мала тухать; CrowdSec сарӑлнӑ обществӑ сигнал тетелӗнче тата майлаштарнӑ SaaS консольте вӑйлӑ. Ун вырӑнне ҫав корпусра тата ҫав 121 CRS үлгинче WAF/CRS витӗмлӗхӗмӗр — 280 373 EPS, ModSec 16 560 EPS-ӗнчен 16,93× пысӑкрах (bench-vs-modsec.json).",
     vsLegend: "Хӗрлӗ = ҫав йӗркери ҫӗнтерекен",
     honestItems: [
       "Реактивлӑ архитектура — лог йӗрки ӳкиччен пӗрремӗш ыйту иртме пултарать; эпир ModSec inline хӑвӑртлӑхӗнче мар.",
@@ -3282,6 +3317,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Вӑйлӑ енӗсем (виҫнӗ)", "Тӳрӗ чиккисем"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Пӗр сӑнчӑр", "Бан анчах", "Пайӑн-пайӑн", "WAF уйрӑм"],
+      ["WAF/CRS витӗмлӗхӗ (ҫав корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритечӗ", "100% (121 правило)", "—", "—", "Эталон (100%)"],
       ["Чӑн тапӑну recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Сапаланӑ / JA3 кластер бан", "100% (80 IP)", "—", "Сигнал ҫинче", "—"],
@@ -3368,13 +3404,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Bir qurulım, bir zıncır", v: "Fail2ban + ModSecurity + CrowdSec'ni ayrı qurup birleştirmeysiñiz. nginx logu → WAF/CRS → kernel ban tek mahsulda, ~15 daq qurulım." },
       { k: "~20 ms kernel ban", v: "Log satırından ipset/XDP banğa mediana ~20 ms. Fail2ban/CrowdSec saniye–daqiqa seviyesinde qala; 5 ölçengen örneknen isbatlanğan." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Aynı korpus ve aynı 121 OWASP CRS pattern (PCRE2 JIT) üzerinde WAF/CRS ötkerim qabiliyeti 280 373 EPS — ModSec'niñ 16 560 EPS'inden 16,93× daa tez. Ölçengen ve kene çıqarıla bilgen (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS qaidesi, 1500 satırlıq korpusta kerçek hücum recall 100% ve ModSec ile tam paritet — 0.2% yañlış pozitivde." },
       { k: "Dağıtıq hücumnı qaplav", v: "JA3 klaster tapuv + IP başına ban — 80 IP canlı testte 100%. Fail2ban tek IP'li; CrowdSec ayrı signal ağını ister." },
       { k: "Şeffaf, tekrar tüzülgen delil", v: "75 avtomatik test + 14 fayllı delil paketi + 72 saat soak (864 örnek, 0 hata). Raqiplerde avtomatik delil yoq ya da parça-parça." },
       { k: "Self-hosted · MIT · Türkiyede yapılğan", v: "Malümatıñız sizde qala, vendor bağlılığı yoq, tamamen açıq kod. SOC vaqıt sızığı, Prometheus metrikaları ve Telegram idaresi bir pan'elde (:8443)." },
     ],
     vsNote:
-      "Doğru sıñır: bazı sahalarda raqipler açıq şekilde daha yahşı (qırmızı hüceyreler). ModSec + CRS ilk sorağını hemen bloklavda ögde; CrowdSec dağıtıq cemaat signal ağında ve idare etilgen SaaS konsolunda küçlü. Bizim küç — tek zıncır integratsiyası + ~20 ms ban tezligi + şeffaf, tekrar tüzülgen delil.",
+      "Doğru sıñır: bazı sahalarda raqipler açıq şekilde daha yahşı (qırmızı hüceyreler). ModSec + CRS ilk sorağını hemen bloklavda ögde; CrowdSec dağıtıq cemaat signal ağında ve idare etilgen SaaS konsolunda küçlü. Onıñ yerine aynı korpus ve aynı 121 CRS pattern üzerinde WAF/CRS ötkerim qabiliyetimiz 280 373 EPS — ModSec'niñ 16 560 EPS'inden 16,93× yüksek (bench-vs-modsec.json).",
     vsLegend: "Qırmızı = o satırdaki ğalip",
     honestItems: [
       "Reaktiv mimarlıq — log satırı tüşkence ilk soravnıñ keçüvi mümkün; biz ModSec'niñ inline tezliginde degilmiz.",
@@ -3404,6 +3441,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Küçlü tarafları (ölçengen)", "Doğru sıñırlar"],
     vsRows0: [
       ["Log → WAF → kernel ban", "Tek zıncır", "Faqat ban", "Parça-parça", "WAF ayrı"],
+      ["WAF/CRS ötkerim qabiliyeti (aynı korpus)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS pariteti", "100% (121 qaide)", "—", "—", "Referans (100%)"],
       ["Kerçek ücüm recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Dağıtılğan / JA3 klaster ban", "100% (80 IP)", "—", "Signal esaslı", "—"],
@@ -3490,13 +3528,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Bir kurma, bir zincir", v: "Fail2ban + ModSecurity + CrowdSec'i ayırı kurup birleştirmeersiniz. nginx logu → WAF/CRS → kernel ban tek üründä, ~15 dak kurma." },
       { k: "~20 ms kernel ban", v: "Log satırından ipset/XDP bana mediana ~20 ms. Fail2ban/CrowdSec saniye–dakika kertindä kalêr; 5 ölçülü örneklän ispatlandı." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Aynı korpusta hem aynı 121 OWASP CRS pattern (PCRE2 JIT) üzerindä WAF/CRS geçirim kapasitesi 280 373 EPS — ModSec'in 16 560 EPS'indän 16,93× tez. Ölçülü hem genä yapılabilän (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS pariteti", v: "121 OWASP CRS kuralı, 1500 satırlık korpusta gerçek saldırı recall 100% hem ModSec ilä tam paritet — 0.2% yalancı pozitivdä." },
       { k: "Daalı saldırıyı kaplamak", v: "JA3 klaster bulması + IP başına ban — 80 IP canlı testtä 100%. Fail2ban tek IP'li; CrowdSec ayırı sinyal aa ister." },
       { k: "Açık, tekrar yapılabilän delil", v: "75 avtomatik test + 14 dosyalı delil paketi + 72 saat soak (864 örnek, 0 hata). Rakiplerdä avtomatik delil yok osaydı parça-parça." },
       { k: "Self-hosted · MIT · Türkiyedä yapıldı", v: "Bilgileriniz sizdä kalêr, vendor baalantısı yok, bütünnä açık kod. SOC zaman çizgisi, Prometheus metrikaları hem Telegram işlemesi bir paneldä (:8443)." },
     ],
     vsNote:
-      "Dooru sınır: kimi alannarda rakiplär açık şekildä taa islää (kırmızı üücüklär). ModSec + CRS ilk isteyi hemen bloklamakta önnärdä; CrowdSec daalı cümnä sinyal aandä hem işlenän SaaS konsolundä küvetli. Bizim küvet — tek zincir integratsiyası + ~20 ms ban hızı + açık, tekrar yapılabilän delil.",
+      "Dooru sınır: kimi alannarda rakiplär açık şekildä taa islää (kırmızı üücüklär). ModSec + CRS ilk isteyi hemen bloklamakta önnärdä; CrowdSec daalı cümnä sinyal aandä hem işlenän SaaS konsolundä küvetli. Onun erinä aynı korpusta hem aynı 121 CRS pattern üzerindä WAF/CRS geçirim kapasitemiz 280 373 EPS — ModSec'in 16 560 EPS'indän 16,93× büük (bench-vs-modsec.json).",
     vsLegend: "Kırmızı = o satırdaki kazanan",
     honestItems: [
       "Reaktiv mimarlık — log satırı düşenädäk ilk isteyin geçmesi olabilir; biz ModSec'in inline hızındä diiliz.",
@@ -3526,6 +3565,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Kuvetli taraflar (ölçülü)", "Dooru sınırlar"],
     vsRows0: [
       ["Log → WAF → kernel ban", "Bir zincir", "Salt ban", "Parça-parça", "WAF ayrı"],
+      ["WAF/CRS geçirim kapasitesi (aynı korpus)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS pariteti", "100% (121 kural)", "—", "—", "Referans (100%)"],
       ["Gerçek saldırı recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Daaıdılmış / JA3 klaster ban", "100% (80 IP)", "—", "Signal temelli", "—"],
@@ -3612,13 +3652,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "بىر ئورنىتىش، بىر زەنجىر", v: "Fail2ban + ModSecurity + CrowdSec نى ئايرىم ئورنىتىپ بىرلەشتۈرمەيسىز. nginx خاتىرىسى → WAF/CRS → يادرو چەكلىشى بىر مەھسۇلاتتا، ~15 مىنۇت ئورنىتىش." },
       { k: "~20 مىللىسېكۇنت يادرو چەكلىشى", v: "خاتىرە قۇرىدىن ipset/XDP چەكلەشكە ئوتتۇرا قىممەت ~20 مىللىسېكۇنت. Fail2ban/CrowdSec سېكۇنت–مىنۇت دەرىجىسىدە قالىدۇ؛ 21 ئۆلچەنگەن نەمۇنە بىلەن ئىسپاتلانغان." },
+      { k: "280,373 EPS · 16.93× ModSec", v: "ئوخشاش كوربۇستا ۋە ئوخشاش 121 OWASP CRS قېلىپىدا (PCRE2 JIT) WAF/CRS ئۆتكۈزۈش ئىقتىدارى 280,373 EPS — ModSec نىڭ 16,560 EPS ئىدىن 16.93× تېز. ئۆلچەنگەن ۋە قايتا ئىشلەپچىقارغىلى بولىدۇ (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS تەڭپۇڭلۇقى", v: "121 OWASP CRS قائىدىسى، 1500 قۇرلۇق كورپۇستا ھەقىقىي ھۇجۇم recall 100% ۋە ModSec بىلەن تولۇق تەڭپۇڭلۇق — 0.2% يالغان مۇسبەتتە." },
       { k: "تارقاق ھۇجۇمنى قاپلاش", v: "JA3 توپلام بايقاش + IP بويىچە چەكلەش — 80 IP جانلىق سىناقتا 100%. Fail2ban يەككە IP لىق؛ CrowdSec ئايرىم سىگنال تورى تەلەپ قىلىدۇ." },
       { k: "ئوچۇق، قايتا ياسىغىلى بولىدىغان ئىسپات", v: "75 ئاپتوماتىك سىناق + 14 ھۆججەتلىك ئىسپات بولىقى + 72 سائەت soak (864 نەمۇنە، 0 خاتالىق). رەقىبلەردە ئاپتوماتىك ئىسپات يوق ياكى پارچە-پارچە." },
       { k: "Self-hosted · MIT · تۈركىيەدە ياسالغان", v: "سانلىق مەلۇماتىڭىز سىزدە قالىدۇ، ساتقۇچىغا باغلىنىش يوق، تولۇق ئوچۇق كود. SOC ۋاقىت سىزىقى، Prometheus مېترىكىلىرى ۋە Telegram باشقۇرۇشى بىر تاختىدا (:8443)." },
     ],
     vsNote:
-      "سەمىمىي چەك: بەزى ساھەلەردە رەقىبلەر ئېنىق ياخشىراق (قىزىل كاتەكچىلەر). ModSec + CRS تۇنجى ئىلتىماسنى دەرھال توسۇشتا ئالدىدا؛ CrowdSec تارقاق جەمئىيەت سىگنال تورىدا ۋە باشقۇرۇلىدىغان SaaS كونسولىدا كۈچلۈك. بىزنىڭ كۈچىمىز — بىرلا زەنجىر بىرلەشتۈرۈش + ~20 مىللىسېكۇنت چەكلەش سۈرئىتى + ئوچۇق، قايتا ياسىغىلى بولىدىغان ئىسپات.",
+      "سەمىمىي چەك: بەزى ساھەلەردە رەقىبلەر ئېنىق ياخشىراق (قىزىل كاتەكچىلەر). ModSec + CRS تۇنجى ئىلتىماسنى دەرھال توسۇشتا ئالدىدا؛ CrowdSec تارقاق جەمئىيەت سىگنال تورىدا ۋە باشقۇرۇلىدىغان SaaS كونسولىدا كۈچلۈك. ئۇنىڭ ئورنىغا ئوخشاش كوربۇستا ۋە ئوخشاش 121 CRS قېلىپىدا WAF/CRS ئۆتكۈزۈش ئىقتىدارىمىز 280,373 EPS — ModSec نىڭ 16,560 EPS ئىدىن 16.93× يۇقىرى (bench-vs-modsec.json).",
     vsLegend: "قىزىل = شۇ قۇردىكى غالىب",
     honestItems: [
       "ئىنكاسچان قۇرۇلما — خاتىرە قۇرى چۈشكۈچە تۇنجى ئىلتىماس ئۆتۈپ كېتىشى مۇمكىن؛ بىز ModSec نىڭ inline سۈرئىتىدە ئەمەس.",
@@ -3648,6 +3689,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["كۈچلۈك تەرەپلىرى (ئۆلچەنگەن)", "سەمىمىي چەكلەر"],
     vsRows0: [
       ["لوگ → WAF → يادرو چەكلەش", "بىر زەنجىر", "پەقەت چەكلەش", "پارچە-پارچە", "WAF ئايرىم"],
+      ["WAF/CRS ئۆتكۈزۈش ئىقتىدارى (ئوخشاش كوربۇس)", "280,373 EPS (16.93×)", "—", "—", "16,560 EPS"],
       ["OWASP CRS تەڭپۇڭلۇقى", "100% (121 قائىدە)", "—", "—", "پايدىلىنىش (100%)"],
       ["ھەقىقىي ھۇجۇم recall", "100% (1K+10K)", "—", "—", "100%"],
       ["تارقاق / JA3 كلاستېر چەكلەش", "100% (80 IP)", "—", "سىگنالغا ئاساسەن", "—"],
@@ -3734,13 +3776,14 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     advantages: [
       { k: "Биир олохтооһун, биир сиэп", v: "Fail2ban + ModSecurity + CrowdSec-ы туспа олохтоон холбообоккун. nginx лога → WAF/CRS → kernel бан биир бородууксуйаҕа, ~15 мүн олохтооһун." },
       { k: "~20 мс kernel бан", v: "Лог строкатыттан ipset/XDP баҥҥа медиана ~20 мс. Fail2ban/CrowdSec сөкүүндэ–мүнүөтэ таһымыгар хаалаллар; 5 кээмэйдэммит холобурунан дакаастаммыт." },
+      { k: "280 373 EPS · 16,93× ModSec", v: "Биир корпуска уонна биир 121 OWASP CRS pattern (PCRE2 JIT) үрдүгэр WAF/CRS ыытар кыаҕа — 280 373 EPS, ModSec 16 560 EPS-тан 16,93× түргэн. Кээмэйдэммит уонна хатыланар (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS паритета", v: "121 OWASP CRS быраабылата, 1500 строкалаах корпуска чахчы саба түһүү recall 100% уонна ModSec кытта толору паритет — 0.2% сымыйа позитивга." },
       { k: "Тарҕаммыт саба түһүүнү хабыы", v: "JA3 кластеры булуу + IP аайы бан — 80 IP тыыннаах тескэ 100%. Fail2ban биир IP-лаах; CrowdSec туспа сигнал ситимин ирдиир." },
       { k: "Ыраас, хат оҥоһуллар туоһу", v: "75 автомат тест + 14 файллаах туоһу пакета + 72 чаас soak (864 холобур, 0 алҕас). Күрэхтэһээччилэргэ автомат туоһу суох эбэтэр аҥаардас." },
       { k: "Self-hosted · MIT · Турцияҕа оҥоһуллубут", v: "Дааннайдарыҥ эйиэхэ хаалаллар, вендорга сыһыаны суох, толору аһаҕас код. SOC кэм линията, Prometheus метриктэрэ уонна Telegram салайыыта биир панельга (:8443)." },
     ],
     vsNote:
-      "Кырдьык кыраныыс: сорох эйгэлэргэ күрэхтэһээччилэр биллэрдик ордуктар (кыһыл клеткалар). ModSec + CRS маҥнайгы көрдөһүүнү тута хаайарыгар инники; CrowdSec тарҕаммыт общество сигнал ситимигэр уонна салайыллар SaaS консолугар күүстээх. Биһиги күүспүт — биир сиэп интеграцията + ~20 мс бан түргэнэ + ыраас, хат оҥоһуллар туоһу.",
+      "Кырдьык кыраныыс: сорох эйгэлэргэ күрэхтэһээччилэр биллэрдик ордуктар (кыһыл клеткалар). ModSec + CRS маҥнайгы көрдөһүүнү тута хаайарыгар инники; CrowdSec тарҕаммыт общество сигнал ситимигэр уонна салайыллар SaaS консолугар күүстээх. Онун оннугар биир корпуска уонна биир 121 CRS pattern үрдүгэр биһиги WAF/CRS ыытар кыахпыт — 280 373 EPS, ModSec 16 560 EPS-тан 16,93× үрдүк (bench-vs-modsec.json).",
     vsLegend: "Кыһыл = ол строкаҕа кыайааччы",
     honestItems: [
       "Реактивнай архитектура — лог строката түһүөр диэри маҥнайгы көрдөһүү ааһыан сөп; биһиги ModSec inline түргэнигэр буолбатахпыт.",
@@ -3770,6 +3813,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     vsGroupLabels: ["Күүстээх өрүттэрэ (кээмэйдэммит)", "Кырдьыктаах кыраныыссалар"],
     vsRows0: [
       ["Лог → WAF → ядро бан", "Биир силбиэ", "Бан эрэ", "Аҥаардастыы", "WAF туспа"],
+      ["WAF/CRS ыытар кыаҕа (биир корпус)", "280 373 EPS (16,93×)", "—", "—", "16 560 EPS"],
       ["OWASP CRS паритета", "100% (121 быраабыла)", "—", "—", "Эталон (100%)"],
       ["Дьиҥнээх саба түһүү recall", "100% (1K+10K)", "—", "—", "100%"],
       ["Тарҕаммыт / JA3 кластер бан", "100% (80 IP)", "—", "Сигналга олоҕуран", "—"],

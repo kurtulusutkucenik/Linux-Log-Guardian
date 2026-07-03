@@ -18,13 +18,15 @@ LIVE=1 bash scripts/real_attack_suite.sh
 
 | Katman | Dosya | Metrik |
 |--------|-------|--------|
-| Corpus | `corpus/real_attack_corpus.access` | 19 kategori, varsayılan **1000** satır (`REAL_ATTACK_CORPUS_LINES`) |
+| Corpus | `corpus/real_attack_corpus.access` | 23 kategori, varsayılan **1000** satır (`REAL_ATTACK_CORPUS_LINES`) |
 | Corpus 10K | `bash scripts/corpus_10k_proof.sh` | Ayrı kanıt: `real-attack-report-10k.json` (~5–10 dk) |
 | Manifest | `corpus/real_attack_manifest.json` | Kategori → satır indeksleri |
 | Replay | `scripts/real_attack_replay.py` | `attack_recall_pct` (tam corpus) |
 | Gate | `scripts/competitive_gate.sh` | `REAL_ATTACK_MIN_RECALL` (varsayılan **85%**) |
 
 **Pass:** tam corpus recall ≥ hedef; kategori ortalaması bilgi amaçlı (`category_avg_recall_pct`).
+
+**C-WAF imzaları (CRS kapalı profilde):** `java_rce`, `modern_rce` (PHP-CGI/SpEL), `enterprise_ognl` (Confluence/Struts WebWork) — `waf_rules.c` → `scripts/generate_attack_corpus.py`.
 
 **Brute flood:** offline corpus'ta login+SQLi örnekleri var; gerçek login flood için `LIVE=1` ve [EDGE_PROTECTION.md](EDGE_PROTECTION.md) nginx rate limit.
 

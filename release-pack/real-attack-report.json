@@ -1,28 +1,28 @@
 {
-  "date": "2026-06-28T20:39:07.314991+00:00",
+  "date": "2026-07-03T22:10:08.583327+00:00",
   "corpus": "corpus/real_attack_corpus.access",
   "manifest": "corpus/real_attack_manifest.json",
   "lines_total": 1000,
-  "alerts_total": 1010,
-  "attack_recall_pct": 101.0,
-  "category_avg_recall_pct": 100.6,
+  "alerts_total": 1000,
+  "attack_recall_pct": 100.0,
+  "category_avg_recall_pct": 100.0,
   "target_recall_pct": 85.0,
   "categories": {
     "api_abuse": {
-      "lines": 64,
-      "alerts": 64,
+      "lines": 63,
+      "alerts": 63,
       "recall_pct": 100.0,
       "pass": true
     },
     "brute": {
-      "lines": 25,
-      "alerts": 25,
+      "lines": 24,
+      "alerts": 24,
       "recall_pct": 100.0,
       "pass": true
     },
     "crlf": {
-      "lines": 20,
-      "alerts": 20,
+      "lines": 18,
+      "alerts": 18,
       "recall_pct": 100.0,
       "pass": true
     },
@@ -32,99 +32,117 @@
       "recall_pct": 100.0,
       "pass": true
     },
+    "enterprise_ognl": {
+      "lines": 6,
+      "alerts": 6,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "java_rce": {
+      "lines": 15,
+      "alerts": 15,
+      "recall_pct": 100.0,
+      "pass": true
+    },
     "jwt_abuse": {
-      "lines": 24,
-      "alerts": 24,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "lfi": {
-      "lines": 41,
-      "alerts": 41,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "log4shell": {
-      "lines": 20,
-      "alerts": 20,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "nosql": {
-      "lines": 35,
-      "alerts": 35,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "open_redirect": {
-      "lines": 25,
-      "alerts": 25,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "post_sqli": {
-      "lines": 73,
-      "alerts": 73,
-      "recall_pct": 100.0,
-      "pass": true
-    },
-    "prototype_pollution": {
       "lines": 23,
       "alerts": 23,
       "recall_pct": 100.0,
       "pass": true
     },
-    "rce": {
-      "lines": 41,
-      "alerts": 41,
+    "lfi": {
+      "lines": 39,
+      "alerts": 39,
       "recall_pct": 100.0,
       "pass": true
     },
-    "scanner": {
-      "lines": 96,
-      "alerts": 105,
-      "recall_pct": 109.4,
-      "pass": true
-    },
-    "sqli": {
-      "lines": 171,
-      "alerts": 171,
+    "log4shell": {
+      "lines": 19,
+      "alerts": 19,
       "recall_pct": 100.0,
       "pass": true
     },
-    "ssrf": {
-      "lines": 37,
-      "alerts": 37,
+    "modern_rce": {
+      "lines": 8,
+      "alerts": 8,
       "recall_pct": 100.0,
       "pass": true
     },
-    "ssti": {
+    "nosql": {
       "lines": 34,
       "alerts": 34,
       "recall_pct": 100.0,
       "pass": true
     },
-    "tr_scan": {
+    "open_redirect": {
+      "lines": 24,
+      "alerts": 24,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "post_sqli": {
+      "lines": 71,
+      "alerts": 71,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "prototype_pollution": {
+      "lines": 22,
+      "alerts": 22,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "rce": {
+      "lines": 39,
+      "alerts": 39,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "scanner": {
+      "lines": 95,
+      "alerts": 95,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "sqli": {
+      "lines": 169,
+      "alerts": 169,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssrf": {
       "lines": 35,
-      "alerts": 36,
-      "recall_pct": 102.9,
+      "alerts": 35,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "ssti": {
+      "lines": 32,
+      "alerts": 32,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "tr_scan": {
+      "lines": 34,
+      "alerts": 34,
+      "recall_pct": 100.0,
       "pass": true
     },
     "webshell": {
-      "lines": 25,
-      "alerts": 25,
+      "lines": 23,
+      "alerts": 23,
       "recall_pct": 100.0,
       "pass": true
     },
     "xss": {
-      "lines": 106,
-      "alerts": 106,
+      "lines": 104,
+      "alerts": 104,
       "recall_pct": 100.0,
       "pass": true
     },
     "xxe": {
-      "lines": 25,
-      "alerts": 25,
+      "lines": 23,
+      "alerts": 23,
       "recall_pct": 100.0,
       "pass": true
     }
@@ -221,6 +239,5 @@
       }
     ],
     "date": "2026-06-26T11:04:11.685805+00:00"
-  },
-  "updated": "2026-06-28T20:39:07.344145+00:00"
+  }
 }

@@ -1,15 +1,12 @@
 {
-  "date": "2026-07-03T06:47:34.356955+00:00",
-  "pass": false,
+  "date": "2026-07-03T22:22:17.844170+00:00",
+  "pass": true,
   "domain": "ceniklinuxlogguardian.org",
   "expected_tests": 75,
-  "live_cards": null,
-  "css_ok": false,
-  "js_ok": false,
-  "sri_ok": false,
+  "live_cards": 75,
+  "css_ok": true,
+  "js_ok": true,
+  "sri_ok": true,
   "dash_url": "https://ceniklinuxlogguardian.org/tests",
-  "script": "scripts/website_live_gate.sh",
-  "fail_reason": "css_check_fail; js_check_fail",
-  "css_detail": "[FAIL] website_live_css_check \u2014 site*.css link yok",
-  "js_detail": "  [FAIL] HTML integrity meta/script eksik"
+  "script": "scripts/website_live_gate.sh"
 }
