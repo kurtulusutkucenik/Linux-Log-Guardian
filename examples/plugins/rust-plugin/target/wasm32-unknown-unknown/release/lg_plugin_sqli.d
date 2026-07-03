@@ -1,1 +1,0 @@
-/home/kurtulus/Masaüstü/Linux\ Log\ Guardian/examples/plugins/rust-plugin/target/wasm32-unknown-unknown/release/lg_plugin_sqli.wasm: /home/kurtulus/Masaüstü/Linux\ Log\ Guardian/examples/plugins/rust-plugin/src/lib.rs

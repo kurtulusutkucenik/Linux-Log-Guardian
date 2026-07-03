@@ -47,7 +47,7 @@ const TR: SectionCopy = {
   hero_bullets: ["~20 ms kernel ban", "75 otomatik test", "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   hero_chips: ["açık kaynak · MIT", "72h soak PASS"],
-  hero_reach: "2,3k+ ziyaret · 4k+ sayfa · 54 ülke · kanıt PDF",
+  hero_reach: "3,65k+ ziyaret · 56 ülke · kanıt PDF",
   hero_praise_lead:
     "Türkiye'nin ölçülebilir kanıtlı, tek zincir self-hosted güvenlik stack'i — rakipler parça parça, biz hepsi bir arada.",
   hero_praise_highlights: [
@@ -168,7 +168,7 @@ const TR: SectionCopy = {
     { value: "75", label: "Otomatik test" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
-    { value: "54", label: "Ülke erişimi" },
+    { value: "56", label: "Ülke erişimi" },
     { value: "280.373", label: "EPS" },
   ],
   metric_labels: {},
@@ -179,7 +179,7 @@ const EN: SectionCopy = {
   hero_bullets: ["~20 ms kernel ban", "75 automated tests", "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · single chain · self-hosted",
   hero_chips: ["open source · MIT", "72h soak PASS"],
-  hero_reach: "2.3k+ visits · 4k+ pages · 54 countries · proof PDF",
+  hero_reach: "3.65k+ visits · 56 countries · proof PDF",
   hero_praise_lead:
     "Turkey's measurable-proof, single-chain self-hosted security stack — rivals are piecemeal; we ship one integrated chain.",
   hero_praise_highlights: [
@@ -279,7 +279,7 @@ const EN: SectionCopy = {
     { value: "75", label: "Automated tests" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
-    { value: "54", label: "Countries" },
+    { value: "56", label: "Countries" },
     { value: "280,373", label: "EPS" },
   ],
   metric_labels: {

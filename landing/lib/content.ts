@@ -16,7 +16,7 @@ export const HERO = {
   bullets: ["~20 ms kernel ban", "75 otomatik test", "72h soak PASS"],
   tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   chips: ["açık kaynak · MIT", "72h soak PASS"],
-  reach: "2,3k+ ziyaret · 4k+ sayfa · 54 ülke · kanıt PDF",
+  reach: "3,65k+ ziyaret · 56 ülke · kanıt PDF",
   quickstart: [
     "git clone https://github.com/kurtulusutkucenik/Linux-Log-Guardian.git",
     "cd Linux-Log-Guardian",
@@ -503,9 +503,8 @@ export const METRICS = {
     {
       label: "Erişim & kurulum",
       items: [
-        { value: "2.3k+", unit: "", label: "Site ziyareti" },
-        { value: "4k+", unit: "", label: "Sayfa görüntüleme" },
-        { value: "54", unit: "", label: "Ülke erişimi" },
+        { value: "3.65k+", unit: "", label: "Site ziyareti" },
+        { value: "56", unit: "", label: "Ülke erişimi" },
         { value: "~15", unit: "dk", label: "Core kurulum süresi" },
         { value: "9091", unit: "", label: "Prometheus port" },
         { value: "8443", unit: "", label: "Dashboard port (prod)" },

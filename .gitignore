@@ -22,6 +22,12 @@ tester
 siem_engine
 loganalyzer
 loganalyzer-daemon
+# ARM cross-build ciktisi (build_arm64.sh yeniden uretir)
+*.aarch64
+
+# ── Rust wasm plugin build cache (build_wasm_plugin.sh yeniden uretir) ──
+# Kullanilan cikti: examples/plugins/*.wasm (kok) — target/ atilir
+examples/plugins/rust-plugin/target/
 
 # ── Build / analiz cache ─────────────────────────────────────────
 graphify-out/
