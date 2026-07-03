@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { invalidateAllBansCache } from "@/lib/bansCache";
+import { timingSafeTokenInList } from "@/lib/timingSafeToken";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ function cacheBustAuthorized(req: NextRequest): boolean {
     process.env.DASHBOARD_FLEET_API_KEY,
     process.env.FLEET_API_KEY,
   ].filter((k): k is string => Boolean(k && k.length > 0));
-  return allowed.some((k) => k === token);
+  return timingSafeTokenInList(token, allowed);
 }
 
 /** Host scriptleri (dashboard_live_demo) — JWT olmadan bans cache temizligi */

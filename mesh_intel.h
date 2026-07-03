@@ -1,6 +1,6 @@
 /* mesh_intel.h — Global Mesh Tehdit İstihbaratı (ZeroMQ Pub/Sub)
  *
- * Cloudflare'in global IP ban sisteminin açık kaynak eşdeğeri.
+ * Dağıtık, global IP ban paylaşımı: bir düğümdeki tespit tüm filoya yayılır.
  *
  * Mimari:
  *   PUB (Sunucu A tespit) -> tcp://IFACE:5556

@@ -1,8 +1,6 @@
 {
-  "date": "2026-06-30T18:46:47.203581+00:00",
+  "date": "2026-07-02T20:23:38.770580+00:00",
   "pass": true,
-  "skipped": true,
-  "skip_reason": "SKIP_FLEET=1 \u2014 WITH_FLEET=1 ile tam filo provasi",
   "dash_url": "https://localhost:8443",
   "host_agent": "node-kurtulus-01",
   "vm_agent": "node-vm-02",

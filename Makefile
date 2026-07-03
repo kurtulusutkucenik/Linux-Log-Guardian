@@ -23,8 +23,14 @@ ifeq ($(ARCH),aarch64)
 endif
 CFLAGS  = -Wall -Wextra -O2 -pthread $(ARCH_SIMD) \
           -D_POSIX_C_SOURCE=200809L \
-          -DHAVE_LIBBPF
-LDFLAGS = -pthread
+          -DHAVE_LIBBPF \
+          -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIE
+LDFLAGS = -pthread -pie -Wl,-z,relro,-z,now -Wl,-z,noexecstack
+
+ifeq ($(LG_ASAN),1)
+  CFLAGS += -fsanitize=address,undefined -fno-omit-frame-pointer
+  LDFLAGS += -fsanitize=address,undefined
+endif
 LIBS    = -lsqlite3 -lcurl -lssl -lcrypto -lpcre2-8 \
           -lm -lbpf -lelf -lz -luring -ldl -lseccomp
 
@@ -299,8 +305,13 @@ install: $(TARGET) $(DAEMON)
 	fi
 
 # ── Derleme modları ───────────────────────────────────────────
+debug: CFLAGS := $(filter-out -D_FORTIFY_SOURCE=2,$(CFLAGS))
 debug: CFLAGS += -g -O0 -DDEBUG
 debug: all
+
+asan: clean
+	$(MAKE) LG_ASAN=1 binaries
+	@echo "[OK] asan: AddressSanitizer + UBSan binaries"
 
 bench: CFLAGS += -O3 -march=native -flto
 bench: all
@@ -391,4 +402,4 @@ release: wasm-release
 print-maxminddb:
 	@echo "$(HAVE_MAXMINDDB)"
 
-.PHONY: all clean install debug bench bench-run bench-report security-test xff-test auth-test fuzz-test intel-test check-deps fallback wasm-release release print-maxminddb
+.PHONY: all clean install debug asan bench bench-run bench-report security-test xff-test auth-test fuzz-test intel-test check-deps fallback wasm-release release print-maxminddb

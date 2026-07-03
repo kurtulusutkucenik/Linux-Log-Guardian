@@ -92,6 +92,12 @@ install_binary "$ROOT/log-guardian" "$LG_BIN" "analyzer"
 [[ -x "$ROOT/log-guardian-daemon" ]] \
   && install_binary "$ROOT/log-guardian-daemon" "$DAEMON_BIN" "daemon"
 
+if command -v systemctl >/dev/null 2>&1; then
+  systemctl daemon-reload 2>/dev/null \
+    && echo "[upgrade_binary] systemctl daemon-reload OK" \
+    || echo "[upgrade_binary] WARN: daemon-reload atlandi" >&2
+fi
+
 start_service_after_upgrade() {
   local svc="$1" was_active="$2"
   if [[ "$was_active" -eq 1 ]]; then

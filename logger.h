@@ -31,8 +31,8 @@ void log_set_hmac_key(const unsigned char *key, size_t key_len);
 void log_alert_json_signed(const void *alert_ptr, const char *filepath);
 
 /*
- * ArcSight CEF (Common Event Format) formatında alert kaydı.
- * Gelişmiş SIEM ürünlerine (QRadar, ArcSight) native entegrasyon.
+ * CEF (Common Event Format) formatında alert kaydı.
+ * CEF uyumlu SIEM ürünlerine native entegrasyon.
  */
 void log_alert_cef(const void *alert_ptr, const char *filepath);
 

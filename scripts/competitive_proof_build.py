@@ -959,25 +959,26 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
     web_preview = data.get("websitePreviewGate") or {}
     if web_preview:
         ok = web_preview.get("pass") is True
+        site_fail = int(web_preview.get("site_fail") or 0)
+        site_tests = int(web_preview.get("site_tests") or 0)
+        site_pass = int(web_preview.get("site_pass") or 0)
+        expected = int(web_preview.get("expected_tests") or 0)
+        parity = f"{site_tests}/{expected}" if site_fail == 0 else f"{site_pass}/{expected}"
+        verdict_tr = (
+            f"Site {parity} parity; "
+            f"grafana {'yes' if web_preview.get('has_grafana_parity') else 'no'}; "
+            f"edge {'yes' if web_preview.get('has_edge_gate') else 'no'}."
+            if ok
+            else str(web_preview.get("fail_reason") or "bash scripts/website_preview_gate.sh")
+        )
+        verdict_en = verdict_tr
         row(
             "website-preview-gate",
             "pass" if ok else "fail",
             "Statik site preview — test parity + smoke",
-            (
-                f"Site {web_preview.get('site_pass', 0)}/{web_preview.get('expected_tests', 0)}; "
-                f"grafana {'yes' if web_preview.get('has_grafana_parity') else 'no'}; "
-                f"edge {'yes' if web_preview.get('has_edge_gate') else 'no'}."
-                if ok
-                else str(web_preview.get("fail_reason") or "bash scripts/website_preview_gate.sh")
-            ),
+            verdict_tr,
             "Static site preview — test parity + smoke",
-            (
-                f"Site {web_preview.get('site_pass', 0)}/{web_preview.get('expected_tests', 0)}; "
-                f"grafana {'yes' if web_preview.get('has_grafana_parity') else 'no'}; "
-                f"edge {'yes' if web_preview.get('has_edge_gate') else 'no'}."
-                if ok
-                else str(web_preview.get("fail_reason") or "bash scripts/website_preview_gate.sh")
-            ),
+            verdict_en,
             purpose="assets/website test-results.js ile competitive-proof parity.",
             purpose_en="assets/website test-results.js parity with competitive-proof.",
             metrics=[

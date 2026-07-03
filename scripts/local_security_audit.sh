@@ -56,6 +56,15 @@ else
   warn "security_hardening_test atlandi (kaynak repo yok — deb kurulumu)"
 fi
 
+if [[ -x "$SCRIPTS/binary_hardening_check.sh" ]] \
+    && { [[ -x "$SRC_ROOT/log-guardian" ]] || [[ -x /usr/local/bin/log-guardian ]]; }; then
+  if bash "$SCRIPTS/binary_hardening_check.sh" >/dev/null 2>&1; then
+    ok "binary_hardening_check (PIE + RELRO)"
+  else
+    warn "binary_hardening_check — make && sudo bash scripts/upgrade_log_guardian_binary.sh"
+  fi
+fi
+
 if grep -qE '^API_BIND=0\.0\.0\.0' "$SRC_ROOT/rules.conf" 2>/dev/null; then
   bad "rules.conf sablonu API_BIND=0.0.0.0 (127.0.0.1 olmali)"
 else

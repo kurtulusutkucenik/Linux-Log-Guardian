@@ -6,3 +6,5 @@ Disallow: /csp.txt
 Disallow: /publish.allowlist
 Disallow: /_headers
 Disallow: /_redirects
+
+Sitemap: https://ceniklinuxlogguardian.org/sitemap.xml

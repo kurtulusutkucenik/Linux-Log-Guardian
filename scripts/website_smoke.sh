@@ -82,7 +82,13 @@ check_code() {
 check_code "/" 200
 check_code "/tests" 200
 check_code "/tests.html" 200
-CSS_PATH="$(grep -oP 'href="(?:\./|/)\Ksite[^"]+\.css' "$SITE/index.html" | head -1 || true)"
+CSS_PATH="$(python3 - "$SITE/index.html" <<'PY' || true
+import re, sys
+from pathlib import Path
+m = re.search(r'href="(?:\./|/)(site[^"]+\.css)"', Path(sys.argv[1]).read_text(encoding="utf-8"))
+print(m.group(1) if m else "")
+PY
+)"
 if [[ -z "$CSS_PATH" ]]; then
   bad "index.html site*.css link yok"
 else
@@ -90,12 +96,18 @@ else
   check_code "/site.css" 403
 fi
 check_code "/i18n.js" 200
-if [[ -f "$SITE/three.min.js" ]]; then
+if grep -qxF "boot-enter.js" "$SITE/publish.allowlist" 2>/dev/null; then
+  check_code "/boot-enter.js" 200
+else
+  check_code "/boot-enter.js" 403
+fi
+# Legacy bundle — diskte olsa bile allowlist disi ise 403 beklenir
+if [[ -f "$SITE/three.min.js" ]] && grep -qxF "three.min.js" "$SITE/publish.allowlist" 2>/dev/null; then
   check_code "/three.min.js" 200
 else
   check_code "/three.min.js" 403
 fi
-if [[ -f "$SITE/phoenix-3d.js" ]]; then
+if [[ -f "$SITE/phoenix-3d.js" ]] && grep -qxF "phoenix-3d.js" "$SITE/publish.allowlist" 2>/dev/null; then
   check_code "/phoenix-3d.js" 200
 else
   check_code "/phoenix-3d.js" 403
@@ -111,6 +123,12 @@ check_code "/admin/" 403
 check_code "/deploy-manifest.json" 403
 check_code "/.well-known/gpc.json" 200
 check_code "/.well-known/security.txt" 200
+if grep -qxF "robots.txt" "$SITE/publish.allowlist" 2>/dev/null; then
+  check_code "/robots.txt" 200
+fi
+if grep -qxF "sitemap.xml" "$SITE/publish.allowlist" 2>/dev/null; then
+  check_code "/sitemap.xml" 200
+fi
 check_code "/evidence/competitive-proof.pdf" 200
 check_code "/404.html" 200
 

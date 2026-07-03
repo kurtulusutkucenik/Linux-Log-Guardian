@@ -2070,8 +2070,8 @@ export function evaluateValidationTests(
       verdict: pass
         ? L(
             locale,
-            `Site ${webPreview.site_pass ?? 0}/${webPreview.expected_tests ?? 0} · grafana parity ${webPreview.has_grafana_parity ? "evet" : "hayır"} · edge ${webPreview.has_edge_gate ? "evet" : "hayır"}.`,
-            `Site ${webPreview.site_pass ?? 0}/${webPreview.expected_tests ?? 0} · grafana parity ${webPreview.has_grafana_parity ? "yes" : "no"} · edge ${webPreview.has_edge_gate ? "yes" : "no"}.`,
+            `Site ${webPreview.site_fail === 0 ? webPreview.site_tests ?? 0 : webPreview.site_pass ?? 0}/${webPreview.expected_tests ?? 0} parity · grafana ${webPreview.has_grafana_parity ? "evet" : "hayır"} · edge ${webPreview.has_edge_gate ? "evet" : "hayır"}.`,
+            `Site ${webPreview.site_fail === 0 ? webPreview.site_tests ?? 0 : webPreview.site_pass ?? 0}/${webPreview.expected_tests ?? 0} parity · grafana ${webPreview.has_grafana_parity ? "yes" : "no"} · edge ${webPreview.has_edge_gate ? "yes" : "no"}.`,
           )
         : L(
             locale,

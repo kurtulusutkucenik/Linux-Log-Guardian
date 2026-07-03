@@ -5,23 +5,26 @@
   <meta name="color-scheme" content="dark" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Linux Log Guardian — Türk yapımı açık kaynak nginx WAF. log → ban ~15 dk." />
+  <title>Linux Log Guardian — nginx log → WAF → kernel ban</title>
+  <link rel="canonical" href="https://ceniklinuxlogguardian.org/" />
   <meta name="google" content="notranslate" />
-  <meta name="lg-integrity-i18n" content="sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu" />
+  <meta name="lg-integrity-i18n" content="sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy" />
   <meta name="lg-integrity-css" content="sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp" />
   <meta name="referrer" content="no-referrer" />
-  <meta name="lg-proof-stats" content="72,68,4" />
+  <meta name="lg-proof-stats" content="75,73,2" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Linux Log Guardian" />
   <meta property="og:description" content="Open-source nginx WAF from Turkey. nginx log → OWASP CRS → kernel ban in ~15 min." />
-  <meta property="og:image" content="/screenshots/dashboard-fleet.png" />
+  <meta property="og:url" content="https://ceniklinuxlogguardian.org/" />
+  <meta property="og:image" content="https://ceniklinuxlogguardian.org/screenshots/dashboard-fleet.png" />
   <meta property="og:locale" content="tr_TR" />
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:title" content="Linux Log Guardian" />
   <meta name="twitter:description" content="Open-source nginx WAF from Turkey. log → ban in ~15 min." />
-  <meta name="twitter:image" content="/screenshots/dashboard-fleet.png" />
+  <meta name="twitter:image" content="https://ceniklinuxlogguardian.org/screenshots/dashboard-fleet.png" />
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI' 'sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu'; script-src-attr 'none'; style-src 'self' 'sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'self'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI' 'sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy'; script-src-attr 'none'; style-src 'self' 'sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'self'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
   <link rel="stylesheet" href="/boot.css" id="lg-boot-css" />
   <link rel="preload" href="/site-Rm2vtkLic7O9.css" as="style" integrity="sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp" />
   <link rel="preload" href="/fonts/Syne-Variable.ttf" as="font" type="font/ttf" crossorigin="anonymous" />
@@ -108,7 +111,7 @@
           <span class="lg-hero-metric-label" data-i18n="hero.metric_ban">kernel ban</span>
         </li>
         <li class="lg-hero-metric">
-          <span class="lg-hero-metric-val" data-lg-count="68">68</span>
+          <span class="lg-hero-metric-val" data-lg-count="73">73</span>
           <span class="lg-hero-metric-label" data-i18n="hero.metric_tests">otomatik test</span>
         </li>
         <li class="lg-hero-metric">
@@ -210,7 +213,7 @@
             <div class="lg-motion-card-body">
               <span class="lg-motion-card-num">01</span>
               <span class="lg-tile-eyebrow" data-i18n="showcase.core.eyebrow">//:Core</span>
-              <h3 data-i18n="showcase.core.title">What=&quot;we do&quot;</h3>
+              <h3 data-i18n="showcase.core.title">Core — log → ban</h3>
               <p data-i18n="showcase.core.desc">Tek zincir: nginx log → OWASP CRS → ~17 ms kernel ban. ~15 dakikada üretim.</p>
               <a class="btn btn-link lg-motion-link" href="#kurulum" data-i18n="showcase.cta">Keşfet ⟶</a>
             </div>
@@ -224,22 +227,22 @@
             <div class="lg-motion-card-body">
               <span class="lg-motion-card-num">02</span>
               <span class="lg-tile-eyebrow" data-i18n="showcase.pro.eyebrow">//:Pro</span>
-              <h3 data-i18n="showcase.pro.title">Pro=&quot;SOC&quot;</h3>
+              <h3 data-i18n="showcase.pro.title">Pro — SOC &amp; filo</h3>
               <p data-i18n="showcase.pro.desc">Filo, SOC timeline, Grafana — kurulum sonrası kendi sunucunuzda opsiyonel katman.</p>
               <a class="btn btn-link lg-motion-link" href="#dashboard" data-i18n="showcase.cta">Keşfet ⟶</a>
             </div>
           </article>
           <article class="lg-motion-card lg-motion-card-proof" data-lg-accent="#22c55e" data-lg-case="proof" tabindex="0">
             <div class="lg-motion-card-accent lg-motion-card-accent-proof" aria-hidden="true">
-              <span class="lg-motion-card-peek-sum" data-i18n="showcase.proof.peek">68 test · 72h soak PASS</span>
+              <span class="lg-motion-card-peek-sum" data-i18n="showcase.proof.peek">75 test · 72h soak PASS</span>
               <span class="lg-motion-card-peek-label" data-i18n="showcase.proof.short">PROOF</span>
-              <div class="lg-motion-card-tags"><span data-i18n="showcase.proof.tag1">68 test</span><span data-i18n="showcase.proof.tag2">72h soak</span></div>
+              <div class="lg-motion-card-tags"><span data-i18n="showcase.proof.tag1">75 test</span><span data-i18n="showcase.proof.tag2">72h soak</span></div>
             </div>
             <div class="lg-motion-card-body">
               <span class="lg-motion-card-num">03</span>
               <span class="lg-tile-eyebrow" data-i18n="showcase.proof.eyebrow">//:Proof</span>
-              <h3 data-i18n="showcase.proof.title">Proof=&quot;68 test&quot;</h3>
-              <p data-i18n="showcase.proof.desc">68 otomatik test, competitive PDF, 72h soak — dashboard /tests ile aynı matris.</p>
+              <h3 data-i18n="showcase.proof.title">Kanıt — 75 test</h3>
+              <p data-i18n="showcase.proof.desc">75 otomatik test, competitive PDF, 72h soak — dashboard /tests ile aynı matris.</p>
               <a class="btn btn-link lg-motion-link" href="/tests" data-i18n="showcase.cta">Keşfet ⟶</a>
             </div>
           </article>
@@ -252,7 +255,7 @@
             <div class="lg-motion-card-body">
               <span class="lg-motion-card-num">04</span>
               <span class="lg-tile-eyebrow" data-i18n="showcase.grafana.eyebrow">//:Metrics</span>
-              <h3 data-i18n="showcase.grafana.title">Grafana=&quot;SOC&quot;</h3>
+              <h3 data-i18n="showcase.grafana.title">Metrik — Grafana</h3>
               <p data-i18n="showcase.grafana.desc">Tenant etiketli Prometheus, Grafana panoları ve alert kuralları — self-hosted gözlemlenebilirlik.</p>
               <a class="btn btn-link lg-motion-link" href="#dashboard" data-i18n="showcase.cta">Keşfet ⟶</a>
             </div>
@@ -486,7 +489,7 @@
     </div>
     <div class="lg-stats-grid">
       <div class="lg-stat">
-        <span class="lg-stat-value"><span data-lg-count="68">68</span></span>
+        <span class="lg-stat-value"><span data-lg-count="73">73</span></span>
         <span class="lg-stat-label" data-i18n="stats.tests_label">Otomatik test</span>
       </div>
       <div class="lg-stat">
@@ -758,7 +761,7 @@ bash scripts/test_deb_local.sh</pre>
         <span class="lg-eyebrow" data-i18n="section.tests_eyebrow">//:Proof</span>
         <h2 data-i18n="tests.title">Doğrulama testleri</h2>
       </div>
-      <p class="prose" data-i18n="tests.teaser">Dashboard ile aynı otomatik test matrisi — <strong>72 kanıt</strong> (kurulum kapıları, CRS, FP, ban gecikmesi, corpus, 72h soak).</p>
+      <p class="prose" data-i18n="tests.teaser">Dashboard ile aynı otomatik test matrisi — <strong>75 kanıt</strong> (kurulum kapıları, CRS, FP, ban gecikmesi, corpus, 72h soak).</p>
       <p class="tests-teaser-actions">
         <a class="btn btn-primary" href="/tests" data-i18n="tests.open_full">Tüm testleri gör (70)</a>
         <a class="btn btn-secondary" href="/evidence/competitive-proof.pdf" rel="noopener noreferrer" data-i18n="tests.proof_pdf">Kanıt PDF</a>
@@ -893,6 +896,6 @@ SKIP_WEBHOOK=1 bash scripts/demo_3min.sh</span><span class="lg-terminal-cursor" 
     </button>
   </nav>
   <script src="/boot-enter.js?v=WYIwDl9SzQw5" integrity="sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI" crossorigin="anonymous"></script>
-  <script src="/i18n.js?v=L0kQb8GcsiPt" defer integrity="sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu" crossorigin="anonymous"></script>
+  <script src="/i18n.js?v=ZdpFGtYE9TBY" defer integrity="sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy" crossorigin="anonymous"></script>
 </body>
 </html>

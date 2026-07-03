@@ -10,6 +10,13 @@ tests/parser_auth_test
 
 # Gecici / tasinan dosyalar (asla commit etme)
 1.zip
+gerçek
+
+# Release artefaktlari (GitHub Releases / dist/ kullan)
+release-pack.zip
+data-room.zip
+release-pack/data-room.zip
+release-pack/deb/*.deb
 
 # ── Derlenmiş binary'ler ─────────────────────────────────────────
 log-guardian

@@ -133,13 +133,15 @@ if command -v log-guardian >/dev/null 2>&1; then
   [[ "$ipc" == "ok" ]] && ok "IPC (--status)" || bad "IPC fail — make && sudo make install && restart"
 fi
 
-# --- Grafana/Prometheus (opsiyonel) ---
+# --- Grafana/Prometheus (opsiyonel — stack kapaliysa atlanir) ---
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx prometheus-lg; then
   if bash "$ROOT/scripts/prometheus_smoke.sh" >/dev/null 2>&1; then
     ok "Prometheus scrape (docker)"
   else
-    warn "Prometheus scrape — bash scripts/prometheus_smoke.sh"
+    warn "Prometheus scrape (opsiyonel) — bash scripts/grafana_stack.sh && bash scripts/prometheus_smoke.sh"
   fi
+else
+  ok "Prometheus scrape atlandi (opsiyonel — bash scripts/grafana_stack.sh)"
 fi
 
 # --- API güvenlik ---

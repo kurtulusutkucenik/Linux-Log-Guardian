@@ -44,7 +44,7 @@ services:
       - DATABASE_URL=file:/app/prisma/dev.db
       - JWT_SECRET=${JWT_SECRET:?JWT_SECRET required — min 32 chars}
       - NODE_ENV=production
-      - LOG_GUARDIAN_TIER=${LOG_GUARDIAN_TIER:-pro}
+      - LOG_GUARDIAN_TIER=${LOG_GUARDIAN_TIER:-pro}  # pro | pro_plus | enterprise
       - DASHBOARD_SEED=${DASHBOARD_SEED:-0}
       - DASHBOARD_ADMIN_PASSWORD=${DASHBOARD_ADMIN_PASSWORD:-}
       - DASHBOARD_FLEET_API_KEY=${DASHBOARD_FLEET_API_KEY:-}

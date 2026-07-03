@@ -1,6 +1,6 @@
 # Soak test ozeti
 
-Uretim: 2026-06-29 13:08 UTC
+Uretim: 2026-07-02 20:21 UTC
 
 | Alan | Deger |
 |------|-------|

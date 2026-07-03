@@ -7,11 +7,12 @@
 set -euo pipefail
 
 SHARE="${LG_VM_SYNC_SRC:-/mnt/lg}"
-if [[ -f "${BASH_SOURCE[0]}" ]]; then
+# Host paylasimi (/mnt/lg) varsa oncelik — yerel klon eski kalmasin
+if [[ -z "${LG_VM_SYNC_SRC:-}" && -d /mnt/lg/scripts ]]; then
+  SHARE="/mnt/lg"
+elif [[ -f "${BASH_SOURCE[0]}" && ! -d "$SHARE/scripts" ]]; then
   SHARE_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-  if [[ -d "$SHARE_ROOT/scripts" ]]; then
-    SHARE="$SHARE_ROOT"
-  fi
+  [[ -d "$SHARE_ROOT/scripts" ]] && SHARE="$SHARE_ROOT"
 fi
 
 # shellcheck source=scripts/lib/vm_paths.sh
@@ -27,7 +28,11 @@ if [[ ! -d "$SHARE/scripts" ]]; then
 fi
 
 echo "=== vm_refresh_from_host ==="
-echo "  kaynak: $SHARE"
+if [[ "$SHARE" == /mnt/lg* ]]; then
+  echo "  kaynak: $SHARE (host paylasimi — guncel kod)"
+else
+  echo "  kaynak: $SHARE (yerel klon — host icin: sudo mount -t vboxsf lg /mnt/lg)"
+fi
 echo "  hedef:  $DEST (kullanici: $REAL_USER)"
 echo ""
 
@@ -73,6 +78,44 @@ if [[ -n "$REAL_USER" && "$REAL_USER" != root ]]; then
   fi
 fi
 
+echo ""
+echo "=== vm_refresh ozet ==="
+python3 - "$DEST" <<'PY'
+import json, sys
+from pathlib import Path
+dest = Path(sys.argv[1])
+gate_fail = 0
+gate_warn = 0
+ops = dest / "ops-gate-report.json"
+if ops.is_file():
+    data = json.loads(ops.read_text(encoding="utf-8"))
+    gates = data.get("gates") or []
+    gate_fail = sum(1 for g in gates if g.get("pass") is not True)
+    gate_warn = sum(int(g.get("warn") or 0) for g in gates)
+    print(f"  ops_gate: {len(gates) - gate_fail}/{len(gates)} pass")
+    for g in gates:
+        if g.get("id") == "post-install-verify":
+            print(f"  post_install: FAIL={g.get('fail', 0)} WARN={g.get('warn', 0)}")
+            break
+else:
+    print("  ops_gate: (rapor yok — bash scripts/ops_gate_report.sh)")
+preview = dest / "website-preview-gate-report.json"
+if preview.is_file():
+    r = json.loads(preview.read_text(encoding="utf-8"))
+    if r.get("pass") is True:
+        sf = int(r.get("site_fail") or 0)
+        shown = int(r.get("site_tests") or 0) if sf == 0 else int(r.get("site_pass") or 0)
+        exp = int(r.get("expected_tests") or 0)
+        print(f"  website_preview: {shown}/{exp} pass")
+    else:
+        gate_fail += 1
+        print(f"  website_preview: FAIL ({r.get('fail_reason', '?')})")
+print(f"  FAIL: {gate_fail}   WARN: {gate_warn}")
+if gate_fail == 0:
+    print("[OK] vm_refresh_from_host — sunuma hazir (FAIL=0)")
+else:
+    print("[WARN] vm_refresh_from_host — FAIL>0; bash scripts/vm_demo_gate.sh --verify-only")
+PY
 echo ""
 echo "[OK] vm_refresh_from_host — VM guncel"
 if deb="$(ls -1t "$DEST"/dist/log-guardian_*.deb 2>/dev/null | head -1)"; then

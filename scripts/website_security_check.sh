@@ -123,7 +123,14 @@ else
 fi
 
 META_I18N_SRI="$(grep -oP 'name="lg-integrity-i18n" content="\K[^"]+' "$SITE/index.html" || true)"
-SCRIPT_SRI="$(grep -oP 'i18n\.js(?:\?[^"]*)?" defer integrity="\K[^"]+' "$SITE/index.html" || true)"
+SCRIPT_SRI="$(python3 - "$SITE/index.html" <<'PY' || true
+import re, sys
+from pathlib import Path
+html = Path(sys.argv[1]).read_text(encoding="utf-8")
+m = re.search(r'i18n\.js(?:\?[^"]+)?" defer integrity="([^"]+)"', html)
+print(m.group(1) if m else "")
+PY
+)"
 if [[ -n "$META_I18N_SRI" && "$META_I18N_SRI" == "$SCRIPT_SRI" ]]; then
   ok "lg-integrity-i18n == script SRI"
 else
@@ -166,10 +173,16 @@ else
   warn "i18n.js SRI yok (bash scripts/website_refresh_sri.sh)"
 fi
 
-if [[ -f "$SITE/site.css" ]] && grep -qE 'href="(?:\./|/)site[^"]*\.css"' "$SITE/index.html"; then
-  ok "site.css SRI"
+if python3 - "$SITE/index.html" <<'PY' | grep -qx 1
+import re, sys
+from pathlib import Path
+html = Path(sys.argv[1]).read_text(encoding="utf-8")
+print(1 if re.search(r'href="(?:\./|/)site[^"]+\.css"', html) else 0)
+PY
+then
+  ok "site.css link"
 else
-  warn "site.css SRI yok (bash scripts/website_refresh_sri.sh)"
+  warn "site.css link yok (bash scripts/website_refresh_sri.sh)"
 fi
 
 if grep -q 'lg-integrity-css' "$SITE/index.html"; then
@@ -210,10 +223,22 @@ else
   bad "gpc.json eksik"
 fi
 
-if grep -oE 'href="https?://[^"]+|src="https?://[^"]+' "$SITE/index.html" 2>/dev/null | grep -qvE 'github\.com/kurtulusutkucenik/Linux-Log-Guardian'; then
-  bad "index.html dis URL (yalnizca github.com/kurtulusutkucenik/Linux-Log-Guardian)"
+if python3 - "$SITE/index.html" <<'PY'
+import re, sys
+from pathlib import Path
+allowed = (
+    "github.com/kurtulusutkucenik/Linux-Log-Guardian",
+    "ceniklinuxlogguardian.org",
+)
+html = Path(sys.argv[1]).read_text(encoding="utf-8")
+urls = re.findall(r'(?:href|src)="(https?://[^"]+)"', html)
+bad = [u for u in urls if not any(a in u for a in allowed)]
+raise SystemExit(1 if bad else 0)
+PY
+then
+  ok "index dis URL (github + canonical)"
 else
-  ok "index dis URL (github repo)"
+  bad "index.html dis URL (yalnizca github repo + canonical domain)"
 fi
 
 if [[ -f "$ROOT/scripts/website_audit_deploy.sh" ]]; then
@@ -234,10 +259,10 @@ else
   bad "website_ensure_deploy.sh eksik"
 fi
 
-if [[ -f "$ROOT/wrangler.toml" ]] && grep -q 'pages_build_output_dir = "assets/website-deploy"' "$ROOT/wrangler.toml"; then
+if [[ -f "$ROOT/wrangler.toml" ]] && grep -qE 'pages_build_output_dir = "(landing/out|assets/website-deploy)"' "$ROOT/wrangler.toml"; then
   ok "wrangler.toml output"
 else
-  bad "wrangler.toml output eksik"
+  bad "wrangler.toml output eksik (landing/out veya assets/website-deploy)"
 fi
 
 if grep -q "Strict-Transport-Security" "$SITE/_headers"; then
@@ -298,6 +323,12 @@ if grep -q 'property="og:title"' "$SITE/index.html" && grep -q 'name="twitter:ca
   ok "OG / Twitter meta"
 else
   bad "OG / Twitter meta eksik"
+fi
+
+if grep -q 'https://ceniklinuxlogguardian.org/screenshots/' "$SITE/index.html"; then
+  ok "OG image absolute URL (index)"
+else
+  bad "OG image mutlak URL yok (index) — paylasim onizlemesi kirilir"
 fi
 
 if grep -qxF "404.html" "$ALLOWLIST"; then

@@ -22,7 +22,7 @@ SPECS = (
         "name": "dashboard-tests.png",
         "title": "Tests · phase100",
         "accent": (34, 197, 94),
-        "chips": ("70 PASS", "FAIL: 0", "72h soak"),
+        "chips": ("75 PASS", "FAIL: 0", "72h soak"),
     },
 )
 

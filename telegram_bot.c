@@ -2,6 +2,7 @@
 #include "webhook.h"
 #include "db.h"
 #include "firewall.h"
+#include "crypto_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -755,7 +756,7 @@ int telegram_bot_webhook_secret_ok(const char *header_value)
         return 1;
     if (!header_value)
         return 0;
-    return strcmp(header_value, want) == 0;
+    return secure_equals(header_value, want);
 }
 
 static void json_escape_str(const char *src, char *dst, size_t cap)

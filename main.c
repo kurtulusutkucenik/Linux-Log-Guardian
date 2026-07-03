@@ -2939,6 +2939,16 @@ static void *worker_loop(void *arg) {
         unsigned int local_insert_ctr = 0;   /* heap throttle sayaci */
         IpRecord *last_heap_rec = NULL;
 
+        /*
+         * Thread-local istatistik sayaclari — cache-line bouncing azaltma.
+         * 16 worker her satirda ~10 paylasimli atomic'e yazarsa tek cache
+         * line tum cekirdekler arasinda zipladigi icin olcekleme t=8'de
+         * doyar. Sayaclar chunk sonunda TEK SEFER flush edilir (davranis ayni).
+         */
+        long loc_lines = 0, loc_bytes = 0, loc_err = 0;
+        long loc_get = 0, loc_post = 0, loc_put = 0, loc_del = 0, loc_other = 0;
+        long loc_2xx = 0, loc_3xx = 0, loc_4xx = 0, loc_5xx = 0;
+
         while (p < end) {
             if (g_paused && g_running) {
                 usleep(50000);
@@ -2954,7 +2964,7 @@ static void *worker_loop(void *arg) {
 
             LogEntry entry;
             if (parse_log_line(line_start, line_len, &entry) < 0) {
-                atomic_fetch_add(&g_atomic_errors, 1);
+                loc_err++;
                 continue;
             }
             {
@@ -2964,26 +2974,26 @@ static void *worker_loop(void *arg) {
                 memcpy(ip_chk, entry.ip.ptr, ip_n);
                 ip_chk[ip_n] = '\0';
                 if (!is_valid_ip(ip_chk)) {
-                    atomic_fetch_add(&g_atomic_errors, 1);
+                    loc_err++;
                     continue;
                 }
             }
-            atomic_fetch_add(&g_atomic_lines, 1);
-            atomic_fetch_add(&g_atomic_bytes, (long)line_len);
+            loc_lines++;
+            loc_bytes += (long)line_len;
             lines_processed++;
 
-            /* HTTP Method sayaclari */
-            if      (entry.method.len == 3 && entry.method.ptr[0]=='G') atomic_fetch_add(&g_cnt_get, 1);
-            else if (entry.method.len == 4 && entry.method.ptr[0]=='P' && entry.method.ptr[1]=='O') atomic_fetch_add(&g_cnt_post, 1);
-            else if (entry.method.len == 3 && entry.method.ptr[0]=='P') atomic_fetch_add(&g_cnt_put, 1);
-            else if (entry.method.len == 6) atomic_fetch_add(&g_cnt_delete, 1);
-            else    atomic_fetch_add(&g_cnt_other, 1);
+            /* HTTP Method sayaclari (thread-local, chunk sonunda flush) */
+            if      (entry.method.len == 3 && entry.method.ptr[0]=='G') loc_get++;
+            else if (entry.method.len == 4 && entry.method.ptr[0]=='P' && entry.method.ptr[1]=='O') loc_post++;
+            else if (entry.method.len == 3 && entry.method.ptr[0]=='P') loc_put++;
+            else if (entry.method.len == 6) loc_del++;
+            else    loc_other++;
 
-            /* HTTP Status dagilimi */
-            if      (entry.status >= 200 && entry.status < 300) atomic_fetch_add(&g_cnt_2xx, 1);
-            else if (entry.status >= 300 && entry.status < 400) atomic_fetch_add(&g_cnt_3xx, 1);
-            else if (entry.status >= 400 && entry.status < 500) atomic_fetch_add(&g_cnt_4xx, 1);
-            else if (entry.status >= 500)                        atomic_fetch_add(&g_cnt_5xx, 1);
+            /* HTTP Status dagilimi (thread-local) */
+            if      (entry.status >= 200 && entry.status < 300) loc_2xx++;
+            else if (entry.status >= 300 && entry.status < 400) loc_3xx++;
+            else if (entry.status >= 400 && entry.status < 500) loc_4xx++;
+            else if (entry.status >= 500)                        loc_5xx++;
 
             IpRecord *rec = ipmap_get_or_create(&g_ipmap, entry.ip);
             if (!rec) continue;
@@ -3065,9 +3075,9 @@ static void *worker_loop(void *arg) {
                 webhook_send_alert(&alert);
                 /* JSON formatinda logla (SIEM icin) - HMAC imzali */
                 log_alert_json_signed(&alert, "/var/log/linux-log-guardian-alerts.json");
-                /* CEF (Common Event Format) formatında logla (ArcSight vb. için) */
+                /* CEF (Common Event Format) formatında logla (CEF uyumlu SIEM için) */
                 log_alert_cef(&alert, "/var/log/linux-log-guardian-alerts.cef");
-                /* Phase 2: Real-time TCP SIEM stream (Logstash/Datadog/Elastic) */
+                /* Phase 2: Real-time TCP SIEM stream (CEF/JSON uyumlu alıcılar) */
                 siem_forwarder_publish(&alert, "anomaly-engine");
                 
                 if (g_use_tui) {
@@ -3142,6 +3152,20 @@ static void *worker_loop(void *arg) {
             /* Kisa chunk'larda da Top-10 guncel kalsin. */
             heap_try_insert(&g_top10, last_heap_rec);
         }
+
+        /* Thread-local sayaclari chunk sonunda TEK SEFER flush et */
+        if (loc_lines) atomic_fetch_add(&g_atomic_lines, loc_lines);
+        if (loc_bytes) atomic_fetch_add(&g_atomic_bytes, loc_bytes);
+        if (loc_err)   atomic_fetch_add(&g_atomic_errors, loc_err);
+        if (loc_get)   atomic_fetch_add(&g_cnt_get, loc_get);
+        if (loc_post)  atomic_fetch_add(&g_cnt_post, loc_post);
+        if (loc_put)   atomic_fetch_add(&g_cnt_put, loc_put);
+        if (loc_del)   atomic_fetch_add(&g_cnt_delete, loc_del);
+        if (loc_other) atomic_fetch_add(&g_cnt_other, loc_other);
+        if (loc_2xx)   atomic_fetch_add(&g_cnt_2xx, loc_2xx);
+        if (loc_3xx)   atomic_fetch_add(&g_cnt_3xx, loc_3xx);
+        if (loc_4xx)   atomic_fetch_add(&g_cnt_4xx, loc_4xx);
+        if (loc_5xx)   atomic_fetch_add(&g_cnt_5xx, loc_5xx);
         atomic_fetch_add(&g_batch_lines, lines_processed);
     }
     return NULL;

@@ -1,17 +1,26 @@
-/** SaaS tier — runtime feature gate (Community / Pro / Enterprise). */
+/** SaaS tier — runtime feature gate (Community / Pro / Pro Plus / Enterprise). */
 
-export type SaasTier = "community" | "pro" | "enterprise";
+export type SaasTier = "community" | "pro" | "pro_plus" | "enterprise";
 
 const TIER_ORDER: Record<SaasTier, number> = {
   community: 0,
   pro: 1,
-  enterprise: 2,
+  pro_plus: 2,
+  enterprise: 3,
 };
 
-export function resolveSaasTier(): SaasTier {
-  const raw = (process.env.LOG_GUARDIAN_TIER || "community").toLowerCase();
-  if (raw === "pro" || raw === "enterprise") return raw;
+/** LOG_GUARDIAN_TIER aliases: pro-plus, proplus → pro_plus */
+export function normalizeSaasTier(raw: string): SaasTier {
+  const s = raw.trim().toLowerCase().replace(/-/g, "_");
+  if (s === "proplus") return "pro_plus";
+  if (s === "community" || s === "pro" || s === "pro_plus" || s === "enterprise") {
+    return s;
+  }
   return "community";
+}
+
+export function resolveSaasTier(): SaasTier {
+  return normalizeSaasTier(process.env.LOG_GUARDIAN_TIER || "community");
 }
 
 export function tierAtLeast(required: SaasTier): boolean {
@@ -22,20 +31,41 @@ export function tierStatus() {
   const tier = resolveSaasTier();
   return {
     tier,
+    displayName:
+      tier === "pro_plus"
+        ? "Pro Plus"
+        : tier === "enterprise"
+          ? "Enterprise"
+          : tier === "pro"
+            ? "Pro"
+            : "Community",
     features: {
       fleet: tierAtLeast("pro"),
       compliance: tierAtLeast("pro"),
       multiTenant: tierAtLeast("pro"),
+      k8sKindCluster: tierAtLeast("pro_plus"),
+      helmChart: tierAtLeast("pro_plus"),
+      k8sOperator: tierAtLeast("pro_plus"),
       wasmSignedMarketplace: tierAtLeast("enterprise"),
       ebpfMandatoryRunbook: tierAtLeast("enterprise"),
+    },
+    resources: {
+      coreRamMb: 120,
+      proStackRamMb: 730,
+      proPlusStackRamMb: 1900,
+      coreDiskMb: 4,
+      proStackDiskGb: 5,
+      proPlusStackDiskGb: 8,
     },
     env: "LOG_GUARDIAN_TIER",
     hint:
       tier === "community"
         ? "Pro: LOG_GUARDIAN_TIER=pro — fleet + compliance"
         : tier === "pro"
-          ? "Enterprise: LOG_GUARDIAN_TIER=enterprise — imzali Wasm marketplace"
-          : "Enterprise tier aktif",
+          ? "Pro Plus: LOG_GUARDIAN_TIER=pro_plus — K8s/Helm kaniti (bash scripts/pro_plus_stack.sh)"
+          : tier === "pro_plus"
+            ? "Enterprise: LOG_GUARDIAN_TIER=enterprise — imzali Wasm marketplace"
+            : "Enterprise tier aktif",
   };
 }
 

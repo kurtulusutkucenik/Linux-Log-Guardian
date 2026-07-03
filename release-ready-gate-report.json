@@ -1,12 +1,12 @@
 {
-  "date": "2026-06-30T18:46:47.237367+00:00",
-  "pass": true,
+  "date": "2026-07-02T20:23:38.789400+00:00",
+  "pass": false,
   "release_ready_ok": true,
   "docs_consistency_ok": true,
-  "website_live_ok": null,
-  "website_live_skipped": true,
-  "vm_fleet_ok": null,
-  "vm_fleet_skipped": true,
+  "website_live_ok": false,
+  "website_live_skipped": false,
+  "vm_fleet_ok": true,
+  "vm_fleet_skipped": false,
   "proof_tests": 75,
   "proof_pass": 75,
   "artifacts": {
@@ -14,5 +14,6 @@
     "data_room_zip": true,
     "release_pack_zip": true
   },
-  "script": "scripts/release_ready_gate.sh"
+  "script": "scripts/release_ready_gate.sh",
+  "fail_reason": "website_live"
 }

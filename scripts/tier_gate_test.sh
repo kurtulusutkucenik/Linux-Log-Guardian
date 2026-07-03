@@ -16,11 +16,16 @@ import os
 import importlib.util
 
 # tier.ts mantigini Python ile dogrula (Node TS import gerektirmez)
-TIER_ORDER = {"community": 0, "pro": 1, "enterprise": 2}
+TIER_ORDER = {"community": 0, "pro": 1, "pro_plus": 2, "enterprise": 3}
+
+def normalize_tier(raw):
+    s = raw.strip().lower().replace("-", "_")
+    if s == "proplus":
+        return "pro_plus"
+    return s if s in TIER_ORDER else "community"
 
 def resolve_tier():
-    raw = os.environ.get("LOG_GUARDIAN_TIER", "community").lower()
-    return raw if raw in TIER_ORDER else "community"
+    return normalize_tier(os.environ.get("LOG_GUARDIAN_TIER", "community"))
 
 def tier_at_least(required):
     return TIER_ORDER[resolve_tier()] >= TIER_ORDER[required]
@@ -45,6 +50,17 @@ assert not is_pro_route("/api/reports")
 
 os.environ["LOG_GUARDIAN_TIER"] = "pro"
 assert tier_at_least("pro")
+assert not tier_at_least("pro_plus")
+assert not tier_at_least("enterprise")
+
+os.environ["LOG_GUARDIAN_TIER"] = "pro-plus"
+assert resolve_tier() == "pro_plus"
+assert tier_at_least("pro")
+assert tier_at_least("pro_plus")
+assert not tier_at_least("enterprise")
+
+os.environ["LOG_GUARDIAN_TIER"] = "pro_plus"
+assert tier_at_least("pro_plus")
 assert not tier_at_least("enterprise")
 
 os.environ["LOG_GUARDIAN_TIER"] = "enterprise"

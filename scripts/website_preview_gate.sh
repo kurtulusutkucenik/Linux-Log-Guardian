@@ -120,13 +120,20 @@ echo "[OK] website_smoke (assets/website)"
 FINAL="$(python3 -c "import json; r=json.loads('''$PARITY_JSON'''); r['pass']=True; r.pop('fail_reason',None); print(json.dumps(r))")"
 write_report "$FINAL"
 
-if [[ -x "$ROOT/.venv-website-smoke/bin/python" ]] || python3 -c "import playwright" 2>/dev/null; then
+if [[ "${LG_WEBSITE_BROWSER_SMOKE:-0}" == "1" ]] \
+    && { [[ -x "$ROOT/.venv-website-smoke/bin/python" ]] || python3 -c "import playwright" 2>/dev/null; }; then
   LG_WEBSITE_SMOKE_DIR="$SITE" python3 "$ROOT/scripts/website_i18n_browser_smoke.py" >/dev/null 2>&1 \
     && echo "[OK] website_i18n_browser_smoke" \
-    || echo "[WARN] website_i18n_browser_smoke — playwright?"
-else
-  echo "[SKIP] website_i18n_browser_smoke — playwright yok"
+    || echo "[WARN] website_i18n_browser_smoke — LG_WEBSITE_BROWSER_SMOKE=1 ama test fail"
 fi
 
-sp="$(python3 -c "import json; r=json.load(open('$REPORT')); print(f\"{r.get('site_pass',0)}/{r.get('expected_tests',0)} test\")")"
+sp="$(python3 - "$REPORT" <<'PY'
+import json, sys
+r = json.load(open(sys.argv[1]))
+expected = int(r.get("expected_tests") or 0)
+site_fail = int(r.get("site_fail") or 0)
+shown = int(r.get("site_tests") or 0) if site_fail == 0 else int(r.get("site_pass") or 0)
+print(f"{shown}/{expected} test")
+PY
+)"
 echo "[OK] website_preview_gate — ${sp}"

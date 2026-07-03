@@ -1,6 +1,6 @@
 /* mesh_intel.c — Global Mesh Tehdit İstihbaratı (ZeroMQ PUB/SUB)
  *
- * Cloudflare tarzı: Sunucu A bir APT keşfedince IP'yi ZeroMQ PUB socket'e
+ * Dağıtık ban paylaşımı: Sunucu A bir APT keşfedince IP'yi ZeroMQ PUB socket'e
  * yayınlar. Dünyanın her yerindeki Log Guardian ajanları SUB socket ile
  * alıp daemon_ipc_ban_*() → XDP map'e milisaniyeler içinde yazar.
  */

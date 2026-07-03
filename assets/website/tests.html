@@ -4,15 +4,25 @@
   <meta charset="utf-8" />
   <meta name="color-scheme" content="dark" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Linux Log Guardian — doğrulama testleri (72 otomatik kanıt)." />
+  <meta name="description" content="Linux Log Guardian — doğrulama testleri (75 otomatik kanıt)." />
+  <link rel="canonical" href="https://ceniklinuxlogguardian.org/tests" />
   <meta name="google" content="notranslate" />
-  <meta name="lg-integrity-i18n" content="sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu" />
+  <meta name="lg-integrity-i18n" content="sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy" />
   <meta name="lg-integrity-css" content="sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp" />
   <meta name="referrer" content="no-referrer" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Testler — Linux Log Guardian" />
+  <meta property="og:description" content="75 automated validation tests — install gates, CRS parity, FP, ban latency, 72h soak." />
+  <meta property="og:image" content="https://ceniklinuxlogguardian.org/screenshots/dashboard-tests.png" />
+  <meta property="og:url" content="https://ceniklinuxlogguardian.org/tests" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Testler — Linux Log Guardian" />
+  <meta name="twitter:description" content="75 automated validation tests — same matrix as dashboard /tests." />
+  <meta name="twitter:image" content="https://ceniklinuxlogguardian.org/screenshots/dashboard-tests.png" />
   <title>Testler — Linux Log Guardian</title>
   <meta http-equiv="X-Content-Type-Options" content="nosniff" />
   <meta http-equiv="X-Frame-Options" content="DENY" />
-  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI' 'sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu' 'sha384-mWfurX9hFhu/77J1w5uPx+wAgWixWfplW1CPj1pWRzUWG88+WEKKd9YNMMHA4RDJ'; script-src-attr 'none'; style-src 'self' 'sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'self'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
+  <meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI' 'sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy' 'sha384-g/BIM0fjbkvuQi5IUxrbgZDLXrgZ2ojm+9iVQJIdUpbxtyERecVYIgKlLKnmXfTC'; script-src-attr 'none'; style-src 'self' 'sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp'; style-src-attr 'none'; img-src 'self'; font-src 'self'; connect-src 'none'; frame-src 'none'; frame-ancestors 'none'; child-src 'none'; worker-src 'none'; media-src 'self'; prefetch-src 'none'; manifest-src 'none'; base-uri 'none'; form-action 'none'; object-src 'none'; navigate-to 'self' mailto: https://github.com; trusted-types lgI18n; require-trusted-types-for 'script'; require-sri-for script;" />
   <link rel="stylesheet" href="/boot.css" id="lg-boot-css" />
   <link rel="preload" href="/site-Rm2vtkLic7O9.css" as="style" integrity="sha384-Rm2vtkLic7O94Z1kYDUoS1UkLDpEc/qbSHeWXBmx/4VvXaN7sMWm8lDzHIl0PcWp" />
   <link rel="preload" href="/fonts/Syne-Variable.ttf" as="font" type="font/ttf" crossorigin="anonymous" />
@@ -100,9 +110,9 @@
       <!-- LG_TESTS_TOOLBAR -->
 <div id="test-results-toolbar" class="tests-toolbar" aria-live="polite">
 <div class="tests-toolbar-pill">
-<span>72 test</span>
-<span class="tests-toolbar-pass">68 geçti</span>
-<span class="tests-toolbar-fail">4 ✗</span>
+<span>75 test</span>
+<span class="tests-toolbar-pass">73 geçti</span>
+<span class="tests-toolbar-fail">2 ✗</span>
 </div>
 <a class="tests-toolbar-pdf" href="/evidence/competitive-proof.pdf" rel="noopener noreferrer" type="application/pdf" data-i18n="tests.proof_pdf">Kanıt PDF</a>
 <a class="tests-toolbar-pack" href="/evidence/competitive-proof.json" rel="noopener noreferrer" download data-i18n="tests.proof_pack">Kanıt paketi JSON</a>
@@ -110,13 +120,13 @@
 <!-- LG_TESTS_TOOLBAR_END -->
       <!-- LG_TESTS_HERO -->
 <div id="test-results-hero" class="test-hero" aria-live="polite">
-<div class="test-hero-badge" aria-hidden="true">94%</div>
+<div class="test-hero-badge" aria-hidden="true">97%</div>
 <div class="test-hero-text">
 <strong>Test özeti</strong>
-<span>68/72 test geçti · 4 kaldı</span>
+<span>73/75 test geçti · 2 kaldı</span>
 </div>
 <div class="test-hero-bar" aria-hidden="true">
-<progress class="test-hero-bar-fill" value="94" max="100"></progress>
+<progress class="test-hero-bar-fill" value="97" max="100"></progress>
 </div>
 </div>
 <!-- LG_TESTS_HERO_END -->
@@ -167,7 +177,7 @@
       </div>
       </div>
       <!-- LG_TESTS_SUMMARY -->
-<p id="test-results-summary" class="test-summary muted-sm">68/72 test geçti · 4 kaldı</p>
+<p id="test-results-summary" class="test-summary muted-sm">73/75 test geçti · 2 kaldı</p>
 <!-- LG_TESTS_SUMMARY_END -->
       <ul id="test-results-list" class="test-grid test-grid-full" aria-label="Test sonuçları">
       <!-- LG_TESTS_STATIC -->
@@ -189,7 +199,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/api_fail_closed_test.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-auth-log-ingest" data-test-id="auth-log-ingest">
@@ -209,7 +219,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/auth_log_e2e.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-helm-install-smoke" data-test-id="helm-install-smoke">
@@ -229,7 +239,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/helm_install_smoke.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-journald-ingest" data-test-id="journald-ingest">
@@ -249,7 +259,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/journald_e2e.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-local-security-audit" data-test-id="local-security-audit">
@@ -269,7 +279,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/local_security_audit.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-marketplace-sig" data-test-id="marketplace-sig">
@@ -289,7 +299,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/marketplace_sig_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-mesh-etcd" data-test-id="mesh-etcd">
@@ -309,7 +319,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/mesh_etcd_e2e.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-post-install-verify" data-test-id="post-install-verify">
@@ -329,7 +339,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/post_install_verify.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-vm-demo-gate" data-test-id="vm-demo-gate">
@@ -349,7 +359,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/vm_demo_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-group-label">Rekabet ve güvenlik kanıtı</li>
@@ -401,7 +411,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/build_arm64.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-attack-map" data-test-id="attack-map">
@@ -414,16 +424,16 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">5 marker, kaynak=live; ack=1 ban=4.</p>
+<p class="test-verdict-box">4 marker, kaynak=live; ack=1 ban=3.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">markers:</span> 5</span>
+<span class="test-metric"><span class="test-metric-label">markers:</span> 4</span>
 <span class="test-metric"><span class="test-metric-label">ack:</span> 1</span>
-<span class="test-metric"><span class="test-metric-label">ban:</span> 4</span>
+<span class="test-metric"><span class="test-metric-label">ban:</span> 3</span>
 <span class="test-metric"><span class="test-metric-label">bans:</span> ipset</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/attack_map_e2e.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-ban-latency" data-test-id="ban-latency">
@@ -435,7 +445,7 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">Medyan 16.82 ms — hedef &lt;75.0 ms, ipset dogrulandi.</p>
+<p class="test-verdict-box">Medyan 17.85 ms — hedef &lt;75.0 ms, ipset dogrulandi.</p>
 </li>
 <li class="test-card status-pass test-card-static" id="test-ban-policy-audit" data-test-id="ban-policy-audit">
 <div class="test-card-head">
@@ -458,7 +468,7 @@
 <time datetime="2026-06-30">2026-06-30</time>
 </div>
 </li>
-<li class="test-card status-fail test-card-static" id="test-bans-telegram-ops" data-test-id="bans-telegram-ops">
+<li class="test-card status-pass test-card-static" id="test-bans-telegram-ops" data-test-id="bans-telegram-ops">
 <div class="test-card-head">
 <div class="test-card-head-main">
 <span class="test-card-icon" aria-hidden="true"></span>
@@ -466,13 +476,13 @@
 <h3>Bans + Telegram ack — operator panel API</h3>
 <p class="test-purpose">Operatör paneli /api/telegram-acks + /bans?search= canli veri.</p>
 </div></div>
-<span class="test-status">KALDI</span>
+<span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">login HTTP 429</p>
+<p class="test-verdict-box">IP 203.0.113.198; ack yes (utku); ban miss.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">acks:</span> 0</span>
+<span class="test-metric"><span class="test-metric-label">acks:</span> 1</span>
 <span class="test-metric"><span class="test-metric-label">ban:</span> miss</span>
-<span class="test-metric"><span class="test-metric-label">operator:</span> —</span>
+<span class="test-metric"><span class="test-metric-label">operator:</span> utku</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/bans_telegram_ops_e2e.sh</span>
@@ -488,7 +498,7 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">Guardian 5357 EPS (tek gecis log-WAF); CRS replay 14302 EPS — farkli mimari, hiz iddiasi degil.</p>
+<p class="test-verdict-box">Guardian 280373 EPS (tek gecis log-WAF); CRS replay 16560 EPS — farkli mimari, hiz iddiasi degil.</p>
 </li>
 <li class="test-card status-pass test-card-static" id="test-compliance-export" data-test-id="compliance-export">
 <div class="test-card-head">
@@ -527,7 +537,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/copilot_ollama_e2e.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-crowdsec-bouncer" data-test-id="crowdsec-bouncer">
@@ -549,7 +559,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/crowdsec_bouncer_e2e.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-crs-parity" data-test-id="crs-parity">
@@ -617,17 +627,17 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">demo_3min=yes; dash=yes; proof 66/72.</p>
+<p class="test-verdict-box">demo_3min=yes; dash=yes; proof 75/75.</p>
 <div class="test-metrics">
 <span class="test-metric"><span class="test-metric-label">PDF:</span> yes</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 66/72</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/demo_rehearsal_gate.sh</span>
 <time datetime="2026-06-30">2026-06-30</time>
 </div>
 </li>
-<li class="test-card status-fail test-card-static" id="test-demo-video-gate" data-test-id="demo-video-gate">
+<li class="test-card status-pass test-card-static" id="test-demo-video-gate" data-test-id="demo-video-gate">
 <div class="test-card-head">
 <div class="test-card-head-main">
 <span class="test-card-icon" aria-hidden="true"></span>
@@ -635,12 +645,12 @@
 <h3>Demo video — 04:00 kayit hazirlik kapisi</h3>
 <p class="test-purpose">demo_video + SIEM + PDF + presentation_ship — kayit oncesi otomatik.</p>
 </div></div>
-<span class="test-status">KALDI</span>
+<span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">presentation_ship</p>
+<p class="test-verdict-box">pdf=yes; ship=yes; siem=yes; proof 72/72.</p>
 <div class="test-metrics">
 <span class="test-metric"><span class="test-metric-label">SIEM:</span> yes</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 69/72</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 72/72</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/demo_video_gate.sh</span>
@@ -657,14 +667,14 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">checks OK=37; proof 66/72; hosting §8b=yes.</p>
+<p class="test-verdict-box">checks OK=37; proof 75/75; hosting §8b=yes.</p>
 <div class="test-metrics">
 <span class="test-metric"><span class="test-metric-label">checks:</span> 37</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 66/72</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/docs_consistency_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-edge-protection-gate" data-test-id="edge-protection-gate">
@@ -685,7 +695,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/edge_protection_gate.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-06-30">2026-06-30</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-enterprise-escalation-gate" data-test-id="enterprise-escalation-gate">
@@ -750,6 +760,26 @@
 <span class="test-status">GEÇTİ</span>
 </div>
 <p class="test-verdict-box">500 benign satirda %0.2 FP — hedef &lt;%5.0.</p>
+</li>
+<li class="test-card status-pass test-card-static" id="test-github-ship-gate" data-test-id="github-ship-gate">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>GitHub ship — push oncesi tam kapı</h3>
+<p class="test-purpose">presentation_ship + security_closure + secret scan — git push hazirligi.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">ship=yes; closure=yes; secret=yes; proof 73/73.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">closure:</span> yes</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 73/73</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/github_ship_gate.sh</span>
+<time datetime="2026-06-30">2026-06-30</time>
+</div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-grafana-alerts" data-test-id="grafana-alerts">
 <div class="test-card-head">
@@ -865,14 +895,14 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">cluster=lg; mode=dry-run-server.</p>
+<p class="test-verdict-box">cluster=lg; mode=live-ready.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">mode:</span> dry-run-server</span>
+<span class="test-metric"><span class="test-metric-label">mode:</span> live-ready</span>
 <span class="test-metric"><span class="test-metric-label">cluster:</span> lg</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/k8s_kind_e2e.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-l7-probe-prod" data-test-id="l7-probe-prod">
@@ -895,6 +925,26 @@
 <div class="test-card-foot">
 <span>scripts/l7_probe_prod_e2e.sh</span>
 <time datetime="2026-06-29">2026-06-29</time>
+</div>
+</li>
+<li class="test-card status-pass test-card-static" id="test-laptop-core-gate" data-test-id="laptop-core-gate">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Laptop Core — edge + SOC + ban operatörü</h3>
+<p class="test-purpose">nginx→WAF→ban Core vaadi — edge, Telegram SOC, ban API.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">edge=skip; soc=yes; ban=yes; xdp=ipset-fallback; proof 75/75.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">xdp:</span> ipset-fallba</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/laptop_core_gate.sh</span>
+<time datetime="2026-06-30">2026-06-30</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-laptop-excellence-gate" data-test-id="laptop-excellence-gate">
@@ -927,9 +977,9 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">INC-6a43e5a6-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.</p>
+<p class="test-verdict-box">INC-6a440909-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">INC:</span> INC-6a43e5a6-2382</span>
+<span class="test-metric"><span class="test-metric-label">INC:</span> INC-6a440909-2382</span>
 <span class="test-metric"><span class="test-metric-label">IP:</span> 10.0.0.99</span>
 <span class="test-metric"><span class="test-metric-label">active:</span> 1</span>
 </div>
@@ -1030,6 +1080,26 @@
 <time datetime="2026-06-29">2026-06-29</time>
 </div>
 </li>
+<li class="test-card status-pass test-card-static" id="test-morning-operator-gate" data-test-id="morning-operator-gate">
+<div class="test-card-head">
+<div class="test-card-head-main">
+<span class="test-card-icon" aria-hidden="true"></span>
+<div class="test-card-title-wrap">
+<h3>Morning operator — sabah hazirlik (hizli)</h3>
+<p class="test-purpose">Rapor-oncelikli sabah kapisi — demo_3min kosmaz, mevcut gate&#x27;leri bozmaz.</p>
+</div></div>
+<span class="test-status">GEÇTİ</span>
+</div>
+<p class="test-verdict-box">core=yes(rapor); ship=yes; proof 75/75.</p>
+<div class="test-metrics">
+<span class="test-metric"><span class="test-metric-label">core:</span> rapor</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
+</div>
+<div class="test-card-foot">
+<span>scripts/morning_operator_gate.sh</span>
+<time datetime="2026-06-30">2026-06-30</time>
+</div>
+</li>
 <li class="test-card status-pass test-card-static" id="test-nginx-consult" data-test-id="nginx-consult">
 <div class="test-card-head">
 <div class="test-card-head-main">
@@ -1093,7 +1163,7 @@
 <time datetime="2026-06-28">2026-06-28</time>
 </div>
 </li>
-<li class="test-card status-fail test-card-static" id="test-presentation-ship-gate" data-test-id="presentation-ship-gate">
+<li class="test-card status-pass test-card-static" id="test-presentation-ship-gate" data-test-id="presentation-ship-gate">
 <div class="test-card-head">
 <div class="test-card-head-main">
 <span class="test-card-icon" aria-hidden="true"></span>
@@ -1101,12 +1171,12 @@
 <h3>Presentation ship — sunum + GitHub zinciri</h3>
 <p class="test-purpose">demo_rehearsal + release_ready — tek komutta sunum ve ship.</p>
 </div></div>
-<span class="test-status">KALDI</span>
+<span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">release_ready</p>
+<p class="test-verdict-box">demo=yes; release=yes; artefakt 3/3; proof 75/75.</p>
 <div class="test-metrics">
 <span class="test-metric"><span class="test-metric-label">artefakt:</span> 3/3</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 66/72</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/presentation_ship_gate.sh</span>
@@ -1166,14 +1236,14 @@
 </div></div>
 <span class="test-status">KALDI</span>
 </div>
-<p class="test-verdict-box">release_ready_check; vm_fleet</p>
+<p class="test-verdict-box">website_live</p>
 <div class="test-metrics">
 <span class="test-metric"><span class="test-metric-label">artefakt:</span> 3/3</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 66/72</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75/75</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/release_ready_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-siem-export" data-test-id="siem-export">
@@ -1216,7 +1286,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/taxii_feed_e2e.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-telegram-operator-undo-e2e" data-test-id="telegram-operator-undo-e2e">
@@ -1250,9 +1320,9 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">SOC 16 (ack 8); map 4; bans ack 1; webhook prod undo.</p>
+<p class="test-verdict-box">SOC 15 (ack 8); map 4; bans ack 1; webhook prod undo.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">soc:</span> 16</span>
+<span class="test-metric"><span class="test-metric-label">soc:</span> 15</span>
 <span class="test-metric"><span class="test-metric-label">map:</span> 4</span>
 <span class="test-metric"><span class="test-metric-label">bans:</span> 1</span>
 <span class="test-metric"><span class="test-metric-label">webhook:</span> prod undo</span>
@@ -1312,7 +1382,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/vm_fleet_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-vm-host-prep-gate" data-test-id="vm-host-prep-gate">
@@ -1352,7 +1422,7 @@
 </div>
 <div class="test-card-foot">
 <span>scripts/vps_xdp_proof.sh</span>
-<time datetime="2026-06-29">2026-06-29</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-wasm-native" data-test-id="wasm-native">
@@ -1440,7 +1510,7 @@
 <time datetime="2026-06-29">2026-06-29</time>
 </div>
 </li>
-<li class="test-card status-pass test-card-static" id="test-website-live-gate" data-test-id="website-live-gate">
+<li class="test-card status-fail test-card-static" id="test-website-live-gate" data-test-id="website-live-gate">
 <div class="test-card-head">
 <div class="test-card-head-main">
 <span class="test-card-icon" aria-hidden="true"></span>
@@ -1448,16 +1518,16 @@
 <h3>Website live — canli site /tests parity</h3>
 <p class="test-purpose">ceniklinuxlogguardian.org SRI + test kart parity.</p>
 </div></div>
-<span class="test-status">GEÇTİ</span>
+<span class="test-status">KALDI</span>
 </div>
-<p class="test-verdict-box">ceniklinuxlogguardian.org 72/72; CSS=no.</p>
+<p class="test-verdict-box">css_check_fail; js_check_fail</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">live:</span> 72/72</span>
+<span class="test-metric"><span class="test-metric-label">live:</span> None/75</span>
 <span class="test-metric"><span class="test-metric-label">domain:</span> ceniklinuxlogguardian.or</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/website_live_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <li class="test-card status-pass test-card-static" id="test-website-preview-gate" data-test-id="website-preview-gate">
@@ -1470,14 +1540,14 @@
 </div></div>
 <span class="test-status">GEÇTİ</span>
 </div>
-<p class="test-verdict-box">Site 67/72; grafana yes; edge yes.</p>
+<p class="test-verdict-box">Site 75/75 parity; grafana yes; edge yes.</p>
 <div class="test-metrics">
-<span class="test-metric"><span class="test-metric-label">site:</span> 72</span>
-<span class="test-metric"><span class="test-metric-label">proof:</span> 72</span>
+<span class="test-metric"><span class="test-metric-label">site:</span> 75</span>
+<span class="test-metric"><span class="test-metric-label">proof:</span> 75</span>
 </div>
 <div class="test-card-foot">
 <span>scripts/website_preview_gate.sh</span>
-<time datetime="2026-06-30">2026-06-30</time>
+<time datetime="2026-07-02">2026-07-02</time>
 </div>
 </li>
 <!-- LG_TESTS_STATIC_END -->
@@ -1492,7 +1562,7 @@
     · <span class="contact-plain">kurtulusutkucenikcontact (at) gmail.com</span>
   </footer>
   <script src="/boot-enter.js?v=WYIwDl9SzQw5" integrity="sha384-WYIwDl9SzQw5TiGdfvB0F6yF43D/ZDN461Uu6syS6053lPnFc5Ey9SzmfWWaavZI" crossorigin="anonymous"></script>
-  <script src="/i18n.js?v=L0kQb8GcsiPt" defer integrity="sha384-L0kQb8GcsiPtB/pnu4svLyHveSufovj8nGVfeGbNaydqO+DnqpzHu6OYiWsxLwpu" crossorigin="anonymous"></script>
-  <script src="/test-results.js?v=mWfurX9hFhux" defer integrity="sha384-mWfurX9hFhu/77J1w5uPx+wAgWixWfplW1CPj1pWRzUWG88+WEKKd9YNMMHA4RDJ" crossorigin="anonymous"></script>
+  <script src="/i18n.js?v=ZdpFGtYE9TBY" defer integrity="sha384-ZdpFGtYE9TBYWMZi7Zwai9+kS8wf3HU2OxcJpDU/SnUHi310BAM342ZqpCixE2Iy" crossorigin="anonymous"></script>
+  <script src="/test-results.js?v=gxBIM0fjbkvu" defer integrity="sha384-g/BIM0fjbkvuQi5IUxrbgZDLXrgZ2ojm+9iVQJIdUpbxtyERecVYIgKlLKnmXfTC" crossorigin="anonymous"></script>
 </body>
 </html>

@@ -46,15 +46,48 @@ static size_t curl_write_cb(void *data, size_t sz, size_t nmemb, void *userp) {
         *buf = calloc(1, 8192);
     }
     if (*buf) {
-        strncat(*buf, data, 8190 - strlen(*buf));
+        size_t used = strlen(*buf);
+        size_t room = 8190 - used;
+        size_t copy = realsize < room ? realsize : room;
+        if (copy > 0)
+            memcpy(*buf + used, data, copy);
+        (*buf)[used + copy] = '\0';
     }
     return realsize;
 }
 
+static int url_host_is_loopback(const char *url)
+{
+    if (!url || strncmp(url, "https://", 8) != 0)
+        return 0;
+
+    const char *host = url + 8;
+    const char *end = strchr(host, '/');
+    if (!end)
+        end = host + strlen(host);
+
+    size_t host_len = (size_t)(end - host);
+    const char *colon = memchr(host, ':', host_len);
+    if (colon)
+        host_len = (size_t)(colon - host);
+
+    if (host_len >= 2 && host[0] == '[' && host[host_len - 1] == ']') {
+        host++;
+        host_len -= 2;
+    }
+
+    if (host_len == 9 && strncmp(host, "localhost", 9) == 0)
+        return 1;
+    if (host_len == 9 && strncmp(host, "127.0.0.1", 9) == 0)
+        return 1;
+    if (host_len == 3 && strncmp(host, "::1", 3) == 0)
+        return 1;
+    return 0;
+}
+
 static void apply_curl_tls_for_url(CURL *curl, const char *url) {
     if (!curl || !url) return;
-    if (strstr(url, "https://") &&
-        (strstr(url, "127.0.0.1") || strstr(url, "localhost"))) {
+    if (url_host_is_loopback(url)) {
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
         curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     }

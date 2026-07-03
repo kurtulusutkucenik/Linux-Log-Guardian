@@ -16,6 +16,7 @@
 
 typedef struct {
     pcre2_code       *re;
+    int               jitted;   /* 1 = pcre2_jit_match kullanilabilir */
     char              pattern[PATTERN_LINE_MAX];
 } CompiledPattern;
 
@@ -96,6 +97,7 @@ static int compile_and_add_pattern(const char *val, int is_crs)
 
     int idx = g_pattern_count++;
     g_patterns[idx].re = re;
+    g_patterns[idx].jitted = (jit_rc == 0);
     strncpy(g_patterns[idx].pattern, val, PATTERN_LINE_MAX - 1);
     g_patterns[idx].pattern[PATTERN_LINE_MAX - 1] = '\0';
     if (is_crs) g_crs_pattern_count++;
@@ -194,14 +196,27 @@ int pcre_engine_match(StrView url) {
 
     int matched = 0;
     for (int i = 0; i < g_pattern_count && !matched; i++) {
-        int rc = pcre2_match(
-            g_patterns[i].re,
-            (PCRE2_SPTR)url.ptr,
-            (PCRE2_SIZE)url.len,
-            0, 0,
-            tls_data->mdata_array[i],
-            g_match_context
-        );
+        int rc;
+        if (g_patterns[i].jitted) {
+            /* JIT fast path: interpreter fallback + arg dogrulama atlanir */
+            rc = pcre2_jit_match(
+                g_patterns[i].re,
+                (PCRE2_SPTR)url.ptr,
+                (PCRE2_SIZE)url.len,
+                0, 0,
+                tls_data->mdata_array[i],
+                g_match_context
+            );
+        } else {
+            rc = pcre2_match(
+                g_patterns[i].re,
+                (PCRE2_SPTR)url.ptr,
+                (PCRE2_SIZE)url.len,
+                0, 0,
+                tls_data->mdata_array[i],
+                g_match_context
+            );
+        }
         if (rc >= 0) matched = 1;
     }
     
