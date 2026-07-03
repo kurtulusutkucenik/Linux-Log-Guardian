@@ -175,7 +175,7 @@ sudo log-guardian unban 203.0.113.99
 | nginx consult | **PASS** (union/or1/LFI 403, benign 200) | ModSec inline ayrı |
 | Canlı harness | **525/525 refused** (:80) | Manuel test, tek rapor yok |
 | False positive | **%0.5** (500 benign) | Fail2ban’da WAF yok |
-| Ban gecikmesi | **~17 ms** → ipset | Genelde saniye–dakika |
+| Ban gecikmesi | **17,85 ms** → ipset | Genelde saniye–dakika |
 | CRS parity | **%100** | ModSec ayrı; ban ayrı entegrasyon |
 | Kanıt paketi | `competitive-proof.pdf` + `release-pack.zip` | Manuel / dağınık |
 
@@ -228,16 +228,96 @@ Detay: [docs/GITHUB_RELEASE.md](docs/GITHUB_RELEASE.md) · [docs/DATA_ROOM.md](d
 
 ---
 
-## Katmanlar
+## Sürümler (Core · Pro · Pro Plus)
 
-| Katman | Ne | Doküman |
-|--------|-----|---------|
-| **Core** | nginx log → WAF → ipset/XDP ban | [QUICKSTART_NGINX](docs/QUICKSTART_NGINX.md) |
-| **Pro** | eBPF daemon, dashboard, Grafana, fleet | [QUICKSTART_DOCKER](docs/QUICKSTART_DOCKER.md) |
+> **Tek felsefe:** Az kaynak, çok koruma. **Koruma Core'da** — C binary (`log-guardian` + `log-guardian-daemon`).  
+> Üst sürümlerde RAM ve disk artışının sorumlusu Log Guardian çekirdeği **değildir**; Docker image'ları, Grafana, Prometheus, Caddy ve (Pro Plus'ta) kind/K8s gibi **sunum ve entegrasyon araçları** bu maliyeti taşır. Core binary hâlâ ~515 KB.
+
+### Performans (Core — ölçülmüş)
+
+| Metrik | Değer |
+|--------|-------|
+| **EPS** | 280.373 |
+| **Ban latency** | 17,85 ms |
+
+### Kaynak kullanımı (ayrı hesap)
+
+| Sürüm | Bileşenler | RAM | Disk |
+|-------|------------|-----|------|
+| **Core** | Binary + daemon + `/etc/log-guardian` config/DB | **~110 MB** | **~4 MB** (temiz) · **~55 MB** (`events.db` dolu) |
+| **Pro** | Core + dashboard + Grafana + Caddy + Prometheus + relay | **~730 MB** (laptop) · **~400 MB** (VM) | **~5,3 GB** (VM, çoğunlukla Docker image) |
+| **Pro Plus** | Pro + K8s/Helm kanıtı (kind) + fleet vitrin + opsiyonel Wasm/mesh | **~1,9 GB** (laptop, hepsi açık) | Pro disk + **~2–3 GB** (kind volume) |
+
+### Zincir özeti
+
+| Sürüm | Ne |
+|-------|-----|
+| **Linux Log Guardian** (Core) | C binary → log → WAF → ban |
+| **Linux Log Guardian Pro** | Core + Dashboard + Grafana + Caddy + Prometheus |
+| **Linux Log Guardian Pro Plus** | Pro + K8s/Helm kanıtı (kind) + fleet vitrin + opsiyonel Wasm/mesh |
+
+Hepsi bir arada “mega platform” değil — ihtiyacın olan katmanı açarsın. Günlük iş için **Core** veya **Pro** yeter; Pro Plus yalnızca K8s/Helm demosu için.
+
+```bash
+# Core (varsayılan)
+sudo systemctl enable --now log-guardian-daemon log-guardian
+
+# Pro stack (:8443 SOC)
+bash scripts/dashboard_stack.sh                    # LOG_GUARDIAN_TIER=pro
+
+# Pro Plus (K8s vitrin — demo bitince kapat)
+bash scripts/pro_plus_stack.sh                     # LOG_GUARDIAN_TIER=pro_plus
+bash scripts/pro_plus_down.sh                      # kind kapat (~1,2 GB RAM geri)
+bash scripts/pro_plus_status.sh                    # Core / Pro / Pro Plus ayrı ölçüm
+curl -sk https://localhost:8443/api/tier | jq .    # tier doğrulama
+```
+
+### Pro ve Pro Plus — ne kazandırır?
+
+**Linux Log Guardian Pro** (Core üstüne):
+
+| Avantaj | Ne işe yarar |
+|---------|----------------|
+| **SOC dashboard** (`:8443`) | Operatör paneli, `/tests` kanıt kartları, attack map, ban yönetimi |
+| **Grafana + Prometheus** | Metrik, alert, `$tenant` panelleri |
+| **Caddy TLS** | Prod sunum URL'si, JWT korumalı erişim |
+| **Fleet + multi-tenant** | Çok sunucu telemetry, komut, uyumluluk raporu |
+| **Webhook / Telegram** | Alarm fan-out, operatör ack/undo |
+
+**Linux Log Guardian Pro Plus** (Pro üstüne — *en kapsamlı sürüm*):
+
+| Avantaj | Ne işe yarar |
+|---------|----------------|
+| **K8s / Helm kanıtı** | `helm install log-guardian` — cluster'da da çalışır demosu |
+| **kind + operator** | Admission webhook, DaemonSet, live-ready pod kanıtı |
+| **Fleet vitrin** | Multi-node filo sunumu |
+| **Wasm / mesh (opsiyonel)** | İmzalı plugin marketplace, etcd mesh — Enterprise yolu |
+
+Koruma seviyesi **Core ile aynı** kalır; Pro ve Pro Plus **görünürlük ve entegrasyon kanıtı** ekler.
+
+### RAM ve disk artışı — sorumluluk sınırı
+
+| Katman | Log Guardian sorumluluğu | Üçüncü parti araçlar (bizim dışımızda) |
+|--------|--------------------------|------------------------------------------|
+| **Core** | `log-guardian` + daemon + config/DB (**~110 MB RAM**, **~4–55 MB disk**) | — |
+| **Pro** | Aynı Core binary; ek koruma **yok** | Docker image'ları, Node.js dashboard, Grafana, Prometheus, Caddy |
+| **Pro Plus** | Yine aynı Core; ek koruma **yok** | kind/K8s node, Helm chart pod'ları, operator, opsiyonel Wasm/mesh stack |
+
+> **Özet:** Sürüm büyüdükçe artan RAM ve disk **Log Guardian C çekirdeğinden kaynaklanmaz**. Core binary ~515 KB ve ~110 MB RAM'de kalır. Fazlalık, SOC ve demo için seçtiğin **harici araçların** (Docker, Grafana, kind vb.) kapladığı alandır — bunları kapatınca veya sadece Core çalıştırınca maliyet düşer.
+
+```bash
+bash scripts/pro_plus_status.sh    # Core / Pro / Pro Plus RAM ayrı ölçüm
+bash scripts/pro_plus_down.sh      # K8s vitrin kapat → ~1,2 GB RAM geri
+```
+
+### Diğer modüller (opsiyonel)
+
+| Modül | Ne | Doküman |
+|-------|-----|---------|
 | **Threat intel** | Firehol (key yok) + opsiyonel AbuseIPDB/OTX | [THREAT_INTEL_SETUP](docs/THREAT_INTEL_SETUP.md) |
-| **Opsiyonel** | XDR, Wasm, Copilot | [SCOPE_COVERAGE](docs/SCOPE_COVERAGE.md) |
+| **XDR / Wasm / Copilot** | Enterprise vitrin katmanları | [SCOPE_COVERAGE](docs/SCOPE_COVERAGE.md) |
 
-İlk temas: [QUICKSTART_15MIN](docs/QUICKSTART_15MIN.md) · Demo GIF: [DEMO_GIF](docs/DEMO_GIF.md) · Yol haritası: [ROADMAP_FREE](docs/ROADMAP_FREE.md)
+İlk temas: [QUICKSTART_15MIN](docs/QUICKSTART_15MIN.md) · Docker SOC: [QUICKSTART_DOCKER](docs/QUICKSTART_DOCKER.md) · Yol haritası: [ROADMAP_FREE](docs/ROADMAP_FREE.md)
 
 ---
 
@@ -280,7 +360,7 @@ An open-source, Linux-native edge security project (MIT). It does not replace Cl
 | Distributed cluster | **100%** (80 IPs, same UA) | Per-IP ban; cluster separate |
 | Live harness | **525/525 refused** (:80) | Manual tests, no single report |
 | False positive | **0.5%** (500 benign lines) | No WAF on fail2ban |
-| Ban latency | **~17 ms** → ipset | Usually seconds–minutes |
+| Ban latency | **17.85 ms** → ipset | Usually seconds–minutes |
 | CRS parity | **100%** | ModSec separate; ban separate integration |
 | Proof package | `competitive-proof.pdf` + `release-pack.zip` | Manual / scattered |
 
@@ -358,16 +438,96 @@ Details: [docs/GITHUB_RELEASE.md](docs/GITHUB_RELEASE.md) · [docs/DATA_ROOM.md]
 
 ---
 
-## Layers
+## Editions (Core · Pro · Pro Plus)
 
-| Layer | What | Docs |
-|-------|------|------|
-| **Core** | nginx log → WAF → ipset/XDP ban | [QUICKSTART_NGINX](docs/QUICKSTART_NGINX.md) |
-| **Pro** | eBPF daemon, dashboard, Grafana, fleet | [QUICKSTART_DOCKER](docs/QUICKSTART_DOCKER.md) |
+> **One philosophy:** Low resource footprint, high protection. **Protection lives in Core** — the C binary (`log-guardian` + `log-guardian-daemon`).  
+> RAM and disk growth in upper tiers is **not** from the Log Guardian core (~515 KB binary). It comes from **presentation and integration tooling**: Docker images, Grafana, Prometheus, Caddy, and (Pro Plus) kind/K8s.
+
+### Performance (Core — measured)
+
+| Metric | Value |
+|--------|-------|
+| **EPS** | 280,373 |
+| **Ban latency** | 17.85 ms |
+
+### Resource usage (separate accounting)
+
+| Edition | Components | RAM | Disk |
+|---------|------------|-----|------|
+| **Core** | Binary + daemon + `/etc/log-guardian` config/DB | **~110 MB** | **~4 MB** (clean) · **~55 MB** (full `events.db`) |
+| **Pro** | Core + dashboard + Grafana + Caddy + Prometheus + relays | **~730 MB** (laptop) · **~400 MB** (VM) | **~5.3 GB** (VM, mostly Docker images) |
+| **Pro Plus** | Pro + K8s/Helm proof (kind) + fleet demo + optional Wasm/mesh | **~1.9 GB** (laptop, all open) | Pro disk + **~2–3 GB** (kind volume) |
+
+### Chain summary
+
+| Edition | What |
+|---------|------|
+| **Linux Log Guardian** (Core) | C binary → log → WAF → ban |
+| **Linux Log Guardian Pro** | Core + Dashboard + Grafana + Caddy + Prometheus |
+| **Linux Log Guardian Pro Plus** | Pro + K8s/Helm proof (kind) + fleet demo + optional Wasm/mesh |
+
+Not an all-in-one mega platform — enable the layer you need. Daily work: **Core** or **Pro**. Pro Plus is for K8s/Helm demos only.
+
+```bash
+# Core (default)
+sudo systemctl enable --now log-guardian-daemon log-guardian
+
+# Pro stack (:8443 SOC)
+bash scripts/dashboard_stack.sh                    # LOG_GUARDIAN_TIER=pro
+
+# Pro Plus (K8s demo — shut down after)
+bash scripts/pro_plus_stack.sh                     # LOG_GUARDIAN_TIER=pro_plus
+bash scripts/pro_plus_down.sh                      # stop kind (~1.2 GB RAM back)
+bash scripts/pro_plus_status.sh                    # per-tier RAM breakdown
+curl -sk https://localhost:8443/api/tier | jq .
+```
+
+### Pro and Pro Plus — what you gain
+
+**Linux Log Guardian Pro** (on top of Core):
+
+| Benefit | Purpose |
+|---------|---------|
+| **SOC dashboard** (`:8443`) | Operator UI, `/tests` proof cards, attack map, ban management |
+| **Grafana + Prometheus** | Metrics, alerts, `$tenant` panels |
+| **Caddy TLS** | Production demo URL, JWT-protected access |
+| **Fleet + multi-tenant** | Multi-host telemetry, commands, compliance export |
+| **Webhook / Telegram** | Alert fan-out, operator ack/undo |
+
+**Linux Log Guardian Pro Plus** (on top of Pro — *full edition*):
+
+| Benefit | Purpose |
+|---------|---------|
+| **K8s / Helm proof** | `helm install log-guardian` — runs on cluster demo |
+| **kind + operator** | Admission webhook, DaemonSet, live-ready pod proof |
+| **Fleet showcase** | Multi-node fleet presentation |
+| **Wasm / mesh (optional)** | Signed plugin marketplace, etcd mesh — Enterprise path |
+
+Protection level **stays the same as Core**; Pro and Pro Plus add **visibility and integration proof**.
+
+### RAM and disk growth — responsibility boundary
+
+| Layer | Log Guardian responsibility | Third-party tooling (outside our core) |
+|-------|----------------------------|----------------------------------------|
+| **Core** | `log-guardian` + daemon + config/DB (**~110 MB RAM**, **~4–55 MB disk**) | — |
+| **Pro** | Same Core binary; **no extra protection** | Docker images, Node.js dashboard, Grafana, Prometheus, Caddy |
+| **Pro Plus** | Same Core again; **no extra protection** | kind/K8s node, Helm chart pods, operator, optional Wasm/mesh stack |
+
+> **Summary:** Higher-tier RAM and disk use is **not caused by the Log Guardian C core**. The Core binary stays ~515 KB and ~110 MB RAM. The overhead comes from **external tools** you enable for SOC and demos (Docker, Grafana, kind, etc.) — shut them down or run Core-only to reduce cost.
+
+```bash
+bash scripts/pro_plus_status.sh    # per-tier RAM breakdown
+bash scripts/pro_plus_down.sh      # stop K8s demo → ~1.2 GB RAM back
+```
+
+### Other modules (optional)
+
+| Module | What | Docs |
+|--------|------|------|
 | **Threat intel** | Firehol (no key) + optional AbuseIPDB/OTX | [THREAT_INTEL_SETUP](docs/THREAT_INTEL_SETUP.md) |
-| **Optional** | XDR, Wasm, Copilot | [SCOPE_COVERAGE](docs/SCOPE_COVERAGE.md) |
+| **XDR / Wasm / Copilot** | Enterprise demo layers | [SCOPE_COVERAGE](docs/SCOPE_COVERAGE.md) |
 
-Always lead with **Core** (15 min). Broader layers are optional — [BRANDING.md](docs/BRANDING.md).
+Start here: [QUICKSTART_15MIN](docs/QUICKSTART_15MIN.md) · Docker SOC: [QUICKSTART_DOCKER](docs/QUICKSTART_DOCKER.md) · Roadmap: [ROADMAP_FREE](docs/ROADMAP_FREE.md)
 
 ---
 
