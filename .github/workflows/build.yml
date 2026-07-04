@@ -16,7 +16,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
-          libcurl4-openssl-dev libssl-dev liburing-dev pkg-config curl
+          libcurl4-openssl-dev libssl-dev liburing-dev libseccomp-dev pkg-config curl
 
     - name: Build Fallback Mode (No XDP)
       run: make fallback
@@ -102,7 +102,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang curl pkg-config libpcre2-dev libsqlite3-dev \
-          libcurl4-openssl-dev libssl-dev liburing-dev libbpf-dev
+          libcurl4-openssl-dev libssl-dev liburing-dev libbpf-dev libseccomp-dev
 
     - name: Rust toolchain
       uses: dtolnay/rust-toolchain@stable

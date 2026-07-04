@@ -3315,11 +3315,6 @@ static void print_json_report(double elapsed) {
     fflush(stdout);
 }
 
-#include <seccomp.h>
-
-/* setup_seccomp moved to auth.c */
-    /* Whitelist essential syscalls */
-
 int main(int argc, char *argv[]) {
     log_rl_init();
 
