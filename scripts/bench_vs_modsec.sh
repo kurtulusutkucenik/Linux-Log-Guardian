@@ -32,7 +32,16 @@ fi
   exit 1
 }
 
-make -j"$(nproc 2>/dev/null || echo 2)" -s log-guardian >/dev/null
+WASMTIME_ROOT="${WASMTIME_ROOT:-$ROOT/vendor/wasmtime}"
+MAKE_ARGS=( -j"$(nproc 2>/dev/null || echo 2)" -s )
+if [[ -f "$WASMTIME_ROOT/lib/libwasmtime.so" || -f "$WASMTIME_ROOT/lib/libwasmtime.a" ]]; then
+  MAKE_ARGS+=( HAVE_WASM=1 "WASMTIME_ROOT=$WASMTIME_ROOT" )
+fi
+make "${MAKE_ARGS[@]}" log-guardian >/dev/null || {
+  echo "[bench_vs_modsec] FAIL: make log-guardian" >&2
+  make "${MAKE_ARGS[@]}" log-guardian
+  exit 1
+}
 
 # ---------------------------------------------------------------------------
 # Adil olcum (apples-to-apples):

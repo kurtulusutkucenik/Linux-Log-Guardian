@@ -33,37 +33,16 @@ jobs:
     - name: Wasm release build (HAVE_WASM=1)
       run: bash scripts/wasm_gate.sh
 
-    - name: Competitive suite + merge gate
-      run: |
-        export LOGANALYZER_PASSWORD='DegistirBeni!123'
-        export REQUIRE_WASM_NATIVE=1
-        export SKIP_BAN_BENCH=1
-        export COMPETITIVE_FAST=1
-        bash scripts/competitive_suite.sh
+    - name: CI offline core gate
+      run: bash scripts/ci_core_gate.sh
       env:
+        LOGANALYZER_PASSWORD: "DegistirBeni!123"
+        COMPETITIVE_FAST: "1"
+        SKIP_BAN_BENCH: "1"
+        LIVE: "0"
         REQUIRE_WASM_NATIVE: "1"
-
-    - name: Laptop dev gate (offline kanit — VPS/webhook yok)
-      run: |
-        export LOGANALYZER_PASSWORD='DegistirBeni!123'
-        export COMPETITIVE_FAST=1
-        export LIVE=0
-        export SKIP_CONSULT=1
-        bash scripts/laptop_dev_gate.sh
-
-    - name: Real attack + distributed cluster proof (offline)
-      run: |
-        export LOGANALYZER_PASSWORD='DegistirBeni!123'
-        export LIVE=0
-        bash scripts/real_attack_suite.sh
-        bash scripts/ja3_cluster_proof.sh
-        bash scripts/competitive_proof.sh
-
-    - name: Competitive merge gate (FP, recall, EPS)
-      run: |
-        export LOGANALYZER_PASSWORD='DegistirBeni!123'
-        export REQUIRE_WASM_NATIVE=1
-        bash scripts/competitive_gate.sh
+        LG_SYNC_NO_SUDO: "1"
+        LG_SKIP_DASHBOARD_SYNC: "1"
 
     - name: Upload proof artefacts
       uses: actions/upload-artifact@v4
@@ -72,10 +51,10 @@ jobs:
         name: competitive-proof
         path: |
           real-attack-report.json
-          ja3-cluster-report.json
-          competitive-proof.json
-          competitive-proof.pdf
-          data-room.zip
+          bench-vs-modsec.json
+          fp-report.json
+          lineage-live-report.json
+          wasm-status.json
 
     - name: Webhook config smoke (dry-run)
       run: bash scripts/webhook_smoke_test.sh

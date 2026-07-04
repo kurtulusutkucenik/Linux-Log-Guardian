@@ -114,7 +114,9 @@ print(
 )
 PY
 
-bash scripts/sync_dashboard_data.sh 2>/dev/null || true
+if [[ "${LG_SKIP_DASHBOARD_SYNC:-0}" != "1" ]]; then
+  bash scripts/sync_dashboard_data.sh 2>/dev/null || true
+fi
 [[ -f live-attack-report.json ]] && cp -f live-attack-report.json .cache/dashboard-live/ 2>/dev/null || true
 
 if [[ "$CORPUS_EXIT" -ne 0 ]]; then
