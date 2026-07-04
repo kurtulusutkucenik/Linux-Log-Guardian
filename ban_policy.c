@@ -1,6 +1,7 @@
 /* ban_policy.c — AUTO_BAN_MIN_RISK + audit jsonl + rate cap + hash chain */
 #define _GNU_SOURCE
 #include "ban_policy.h"
+#include "dist_risk.h"
 #include "fp_trust.h"
 #include "incident_engine.h"
 #include "crypto_utils.h"
@@ -139,6 +140,14 @@ int ban_policy_should_auto_ban(const char *ip, const Alert *alert,
     double inc_risk = ip ? incident_engine_ip_risk(ip) : 0.0;
     double al_risk  = alert_risk_score(alert);
     double risk = inc_risk > al_risk ? inc_risk : al_risk;
+    if (ip) {
+        double dr = dist_risk_bonus(ip);
+        if (dr > 0.0) {
+            risk += dr;
+            if (risk > 100.0)
+                risk = 100.0;
+        }
+    }
 
     if (alert && alert->level == ALERT_CRIT && al_risk >= 85.0) {
         if (out) {

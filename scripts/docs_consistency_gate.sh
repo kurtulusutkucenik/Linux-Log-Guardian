@@ -55,7 +55,7 @@ esc = (root / "docs/ENTERPRISE_ESCALATION.md").read_text(encoding="utf-8") if (r
 
 hosting_8b = bool(re.search(r"8b\.\s*Telegram|§8b", hosting)) and "telegram_soc_gate" in hosting
 esc_hosting_link = "HOSTING_RUNBOOK_TR.md" in esc and bool(re.search(r"§8b|8b", esc))
-support_64 = "75 kart" in (root / "docs/ENTERPRISE_SUPPORT.md").read_text(encoding="utf-8", errors="replace") if (root / "docs/ENTERPRISE_SUPPORT.md").is_file() else False
+support_kart = "76 kart" in (root / "docs/ENTERPRISE_SUPPORT.md").read_text(encoding="utf-8", errors="replace") if (root / "docs/ENTERPRISE_SUPPORT.md").is_file() else False
 
 reasons = []
 if check_rc != 0:
@@ -66,8 +66,8 @@ if not hosting_8b:
     reasons.append("hosting_8b_missing")
 if not esc_hosting_link:
     reasons.append("escalation_hosting_link")
-if not support_64:
-    reasons.append("support_64_missing")
+if not support_kart:
+    reasons.append("support_kart_missing")
 
 ok = len(reasons) == 0
 out = {
@@ -79,7 +79,7 @@ out = {
     "proof_pass": proof_pass,
     "hosting_8b": hosting_8b,
     "escalation_hosting_link": esc_hosting_link,
-    "support_64_kart": support_64,
+    "support_kart": support_kart,
     "script": "scripts/docs_consistency_gate.sh",
 }
 if not ok:

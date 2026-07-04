@@ -67,6 +67,7 @@
 #include "adaptive_threshold.h"
 #include "ja3_engine.h"
 #include "ja3_cluster.h"
+#include "dist_risk.h"
 #include "threat_feed.h"
 #include "crypto_utils.h"
 #include "auth.h"
@@ -1745,6 +1746,31 @@ static void lg_telegram_incident(const char *incident_id, char *buf, size_t cap)
     (void)db_incident_format_path(g_db_path, incident_id, buf, cap);
 }
 
+static void apply_auto_ban_profile(const char *profile,
+                                   int *incident_min, double *auto_ban_min_risk,
+                                   int *brute_err, int *adapt_warmup,
+                                   int explicit_incident, int explicit_risk,
+                                   int explicit_brute, int explicit_warmup)
+{
+    if (!profile || !profile[0])
+        return;
+    int p_inc = 3, p_brute = 5, p_warmup = 100;
+    double p_risk = 60.0;
+    if (strcmp(profile, "hosting") == 0) {
+        p_inc = 3; p_risk = 70.0; p_brute = 4; p_warmup = 80;
+    } else if (strcmp(profile, "paranoid") == 0) {
+        p_inc = 1; p_risk = 40.0; p_brute = 3; p_warmup = 50;
+    } else if (strcmp(profile, "community") == 0) {
+        p_inc = 3; p_risk = 60.0; p_brute = 5; p_warmup = 100;
+    } else {
+        return;
+    }
+    if (!explicit_incident) *incident_min = p_inc;
+    if (!explicit_risk) *auto_ban_min_risk = p_risk;
+    if (!explicit_brute) *brute_err = p_brute;
+    if (!explicit_warmup) *adapt_warmup = p_warmup;
+}
+
 static void load_rules_file(const char *path) {
     FILE *fp = fopen(path, "r");
     if (!fp) return;
@@ -1763,11 +1789,17 @@ static void load_rules_file(const char *path) {
     int fp_learn = 0, fp_trust_days = 30, fp_min_samples = 100;
     int fp_auto_whitelist = 0;
     int ja3_cluster_en = 0, ja3_cluster_min = 3;
+    int dist_risk_en = 1, dist_risk_min = 3, dist_risk_window = 300;
     char fp_store_path[512] = "data/fp-trust.lst";
     int auto_ban_policy = 1;
     double auto_ban_min_risk = 60.0;
     int ban_max_auto_per_min = 0;
     char ban_audit_path[512] = "data/ban-policy-audit.jsonl";
+    char auto_ban_profile[32] = "";
+    int incident_min_hits = 3;
+    int explicit_incident_min = 0, explicit_auto_ban_min = 0;
+    int explicit_brute_err = 0, explicit_adapt_warmup = 0;
+    int consult_cache_ttl = 0;
     anomaly_get_thresholds(&low_slow_req, &brute_err, &ddos_rps, &slow_ms,
                            &sqli_score, &slow_hit_cnt, &cooldown);
 
@@ -1792,7 +1824,10 @@ static void load_rules_file(const char *path) {
         int is_number = (errno == 0 && endptr && *trim_ws(endptr) == '\0');
 
         if (strcmp(key, "LOW_SLOW_REQ") == 0 && is_number) low_slow_req = (int)parsed;
-        else if (strcmp(key, "BRUTE_FORCE_ERR") == 0 && is_number) brute_err = (int)parsed;
+        else if (strcmp(key, "BRUTE_FORCE_ERR") == 0 && is_number) {
+            brute_err = (int)parsed;
+            explicit_brute_err = 1;
+        }
         else if (strcmp(key, "DDOS_RPS") == 0 && is_number) ddos_rps = (int)parsed;
         else if (strcmp(key, "SLOW_RESP_MS") == 0 && is_number) slow_ms = (int)parsed;
         else if (strcmp(key, "SQLI_SCORE") == 0 && is_number) sqli_score = (int)parsed;
@@ -2009,6 +2044,12 @@ static void load_rules_file(const char *path) {
             ja3_cluster_en = (int)parsed != 0;
         else if (strcmp(key, "JA3_CLUSTER_MIN_IPS") == 0 && is_number && parsed >= 2)
             ja3_cluster_min = (int)parsed;
+        else if (strcmp(key, "DIST_RISK") == 0 && is_number)
+            dist_risk_en = (int)parsed != 0;
+        else if (strcmp(key, "DIST_RISK_MIN_IPS") == 0 && is_number && parsed >= 2)
+            dist_risk_min = (int)parsed;
+        else if (strcmp(key, "DIST_RISK_WINDOW_SEC") == 0 && is_number && parsed >= 60 && parsed <= 3600)
+            dist_risk_window = (int)parsed;
         else if (strcmp(key, "THREAT_FEED_ENABLED") == 0 && is_number)
             g_threat_config.enabled = (int)parsed;
         else if (strcmp(key, "THREAT_FEED_INTERVAL_SEC") == 0 && is_number && parsed > 0)
@@ -2089,8 +2130,10 @@ static void load_rules_file(const char *path) {
             double d = strtod(val, &ep);
             if (ep && ep != val && d > 1.0) adapt_ban = d;
         }
-        else if (strcmp(key, "ADAPTIVE_WARMUP_SAMPLES") == 0 && is_number && parsed > 0)
+        else if (strcmp(key, "ADAPTIVE_WARMUP_SAMPLES") == 0 && is_number && parsed > 0) {
             adapt_warmup = (int)parsed;
+            explicit_adapt_warmup = 1;
+        }
         else if (strcmp(key, "MESH_PUB_ENABLED") == 0 && is_number)
             g_threat_config.mesh_pub_enabled = (int)parsed != 0;
         else if (strcmp(key, "MESH_PUB_ADDR") == 0) {
@@ -2186,8 +2229,10 @@ static void load_rules_file(const char *path) {
             g_openapi_strict = (int)parsed != 0;
         else if (strcmp(key, "INCIDENT_WINDOW_SEC") == 0 && is_number && parsed >= 60)
             incident_engine_set_window_sec((int)parsed);
-        else if (strcmp(key, "INCIDENT_MIN_LOG_HITS") == 0 && is_number && parsed >= 1)
-            incident_engine_set_min_log_hits((int)parsed);
+        else if (strcmp(key, "INCIDENT_MIN_LOG_HITS") == 0 && is_number && parsed >= 1) {
+            incident_min_hits = (int)parsed;
+            explicit_incident_min = 1;
+        }
         else if (strcmp(key, "FALCO_HOST_RULES") == 0) {
             size_t n = strlen(val);
             if (n >= sizeof(g_falco_host_rules_path))
@@ -2214,9 +2259,19 @@ static void load_rules_file(const char *path) {
         else if (strcmp(key, "AUTO_BAN_MIN_RISK") == 0) {
             char *ep = NULL;
             double d = strtod(val, &ep);
-            if (ep && *trim_ws(ep) == '\0' && d >= 0.0 && d <= 100.0)
+            if (ep && *trim_ws(ep) == '\0' && d >= 0.0 && d <= 100.0) {
                 auto_ban_min_risk = d;
+                explicit_auto_ban_min = 1;
+            }
         }
+        else if (strcmp(key, "AUTO_BAN_PROFILE") == 0) {
+            size_t n = strlen(val);
+            if (n >= sizeof(auto_ban_profile)) n = sizeof(auto_ban_profile) - 1;
+            memcpy(auto_ban_profile, val, n);
+            auto_ban_profile[n] = '\0';
+        }
+        else if (strcmp(key, "CONSULT_CACHE_TTL") == 0 && is_number && parsed >= 0 && parsed <= 300)
+            consult_cache_ttl = (int)parsed;
         else if (strcmp(key, "BAN_POLICY_AUDIT") == 0) {
             size_t n = strlen(val);
             if (n >= sizeof(ban_audit_path)) n = sizeof(ban_audit_path) - 1;
@@ -2272,6 +2327,13 @@ static void load_rules_file(const char *path) {
         }
     }
     fclose(fp);
+
+    apply_auto_ban_profile(auto_ban_profile, &incident_min_hits, &auto_ban_min_risk,
+                           &brute_err, &adapt_warmup, explicit_incident_min,
+                           explicit_auto_ban_min, explicit_brute_err,
+                           explicit_adapt_warmup);
+    incident_engine_set_min_log_hits(incident_min_hits);
+    api_server_set_consult_cache_ttl(consult_cache_ttl);
 
     rules_fleet_reload_overlay();
 
@@ -2367,6 +2429,9 @@ static void load_rules_file(const char *path) {
         }
     }
     ja3_cluster_config(ja3_cluster_en, ja3_cluster_min);
+    dist_risk_config(dist_risk_en);
+    dist_risk_set_min_ips(dist_risk_min);
+    dist_risk_set_window_sec(dist_risk_window);
 
     const char *env_token = getenv("LOGANALYZER_TELEGRAM_TOKEN");
     if (env_token && *env_token) {
@@ -3047,6 +3112,16 @@ static void *worker_loop(void *arg) {
                 continue;
             }
 
+            {
+                char dr_fp[72] = {0};
+                if (entry.user_agent.ptr && entry.user_agent.len > 0) {
+                    ja3_cluster_fingerprint_ua(entry.user_agent.ptr,
+                                             entry.user_agent.len,
+                                             dr_fp, sizeof(dr_fp));
+                }
+                dist_risk_observe(rec->ip, dr_fp[0] ? dr_fp : NULL, entry.ts);
+            }
+
             /* Honey-token Trap URL kontrolu: eslesme = aninda kalici ban */
             if (entry.url.ptr && entry.url.len > 0) {
                 for (size_t ti = 0; ti < g_trap_url_count; ti++) {
@@ -3617,6 +3692,7 @@ int main(int argc, char *argv[]) {
 
     /* Native Threat Intelligence Feed — AbuseIPDB veya benzeri feed'den IoC çek */
     ja3_cluster_init();
+    dist_risk_init();
     threat_feed_init();
     falco_host_rules_init();
     endpoint_baseline_init();
@@ -4183,6 +4259,14 @@ int main(int argc, char *argv[]) {
                     ja3_cluster_get_stats(&jc_active, &jc_bans);
                     msnap.ja3_clusters_active   = (long)jc_active;
                     msnap.ja3_cluster_bans_total  = (long)jc_bans;
+                }
+                {
+                    uint64_t dr_buckets = 0, dr_bonus = 0, dr_obs = 0;
+                    dist_risk_get_stats(&dr_buckets, &dr_bonus, &dr_obs);
+                    msnap.dist_risk_buckets_active = (long)dr_buckets;
+                    msnap.dist_risk_bonus_applied  = (long)dr_bonus;
+                    msnap.dist_risk_observe_total  = (long)dr_obs;
+                    msnap.dist_risk_enabled        = dist_risk_enabled() ? 1L : 0L;
                 }
                 webhook_metrics_snapshot(&msnap.webhook_sent, &msnap.webhook_fail,
                                          &msnap.webhook_queue_drops, &msnap.webhook_queue_depth);

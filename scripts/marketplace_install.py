@@ -8,11 +8,12 @@ import hmac
 import json
 import os
 import shutil
+import stat
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MP = ROOT / "rules" / "marketplace"
-OUT = ROOT / "rules" / "installed-marketplace"
+OUT = Path(os.environ.get("MARKETPLACE_INSTALL_DIR", str(ROOT / "rules" / "installed-marketplace")))
 
 
 def hash_files(pkg_path: Path, files: list[str]) -> str:
@@ -52,11 +53,27 @@ def verify(pkg_id: str, key: bytes) -> dict:
     return {"id": pkg_id, "digest": digest, "files": files, "path": str(pkg_path)}
 
 
+def _rmtree_force(path: Path) -> None:
+    if not path.exists():
+        return
+    for root, dirs, files in os.walk(path, topdown=False):
+        for name in files + dirs:
+            p = os.path.join(root, name)
+            try:
+                os.chmod(p, stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR)
+            except OSError:
+                pass
+    try:
+        os.chmod(path, stat.S_IWUSR | stat.S_IRUSR | stat.S_IXUSR)
+    except OSError:
+        pass
+    shutil.rmtree(path)
+
+
 def install(pkg_id: str) -> Path:
     dest = OUT / pkg_id
     src = MP / pkg_id
-    if dest.exists():
-        shutil.rmtree(dest)
+    _rmtree_force(dest)
     shutil.copytree(src, dest)
     return dest
 

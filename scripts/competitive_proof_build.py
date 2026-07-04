@@ -72,6 +72,7 @@ INPUTS = {
     "taxiiFeed": "taxii-feed-report.json",
     "parserFuzz": "parser-fuzz-report.json",
     "banPolicyAudit": "ban-policy-audit-report.json",
+    "distRiskProof": "dist-risk-proof-report.json",
     "lineageIncident": "lineage-incident-report.json",
     "helmInstall": "helm-install-smoke-report.json",
     "k8sAdmission": "k8s-admission-report.json",
@@ -1619,7 +1620,9 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
     if k8s_adm:
         ok = k8s_adm.get("pass") is True
         mode = str(k8s_adm.get("mode") or "standalone")
-        st = "pass" if ok and mode != "skip" else ("warn" if ok else "fail")
+        st = "pass" if ok and mode in ("kind-live", "standalone", "url", "docker-standalone") else (
+            "warn" if ok else "fail"
+        )
         row(
             "k8s-admission",
             st,
@@ -2288,6 +2291,38 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/ban_policy_audit_e2e.sh",
             date=str(ban_audit.get("date") or "")[:10],
+        )
+
+    dist_risk = data.get("distRiskProof") or {}
+    if dist_risk:
+        ok = dist_risk.get("pass") is True
+        delta = dist_risk.get("delta", "—")
+        verdict_tr = (
+            f"risk off={dist_risk.get('risk_off', '—')} on={dist_risk.get('risk_on', '—')}; delta={delta}."
+            if ok
+            else "dist_risk_proof_e2e FAIL."
+        )
+        verdict_en = (
+            f"risk off={dist_risk.get('risk_off', '—')} on={dist_risk.get('risk_on', '—')}; delta={delta}."
+            if ok
+            else "dist_risk_proof_e2e FAIL."
+        )
+        row(
+            "dist-risk-proof",
+            "pass" if ok else "fail",
+            "DIST_RISK — dagitik saldiri skoru kaniti",
+            verdict_tr,
+            "DIST_RISK — distributed attack score proof",
+            verdict_en,
+            purpose="/24 + UA fp korelasyonu → ban risk bonusu; unit test + replay delta.",
+            purpose_en="/24 + UA fp correlation → ban risk bonus; unit test + replay delta.",
+            metrics=[
+                {"label": "delta", "value": str(delta)},
+                {"label": "risk_off", "value": str(dist_risk.get("risk_off", "—"))},
+                {"label": "risk_on", "value": str(dist_risk.get("risk_on", "—"))},
+            ],
+            script="scripts/dist_risk_proof_e2e.sh",
+            date=str(dist_risk.get("date") or "")[:10],
         )
 
     lineage_inc = data.get("lineageIncident") or {}

@@ -59,6 +59,10 @@ typedef struct {
     long ban_pipeline_failed;   /* Ban basarisiz                     */
     long ja3_clusters_active;   /* Aktif UA/JA3 cluster bucket      */
     long ja3_cluster_bans_total;/* Cluster flush ile ban sayisi     */
+    long dist_risk_buckets_active;   /* DIST_RISK aktif bucket (ip>=2) */
+    long dist_risk_bonus_applied;    /* Risk bonus uygulama sayisi     */
+    long dist_risk_observe_total;    /* dist_risk_observe cagri sayisi   */
+    long dist_risk_enabled;          /* 1=DIST_RISK acik                 */
     long webhook_sent;          /* Webhook basarili gonderim        */
     long webhook_fail;          /* Webhook HTTP/curl hatasi         */
     long webhook_queue_drops;   /* Async kuyruk dolu — atilan       */

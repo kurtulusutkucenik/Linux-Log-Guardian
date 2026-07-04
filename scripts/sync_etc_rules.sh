@@ -32,5 +32,18 @@ if ! grep -q "or\[\\\\s\\\\\+" "$CONF" 2>/dev/null; then
   echo "[sync_etc_rules] OR SQLi REGEX eklendi"
 fi
 
+upsert_kv() {
+  local key="$1" val="$2"
+  if grep -q "^${key}=" "$CONF" 2>/dev/null; then
+    sed -i "s|^${key}=.*|${key}=${val}|" "$CONF"
+  else
+    echo "${key}=${val}" >>"$CONF"
+  fi
+}
+upsert_kv CONSULT_CACHE_TTL 5
+upsert_kv DIST_RISK 1
+upsert_kv DIST_RISK_MIN_IPS 3
+upsert_kv DIST_RISK_WINDOW_SEC 300
+
 echo "[OK] sync_etc_rules -> ${ETC}/rules/crs-bundle.rules + ${ETC}/examples/openapi-*.json"
 echo "     sudo systemctl restart log-guardian"

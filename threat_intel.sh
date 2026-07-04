@@ -20,21 +20,61 @@ err()  { logger -t "loganalyzer-threatintel" -p daemon.err   "$*"; echo "[ERR ] 
 
 log "Threat Intel guncelleme baslatildi."
 
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" 2>/dev/null && pwd || echo /usr/local/share/log-guardian)"
+CACHE_DIR="${THREAT_INTEL_CACHE_DIR:-/var/cache/log-guardian}"
+FIREHOL_CACHE="${CACHE_DIR}/firehol_level1.netset"
+GEOIP_CACHE_DIR="${CACHE_DIR}/geoip-zones"
+DOWNLOAD_OK=0
+
+mkdir -p "$CACHE_DIR" "$GEOIP_CACHE_DIR" 2>/dev/null || true
+
+resolve_fixture() {
+  local f="${THREAT_INTEL_FIXTURE:-}"
+  [[ -n "$f" && -f "$f" ]] && { echo "$f"; return 0; }
+  for c in \
+    "$ROOT/corpus/fixtures/firehol_sample.netset" \
+    "/usr/local/share/log-guardian/corpus/fixtures/firehol_sample.netset"; do
+    [[ -f "$c" ]] && { echo "$c"; return 0; }
+  done
+  return 1
+}
+
+use_offline_list() {
+  local src="$1" label="$2"
+  [[ -f "$src" ]] || return 1
+  local n
+  n=$(grep -cEv '^#|^$' "$src" 2>/dev/null || echo 0)
+  [[ "${n:-0}" -gt 0 ]] || return 1
+  cp "$src" "$TMP_LIST"
+  cp "$src" "$FIREHOL_CACHE" 2>/dev/null || true
+  log "Offline fallback ($label): $src ($n satir)"
+  DOWNLOAD_OK=1
+  return 0
+}
+
 # ── Listeyi indir (exponential backoff ile retry) ────────────────────
 MAX_RETRY=3
 RETRY_DELAY=5
 for attempt in $(seq 1 $MAX_RETRY); do
     if curl -sSL --fail --max-time 60 --retry 2 "$URL" -o "$TMP_LIST" 2>/dev/null; then
+        DOWNLOAD_OK=1
+        cp "$TMP_LIST" "$FIREHOL_CACHE" 2>/dev/null || true
         break
     fi
     if [[ $attempt -ge $MAX_RETRY ]]; then
-        err "Liste indirilemedi ($MAX_RETRY deneme)."
-        # Cikis yapmiyoruz, belki GeoIP calisir
+        warn "Liste indirilemedi ($MAX_RETRY deneme) — offline fallback deneniyor"
+    else
+        warn "Indirme basarisiz, ${RETRY_DELAY}s sonra yeniden deneniyor... ($attempt/$MAX_RETRY)"
+        sleep "$RETRY_DELAY"
+        RETRY_DELAY=$((RETRY_DELAY * 2))
     fi
-    warn "Indirme basarisiz, ${RETRY_DELAY}s sonra yeniden deneniyor... ($attempt/$MAX_RETRY)"
-    sleep "$RETRY_DELAY"
-    RETRY_DELAY=$((RETRY_DELAY * 2))
 done
+
+if [[ "$DOWNLOAD_OK" -eq 0 ]]; then
+    use_offline_list "$FIREHOL_CACHE" "cache" \
+        || use_offline_list "$(resolve_fixture || true)" "fixture" \
+        || warn "Offline fallback yok — GeoIP veya bos liste ile devam"
+fi
 
 # ── GeoIP Ülke Engelleme (rules.conf'tan oku) ────────────────────────
 RULES_CONF="/etc/log-guardian/rules.conf"
@@ -47,8 +87,18 @@ if [[ -f "$RULES_CONF" ]]; then
             cc_lower=$(echo "$cc" | tr '[:upper:]' '[:lower:]' | tr -d ' ')
             [[ -z "$cc_lower" ]] && continue
             cc_url="http://www.ipdeny.com/ipblocks/data/countries/${cc_lower}.zone"
-            log "Indiriliyor: $cc_url"
-            curl -sSL --max-time 30 "$cc_url" >> "$TMP_LIST" 2>/dev/null || warn "$cc_lower indirilemedi"
+            cc_cache="${GEOIP_CACHE_DIR}/${cc_lower}.zone"
+            if curl -sSL --fail --max-time 30 "$cc_url" -o "$cc_cache.tmp" 2>/dev/null; then
+                mv -f "$cc_cache.tmp" "$cc_cache"
+                cat "$cc_cache" >> "$TMP_LIST"
+                log "GeoIP indirildi: $cc_lower"
+            elif [[ -f "$cc_cache" ]]; then
+                cat "$cc_cache" >> "$TMP_LIST"
+                log "GeoIP cache: $cc_lower ($cc_cache)"
+            else
+                warn "$cc_lower indirilemedi (ag/cache yok)"
+            fi
+            rm -f "$cc_cache.tmp" 2>/dev/null || true
         done
     fi
 fi

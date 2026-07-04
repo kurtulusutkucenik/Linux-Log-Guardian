@@ -86,7 +86,7 @@ else
   bad "ENTERPRISE_ESCALATION hosting §8b link eksik"
 fi
 
-for doc_pat in '75 kart:docs/ENTERPRISE_SUPPORT.md' '75/75:docs/COMPETITIVE_STATUS.md' '75 test:docs/SCOPE_COVERAGE.md'; do
+for doc_pat in '76 kart:docs/ENTERPRISE_SUPPORT.md' '76/76:docs/COMPETITIVE_STATUS.md' '76 test:docs/SCOPE_COVERAGE.md'; do
   label="${doc_pat%%:*}"
   docf="${doc_pat#*:}"
   if grep -q "$label" "$docf" 2>/dev/null; then

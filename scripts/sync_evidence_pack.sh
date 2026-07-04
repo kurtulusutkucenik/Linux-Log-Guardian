@@ -35,7 +35,10 @@ for f in \
   taxii-feed-report.json \
   parser-fuzz-report.json \
   ban-policy-audit-report.json \
+  dist-risk-proof-report.json \
   lineage-incident-report.json \
+  fleet-multi-node-report.json \
+  vm-fleet-gate-report.json \
   vm-sprint-proof.json \
   geoip-mmdb-report.json \
   webhook-route-proof-report.json \

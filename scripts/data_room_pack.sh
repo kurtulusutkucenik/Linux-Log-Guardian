@@ -17,6 +17,10 @@ ARTIFACTS=(
   ja3-cluster-ban-live.json
   fp-cluster-trust-report.json
   lineage-live-report.json
+  dist-risk-proof-report.json
+  k8s-admission-report.json
+  vm-fleet-gate-report.json
+  fleet-multi-node-report.json
   nginx-inline-consult-report.json
   owasp-corpus-report.json
   tr-hosting-corpus-report.json

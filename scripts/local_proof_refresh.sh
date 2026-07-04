@@ -21,6 +21,7 @@ bash scripts/lineage_live_e2e.sh
 bash scripts/fp_cluster_trust_e2e.sh
 bash scripts/journald_e2e.sh
 bash scripts/helm_install_smoke.sh
+bash scripts/k8s_admission_test.sh
 bash scripts/mesh_etcd_e2e.sh
 bash scripts/marketplace_sig_gate.sh
 VPS_XDP_SKIP="${VPS_XDP_SKIP:-1}" bash scripts/vps_xdp_proof.sh

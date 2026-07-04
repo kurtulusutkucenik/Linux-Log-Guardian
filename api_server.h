@@ -26,3 +26,6 @@ typedef struct {
 } ApiServerStats;
 
 void api_server_get_stats(ApiServerStats *out);
+
+/* Inline consult sonuc cache — ayni ip+path flood'unda WAF yukunu azaltir (0=kapali). */
+void api_server_set_consult_cache_ttl(int sec);

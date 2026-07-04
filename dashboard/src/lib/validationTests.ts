@@ -609,6 +609,17 @@ type BanPolicyAuditReport = {
   openapi_strict_checked?: boolean;
 };
 
+type DistRiskProofReport = {
+  date?: string;
+  pass?: boolean;
+  risk_off?: number;
+  risk_on?: number;
+  delta?: number;
+  decision_off?: string;
+  decision_on?: string;
+  script?: string;
+};
+
 type LineageIncidentReport = {
   date?: string;
   pass?: boolean;
@@ -867,6 +878,7 @@ export type TestReports = {
   taxiiFeed?: TaxiiFeedReport | null;
   parserFuzz?: ParserFuzzReport | null;
   banPolicyAudit?: BanPolicyAuditReport | null;
+  distRiskProof?: DistRiskProofReport | null;
   lineageIncident?: LineageIncidentReport | null;
   honeypotFeed?: HoneypotFeedReport | null;
   l7ProbeProd?: L7ProbeProdReport | null;
@@ -3355,6 +3367,39 @@ export function evaluateValidationTests(
       ],
       date: fmtDate(banAudit.date),
       script: "scripts/ban_policy_audit_e2e.sh",
+    });
+  }
+
+  const distRisk = reports.distRiskProof;
+  if (distRisk) {
+    const pass = distRisk.pass === true;
+    out.push({
+      id: "dist-risk-proof",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "DIST_RISK — dağıtık saldırı skoru kanıtı",
+        "DIST_RISK — distributed attack score proof",
+      ),
+      purpose: L(
+        locale,
+        "/24 + UA fingerprint korelasyonu ban risk bonusu; kapalı/açık replay delta ≥10.",
+        "/24 + UA fingerprint correlation ban risk bonus; off/on replay delta ≥10.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `risk off=${distRisk.risk_off ?? "—"} on=${distRisk.risk_on ?? "—"}; delta=${distRisk.delta ?? "—"}.`,
+            `risk off=${distRisk.risk_off ?? "—"} on=${distRisk.risk_on ?? "—"}; delta=${distRisk.delta ?? "—"}.`,
+          )
+        : L(locale, "dist_risk_proof_e2e FAIL", "dist_risk_proof_e2e FAIL"),
+      metrics: [
+        { label: L(locale, "delta", "delta"), value: String(distRisk.delta ?? "—") },
+        { label: L(locale, "kapalı", "off"), value: String(distRisk.risk_off ?? "—") },
+        { label: L(locale, "açık", "on"), value: String(distRisk.risk_on ?? "—") },
+      ],
+      date: fmtDate(distRisk.date),
+      script: "scripts/dist_risk_proof_e2e.sh",
     });
   }
 

@@ -115,6 +115,8 @@ export const GRAFANA_SOC_STAT_PANELS: GrafanaStatPanel[] = [
   { id: "bp_failed", title: "Ban pipeline fail", expr: 'loganalyzer_ban_pipeline_failed{tenant_id="$tenant"}' },
   { id: "ja3_clusters", title: "JA3 cluster buckets", expr: 'loganalyzer_ja3_clusters_active{tenant_id="$tenant"}' },
   { id: "ja3_bans", title: "JA3 cluster bans", expr: 'loganalyzer_ja3_cluster_bans_total{tenant_id="$tenant"}' },
+  { id: "dist_risk_buckets", title: "DIST risk buckets", expr: 'loganalyzer_dist_risk_buckets_active{tenant_id="$tenant"}' },
+  { id: "dist_risk_bonus", title: "DIST risk bonus", expr: 'loganalyzer_dist_risk_bonus_applied_total{tenant_id="$tenant"}' },
 ];
 
 /** Grafana row: REST API security */
@@ -140,6 +142,7 @@ export const GRAFANA_SOC_TS_PANELS: GrafanaTsPanel[] = [
       { key: "xdp", legend: "xdp", expr: 'rate(loganalyzer_ban_pipeline_xdp{tenant_id="$tenant"}[5m])' },
       { key: "ipset", legend: "ipset", expr: 'rate(loganalyzer_ban_pipeline_ipset{tenant_id="$tenant"}[5m])' },
       { key: "ja3", legend: "ja3_cluster", expr: 'rate(loganalyzer_ja3_cluster_bans_total{tenant_id="$tenant"}[5m])' },
+      { key: "dist_risk", legend: "dist_risk_bonus", expr: 'rate(loganalyzer_dist_risk_bonus_applied_total{tenant_id="$tenant"}[5m])' },
     ],
   },
 ];

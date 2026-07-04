@@ -103,6 +103,12 @@ for k, mn in checks:
     print(f"[OK] killerMetrics.{k}={v}")
 if km.get("soak_short_pass") is True:
     print("[OK] killerMetrics.soak_short_pass=True")
+vt = p.get("validationTests") or []
+if vt:
+    pn = sum(1 for t in vt if t.get("status") == "pass")
+    print(f"[OK] validationTests {pn}/{len(vt)} pass" if pn == len(vt) else f"[FAIL] validationTests {pn}/{len(vt)} pass")
+    if pn < len(vt):
+        sys.exit(1)
 PY
 fi
 

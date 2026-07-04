@@ -193,6 +193,18 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         "# HELP loganalyzer_ja3_cluster_bans_total Cluster flush ban sayisi\n"
         "# TYPE loganalyzer_ja3_cluster_bans_total counter\n"
         "loganalyzer_ja3_cluster_bans_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_dist_risk_buckets_active DIST_RISK aktif bucket (ip>=2)\n"
+        "# TYPE loganalyzer_dist_risk_buckets_active gauge\n"
+        "loganalyzer_dist_risk_buckets_active{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_dist_risk_bonus_applied_total DIST_RISK ban risk bonus\n"
+        "# TYPE loganalyzer_dist_risk_bonus_applied_total counter\n"
+        "loganalyzer_dist_risk_bonus_applied_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_dist_risk_observe_total DIST_RISK observe cagri\n"
+        "# TYPE loganalyzer_dist_risk_observe_total counter\n"
+        "loganalyzer_dist_risk_observe_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_dist_risk_enabled DIST_RISK ayari (1=acik)\n"
+        "# TYPE loganalyzer_dist_risk_enabled gauge\n"
+        "loganalyzer_dist_risk_enabled{tenant_id=\"%s\"} %ld\n"
         "# HELP loganalyzer_webhook_sent_total Webhook basarili gonderim\n"
         "# TYPE loganalyzer_webhook_sent_total counter\n"
         "loganalyzer_webhook_sent_total{tenant_id=\"%s\"} %ld\n"
@@ -272,6 +284,10 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         g_tenant_label, s->ban_pipeline_failed,
         g_tenant_label, s->ja3_clusters_active,
         g_tenant_label, s->ja3_cluster_bans_total,
+        g_tenant_label, s->dist_risk_buckets_active,
+        g_tenant_label, s->dist_risk_bonus_applied,
+        g_tenant_label, s->dist_risk_observe_total,
+        g_tenant_label, s->dist_risk_enabled,
         g_tenant_label, s->webhook_sent,
         g_tenant_label, s->webhook_fail,
         g_tenant_label, s->webhook_queue_drops,

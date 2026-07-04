@@ -147,7 +147,7 @@ SRCS = main.c parser.c anomaly.c db.c tui.c webhook.c telegram_bot.c \
        ip_map.c min_heap.c memory_pool.c pcre_engine.c \
        xdp_loader.c metrics.c siem_fsm.c logger.c \
        daemon_ipc.c ipc_auth.c ban_pipeline.c adaptive_threshold.c waf_rules.c \
-       ja3_engine.c ja3_cluster.c apt_graph.c deception.c covert_ch.c threat_feed.c \
+       ja3_engine.c ja3_cluster.c dist_risk.c apt_graph.c deception.c covert_ch.c threat_feed.c \
        crypto_utils.c auth.c firewall.c trap_watcher.c api_server.c \
        k8s_guard.c k8s_webhook.c tarpit_server.c mesh_intel.c agent_sync.c \
        siem_forwarder.c etcd_mesh.c \
@@ -326,6 +326,7 @@ bench-report: all
 XFF_TEST = tests/parser_xff_test
 AUTH_TEST = tests/parser_auth_test
 FUZZ_TEST = tests/parser_fuzz_test
+DIST_RISK_TEST = tests/dist_risk_test
 FIREWALL_XFF_OBJ = firewall.xff.o
 
 $(FIREWALL_XFF_OBJ): firewall.c
@@ -340,6 +341,9 @@ $(AUTH_TEST): tests/parser_auth_test.c parser.o $(FIREWALL_XFF_OBJ)
 $(FUZZ_TEST): tests/parser_fuzz_test.c parser.o $(FIREWALL_XFF_OBJ)
 	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/parser_fuzz_test.c parser.o $(FIREWALL_XFF_OBJ)
 
+$(DIST_RISK_TEST): tests/dist_risk_test.c dist_risk.o geoip_lookup.o
+	$(CC) $(CFLAGS) -I. $(LDFLAGS) -o $@ tests/dist_risk_test.c dist_risk.o geoip_lookup.o $(LIBS)
+
 xff-test: $(XFF_TEST)
 	@./$(XFF_TEST)
 
@@ -348,6 +352,9 @@ auth-test: $(AUTH_TEST)
 
 fuzz-test: $(FUZZ_TEST)
 	@./$(FUZZ_TEST)
+
+dist-risk-test: $(DIST_RISK_TEST)
+	@./$(DIST_RISK_TEST)
 
 parser-test: xff-test auth-test fuzz-test
 

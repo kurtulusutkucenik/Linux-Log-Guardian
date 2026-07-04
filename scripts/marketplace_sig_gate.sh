@@ -31,6 +31,11 @@ print("[OK] catalog tum paketler imzali")
 PY
 
 INST="$ROOT/rules/installed-marketplace"
+GATE_INST="${MARKETPLACE_INSTALL_DIR:-$ROOT/.cache/marketplace-gate-install}"
+rm -rf "$GATE_INST"
+mkdir -p "$GATE_INST"
+export MARKETPLACE_INSTALL_DIR="$GATE_INST"
+
 if [[ -d "$INST" ]]; then
   for d in "$INST"/*; do
     [[ -d "$d" ]] || continue

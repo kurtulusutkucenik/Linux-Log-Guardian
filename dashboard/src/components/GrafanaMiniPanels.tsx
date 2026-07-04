@@ -102,6 +102,8 @@ const SOC_BAN_STATS: { id: string; labelKey: MessageKey }[] = [
   { id: "bp_failed", labelKey: "grafanaSocBpFailed" },
   { id: "ja3_clusters", labelKey: "grafanaSocJa3Clusters" },
   { id: "ja3_bans", labelKey: "grafanaSocJa3Bans" },
+  { id: "dist_risk_buckets", labelKey: "grafanaSocDistRiskBuckets" },
+  { id: "dist_risk_bonus", labelKey: "grafanaSocDistRiskBonus" },
 ];
 
 const API_STATS: { id: string; labelKey: MessageKey }[] = [
@@ -199,6 +201,7 @@ function appendLiveHist(
       xdp: stats.bp_xdp ?? stats.xdp ?? 0,
       ipset: stats.bp_ipset ?? 0,
       ja3: stats.ja3_bans ?? stats.ja3_clusters ?? 0,
+      dist_risk: stats.dist_risk_bonus ?? 0,
     }),
     sparks,
   };
@@ -390,6 +393,7 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
             bp_xdp: soc.bp_xdp,
             ja3_clusters: soc.ja3_clusters,
             ja3_bans: soc.ja3_bans,
+            dist_risk_bonus: soc.dist_risk_bonus,
           });
           merged.timeseries = liveHistTimeseries(liveHistRef.current);
           merged.sparklines = { ...liveHistRef.current.sparks };

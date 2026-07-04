@@ -27,9 +27,10 @@ else
 fi
 
 if bash "$ROOT/scripts/k8s_admission_test.sh" >/dev/null 2>&1; then
-  gate_ok "k8s_admission_test"
+  km=$(python3 -c "import json; print(json.load(open('k8s-admission-report.json')).get('mode','?'))" 2>/dev/null || echo "?")
+  gate_ok "k8s_admission_test (mode=$km)"
 else
-  gate_warn "k8s_admission_test — go yok veya build fail"
+  gate_warn "k8s_admission_test — docker/go/kind erisilemedi"
 fi
 
 if bash "$ROOT/scripts/k8s_kind_e2e.sh" >/dev/null 2>&1; then
@@ -169,7 +170,7 @@ else
 fi
 
 if bash "$ROOT/scripts/docs_consistency_gate.sh" >/dev/null 2>&1; then
-  gate_ok "docs_consistency_gate (64 test + §8b)"
+  gate_ok "docs_consistency_gate (76 test + §8b)"
 else
   gate_warn "docs_consistency_gate — docs/HOSTING_RUNBOOK veya proof sayisi"
 fi

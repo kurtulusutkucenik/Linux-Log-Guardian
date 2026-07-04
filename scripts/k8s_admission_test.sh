@@ -11,7 +11,13 @@ DENY_LABEL="security.log-guardian.io/deny"
 PF_PID=""
 
 cleanup() {
-  [[ -n "$PF_PID" ]] && kill "$PF_PID" 2>/dev/null || true
+  if [[ -n "$PF_PID" ]]; then
+    if [[ "$PF_PID" == lg-k8s-adm-test-* ]]; then
+      docker rm -f "$PF_PID" >/dev/null 2>&1 || true
+    else
+      kill "$PF_PID" 2>/dev/null || true
+    fi
+  fi
 }
 trap cleanup EXIT
 
@@ -72,6 +78,27 @@ run_admit_checks() {
   return 0
 }
 
+try_docker_standalone() {
+  command -v docker >/dev/null 2>&1 || return 1
+  local img="${K8S_ADMISSION_IMAGE:-log-guardian-k8s-op:local}"
+  local port="${K8S_ADMISSION_LOCAL_PORT:-18082}"
+  local cname="lg-k8s-adm-test-$$"
+  docker build -t "$img" "$ROOT/k8s-operator" >/dev/null || return 1
+  docker rm -f "$cname" >/dev/null 2>&1 || true
+  docker run -d --name "$cname" -e GUARDIAN_STANDALONE=1 -e PORT=8082 \
+    -p "${port}:8082" "$img" >/dev/null || return 1
+  PF_PID="$cname"
+  for _ in 1 2 3 4 5 6 7 8; do
+    sleep 1
+    curl -sf --max-time 1 "http://127.0.0.1:${port}/admit" -X POST \
+      -H 'Content-Type: application/json' -d "$allow_payload" >/dev/null 2>&1 && break
+  done
+  run_admit_checks "http://127.0.0.1:${port}" || return 1
+  write_report "docker-standalone" true ""
+  echo "[OK] k8s_admission_test (docker standalone) -> $OUT"
+  exit 0
+}
+
 try_kind_operator() {
   command -v kubectl >/dev/null 2>&1 || return 1
   local ns="${K8S_ADMISSION_NS:-log-guardian}"
@@ -117,4 +144,6 @@ if command -v go >/dev/null 2>&1; then
   fi
 fi
 
-write_skip "go yok ve kind operator erisilemedi"
+try_docker_standalone || true
+
+write_skip "go/kind/docker operator erisilemedi"

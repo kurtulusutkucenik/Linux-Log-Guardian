@@ -148,6 +148,83 @@ static void api_count_rate_limited(void)
 }
 static pthread_mutex_t   g_consult_ip_mu  = PTHREAD_MUTEX_INITIALIZER;
 
+/* consult result cache — ip+method+path (TTL rules.conf CONSULT_CACHE_TTL) */
+#define CONSULT_CACHE_SLOTS 128
+typedef struct {
+    uint64_t key;
+    time_t   expire;
+    int      allow;
+    int      score;
+    int      sqli;
+} consult_cache_slot_t;
+
+static int                   g_consult_cache_ttl = 0;
+static consult_cache_slot_t  g_consult_cache[CONSULT_CACHE_SLOTS];
+static pthread_mutex_t       g_consult_cache_mu  = PTHREAD_MUTEX_INITIALIZER;
+
+void api_server_set_consult_cache_ttl(int sec)
+{
+    g_consult_cache_ttl = (sec > 0 && sec <= 300) ? sec : 0;
+}
+
+static uint64_t consult_cache_key(const char *ip, const char *method, const char *path)
+{
+    uint64_t h = 1469598103934665603ULL;
+    const char *parts[] = { ip, method, path, NULL };
+    for (int i = 0; parts[i]; i++) {
+        for (const unsigned char *p = (const unsigned char *)parts[i]; *p; p++) {
+            h ^= (uint64_t)*p;
+            h *= 1099511628211ULL;
+        }
+        h ^= (uint64_t)'|';
+        h *= 1099511628211ULL;
+    }
+    return h ? h : 1ULL;
+}
+
+static int consult_cache_lookup(uint64_t key, int *allow, int *score, int *sqli)
+{
+    if (g_consult_cache_ttl <= 0)
+        return 0;
+    time_t now = time(NULL);
+    int hit = 0;
+    pthread_mutex_lock(&g_consult_cache_mu);
+    for (int i = 0; i < CONSULT_CACHE_SLOTS; i++) {
+        consult_cache_slot_t *s = &g_consult_cache[i];
+        if (s->key == key && s->expire > now) {
+            *allow = s->allow;
+            *score = s->score;
+            *sqli  = s->sqli;
+            hit = 1;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&g_consult_cache_mu);
+    return hit;
+}
+
+static void consult_cache_store(uint64_t key, int allow, int score, int sqli)
+{
+    if (g_consult_cache_ttl <= 0)
+        return;
+    time_t exp = time(NULL) + g_consult_cache_ttl;
+    pthread_mutex_lock(&g_consult_cache_mu);
+    int slot = (int)(key % CONSULT_CACHE_SLOTS);
+    for (int i = 0; i < CONSULT_CACHE_SLOTS; i++) {
+        int j = (slot + i) % CONSULT_CACHE_SLOTS;
+        consult_cache_slot_t *s = &g_consult_cache[j];
+        if (s->key == key || s->expire <= time(NULL)) {
+            s->key    = key;
+            s->expire = exp;
+            s->allow  = allow;
+            s->score  = score;
+            s->sqli   = sqli;
+            break;
+        }
+    }
+    pthread_mutex_unlock(&g_consult_cache_mu);
+}
+
 /* ban/unban — token basina dakika limiti */
 #define BAN_MAX_PER_MIN 30
 static time_t          g_ban_min_window = 0;
@@ -605,6 +682,21 @@ static void handle_get_consult(conn_info_t *conn)
     if (!method[0])
         snprintf(method, sizeof(method), "GET");
 
+    uint64_t ckey = consult_cache_key(ip, method, path);
+    int cached_allow = 0, cached_score = 0, cached_sqli = 0;
+    if (consult_cache_lookup(ckey, &cached_allow, &cached_score, &cached_sqli)) {
+        if (!cached_allow) {
+            conn->tx_len = snprintf(conn->tx_buf, sizeof(conn->tx_buf),
+                "%s{\"allow\":false,\"score\":%d,\"sqli\":%s,\"cached\":true}",
+                HTTP_403_FORBIDDEN, cached_score, cached_sqli ? "true" : "false");
+        } else {
+            conn->tx_len = snprintf(conn->tx_buf, sizeof(conn->tx_buf),
+                "%s{\"allow\":true,\"score\":%d,\"sqli\":false,\"cached\":true}",
+                HTTP_200_OK, cached_score);
+        }
+        return;
+    }
+
     StrView url  = { path, strlen(path) };
     StrView body = { "", 0 };
     StrView user_agent = { ua, strlen(ua) };
@@ -616,6 +708,8 @@ static void handle_get_consult(conn_info_t *conn)
     /* Inline consult: log oncesi erken red — scanner/LFI tek basina da (>=7) */
     int block = sqli || waf_should_ban(&wr)
         || (wr.match_count > 0 && wr.total_score >= 7);
+
+    consult_cache_store(ckey, block ? 0 : 1, wr.total_score, sqli);
 
     if (block) {
         conn->tx_len = snprintf(conn->tx_buf, sizeof(conn->tx_buf),

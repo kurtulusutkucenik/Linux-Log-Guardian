@@ -83,6 +83,9 @@ async function liveGuardianStats(): Promise<{
         bp_failed: snap.ban_pipeline_failed,
         ja3_clusters: snap.ja3_clusters_active,
         ja3_bans: snap.ja3_cluster_bans_total,
+        dist_risk_buckets: snap.dist_risk_buckets_active,
+        dist_risk_bonus: snap.dist_risk_bonus_applied_total,
+        dist_risk_enabled: snap.dist_risk_enabled,
       },
       telegramStats: {
         tg_ack: snap.telegram_ack_24h,

@@ -31,6 +31,9 @@ export type LiveMetricsSnapshot = {
   xdp_active: number;
   ja3_clusters_active: number;
   ja3_cluster_bans_total: number;
+  dist_risk_buckets_active: number;
+  dist_risk_bonus_applied_total: number;
+  dist_risk_enabled: number;
   threat_total_iocs: number;
   fp_trusted_ips: number;
   ban_pipeline_ipset: number;
@@ -78,6 +81,9 @@ export function parseGuardianMetrics(body: string): LiveMetricsSnapshot {
     xdp_active: num("loganalyzer_xdp_active"),
     ja3_clusters_active: num("loganalyzer_ja3_clusters_active"),
     ja3_cluster_bans_total: num("loganalyzer_ja3_cluster_bans_total"),
+    dist_risk_buckets_active: num("loganalyzer_dist_risk_buckets_active"),
+    dist_risk_bonus_applied_total: num("loganalyzer_dist_risk_bonus_applied_total"),
+    dist_risk_enabled: num("loganalyzer_dist_risk_enabled"),
     threat_total_iocs: num("loganalyzer_threat_total_iocs"),
     fp_trusted_ips: num("loganalyzer_fp_trusted_ips"),
     ban_pipeline_ipset: num("loganalyzer_ban_pipeline_ipset"),
