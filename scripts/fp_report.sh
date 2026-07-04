@@ -4,7 +4,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-RULES="${FP_RULES:-test_rules.conf}"
+RULES="${FP_RULES:-rules.conf}"
 ATTACK_RULES="${FP_ATTACK_RULES:-smoke_schema.conf}"
 BENIGN="${FP_BENIGN:-corpus/benign_corpus.access}"
 ATTACK="${FP_ATTACK:-corpus/schema_strict.access}"

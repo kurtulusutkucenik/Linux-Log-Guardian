@@ -7,7 +7,7 @@ cd "$ROOT"
 # Bosluklu mutlak yol + BENCH_LOG kirliligi onlenir — her zaman repo-relative corpus
 unset BENCH_LOG 2>/dev/null || true
 LOG="corpus/bench_corpus.access"
-RULES="${BENCH_RULES:-test_rules.conf}"
+RULES="${BENCH_RULES:-rules.conf}"
 WORKERS="${BENCH_WORKERS:-$(nproc 2>/dev/null || echo 4)}"
 REPORT="${BENCH_VS_REPORT:-bench-vs-modsec.json}"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
@@ -82,7 +82,7 @@ MEASURE_LINES=$(line_count "$MEASURE_LOG")
 # 4) Guardian ic isleme suresi — 3 kosum medyani (surec startup'i haric)
 read_internal_elapsed() {
   ./log-guardian "$MEASURE_LOG" --no-tui --json --no-ban --no-db --rules "$MEASURE_RULES" -t "$WORKERS" 2>/dev/null \
-    | grep '"elapsed_sec"' | grep -oE '[0-9]+\.[0-9]+' | head -1
+    | grep '"elapsed_sec"' | grep -oE '[0-9]+\.[0-9]+' | head -1 || true
 }
 E1=$(read_internal_elapsed); E2=$(read_internal_elapsed); E3=$(read_internal_elapsed)
 GUARDIAN_ELAPSED=$(printf '%s\n%s\n%s\n' "$E1" "$E2" "$E3" | grep -E '^[0-9]' | sort -g | sed -n '2p')
