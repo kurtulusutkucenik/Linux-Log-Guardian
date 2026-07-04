@@ -73,16 +73,33 @@ CDN/origin: [EDGE_PROTECTION.md](EDGE_PROTECTION.md) — Cloudflare `real_ip`, n
 
 ---
 
+## P3b — Filo / çoklu host
+
+VM veya agent Offline ise önce keepalive, sonra dispatch:
+
+```bash
+bash scripts/vm_fleet_gate.sh
+bash scripts/fleet_multi_node_e2e.sh
+bash scripts/vm_demo_host.sh          # host: VM bekle + filo kapısı
+```
+
+Beklenen: `/fleet` üzerinde `node-kurtulus-01` + `node-vm-02` **Online** · `vm-fleet-gate-report.json` pass.
+
+VM guest (tek komut): `sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh`
+
+---
+
 ## P4 — Kanıt / vitrin
 
 ```bash
+bash scripts/morning_operator_gate.sh   # laptop_core + presentation + :8443
 bash scripts/competitive_proof.sh
 bash scripts/sync_dashboard_data.sh
 bash scripts/dashboard_refresh.sh
 bash scripts/website_preview_gate.sh
 ```
 
-Dashboard: `https://localhost:8443/tests` · Site: `cd landing && npm run dev`
+Dashboard: `https://localhost:8443/tests` (**76 kart**) · Site: `cd landing && npm run dev`
 
 ---
 
@@ -96,7 +113,7 @@ Dashboard: `https://localhost:8443/tests` · Site: `cd landing && npm run dev`
 
 ---
 
-## Laptop kanıt (74 test)
+## Laptop kanıt (76 test)
 
 | Kapı | Script |
 |------|--------|

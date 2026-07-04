@@ -1,0 +1,14 @@
+{
+  "date": "2026-07-04T11:39:49.225391+00:00",
+  "pass": true,
+  "mode": "multi-host",
+  "dash_url": "https://localhost:8443",
+  "agents": [
+    "node-kurtulus-01",
+    "node-vm-02"
+  ],
+  "agent_count": 2,
+  "online_count": 2,
+  "dispatch_target": "node-vm-02",
+  "test_ip": "203.0.113.250"
+}

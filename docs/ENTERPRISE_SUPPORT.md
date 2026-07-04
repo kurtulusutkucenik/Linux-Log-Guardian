@@ -26,7 +26,8 @@ Log Guardian **MIT Core** + opsiyonel **Pro/Enterprise** katmanları.
 | Kritik patch | 72 saat (Enterprise) | — |
 | Ban pipeline uptime | 99.5% | `soak-report.json` 72.0h, 0/864 fail |
 | FP oranı | <%5 (hedef %0.5) | `fp-report.json` ~%0.2 |
-| Filo çoklu host | 2+ agent Online | `fleet-multi-node-report.json` |
+| Filo çoklu host | 2+ agent Online | `fleet-multi-node-report.json` · `vm-fleet-gate-report.json` |
+| Dağıtık saldırı riski | /24 + UA bonus ≤+20 | `dist-risk-proof-report.json` |
 | Edge kapısı | nginx + ban yolu | `edge-protection-gate-report.json` |
 | Telegram operatör | ack + undo | `telegram-soc-gate-report.json` |
 
@@ -40,11 +41,11 @@ bash scripts/release_ready_check.sh    # artefakt kapısı
 bash scripts/release_ready_gate.sh     # ZIP + docs + live + filo zinciri
 ```
 
-Dashboard vitrin: `https://localhost:8443/tests` (**75 kart**) · site: `cd landing && npm run dev`
+Dashboard vitrin: `https://localhost:8443/tests` (**76 kart**) · site: `cd landing && npm run dev`
 
-Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · kapı: `bash scripts/enterprise_escalation_gate.sh`
+Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · sabah matris: `bash scripts/morning_operator_gate.sh` · kapı: `bash scripts/enterprise_escalation_gate.sh`
 
-Filo demo: `host_fleet_agent_setup.sh --install-user-service` + VM `vm_fleet_agent_setup.sh --install-user-service` → `/fleet` iki düğüm Online.
+Filo demo (host): `bash scripts/vm_demo_host.sh` → `node-kurtulus-01` + `node-vm-02` Online · çoklu dispatch: `bash scripts/fleet_multi_node_e2e.sh`
 
 ## Teknik önkoşullar
 

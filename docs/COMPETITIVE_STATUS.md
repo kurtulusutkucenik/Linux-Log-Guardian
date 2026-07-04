@@ -2,7 +2,7 @@
 
 **Linux Log Guardian** ModSecurity/CrowdSec ile aynı kategoride değil; **log → WAF → kernel ban** hattı. Bu belge kanıt paketinin ne iddia ettiğini ve etmediğini ayırır.
 
-**Son güncelleme:** 2026-07-04 · Kanıt: `bash scripts/local_proof_refresh.sh` · laptop `/tests` **75 kart** · corpus **23 kategori**
+**Son güncelleme:** 2026-07-04 · Kanıt: `bash scripts/local_proof_refresh.sh` · laptop `/tests` **76 kart** · corpus **23 kategori**
 
 ---
 
@@ -110,7 +110,7 @@
 
 ## Sonraki geliştirme önceliği (2026-06-29)
 
-**72h soak laptop ✅** · **Canlı site 75 test ✅** · **Dashboard 75/75 ✅** · **Filo host+VM ONLINE ✅** · **k8s kind live-ready ✅** · **local_proof PASS ✅** · **Sprint O kapalı ✅**
+**72h soak laptop ✅** · **Canlı site 76 test ✅** · **Dashboard 76/76 ✅** · **Filo host+VM ONLINE ✅** · **k8s admission docker-standalone ✅** · **local_proof PASS ✅** · **Sprint O kapalı ✅**
 
 **Git / GitHub / VPS** bilinçli ertelendi.
 

@@ -123,7 +123,7 @@ flowchart TB
 | E6 | Mesh (etcd) | `etcd_mesh.c`, `mesh_intel.c` | ✅ | `mesh_etcd_e2e.sh` + `mesh_etcd_live_e2e.sh` | Laptop docker PUT/GET; VPS cluster opsiyonel |
 | E7 | Compliance PDF export | dashboard Pro tier | ✅ | `bash scripts/compliance_export_e2e.sh` | `/api/reports/export` Pro gate |
 | E8 | 72h soak / air-gap runbook | `scripts/soak_test.sh` | ✅ | `soak-report.json` 864 örnek, 0 fail (2026-06-16→19) | Laptop kanıt; VPS tekrar opsiyonel |
-| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 75 test vitrin |
+| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 76 test vitrin |
 
 ### 2.4 Kalite ve rekabet kapıları (tüm tier'lar)
 

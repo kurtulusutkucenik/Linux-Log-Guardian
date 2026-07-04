@@ -11,7 +11,7 @@ cd landing && npm run dev              # hizli onizleme :3001
 bash scripts/website_landing_export.sh # static export -> landing/out
 bash scripts/website_deploy_gate.sh    # build + landing/out + wrangler dogrulama (deploy yok)
 bash scripts/website_publish.sh        # landing/out -> Cloudflare Pages production (canli site)
-bash scripts/website_preview_gate.sh   # /tests parity (landing/lib/tests.ts <-> competitive-proof) 75/75
+bash scripts/website_preview_gate.sh   # /tests parity (landing/lib/tests.ts <-> competitive-proof) 76/76
 ```
 
 **Canli yayin:** Cloudflare Pages bu repoda Git bagli degil — `git push` siteyi guncellemez.

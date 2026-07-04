@@ -65,7 +65,7 @@ bash scripts/dashboard_refresh.sh
 | `bash scripts/website_deploy_gate.sh` | Landing build + `landing/out` + wrangler doğrulama | Hayır |
 | `bash scripts/website_publish.sh` | Canlı site güncelleme (landing/out → Cloudflare Pages) | Hayır |
 | `bash scripts/pre_push_secret_scan.sh` | GitHub öncesi token tarama | Hayır |
-| `bash scripts/website_preview_gate.sh` | Landing /tests parity (75/75, offline) | Hayır |
+| `bash scripts/website_preview_gate.sh` | Landing /tests parity (76/76, offline) | Hayır |
 | `bash scripts/soak_status.sh` | Soak PID + rapor özeti | Hayır |
 | `bash scripts/dashboard_stack.sh` | Grafana + TLS dashboard + JWT | Hayır |
 | `bash scripts/laptop_stack_boot.sh` | Eksik container’ları ayağa kaldır (reboot sonrası) | Hayır |

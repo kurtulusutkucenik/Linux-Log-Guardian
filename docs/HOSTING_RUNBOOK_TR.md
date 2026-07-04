@@ -131,6 +131,15 @@ Kanıt: `nginx-inline-consult-report.json` · `nginx-hybrid-report.json`
 | `ADAPTIVE_THRESHOLD` | `1` | Low-and-slow (ısınma gerekir) |
 | `FP_LEARN` | `1` | İlk hafta daha fazla alarm normal |
 | `FP_TRUST_DAYS` | `30` | Güvenilir IP EMA süresi |
+| `DIST_RISK` | `1` | Dağıtık saldırı: /24 + UA fp + ülke → ban risk bonusu (max +20) |
+| `DIST_RISK_MIN_IPS` | `3` | Bonus için minimum farklı IP (subnet/fingerprint) |
+| `DIST_RISK_WINDOW_SEC` | `300` | Korelasyon penceresi (5 dk) |
+| `JA3_CLUSTER_BAN` | `1` | Aynı UA/JA3 → toplu cluster ban (DIST_RISK'ten bağımsız) |
+| `CONSULT_CACHE_TTL` | `5` | Inline consult flood koruması (saniye) |
+
+**DIST_RISK Grafana:** `loganalyzer_dist_risk_buckets_active`, `loganalyzer_dist_risk_bonus_applied_total` — SOC dashboard “DIST risk” panelleri.
+
+**Kanıt:** `bash scripts/dist_risk_proof_e2e.sh` (risk delta ≥10, unit test dahil).
 
 **İlk hafta beklentisi:** `FP_LEARN=1` açıkken `trusted_ips` sıfırdan başlar; 30 gün / ~100 temiz örnekten sonra false alarm düşer. Dashboard → FP panelinde görünür.
 

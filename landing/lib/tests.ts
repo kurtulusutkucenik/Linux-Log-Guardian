@@ -386,6 +386,26 @@ export const TESTS: TestEntry[] = [
     "date": "2026-06-30"
   },
   {
+    "id": "dist-risk-proof",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
+    "title": "DIST_RISK — dagitik saldiri skoru kaniti",
+    "titleEn": "DIST_RISK — distributed attack score proof",
+    "verdict": "risk off=45.0 on=65.0; delta=20.0.",
+    "verdictEn": "risk off=45.0 on=65.0; delta=20.0.",
+    "group": "proof",
+    "purpose": "/24 + UA fingerprint korelasyonu ban risk bonusu; kapali/acik replay delta >=10.",
+    "purposeEn": "/24 + UA fingerprint correlation ban risk bonus; off/on replay delta >=10.",
+    "metrics": [
+      { "label": "delta", "value": "20.0" },
+      { "label": "off", "value": "45.0" },
+      { "label": "on", "value": "65.0" }
+    ],
+    "script": "scripts/dist_risk_proof_e2e.sh",
+    "date": "2026-07-04"
+  },
+  {
     "id": "bans-telegram-ops",
     "status": "pass",
     "statusLabel": "GECTI",
