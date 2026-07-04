@@ -4,7 +4,16 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
-RULES="${FP_RULES:-rules.conf}"
+RULES="${FP_RULES:-}"
+if [[ -z "$RULES" ]]; then
+  for candidate in rules/fp-bench.conf test_rules.conf; do
+    if [[ -f "$candidate" ]]; then
+      RULES="$candidate"
+      break
+    fi
+  done
+  RULES="${RULES:-rules.conf}"
+fi
 ATTACK_RULES="${FP_ATTACK_RULES:-smoke_schema.conf}"
 BENIGN="${FP_BENIGN:-corpus/benign_corpus.access}"
 ATTACK="${FP_ATTACK:-corpus/schema_strict.access}"

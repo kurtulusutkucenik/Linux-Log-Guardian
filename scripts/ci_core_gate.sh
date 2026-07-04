@@ -12,7 +12,10 @@ export LG_SKIP_DASHBOARD_SYNC="${LG_SKIP_DASHBOARD_SYNC:-1}"
 export WASMTIME_ROOT="${WASMTIME_ROOT:-$ROOT/vendor/wasmtime}"
 export LD_LIBRARY_PATH="${WASMTIME_ROOT}/lib:${LD_LIBRARY_PATH:-}"
 export BENCH_RULES="${BENCH_RULES:-rules.conf}"
-export FP_RULES="${FP_RULES:-rules.conf}"
+export FP_RULES="${FP_RULES:-rules/fp-bench.conf}"
+export REAL_ATTACK_SKIP_CATEGORIES="${REAL_ATTACK_SKIP_CATEGORIES:-1}"
+export BENCH_STEADY_LINES="${BENCH_STEADY_LINES:-5000}"
+export BENCH_WORKERS="${BENCH_WORKERS:-2}"
 
 echo "=== ci_core_gate ==="
 test -x ./log-guardian || { echo "[ci_core_gate] FAIL: log-guardian yok" >&2; exit 1; }

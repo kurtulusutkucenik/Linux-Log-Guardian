@@ -43,6 +43,9 @@ jobs:
         REQUIRE_WASM_NATIVE: "1"
         LG_SYNC_NO_SUDO: "1"
         LG_SKIP_DASHBOARD_SYNC: "1"
+        REAL_ATTACK_SKIP_CATEGORIES: "1"
+        BENCH_STEADY_LINES: "5000"
+        FP_RULES: "rules/fp-bench.conf"
 
     - name: Upload proof artefacts
       uses: actions/upload-artifact@v4
