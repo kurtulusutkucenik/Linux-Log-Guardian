@@ -33,6 +33,10 @@ ifeq ($(LG_ASAN),1)
 endif
 LIBS    = -lsqlite3 -lcurl -lssl -lcrypto -lpcre2-8 \
           -lm -lbpf -lelf -lz -luring -ldl -lseccomp
+# libbpf >= 0.8: bpf_xdp_attach/detach libxdp'de (Ubuntu CI + yeni laptop)
+ifneq ($(shell pkg-config --exists libxdp 2>/dev/null && echo yes),)
+  LIBS += -lxdp
+endif
 
 ifeq ($(LG_CROSS_AARCH64),1)
   override HAVE_WASM := 0

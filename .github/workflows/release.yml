@@ -8,14 +8,14 @@ on:
 
 jobs:
   proof-pack:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v4
 
       - name: Install dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
+          sudo apt-get install -y clang llvm libbpf-dev libxdp-dev libpcre2-dev libsqlite3-dev \
             libcurl4-openssl-dev libssl-dev liburing-dev libseccomp-dev pkg-config zip
 
       - name: Build

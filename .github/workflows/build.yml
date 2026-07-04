@@ -8,14 +8,14 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
     - name: Install Dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y clang llvm libbpf-dev libpcre2-dev libsqlite3-dev \
+        sudo apt-get install -y clang llvm libbpf-dev libxdp-dev libpcre2-dev libsqlite3-dev \
           libcurl4-openssl-dev libssl-dev liburing-dev libseccomp-dev pkg-config curl
 
     - name: Build Fallback Mode (No XDP)
@@ -81,7 +81,7 @@ jobs:
       run: bash scripts/webhook_smoke_test.sh
 
   k8s-operator:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
     - uses: actions/setup-go@v5
@@ -94,7 +94,7 @@ jobs:
       run: bash scripts/k8s_admission_test.sh
 
   wasm:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
     - uses: actions/checkout@v3
 
@@ -102,7 +102,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get install -y clang curl pkg-config libpcre2-dev libsqlite3-dev \
-          libcurl4-openssl-dev libssl-dev liburing-dev libbpf-dev libseccomp-dev
+          libcurl4-openssl-dev libssl-dev liburing-dev libbpf-dev libxdp-dev libseccomp-dev
 
     - name: Rust toolchain
       uses: dtolnay/rust-toolchain@stable
