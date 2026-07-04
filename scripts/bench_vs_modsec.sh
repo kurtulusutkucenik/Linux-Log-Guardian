@@ -72,7 +72,8 @@ if [[ "$STEADY_LINES" -gt 0 && "$LOG_LINES" -gt 0 && "$LOG_LINES" -lt "$STEADY_L
   MEASURE_LOG="$ROOT/.cache/bench-steady.access"
   : > "$MEASURE_LOG"
   reps=$(( (STEADY_LINES + LOG_LINES - 1) / LOG_LINES ))
-  for _ in $(seq 1 "$reps"); do cat "$LOG"; done | head -n "$STEADY_LINES" > "$MEASURE_LOG"
+  # head erken kapaninca cat SIGPIPE (141) — pipefail ile set -e dusmesin
+  { for _ in $(seq 1 "$reps"); do cat "$LOG"; done; } | head -n "$STEADY_LINES" > "$MEASURE_LOG" || [[ ${PIPESTATUS[1]:-0} -eq 0 || ${PIPESTATUS[0]:-0} -eq 141 ]]
 fi
 MEASURE_LINES=$(line_count "$MEASURE_LOG")
 
