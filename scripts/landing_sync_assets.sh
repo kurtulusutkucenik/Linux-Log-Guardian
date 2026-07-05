@@ -43,3 +43,4 @@ for asset in logo.png favicon.ico; do
 done
 
 echo "[OK] landing_sync_assets — $copied kanıt dosyası -> landing/public/evidence/"
+python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" >/dev/null 2>&1 || true

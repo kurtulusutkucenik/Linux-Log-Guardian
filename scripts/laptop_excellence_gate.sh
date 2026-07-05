@@ -61,10 +61,17 @@ fi
 # --- Docker + dashboard ---
 echo ""
 echo "=== Dashboard :8443 ==="
-if bash "$ROOT/scripts/laptop_observability_check.sh" >/dev/null 2>&1; then
-  gate_ok "laptop_observability_check"
+if ! bash "$ROOT/scripts/laptop_observability_check.sh" >/dev/null 2>&1; then
+  if command -v docker >/dev/null 2>&1 && docker info >/dev/null 2>&1; then
+    bash "$ROOT/scripts/laptop_stack_boot.sh" >/dev/null 2>&1 \
+      && bash "$ROOT/scripts/laptop_observability_check.sh" >/dev/null 2>&1 \
+      && gate_ok "laptop_observability_check (auto boot)" \
+      || gate_warn "observability — bash scripts/laptop_stack_boot.sh"
+  else
+    gate_warn "observability — bash scripts/laptop_stack_boot.sh"
+  fi
 else
-  gate_warn "observability — bash scripts/laptop_stack_boot.sh"
+  gate_ok "laptop_observability_check"
 fi
 
 if curl -sfk --max-time 4 --resolve 'localhost:8443:127.0.0.1' \

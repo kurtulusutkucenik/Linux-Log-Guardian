@@ -57,7 +57,8 @@ for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-sta
   nginx-inline-consult-report.json nginx-hybrid-report.json real-attack-report-10k.json \
   owasp-corpus-report.json tr-hosting-corpus-report.json customer-corpus-report.json \
   threat-intel-sync-report.json threat-intel-prod-report.json taxii-feed-report.json \
-  parser-fuzz-report.json ban-policy-audit-report.json dist-risk-proof-report.json lineage-incident-report.json \
+  parser-fuzz-report.json ban-policy-audit-report.json ban-profile-e2e-report.json \
+  dist-risk-proof-report.json lineage-incident-report.json \
   eps-architecture-report.json \
   prod-stack-e2e-report.json phase100-fast-gate-report.json vm-sprint-proof.json; do
   copy_if "$f"

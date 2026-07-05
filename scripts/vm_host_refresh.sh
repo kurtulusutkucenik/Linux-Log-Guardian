@@ -101,14 +101,22 @@ run_guest_refresh() {
   local pass="${LG_VM_GUEST_PASSWORD:-}"
   local pass_file="${LG_VM_GUEST_PASSWORD_FILE:-$HOME/.config/log-guardian/vm-guest.pass}"
   local pass_args=()
+  local pass_content=""
   if [[ -n "$pass" ]]; then
     pass_args=(--password "$pass")
+    pass_content="$pass"
   elif [[ -f "$pass_file" ]]; then
     pass_args=(--passwordfile "$pass_file")
+    pass_content="$(tr -d '\r\n' < "$pass_file")"
   else
     return 1
   fi
-  local cmd='sudo mount -t vboxsf lg /mnt/lg 2>/dev/null || true; sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh'
+  [[ -n "$pass_content" ]] || return 1
+  # guestcontrol TTY yok — sudo -S ile VM parolasi (vm-guest.pass = VBox + sudo)
+  # Tek sudo oturumu: mount + refresh root olarak (NOPASSWD sudoers gerekmez)
+  local inner='/usr/bin/mount -t vboxsf lg /mnt/lg 2>/dev/null || true; bash /mnt/lg/scripts/vm_refresh_from_host.sh'
+  local cmd=""
+  printf -v cmd "printf '%%s\\n' %q | sudo -S -p '' bash -lc %q" "$pass_content" "$inner"
   VBoxManage guestcontrol "$VM_NAME" run \
     --exe /bin/bash \
     --username "${LG_VM_GUEST_USER:-kurtulus}" \
@@ -118,8 +126,11 @@ run_guest_refresh() {
 }
 
 if [[ "$MODE" == "--exec" ]]; then
-  run_guest_refresh && exit 0
-  fail "--exec: HOST'ta LG_VM_GUEST_PASSWORD veya ~/.config/log-guardian/vm-guest.pass (VM kullanici parolasi)"
+  if run_guest_refresh; then
+    ok "vm_host_refresh — VM guncellendi (guestcontrol)"
+    exit 0
+  fi
+  fail "--exec basarisiz — ~/.config/log-guardian/vm-guest.pass (VM sudo parolasi) + VM'de oturum acik mi?"
 fi
 
 if run_guest_refresh 2>/dev/null; then

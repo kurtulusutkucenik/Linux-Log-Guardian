@@ -124,6 +124,10 @@ export default function TestMatrix() {
         {c.intro}
       </p>
 
+      <p className="mt-4 max-w-3xl rounded-lg border border-neon/20 bg-neon/[0.04] px-4 py-3 font-mono text-xs leading-relaxed text-neutral-300">
+        {c.researcherBanner}
+      </p>
+
       <div className="mt-10 flex flex-col gap-6 rounded-xl border border-neutral-800 bg-panel p-6 md:flex-row md:items-center">
         <div className="flex items-center gap-5">
           <div className="flex h-[4.5rem] w-[4.5rem] shrink-0 flex-col items-center justify-center rounded-xl border border-ok/30 bg-black shadow-[0_0_20px_rgba(34,197,94,0.15)]">

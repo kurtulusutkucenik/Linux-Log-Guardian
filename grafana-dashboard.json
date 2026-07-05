@@ -501,6 +501,65 @@
         }
       },
       "targets": [{ "expr": "loganalyzer_webhook_quiet_active{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "row",
+      "title": "DIST risk (distributed attack)",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 80 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "DIST risk enabled",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 81 },
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            { "type": "value", "options": { "0": { "text": "OFF" }, "1": { "text": "ON" } } }
+          ],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              { "color": "red", "value": null },
+              { "color": "green", "value": 1 }
+            ]
+          }
+        }
+      },
+      "targets": [{ "expr": "loganalyzer_dist_risk_enabled{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "DIST risk buckets",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 81 },
+      "targets": [{ "expr": "loganalyzer_dist_risk_buckets_active{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "DIST risk bonus applied",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 81 },
+      "targets": [{ "expr": "loganalyzer_dist_risk_bonus_applied_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "stat",
+      "title": "DIST risk observe total",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 81 },
+      "targets": [{ "expr": "loganalyzer_dist_risk_observe_total{tenant_id=\"$tenant\"}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "DIST risk bonus rate",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 85 },
+      "targets": [
+        {
+          "expr": "rate(loganalyzer_dist_risk_bonus_applied_total{tenant_id=\"$tenant\"}[5m])",
+          "legendFormat": "bonus/s"
+        },
+        {
+          "expr": "rate(loganalyzer_dist_risk_observe_total{tenant_id=\"$tenant\"}[5m])",
+          "legendFormat": "observe/s"
+        }
+      ]
     }
   ],
   "time": { "from": "now-1h", "to": "now" }

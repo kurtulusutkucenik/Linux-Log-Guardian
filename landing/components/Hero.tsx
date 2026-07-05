@@ -143,6 +143,12 @@ export default function Hero() {
           <p className="text-base leading-[1.75] text-neutral-400">{s.hero_side_body}</p>
           <div className="flex flex-wrap gap-3 sm:gap-4">
             <Link
+              href="/testler"
+              className="inline-flex items-center justify-center rounded-md bg-neon/10 px-5 py-3 text-sm font-semibold text-neon ring-1 ring-neon/40 transition-all hover:bg-neon/20 hover:shadow-[0_0_24px_rgba(255,59,59,0.25)] sm:px-6 sm:py-3.5"
+            >
+              {s.hero_cta_tests}
+            </Link>
+            <Link
               href="#kurulum"
               className="inline-flex items-center justify-center rounded-md bg-neon px-5 py-3 text-sm font-semibold text-black shadow-[0_0_20px_rgba(255,59,59,0.3)] transition-all hover:shadow-[0_0_35px_rgba(255,59,59,0.6)] sm:px-6 sm:py-3.5"
             >
@@ -156,13 +162,10 @@ export default function Hero() {
             >
               {s.hero_cta_github}
             </a>
-            <Link
-              href="/testler"
-              className="inline-flex items-center justify-center rounded-md border border-neutral-800 px-5 py-3 text-sm font-medium text-neutral-400 transition-all hover:border-neutral-600 hover:text-white sm:px-6 sm:py-3.5"
-            >
-              {s.hero_cta_tests}
-            </Link>
           </div>
+          <p className="font-mono text-[11px] leading-relaxed text-neutral-500">
+            {s.hero_researcher_note}
+          </p>
         </div>
         <TerminalInstall />
       </div>

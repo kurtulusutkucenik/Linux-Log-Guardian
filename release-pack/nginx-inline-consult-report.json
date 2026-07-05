@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-30T18:20:56.273916+00:00",
+  "date": "2026-07-05T06:53:35.479669+00:00",
   "api_port": 8090,
   "api_reachable": true,
   "endpoint": "/api/v1/consult",
@@ -23,11 +23,5 @@
   },
   "nginx_snippet": "examples/nginx/snippets/log-guardian-inline-consult.conf",
   "pass": true,
-  "note": "make install sonrasi: sudo systemctl restart log-guardian",
-  "e2e": {
-    "nginx_config_ok": true,
-    "edge_sqli_http": 403,
-    "edge_benign_http": 404,
-    "edge_strict": false
-  }
+  "note": "make install sonrasi: sudo systemctl restart log-guardian"
 }

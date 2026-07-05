@@ -54,6 +54,28 @@ pods_stable() {
   return 0
 }
 
+helm_template_proof() {
+  local mode="${1:-template-only}"
+  helm template lg-kind "$CHART" --namespace log-guardian >"$RENDER"
+  grep -q 'kind: DaemonSet' "$RENDER" || fail "DaemonSet yok"
+  grep -q 'kind: Deployment' "$RENDER" || fail "Deployment (analyzer) yok"
+  grep -q 'kind: ConfigMap' "$RENDER" || fail "ConfigMap yok"
+  ok "helm template — DaemonSet + Deployment + ConfigMap"
+  if kubectl cluster-info >/dev/null 2>&1; then
+    helm upgrade --install lg-kind "$CHART" \
+      --namespace log-guardian \
+      --create-namespace \
+      --set daemon.image.pullPolicy=IfNotPresent \
+      --set analyzer.image.pullPolicy=IfNotPresent \
+      --set operator.image.pullPolicy=IfNotPresent \
+      $(helm_kind_sets) \
+      --dry-run=server >/dev/null 2>&1 && mode="dry-run-server" && ok "helm upgrade --dry-run=server"
+  fi
+  write_report "$mode" true "kind cluster opsiyonel — chart kaniti"
+  echo "[OK] k8s_kind_e2e — mode=$mode -> $OUT"
+  exit 0
+}
+
 helm_kind_sets() {
   echo "--set" "analyzer.logVolume.type=emptyDir"
   echo "--set" "operator.standalone=true"
@@ -86,9 +108,8 @@ if command -v kind >/dev/null 2>&1; then
       ok "kind create cluster --name $CLUSTER"
       kind create cluster --name "$CLUSTER"
     else
-      write_report "skip-no-cluster" true "K8S_KIND_CREATE=1 ile kind create"
-      echo "[SKIP] cluster '$CLUSTER' yok — K8S_KIND_CREATE=1"
-      exit 0
+      ok "cluster '$CLUSTER' yok — helm template kaniti (kind opsiyonel)"
+      helm_template_proof "template-only"
     fi
   else
     ok "kind cluster $CLUSTER mevcut"

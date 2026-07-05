@@ -1,0 +1,10 @@
+{
+  "date": "2026-07-05T10:07:35.675629+00:00",
+  "pass": true,
+  "risk_off": 45.0,
+  "risk_on": 65.0,
+  "delta": 20.0,
+  "decision_off": "force_apt",
+  "decision_on": "force_apt",
+  "script": "scripts/dist_risk_proof_e2e.sh"
+}

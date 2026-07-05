@@ -47,6 +47,16 @@ DEST_DIR=$(dirname "$DEST")
 
 [[ "$(id -u)" -eq 0 ]] || { echo "[install_fp_trust] sudo gerekli" >&2; exit 1; }
 
+src_n=$(wc -l <"$SRC" | tr -d ' ')
+dest_n=0
+[[ -f "$DEST" ]] && dest_n=$(wc -l <"$DEST" | tr -d ' ')
+if [[ "$dest_n" -gt 0 && "$src_n" -lt "$dest_n" && "${FORCE:-0}" != "1" ]]; then
+  echo "[install_fp_trust] SKIP: prod store daha zengin ($dest_n > $src_n satir) — korundu: $DEST"
+  echo "  bilerek degistirmek icin: sudo FORCE=1 bash scripts/install_fp_trust_prod.sh \"$SRC\""
+  echo "  veya daha zengin store: sudo bash scripts/install_fp_trust_prod.sh  # en buyuk repo dosyasi"
+  exit 0
+fi
+
 mkdir -p "$DEST_DIR"
 chown root:log-guardian "$DEST_DIR" 2>/dev/null || true
 chmod 2770 "$DEST_DIR"

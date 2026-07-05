@@ -10,7 +10,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install Dependencies
       run: |
@@ -65,7 +65,7 @@ jobs:
   k8s-operator:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     - uses: actions/setup-go@v5
       with:
         go-version: '1.22'
@@ -78,7 +78,7 @@ jobs:
   wasm:
     runs-on: ubuntu-24.04
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
     - name: Install build deps
       run: |

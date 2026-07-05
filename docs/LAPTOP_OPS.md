@@ -24,6 +24,8 @@ bash scripts/dashboard_refresh.sh
 |--------|----------|-------------------|
 | `sudo bash install.sh` | İlk kurulum | Hayır (demo `DegistirBeni!123` kalır) |
 | `sudo bash scripts/install_first_run.sh` | Kurulum sonrası tek komut (API, firewall, IPC, FP warmup) | Hayır |
+| `sudo bash scripts/apply_laptop_security_p0.sh` | P0 güvenlik: nginx log, inline consult, FP trust, whitelist, API | Hayır |
+| `bash scripts/ban_profile_e2e.sh` | AUTO_BAN_PROFILE + consult cache + threat intel offline kanıt | Hayır |
 | `sudo bash scripts/repair_no_xdp_stack.sh` | `--no-xdp` sonrasi daemon unit + servisler + fleet log sustur | Hayır |
 | `bash scripts/post_install_verify.sh` | Tek komut yeşil/kırmızı kurulum matrisi | Hayır |
 | `sudo bash scripts/ensure_api_security.sh` | API `:8090` — bind + token + firewall | **Hayır** |
@@ -65,7 +67,7 @@ bash scripts/dashboard_refresh.sh
 | `bash scripts/website_deploy_gate.sh` | Landing build + `landing/out` + wrangler doğrulama | Hayır |
 | `bash scripts/website_publish.sh` | Canlı site güncelleme (landing/out → Cloudflare Pages) | Hayır |
 | `bash scripts/pre_push_secret_scan.sh` | GitHub öncesi token tarama | Hayır |
-| `bash scripts/website_preview_gate.sh` | Landing /tests parity (76/76, offline) | Hayır |
+| `bash scripts/website_preview_gate.sh` | Landing /tests parity (79/79, offline) | Hayır |
 | `bash scripts/soak_status.sh` | Soak PID + rapor özeti | Hayır |
 | `bash scripts/dashboard_stack.sh` | Grafana + TLS dashboard + JWT | Hayır |
 | `bash scripts/laptop_stack_boot.sh` | Eksik container’ları ayağa kaldır (reboot sonrası) | Hayır |

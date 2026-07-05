@@ -1,13 +1,13 @@
 {
-  "ts": "2026-06-15T18:08:44.214383+00:00",
+  "ts": "2026-07-04T22:28:17.739136+00:00",
   "pass": true,
   "mode": "both",
   "firehol": {
     "prod_marker": true,
     "timer_active": true,
-    "ipset_entries": 24663,
+    "ipset_entries": 24702,
     "live": true,
-    "sync_attempted": true
+    "sync_attempted": false
   },
   "api_feed": {
     "env_file": true,
@@ -15,7 +15,7 @@
     "sources": "abuseipdb",
     "abuseipdb_key": true,
     "otx_key": true,
-    "last_sync_applied": 5000,
+    "last_sync_applied": 0,
     "last_sync_failed": 0,
     "live": true
   },

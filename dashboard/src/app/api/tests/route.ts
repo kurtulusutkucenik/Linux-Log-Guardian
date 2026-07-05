@@ -40,7 +40,7 @@ export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
+  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
     await Promise.all([
       readJson("ops-gate-report.json"),
       readJson("crs-parity-report.json"),
@@ -53,6 +53,9 @@ export async function GET(req: NextRequest) {
       readJson("fp-cluster-trust-report.json"),
       readJson("lineage-live-report.json"),
       readJson("nginx-inline-consult-report.json"),
+      readJson("nginx-hybrid-report.json"),
+      readJson("ban-profile-e2e-report.json"),
+      readJson("ipv6-ban-e2e-report.json"),
       readJson("owasp-corpus-report.json"),
       readJson("tr-hosting-corpus-report.json"),
       readJson("threat-intel-sync-report.json"),
@@ -125,6 +128,9 @@ export async function GET(req: NextRequest) {
     fpClusterTrust: fpClusterTrust as TestReports["fpClusterTrust"],
     lineageLive: lineageLive as TestReports["lineageLive"],
     nginxConsult: nginxConsult as TestReports["nginxConsult"],
+    nginxHybrid: nginxHybrid as TestReports["nginxHybrid"],
+    banProfileE2e: banProfileE2e as TestReports["banProfileE2e"],
+    ipv6BanE2e: ipv6BanE2e as TestReports["ipv6BanE2e"],
     owaspCorpus: owaspCorpus as TestReports["owaspCorpus"],
     trHostingCorpus: trHostingCorpus as TestReports["trHostingCorpus"],
     threatIntelSync: threatIntelSync as TestReports["threatIntelSync"],

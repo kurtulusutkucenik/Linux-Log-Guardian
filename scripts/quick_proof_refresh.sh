@@ -18,6 +18,9 @@ else
 fi
 
 bash "$ROOT/scripts/competitive_proof.sh"
+bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
+  && echo "[OK] dashboard_tests_parity" \
+  || echo "[WARN] dashboard_tests_parity FAIL — dashboard validationTests.ts guncelle" >&2
 bash "$ROOT/scripts/sync_dashboard_data.sh" 2>/dev/null \
   || echo "[WARN] sync_dashboard_data — docker stack ayakta mi?" >&2
 

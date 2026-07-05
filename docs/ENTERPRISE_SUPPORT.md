@@ -41,7 +41,7 @@ bash scripts/release_ready_check.sh    # artefakt kapısı
 bash scripts/release_ready_gate.sh     # ZIP + docs + live + filo zinciri
 ```
 
-Dashboard vitrin: `https://localhost:8443/tests` (**76 kart**) · site: `cd landing && npm run dev`
+Dashboard vitrin: `https://localhost:8443/tests` (**79 kart**) · site: `https://ceniklinuxlogguardian.org/tests`
 
 Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · sabah matris: `bash scripts/morning_operator_gate.sh` · kapı: `bash scripts/enterprise_escalation_gate.sh`
 

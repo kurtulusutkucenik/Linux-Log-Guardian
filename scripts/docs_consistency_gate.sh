@@ -55,7 +55,8 @@ esc = (root / "docs/ENTERPRISE_ESCALATION.md").read_text(encoding="utf-8") if (r
 
 hosting_8b = bool(re.search(r"8b\.\s*Telegram|§8b", hosting)) and "telegram_soc_gate" in hosting
 esc_hosting_link = "HOSTING_RUNBOOK_TR.md" in esc and bool(re.search(r"§8b|8b", esc))
-support_kart = "76 kart" in (root / "docs/ENTERPRISE_SUPPORT.md").read_text(encoding="utf-8", errors="replace") if (root / "docs/ENTERPRISE_SUPPORT.md").is_file() else False
+support_md = (root / "docs/ENTERPRISE_SUPPORT.md").read_text(encoding="utf-8", errors="replace") if (root / "docs/ENTERPRISE_SUPPORT.md").is_file() else ""
+support_kart = bool(re.search(rf"\b{proof_n}\s+kart", support_md)) if proof_n else False
 
 reasons = []
 if check_rc != 0:

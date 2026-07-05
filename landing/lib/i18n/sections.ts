@@ -14,6 +14,7 @@ export type SectionCopy = {
   hero_cta_setup: string;
   hero_cta_github: string;
   hero_cta_tests: string;
+  hero_researcher_note: string;
   about_eyebrow: string;
   about_title: string;
   about_intro: string;
@@ -44,7 +45,7 @@ export type SectionCopy = {
 
 const TR: SectionCopy = {
   hero_badge: "//:LOG→BAN · SYSTEM ONLINE",
-  hero_bullets: ["~20 ms kernel ban", "75 otomatik test", "72h soak PASS"],
+  hero_bullets: ["~20 ms kernel ban", "79 otomatik test", "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   hero_chips: ["açık kaynak · MIT", "72h soak PASS"],
   hero_reach: "3,65k+ ziyaret · 56 ülke · kanıt PDF",
@@ -55,13 +56,13 @@ const TR: SectionCopy = {
     "%100 gerçek saldırı recall + %100 OWASP CRS parity — 121 kural, 1500 satır corpus",
     "%0.2 false positive — 500 benign satırda 1 alarm; rakiplerde yüksek/orta",
     "72 saat VM soak — 864 örnek, 0 hata; rakiplerde otomatik kanıt yok",
-    "75 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
+    "79 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
     "3 araç yığını tek ürün: Fail2ban + ModSecurity + CrowdSec — ~15 dk kurulum",
   ],
   hero_praise_bold: [
     { v: "~20ms", l: "kernel ban" },
     { v: "100", l: "recall" },
-    { v: "75", l: "otomatik test" },
+    { v: "79", l: "otomatik test" },
     { v: "3→1", l: "araç birleşimi" },
   ],
   hero_side_title:
@@ -70,7 +71,9 @@ const TR: SectionCopy = {
     "nginx access log satırından ipset ban'a kadar tek hat: parser, OWASP CRS/WAF değerlendirme ve ~20 ms kernel ban. Rakipler parçalı mimari sunar — biz ölçülmüş, tekrar üretilebilir PDF/JSON kanıtıyla tek zincirde birleştiririz. Türkiye'de geliştirildi, MIT lisansıyla açık kaynak, tamamen self-hosted.",
   hero_cta_setup: "15 dk kurulum",
   hero_cta_github: "GitHub kaynak",
-  hero_cta_tests: "75 testi gör",
+  hero_cta_tests: "79 testi gör",
+  hero_researcher_note:
+    "Güvenlik araştırmacısı? WooCommerce veya mağaza API değil — doğrulama matrisi /testler · security.txt",
   about_eyebrow: "//:Nedir",
   about_title: "Linux Log Guardian nedir?",
   about_intro:
@@ -114,8 +117,8 @@ const TR: SectionCopy = {
       company: "CrowdSec",
       name: "SOC & sinyal katmanı",
       replaces: "CrowdSec bouncer + ayrı konsol + manuel kanıt",
-      body: "CrowdSec parçalı mimarisine gerek yok. Prometheus, SOC timeline, 75 test, 14 kanıt dosyası, Telegram ops — tek panel.",
-      metrics: ["75 test", "72h soak PASS", "14 kanıt dosyası"],
+      body: "CrowdSec parçalı mimarisine gerek yok. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
+      metrics: ["79 test", "72h soak PASS", "14 kanıt dosyası"],
     },
   ],
   metrics_title: "Sitede gösterilen tüm sayısal değerler",
@@ -137,7 +140,7 @@ const TR: SectionCopy = {
     },
     {
       title: "Şeffaf kanıt",
-      body: "competitive-proof PDF, 75 test, 72h soak — rakiplerde yok veya parçalı.",
+      body: "competitive-proof PDF, 79 test, 72h soak — rakiplerde yok veya parçalı.",
     },
     {
       title: "MIT · Türkiye",
@@ -165,7 +168,7 @@ const TR: SectionCopy = {
     },
   ],
   stats: [
-    { value: "75", label: "Otomatik test" },
+    { value: "76", label: "Otomatik test" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
     { value: "56", label: "Ülke erişimi" },
@@ -176,7 +179,7 @@ const TR: SectionCopy = {
 
 const EN: SectionCopy = {
   hero_badge: "//:LOG→BAN · SYSTEM ONLINE",
-  hero_bullets: ["~20 ms kernel ban", "75 automated tests", "72h soak PASS"],
+  hero_bullets: ["~20 ms kernel ban", "79 automated tests", "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · single chain · self-hosted",
   hero_chips: ["open source · MIT", "72h soak PASS"],
   hero_reach: "3.65k+ visits · 56 countries · proof PDF",
@@ -187,13 +190,13 @@ const EN: SectionCopy = {
     "100% real attack recall + 100% OWASP CRS parity — 121 rules, 1500-line corpus",
     "0.2% false positive — 1 alarm in 500 benign lines; rivals higher/medium",
     "72h VM soak — 864 samples, 0 errors; no automatic proof in rivals",
-    "75 automated tests + 14-file evidence pack — PDF/JSON, reproducible",
+    "79 automated tests + 14-file evidence pack — PDF/JSON, reproducible",
     "Fail2ban + ModSecurity + CrowdSec in one chain — ~15 min setup",
   ],
   hero_praise_bold: [
     { v: "~20ms", l: "kernel ban" },
     { v: "100", l: "recall" },
-    { v: "75", l: "auto tests" },
+    { v: "79", l: "auto tests" },
     { v: "3→1", l: "tool merge" },
   ],
   hero_side_title:
@@ -202,7 +205,9 @@ const EN: SectionCopy = {
     "Single chain from nginx access log line to ipset ban: parser, OWASP CRS/WAF evaluation and ~20 ms kernel ban. Rivals offer piecemeal architecture — we merge in one chain with measured, reproducible PDF/JSON proof. Built in Turkey, MIT open source, fully self-hosted.",
   hero_cta_setup: "15 min setup",
   hero_cta_github: "GitHub source",
-  hero_cta_tests: "See 75 tests",
+  hero_cta_tests: "See 79 tests",
+  hero_researcher_note:
+    "Security researcher? Not WooCommerce or a shop API — verification matrix at /testler · security.txt",
   about_eyebrow: "//:About",
   about_title: "What is Linux Log Guardian?",
   about_intro:
@@ -246,8 +251,8 @@ const EN: SectionCopy = {
       company: "CrowdSec",
       name: "SOC & signal layer",
       replaces: "CrowdSec bouncer + separate console + manual proof",
-      body: "No CrowdSec piecemeal stack. Prometheus, SOC timeline, 75 tests, 14 evidence files, Telegram ops — one panel.",
-      metrics: ["75 tests", "72h soak PASS", "14 evidence files"],
+      body: "No CrowdSec piecemeal stack. Prometheus, SOC timeline, 79 tests, 14 evidence files, Telegram ops — one panel.",
+      metrics: ["79 tests", "72h soak PASS", "14 evidence files"],
     },
   ],
   metrics_title: "All numerical values on this site",
@@ -266,7 +271,7 @@ const EN: SectionCopy = {
     title: ["Single chain", "Transparent proof", "MIT · Turkey", "Honest limits", "3-in-1", "Kernel speed", "Distributed attacks", "Operator flow"][i],
     body: [
       "nginx log → OWASP CRS → ~20 ms kernel ban. No Fail2ban + ModSec + script pile.",
-      "competitive-proof PDF, 75 tests, 72h soak — missing or fragmented in rivals.",
+      "competitive-proof PDF, 79 tests, 72h soak — missing or fragmented in rivals.",
       "Open source, Turkish docs, self-hosted — no vendor lock-in.",
       "ModSec blocks the first request inline; we're reactive. CDN absorbs L3/L4. In return our WAF/CRS speed is 16.93× ModSec on the same corpus.",
       "Fail2ban, ModSecurity, CrowdSec not separate — ban + WAF + SOC in one product.",
@@ -276,7 +281,7 @@ const EN: SectionCopy = {
     ][i],
   })),
   stats: [
-    { value: "75", label: "Automated tests" },
+    { value: "76", label: "Automated tests" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
     { value: "56", label: "Countries" },
@@ -340,7 +345,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Der messbar belegte, single-chain self-hosted Security-Stack aus der Türkei — Konkurrenten stückweise, wir alles in einem.",
     hero_cta_setup: "15 Min Setup",
     hero_cta_github: "GitHub-Quelle",
-    hero_cta_tests: "75 Tests ansehen",
+    hero_cta_tests: "76 Tests ansehen",
     about_title: "Was ist Linux Log Guardian?",
     about_intro:
       "Ein Open-Source (MIT), self-hosted Sicherheitsprodukt aus der Türkei. Liest nginx-Access-Logs in Echtzeit, wertet mit OWASP CRS/WAF aus und bannt Angreifer-IPs auf Kernel-Ebene per ipset in ~20 ms — eine Kette, keine Drittanbieter-Cloud.",
@@ -363,7 +368,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "La stack de sécurité self-hosted à preuve mesurable et chaîne unique de la Turquie — les rivaux fragmentés, nous tout-en-un.",
     hero_cta_setup: "Installation 15 min",
     hero_cta_github: "Source GitHub",
-    hero_cta_tests: "Voir 75 tests",
+    hero_cta_tests: "Voir 79 tests",
     about_title: "Qu'est-ce que Linux Log Guardian ?",
     about_intro:
       "Un produit de sécurité open source (MIT), auto-hébergé, conçu en Turquie. Lit les logs d'accès nginx en temps réel, évalue avec OWASP CRS/WAF et bannit les IP attaquantes au niveau noyau via ipset en ~20 ms — une seule chaîne, sans cloud tiers.",
@@ -386,7 +391,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "El stack de seguridad autoalojado de cadena única y prueba medible de Turquía — los rivales fragmentados, nosotros todo en uno.",
     hero_cta_setup: "Instalación 15 min",
     hero_cta_github: "Código GitHub",
-    hero_cta_tests: "Ver 75 pruebas",
+    hero_cta_tests: "Ver 76 pruebas",
     about_title: "¿Qué es Linux Log Guardian?",
     about_intro:
       "Un producto de seguridad de código abierto (MIT), autoalojado, desarrollado en Turquía. Lee los logs de acceso de nginx en tiempo real, evalúa con OWASP CRS/WAF y banea las IP atacantes a nivel de kernel con ipset en ~20 ms — una sola cadena, sin nube de terceros.",
@@ -409,7 +414,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Турецкий self-hosted стек безопасности с измеримым доказательством и единой цепочкой — конкуренты по частям, мы всё в одном.",
     hero_cta_setup: "Установка 15 мин",
     hero_cta_github: "Исходники GitHub",
-    hero_cta_tests: "75 тестов",
+    hero_cta_tests: "76 тестов",
     about_title: "Что такое Linux Log Guardian?",
     about_intro:
       "Открытый (MIT), self-hosted продукт безопасности, разработанный в Турции. Читает access-логи nginx в реальном времени, оценивает через OWASP CRS/WAF и банит IP атакующих на уровне ядра через ipset за ~20 мс — одна цепочка, без стороннего облака.",
@@ -432,7 +437,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "A stack de segurança self-hosted de cadeia única e prova mensurável da Turquia — rivais fragmentados, nós tudo-em-um.",
     hero_cta_setup: "Instalação 15 min",
     hero_cta_github: "Código GitHub",
-    hero_cta_tests: "Ver 75 testes",
+    hero_cta_tests: "Ver 79 testes",
     about_title: "O que é o Linux Log Guardian?",
     about_intro:
       "Um produto de segurança open source (MIT), self-hosted, feito na Turquia. Lê logs de acesso do nginx em tempo real, avalia com OWASP CRS/WAF e bane IPs atacantes ao nível do kernel via ipset em ~20 ms — uma só cadeia, sem nuvem de terceiros.",
@@ -455,7 +460,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Turkije's meetbaar bewezen, single-chain self-hosted security-stack — concurrenten versnipperd, wij alles-in-één.",
     hero_cta_setup: "15 min installatie",
     hero_cta_github: "GitHub-broncode",
-    hero_cta_tests: "Bekijk 75 tests",
+    hero_cta_tests: "Bekijk 79 tests",
     about_title: "Wat is Linux Log Guardian?",
     about_intro:
       "Een open-source (MIT), self-hosted beveiligingsproduct uit Turkije. Leest nginx-accesslogs in realtime, evalueert met OWASP CRS/WAF en bant aanvaller-IP's op kernelniveau via ipset in ~20 ms — één keten, zonder externe cloud.",
@@ -477,7 +482,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "土耳其打造的可衡量证据、单链路自托管安全栈——竞品零散，我们一体化。",
     hero_cta_setup: "15分钟安装",
     hero_cta_github: "GitHub 源码",
-    hero_cta_tests: "查看 75 项测试",
+    hero_cta_tests: "查看 76 项测试",
     about_title: "什么是 Linux Log Guardian？",
     about_intro:
       "一款在土耳其开发的开源（MIT）自托管安全产品。实时读取 nginx 访问日志，使用 OWASP CRS/WAF 评估，并通过 ipset 在内核层约 20 毫秒封禁攻击者 IP——单一链路，无第三方云。",
@@ -500,7 +505,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "トルコ発、測定可能な証拠と単一チェーンのセルフホスト型セキュリティスタック——競合は断片的、私たちはオールインワン。",
     hero_cta_setup: "15分で導入",
     hero_cta_github: "GitHub ソース",
-    hero_cta_tests: "75テストを見る",
+    hero_cta_tests: "76テストを見る",
     about_title: "Linux Log Guardian とは？",
     about_intro:
       "トルコで開発されたオープンソース（MIT）のセルフホスト型セキュリティ製品。nginx アクセスログをリアルタイムに読み取り、OWASP CRS/WAF で評価し、攻撃者 IP を ipset でカーネルレベルに約20msでBAN——単一チェーン、サードパーティクラウド不要。",
@@ -523,7 +528,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "튀르키예의 측정 가능한 증거, 단일 체인 셀프호스팅 보안 스택 — 경쟁사는 조각조각, 우리는 올인원.",
     hero_cta_setup: "15분 설치",
     hero_cta_github: "GitHub 소스",
-    hero_cta_tests: "75개 테스트 보기",
+    hero_cta_tests: "76개 테스트 보기",
     about_title: "Linux Log Guardian이란?",
     about_intro:
       "튀르키예에서 개발된 오픈소스(MIT) 셀프호스팅 보안 제품입니다. nginx 액세스 로그를 실시간으로 읽고 OWASP CRS/WAF로 평가하여 공격자 IP를 ipset으로 커널 수준에서 약 20ms 만에 차단합니다 — 단일 체인, 제3자 클라우드 불필요.",
@@ -546,7 +551,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "منظومة أمن ذاتية الاستضافة من تركيا بسلسلة واحدة ودليل قابل للقياس — المنافسون مجزّأون، ونحن الكل في واحد.",
     hero_cta_setup: "تثبيت 15 دقيقة",
     hero_cta_github: "مصدر GitHub",
-    hero_cta_tests: "شاهد 75 اختباراً",
+    hero_cta_tests: "شاهد 76 اختباراً",
     about_title: "ما هو Linux Log Guardian؟",
     about_intro:
       "منتج أمني مفتوح المصدر (MIT) ذاتي الاستضافة طُوِّر في تركيا. يقرأ سجلات وصول nginx فورياً، ويقيّمها عبر OWASP CRS/WAF، ويحظر عناوين IP المهاجمة على مستوى النواة عبر ipset في نحو 17 مللي ثانية — سلسلة واحدة، بدون سحابة طرف ثالث.",
@@ -569,7 +574,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Türkiyənin ölçülə bilən sübutlu, tək zəncir self-hosted təhlükəsizlik yığını — rəqiblər parça-parça, biz hamısı bir arada.",
     hero_cta_setup: "15 dəq quraşdırma",
     hero_cta_github: "GitHub mənbə",
-    hero_cta_tests: "75 testə bax",
+    hero_cta_tests: "79 testə bax",
     about_title: "Linux Log Guardian nədir?",
     about_intro:
       "Türkiyədə hazırlanmış tam açıq mənbəli (MIT) self-hosted təhlükəsizlik məhsulu. nginx giriş loglarını real vaxtda oxuyur, OWASP CRS/WAF ilə qiymətləndirir və hücumçu IP-ni ipset ilə kernel səviyyəsində ~20 ms-də banlayır — tək zəncir, üçüncü tərəf buludu olmadan.",
@@ -592,7 +597,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Түркияның өлшенетін дәлелді, бір тізбекті self-hosted қауіпсіздік стегі — бәсекелестер бөлшек, біз бәрі бір жерде.",
     hero_cta_setup: "15 мин орнату",
     hero_cta_github: "GitHub бастапқы коды",
-    hero_cta_tests: "75 тестті көру",
+    hero_cta_tests: "76 тестті көру",
     about_title: "Linux Log Guardian деген не?",
     about_intro:
       "Түркияда жасалған ашық кодты (MIT) self-hosted қауіпсіздік өнімі. nginx кіру журналдарын нақты уақытта оқиды, OWASP CRS/WAF арқылы бағалайды және шабуылшы IP-ді ipset арқылы ядро деңгейінде ~20 мс-та бұғаттайды — бір тізбек, үшінші тарап бұлтысыз.",
@@ -615,7 +620,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Turkiyaning o'lchanadigan dalilli, yagona zanjirli self-hosted xavfsizlik steki — raqiblar bo'lak, biz hammasi bir joyda.",
     hero_cta_setup: "15 daq o'rnatish",
     hero_cta_github: "GitHub manba",
-    hero_cta_tests: "75 testni ko'rish",
+    hero_cta_tests: "79 testni ko'rish",
     about_title: "Linux Log Guardian nima?",
     about_intro:
       "Turkiyada ishlab chiqilgan ochiq kodli (MIT) self-hosted xavfsizlik mahsuloti. nginx kirish loglarini real vaqtda o'qiydi, OWASP CRS/WAF bilan baholaydi va hujumchi IP'ni ipset orqali yadro darajasida ~20 ms da bloklaydi — yagona zanjir, uchinchi tomon buluti holda.",
@@ -638,7 +643,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Түркиянын өлчөнгөн далилдүү, бирдиктүү чынжырлуу self-hosted коопсуздук стеги — атаандаштар бөлүк, биз баары бир жерде.",
     hero_cta_setup: "15 мүн орнотуу",
     hero_cta_github: "GitHub булагы",
-    hero_cta_tests: "75 тестти көрүү",
+    hero_cta_tests: "76 тестти көрүү",
     about_title: "Linux Log Guardian деген эмне?",
     about_intro:
       "Түркияда иштелип чыккан ачык коддуу (MIT) self-hosted коопсуздук продукту. nginx кирүү логдорун реалдуу убакытта окуйт, OWASP CRS/WAF менен баалайт жана чабуулчу IP'ни ipset аркылуу ядро деңгээлинде ~20 мс ичинде бөгөттөйт — бирдиктүү чынжыр, үчүнчү тараптын булутусуз.",
@@ -661,7 +666,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Türkiýäniň ölçäp bolýan subutnamaly, ýeke zynjyrly self-hosted howpsuzlyk stegi — bäsdeşler bölek, biz hemmesi bir ýerde.",
     hero_cta_setup: "15 min gurnama",
     hero_cta_github: "GitHub çeşme",
-    hero_cta_tests: "75 testi gör",
+    hero_cta_tests: "79 testi gör",
     about_title: "Linux Log Guardian näme?",
     about_intro:
       "Türkiýede işlenip düzülen açyk çeşmeli (MIT) self-hosted howpsuzlyk önümi. nginx giriş loglaryny hakyky wagtda okaýar, OWASP CRS/WAF bilen bahalandyrýar we hüjümçi IP-ni ipset arkaly ýadro derejesinde ~20 ms-da baglaýar — ýeke zynjyr, üçünji tarap bulutsyz.",
@@ -682,7 +687,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec аерыммы? Бер продукт, бер дәлил, бер урнаштыру.",
     hero_cta_setup: "15 мин урнаштыру",
     hero_cta_github: "GitHub чыганагы",
-    hero_cta_tests: "75 тестны күрү",
+    hero_cta_tests: "76 тестны күрү",
     about_title: "Linux Log Guardian нәрсә ул?",
     pkg_title: "3не 1дә — аерым урнаштыру юк",
     pkg_tagline: "Өч көндәш корал · бер чылбыр · үлчәнгән дәлил",
@@ -701,7 +706,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec айырыммы? Бер продукт, бер дәлил, бер урынлаштырыу.",
     hero_cta_setup: "15 мин урынлаштырыу",
     hero_cta_github: "GitHub сығанағы",
-    hero_cta_tests: "75 тестты ҡарау",
+    hero_cta_tests: "76 тестты ҡарау",
     about_title: "Linux Log Guardian нимә ул?",
     pkg_title: "3-те 1-ҙә — айырым урынлаштырыу юҡ",
     pkg_tagline: "Өс көндәш ҡорал · бер сылбыр · үлсәнгән дәлил",
@@ -718,7 +723,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx кӗрӳ журналӗ → WAF/CRS → kernel ban · пӗр сӑнчӑр · self-hosted",
     hero_cta_setup: "15 мин вырнаҫтарни",
     hero_cta_github: "GitHub çӑлкуҫӗ",
-    hero_cta_tests: "75 тест пӑх",
+    hero_cta_tests: "76 тест пӑх",
     about_title: "Linux Log Guardian мӗн вӑл?",
     pkg_title: "3-е 1-те — уйрӑм вырнаҫтарни ҫук",
     pkg_tagline: "Виҫӗ конкурент хатӗр · пӗр сӑнчӑр · виҫнӗ кӑтарту",
@@ -735,7 +740,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx كىرىش خاتىرىسى → WAF/CRS → يادرو دەرىجىسىدە چەكلەش · بىرلا زەنجىر · ئۆز مۇلازىمېتىر",
     hero_cta_setup: "15 مىنۇت ئورنىتىش",
     hero_cta_github: "GitHub مەنبە",
-    hero_cta_tests: "75 سىناقنى كۆرۈش",
+    hero_cta_tests: "76 سىناقنى كۆرۈش",
     about_title: "Linux Log Guardian نېمە؟",
     pkg_title: "3 بىرگە — ئايرىم ئورنىتىش يوق",
     pkg_tagline: "ئۈچ رەقىب قورال · بىرلا زەنجىر · ئۆلچەنگەن ئىسپات",
@@ -754,7 +759,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec ayrı-ayrımı? Bir mahsul, bir delil, bir qurulım.",
     hero_cta_setup: "15 daq qurulım",
     hero_cta_github: "GitHub menba",
-    hero_cta_tests: "75 testni köster",
+    hero_cta_tests: "79 testni köster",
     about_title: "Linux Log Guardian nedir?",
     pkg_title: "3-ü 1-de — ayrı qurulım yoq",
     pkg_tagline: "Üç raqip alet · tek zıncır · ölçengen delil",
@@ -773,7 +778,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec ayırı-ayırı mı? Bir ürün, bir delil, bir kurma.",
     hero_cta_setup: "15 dak kurma",
     hero_cta_github: "GitHub kaynaa",
-    hero_cta_tests: "75 testi gör",
+    hero_cta_tests: "79 testi gör",
     about_title: "Linux Log Guardian nedir?",
     pkg_title: "3'ü 1'dä — ayırı kurma yok",
     pkg_tagline: "Üç rakip alet · tek zincir · ölçülü delil",
@@ -790,7 +795,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx киирии сурунаала → WAF/CRS → kernel ban · биир сиэп · self-hosted",
     hero_cta_setup: "15 мүн олохтооһун",
     hero_cta_github: "GitHub төрдө",
-    hero_cta_tests: "75 туруору көр",
+    hero_cta_tests: "76 туруору көр",
     about_title: "Linux Log Guardian диэн тугуй?",
     pkg_title: "3 биирдэ — араас олохтооһун суох",
     pkg_tagline: "Үс күрэхтэһээччи тэрил · биир сиэп · кээмэйдэммит туоһу",

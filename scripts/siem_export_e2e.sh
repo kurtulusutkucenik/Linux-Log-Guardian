@@ -69,9 +69,9 @@ rm -f "$LOG"
 python3 "$ROOT/scripts/siem_capture.py" --port "$PORT" --out "$LOG" --timeout 60 &
 CAP_PID=$!
 if [[ "$SIEM_FMT" == "stix" ]]; then
-  sleep 2.0
+  sleep 2.5
 else
-  sleep 1.2
+  sleep 2.0
 fi
 wait_capture_port "$PORT"
 
@@ -87,13 +87,14 @@ load_lg_replay_password
 # /etc rules.conf SIEM_FORMAT=stix + SIEM_PORT=5044 E2E capture ile celisir — SIEM satirlari probe'dan
 mkdir -p "$ROOT/.cache"
 E2E_RULES="$ROOT/.cache/siem_e2e_probe_${SIEM_FMT}.rules.conf"
-grep -v -E '^(SIEM_FORWARDER_ENABLED|SIEM_HOST|SIEM_PORT|SIEM_FORMAT)=' "$RULES" >"$E2E_RULES"
+grep -v -E '^(SIEM_FORWARDER_ENABLED|SIEM_HOST|SIEM_PORT|SIEM_FORMAT|BLOCK_COUNTRIES|THREAT_FEED|INTEL_|GEOIP_)=' "$RULES" >"$E2E_RULES"
+printf '\nTHREAT_FEED_ENABLED=0\nBLOCK_COUNTRIES=\n' >>"$E2E_RULES"
 chmod 600 "$E2E_RULES"
 
 siem_env() {
   env LOGANALYZER_PASSWORD="$LOGANALYZER_PASSWORD" \
     WEBHOOK_DRY_RUN=1 METRICS_PORT=0 LOG_GUARDIAN_SKIP_IPC=1 \
-    MESH_BACKEND=none THREAT_FEED_ENABLED=0 SIEM_SYNC_SEND=1 \
+    MESH_BACKEND=none THREAT_FEED_ENABLED=0 GEOIP_FEED_SKIP=1 SIEM_SYNC_SEND=1 \
     SIEM_FORWARDER_ENABLED=1 SIEM_HOST=127.0.0.1 SIEM_PORT="$PORT" SIEM_FORMAT="$SIEM_FMT" \
     "$@"
 }

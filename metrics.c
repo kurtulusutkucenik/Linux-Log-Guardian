@@ -84,6 +84,9 @@ static void write_all(int fd, const char *buf, size_t len) {
     }
 }
 
+/* Tum tenant metrikleri (~8.5K+); 8192 tasiyordu → Prometheus parse fail */
+#define METRICS_BODY_MAX 16384
+
 static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapshot *s)
 {
     return snprintf(body, cap,
@@ -313,7 +316,7 @@ static void handle_client(int cfd) {
     /* Sadece GET /metrics desteklenir */
     int is_metrics = (strncmp(req, "GET /metrics", 12) == 0);
 
-    char body[8192];
+    char body[METRICS_BODY_MAX];
     int blen = 0;
 
     if (is_metrics) {
@@ -356,7 +359,7 @@ typedef struct {
     int     fd;
     int     phase;      /* 0=read, 1=write_header, 2=write_body */
     char    req[512];
-    char    body[8192];
+    char    body[METRICS_BODY_MAX];
     char    header[256];
     int     blen;
     int     hlen;

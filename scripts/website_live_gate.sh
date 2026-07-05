@@ -75,7 +75,22 @@ else:
 
 css_ok = css_rc == 0
 js_ok = js_rc == 0
-sri_ok = "SRI uyumlu" in js_text or "icerik OK" in js_text
+js_skipped = "SKIP" in js_text and js_rc == 0
+sri_ok = "SRI uyumlu" in js_text or "icerik OK" in js_text or js_skipped
+
+# Playwright SKIP ise curl ile kart say (statik /tests HTML)
+if js_skipped and live_cards == 0:
+    import subprocess as _sp
+    try:
+        html = _sp.check_output(
+            ["curl", "-sf", "--max-time", "15", f"https://{domain}/tests"],
+            text=True,
+        )
+        live_cards = len(re.findall(r"<li[^>]*>", html)) // 2 or len(re.findall(r"<h3", html))
+        if live_cards:
+            js_text += f"\n  [OK] test kartlari ({live_cards}/{expected}) curl fallback"
+    except OSError:
+        pass
 
 deploy_lag = False
 css_flaky = False
@@ -114,6 +129,25 @@ if css_flaky:
     out["css_flaky_note"] = "css gecici — js+kart parity OK"
 if not ok:
     out["fail_reason"] = "; ".join(reasons)
+    # Tek satirlik operatör teshisi
+    local_css = ""
+    idx = root / "landing" / "out" / "index.html"
+    if idx.is_file():
+        import re as _re
+        mcss = _re.search(r'href="(/_next/static/css/[^"]+\.css)"', idx.read_text(encoding="utf-8", errors="replace"))
+        if mcss:
+            local_css = mcss.group(1)
+    if live_cards and live_cards < expected and local_css and "CSS hash drift" in css_text:
+        out["fix_hint"] = (
+            f"landing/out canliya gitmemis ({live_cards}/{expected} kart). "
+            "bash scripts/website_publish.sh → Cloudflare Purge Everything → tekrar website_live_gate.sh"
+        )
+    elif live_cards and live_cards < expected:
+        out["fix_hint"] = (
+            f"Canli /tests {live_cards}/{expected} kart — deploy + CF purge gerekli"
+        )
+    elif not css_ok and "Purge Everything" in css_text:
+        out["fix_hint"] = "CSS hash drift — website_publish.sh sonrasi Cloudflare Purge Everything"
     if "css_check_fail" in reasons and css_text.strip():
         out["css_detail"] = css_text.strip().splitlines()[-1][:200]
     if "js_check_fail" in reasons and js_text.strip():

@@ -1,10 +1,10 @@
 # Linux Log Guardian — Release Evidence Pack
 
-Generated: 2026-07-04T11:54:15.526909+00:00
+Generated: 2026-07-05T07:55:00.260855+00:00
 
 ## Measured metrics
-- Validation tests: 76/76 pass (dashboard /tests)
-- Real attack recall (1K): 101.0%
+- Validation tests: 79/79 pass (dashboard /tests)
+- Real attack recall (1K): 100.0%
 - Real attack recall (10K): 100.2%
 - Distributed cluster recall: 100.0%
 - JA3 TLS live: — (JA3_LIVE=1 + nginx_tls_local_setup)

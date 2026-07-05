@@ -1,0 +1,16 @@
+{
+  "date": "2026-07-04T23:37:23.722101+00:00",
+  "pass": true,
+  "dash_url": "https://localhost:8443",
+  "host_agent": "node-kurtulus-01",
+  "vm_agent": "node-vm-02",
+  "host_status": "Online",
+  "vm_status": "Offline",
+  "online_count": 1,
+  "agent_count": 2,
+  "host_keepalive_active": true,
+  "laptop_ops_doc_ok": true,
+  "vm_skipped": true,
+  "laptop_host_only": true,
+  "script": "scripts/vm_fleet_gate.sh"
+}

@@ -9,12 +9,15 @@ bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null || true
 
 # Opsiyonel katman raporlari — stale skip/warn onlenir (go/kind yoksa docker fallback)
 bash "$ROOT/scripts/k8s_admission_test.sh" 2>/dev/null || true
+bash "$ROOT/scripts/ban_profile_e2e.sh" 2>/dev/null || true
 bash "$ROOT/scripts/dist_risk_proof_e2e.sh" 2>/dev/null || true
 
 python3 scripts/competitive_proof_build.py -o competitive-proof.json
+python3 scripts/sync_landing_tests_from_proof.py || true
 # Uzun ops_gate sonrasi ipc:fail onlenir — status + proof ikinci kez
 bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null || true
 python3 scripts/competitive_proof_build.py -o competitive-proof.json
+python3 scripts/sync_landing_tests_from_proof.py || true
 
 VENV="$ROOT/.venv-compliance"
 if [[ ! -x "$VENV/bin/python" ]]; then

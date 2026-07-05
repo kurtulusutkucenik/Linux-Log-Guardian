@@ -5,5 +5,17 @@
 /.env                 /404  404
 /.git/*               /404  404
 /wp-admin/*           /404  404
+/wp-json/*            /404  404
 /admin/*              /404  404
 /*.map                /404  404
+/meta.json            /404  404
+/products.json        /404  404
+/api/*                /404  404
+/homeapi/*            /404  404
+/storeInfo            /404  404
+/xmlrpc.php           /404  404
+/wp-login.php         /404  404
+/shop/*               /404  404
+/cart                 /404  404
+/checkout             /404  404
+/graphql              /404  404

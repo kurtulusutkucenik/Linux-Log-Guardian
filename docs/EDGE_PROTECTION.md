@@ -143,9 +143,10 @@ SQLi modu nginx :80'e vurur; birkac saniye icinde `ban_pipeline` veya ipset'te b
 
 Wi‑Fi / VirtualBox ortaminda XDP OFF + **ipset ban** normal. Asagidaki maddeler laptop demo icin yeterli:
 
+- [x] `sudo bash scripts/apply_laptop_security_p0.sh` — nginx log + inline consult + FP trust + whitelist (tek sudo)
 - [x] `sudo bash scripts/ensure_daemon_env.sh` — `LG_DISABLE_URING=1` (IPC kararliligi)
 - [x] `sudo bash scripts/repair_no_xdp_stack.sh` — daemon unit + metrics
-- [x] Cloudflare Pages: `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` → `website_live_gate` **76/76 kart** (`sitemap.xml` + `robots.txt`)
+- [x] Cloudflare Pages: `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` → `website_live_gate` **79/79 kart** (`sitemap.xml` + `robots.txt`)
 - [x] `bash scripts/binary_hardening_check.sh` — PIE + RELRO (upgrade sonrasi OK)
 - [x] Filo NAT: VM `vm_fleet_agent_setup.sh` + host `host_fleet_agent_setup.sh` · doğrulama: `vm_fleet_gate.sh`
 - [x] `bash scripts/nginx_attack_test.sh` — SQLi alarm ingest OK (`127.0.0.1` whitelist → ban atlanir, beklenen)

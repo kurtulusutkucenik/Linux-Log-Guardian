@@ -200,7 +200,11 @@ cd "$WORK_DIR"
 LG_BIN=$(resolve_lg_bin)
 echo "[fp_learn_warmup] binary=$LG_BIN"
 
-echo "[fp_learn_warmup] corpus=$BENIGN passes=$PASSES min_samples=$MIN_SAMPLES timeout=${WARMUP_TIMEOUT}s"
+uniq_ips=$(awk '{print $1}' "$BENIGN" 2>/dev/null | sort -u | wc -l | tr -d ' ')
+echo "[fp_learn_warmup] corpus=$BENIGN passes=$PASSES min_samples=$MIN_SAMPLES timeout=${WARMUP_TIMEOUT}s unique_ips=$uniq_ips"
+if [[ "${uniq_ips:-0}" -le 1 ]]; then
+  echo "[WARN] corpus tek IP — warmup en fazla 1 trusted IP uretir; prod icin data/fp-trust.lst (coklu IP) kullanin" >&2
+fi
 export LOG_GUARDIAN_SKIP_IPC=1
 AUTH_LOG=$(mktemp)
 PWFILE=$(mktemp)

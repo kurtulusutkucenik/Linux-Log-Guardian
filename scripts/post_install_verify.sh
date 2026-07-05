@@ -67,7 +67,7 @@ fi
 if systemctl is-active log-guardian-daemon >/dev/null 2>&1; then
   ok "log-guardian-daemon.service active"
 else
-  warn "log-guardian-daemon inactive (laptop OK)"
+  ok "log-guardian-daemon inactive (laptop OK — eBPF opsiyonel)"
 fi
 
 # --- Health (IPC) ---

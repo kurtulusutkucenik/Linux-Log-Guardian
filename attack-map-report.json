@@ -1,13 +1,13 @@
 {
-  "date": "2026-07-03T21:49:20.389924+00:00",
+  "date": "2026-07-05T09:34:25.557825+00:00",
   "pass": true,
   "dash_url": "https://localhost:8443",
-  "markers": 17,
-  "total_ips": 17,
+  "markers": 5,
+  "total_ips": 5,
   "data_source": "live",
   "geo_lookup": true,
   "bans_source": "ipset",
   "ack_markers": 1,
-  "ban_markers": 16,
+  "ban_markers": 4,
   "incident_markers": 0
 }

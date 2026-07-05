@@ -4,7 +4,7 @@
 
 **İlgili belgeler:** [CUSTOMER_REQUIREMENTS.md](CUSTOMER_REQUIREMENTS.md) · [PROD_ROADMAP.md](PROD_ROADMAP.md) · [Log_Guardian_Enterprise_Roadmap.md](Log_Guardian_Enterprise_Roadmap.md) · [TEST_MATRIX.md](TEST_MATRIX.md)
 
-**Son güncelleme:** 2026-06-29 (laptop + VM filo 2 node; `/tests` **60 kart**; VPS XDP bilinçli skip)
+**Son güncelleme:** 2026-07-05 (laptop + canlı site `/tests` **79 kart**; GitHub CI `ci_core_gate` yeşil; VPS XDP bilinçli skip)
 
 ---
 
@@ -123,7 +123,7 @@ flowchart TB
 | E6 | Mesh (etcd) | `etcd_mesh.c`, `mesh_intel.c` | ✅ | `mesh_etcd_e2e.sh` + `mesh_etcd_live_e2e.sh` | Laptop docker PUT/GET; VPS cluster opsiyonel |
 | E7 | Compliance PDF export | dashboard Pro tier | ✅ | `bash scripts/compliance_export_e2e.sh` | `/api/reports/export` Pro gate |
 | E8 | 72h soak / air-gap runbook | `scripts/soak_test.sh` | ✅ | `soak-report.json` 864 örnek, 0 fail (2026-06-16→19) | Laptop kanıt; VPS tekrar opsiyonel |
-| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 76 test vitrin |
+| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 79 test vitrin |
 
 ### 2.4 Kalite ve rekabet kapıları (tüm tier'lar)
 

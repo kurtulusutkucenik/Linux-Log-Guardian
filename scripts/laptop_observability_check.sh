@@ -42,9 +42,26 @@ curl -sf --max-time 3 http://127.0.0.1:9090/-/ready >/dev/null 2>&1 \
 curl -sf --max-time 3 -u admin:admin "http://127.0.0.1:${GRAFANA_PORT}/api/health" >/dev/null 2>&1 \
   && check "Grafana API :${GRAFANA_PORT}" 0 || check "Grafana API :${GRAFANA_PORT}" 1
 
-curl -sfG --max-time 3 "http://127.0.0.1:9090/api/v1/query" \
-  --data-urlencode 'query=up{job="log-guardian"}' 2>/dev/null | grep -q '"value":\[[^]]*,"1"\]' \
-  && check "Prometheus scrape log-guardian" 0 || check "Prometheus scrape log-guardian (log-guardian :9091?)" 1
+curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1 \
+  && check "Analyzer metrikleri :9091" 0 || check "Analyzer metrikleri :9091" 1
+
+metrics_fmt_ok=0
+if curl -sf --max-time 3 http://127.0.0.1:9091/metrics 2>/dev/null \
+    | grep -q 'loganalyzer_api_auth_fail_total{tenant_id='; then
+  metrics_fmt_ok=1
+  check "Analyzer metrics format (dist_risk uyumlu)" 0
+else
+  check "Analyzer metrics bozuk/eski binary — sudo bash scripts/install_binaries_systemd.sh" 1
+fi
+
+if curl -sfG --max-time 3 "http://127.0.0.1:9090/api/v1/query" \
+  --data-urlencode 'query=up{job="log-guardian"}' 2>/dev/null | grep -q '"value":\[[^]]*,"1"\]'; then
+  check "Prometheus scrape log-guardian" 0
+elif [[ "$metrics_fmt_ok" -eq 0 ]]; then
+  check "Prometheus scrape (metrics parse hatasi — binary yenile)" 1
+else
+  check "Prometheus scrape log-guardian (bash scripts/grafana_stack.sh)" 1
+fi
 
 if curl -sfG --max-time 3 "http://127.0.0.1:9090/api/v1/query" \
   --data-urlencode 'query=loganalyzer_threat_feed_enabled{tenant_id="default"}' 2>/dev/null \
@@ -56,9 +73,6 @@ if curl -sfG --max-time 3 "http://127.0.0.1:9090/api/v1/query" \
 else
   check "Threat feed metrik (THREAT_FEED kapali veya scrape yok)" 0
 fi
-
-curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1 \
-  && check "Analyzer metrikleri :9091" 0 || check "Analyzer metrikleri :9091" 1
 
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-dashboard; then
   docker exec log-guardian-dashboard node -e \

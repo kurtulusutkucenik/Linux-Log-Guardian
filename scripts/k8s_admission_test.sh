@@ -129,6 +129,7 @@ if [[ -n "${K8S_ADMISSION_URL:-}" ]]; then
 fi
 
 try_kind_operator || true
+try_docker_standalone || true
 
 if command -v go >/dev/null 2>&1; then
   if go build -o /tmp/guardian-k8s-op . 2>/dev/null; then
@@ -143,7 +144,5 @@ if command -v go >/dev/null 2>&1; then
     fi
   fi
 fi
-
-try_docker_standalone || true
 
 write_skip "go/kind/docker operator erisilemedi"

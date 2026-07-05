@@ -20,11 +20,35 @@ else
 fi
 bash "$ROOT/scripts/ops_gate_report.sh"
 
+# Stale k8s-admission skip onlenir (go yoksa docker fallback — competitive_proof.sh ile ayni)
+bash "$ROOT/scripts/k8s_admission_test.sh" 2>/dev/null || true
+
 if [[ "${SKIP_FLEET_PRUNE:-0}" != "1" ]]; then
-  STALE_HOURS="${STALE_HOURS:-1}" bash "$ROOT/scripts/fleet_prune_stale.sh" \
-    && echo "[OK] fleet_prune_stale" \
+  # VM kapali iken node-vm-02 silinmesin — varsayilan 48h (1h demo gurultusu icin STALE_HOURS=1)
+  STALE_HOURS="${STALE_HOURS:-48}" bash "$ROOT/scripts/fleet_prune_stale.sh" \
+    && echo "[OK] fleet_prune_stale (${STALE_HOURS:-48}h)" \
     || echo "[WARN] fleet_prune_stale — atlandi" >&2
 fi
+
+ensure_observability_stack() {
+  if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
+    echo "[WARN] docker yok — grafana/tls stack atlandi" >&2
+    return 0
+  fi
+  if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx prometheus-lg \
+      || ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx grafana-lg; then
+    echo "[dashboard_refresh] Prometheus + Grafana baslatiliyor..."
+    bash "$ROOT/scripts/grafana_stack.sh" || echo "[WARN] grafana_stack — atlandi" >&2
+  fi
+  if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-caddy; then
+    echo "[dashboard_refresh] TLS stack (Caddy) baslatiliyor..."
+    bash "$ROOT/scripts/tls_proxy_up.sh" 2>/dev/null \
+      || bash "$ROOT/scripts/dashboard_stack.sh" 2>/dev/null \
+      || echo "[WARN] tls_proxy_up — atlandi" >&2
+  fi
+}
+
+ensure_observability_stack
 
 run_preview_gate() {
   bash "$ROOT/scripts/website_preview_gate.sh"
@@ -47,6 +71,10 @@ if python3 "$ROOT/scripts/competitive_proof_build.py"; then
 else
   echo "[WARN] competitive_proof_build — atlandi" >&2
 fi
+
+bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
+  && echo "[OK] dashboard_tests_parity" \
+  || echo "[WARN] dashboard_tests_parity FAIL — dashboard validationTests.ts guncelle" >&2
 
 bash "$ROOT/scripts/sync_dashboard_data.sh"
 
@@ -72,6 +100,23 @@ if docker ps --format '{{.Names}}' | grep -qx log-guardian-caddy; then
 else
   echo "[INFO] Caddy yok — bash scripts/tls_proxy_up.sh veya bash scripts/dashboard_stack.sh"
   echo "       Gecici: http://127.0.0.1:3000/tests"
+fi
+
+# Host fleet keepalive — vm_fleet_gate / laptop_excellence icin node-kurtulus-01 Online
+if systemctl --user is-enabled log-guardian-fleet-keepalive.service &>/dev/null; then
+  systemctl --user start log-guardian-fleet-keepalive.service 2>/dev/null \
+    && echo "[OK] fleet keepalive (user systemd)" \
+    || echo "[WARN] fleet keepalive baslatilamadi" >&2
+elif [[ -f "$ROOT/.cache/fleet-host.env" ]]; then
+  bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --bg 2>/dev/null \
+    && echo "[OK] fleet keepalive (nohup)" \
+    || true
+fi
+
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx grafana-lg; then
+  bash "$ROOT/scripts/grafana_provision.sh" >/dev/null 2>&1 \
+    && echo "[OK] grafana_provision (DIST risk paneli dahil)" \
+    || echo "[WARN] grafana_provision — Grafana :3002?" >&2
 fi
 
 wait_dashboard_tier() {

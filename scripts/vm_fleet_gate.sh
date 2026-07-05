@@ -93,7 +93,7 @@ elif [[ -f "$ROOT/.cache/fleet-keepalive.pid" ]] && kill -0 "$(cat "$ROOT/.cache
 fi
 
 python3 - "$REPORT" "$OPS_DOC" "$fleet_json" "$DASH_URL" "$HOST_AGENT" "$VM_AGENT" "$host_keepalive" <<'PY'
-import json, datetime, sys
+import json, datetime, os, sys
 from pathlib import Path
 
 report_path, ops_path, fleet_raw, dash_url, host_id, vm_id = sys.argv[1:7]
@@ -121,11 +121,18 @@ doc_tokens = [
 ]
 doc_ok = all(t in ops for t in doc_tokens)
 
+require_vm = os.environ.get("FLEET_REQUIRE_VM", "0") == "1"
+vm_skipped = False
 reasons = []
 if host_st != "Online":
     reasons.append(f"host_agent={host_id}:{host_st}")
 if vm_st != "Online":
-    reasons.append(f"vm_agent={vm_id}:{vm_st}")
+    if require_vm:
+        reasons.append(f"vm_agent={vm_id}:{vm_st}")
+    elif vm_st in ("Missing", "Offline", "Unknown"):
+        vm_skipped = True
+    else:
+        reasons.append(f"vm_agent={vm_id}:{vm_st}")
 if not doc_ok:
     missing = [t for t in doc_tokens if t not in ops]
     reasons.append("laptop_ops:" + ",".join(missing))
@@ -143,6 +150,8 @@ out = {
     "agent_count": len(agents),
     "host_keepalive_active": bool(host_keepalive),
     "laptop_ops_doc_ok": doc_ok,
+    "vm_skipped": vm_skipped,
+    "laptop_host_only": vm_skipped and ok,
     "script": "scripts/vm_fleet_gate.sh",
 }
 if not ok:
@@ -153,5 +162,9 @@ if not ok:
     sys.exit(1)
 PY
 
-echo "[OK] vm_fleet_gate — ${HOST_AGENT}=Online ${VM_AGENT}=Online → ${DASH_URL}/fleet"
+if python3 -c "import json; r=json.load(open('$REPORT')); exit(0 if r.get('vm_skipped') else 1)" 2>/dev/null; then
+  echo "[OK] vm_fleet_gate — ${HOST_AGENT}=Online (VM kapali — laptop host-only, FLEET_REQUIRE_VM=1 ile zorunlu)"
+else
+  echo "[OK] vm_fleet_gate — ${HOST_AGENT}=Online ${VM_AGENT}=Online → ${DASH_URL}/fleet"
+fi
 echo "  VM keepalive: bash scripts/vm_fleet_agent_setup.sh --install-user-service"

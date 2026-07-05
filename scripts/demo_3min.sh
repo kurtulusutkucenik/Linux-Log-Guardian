@@ -41,7 +41,7 @@ find_pdf() {
 
 banner
 
-step "1/7 Kanit PDF"
+step "1/8 Kanit PDF"
 PDF=$(find_pdf || true)
 if [[ -n "$PDF" ]]; then
   ok "PDF: $PDF"
@@ -59,7 +59,7 @@ else
   fi
 fi
 
-step "2/7 Sprint prod kaniti"
+step "2/8 Sprint prod kaniti"
 if [[ -f "$ROOT/sprint-prod-proof.json" ]]; then
   if python3 -c "import json; exit(0 if json.load(open('$ROOT/sprint-prod-proof.json')).get('pass') else 1)" 2>/dev/null; then
     ok "sprint-prod-proof.json pass=true"
@@ -72,7 +72,7 @@ else
   info "sprint_prod_proof atlandi (/etc yok veya prod degil)"
 fi
 
-step "3/7 Webhook dry-run + P2 route"
+step "3/8 Webhook dry-run + P2 route"
 if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   if bash scripts/webhook_test_cli.sh alert >/dev/null 2>&1 \
       && bash scripts/webhook_test_cli.sh ban >/dev/null 2>&1; then
@@ -89,7 +89,7 @@ else
   info "SKIP_WEBHOOK=1"
 fi
 
-step "4/7 Saldiri logu → ban webhook"
+step "4/8 Saldiri logu → ban webhook"
 if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   if bash scripts/webhook_ban_e2e.sh >/dev/null 2>&1; then
     ok "webhook_ban_e2e"
@@ -98,7 +98,7 @@ if [[ "${SKIP_WEBHOOK:-0}" != "1" ]]; then
   fi
 fi
 
-step "5/7 nginx inline consult (opsiyonel)"
+step "5/8 nginx inline consult (opsiyonel)"
 if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
   info "SKIP_WEBHOOK=1 — nginx_inline_consult_e2e atlandi"
 elif command -v nginx >/dev/null 2>&1; then
@@ -111,7 +111,7 @@ else
   info "nginx yok — inline consult atlandi"
 fi
 
-step "6/7 Dashboard /tests (opsiyonel)"
+step "6/8 Dashboard /tests (opsiyonel)"
 dash_ok=0
 if [[ "${SKIP_DASHBOARD:-0}" != "1" ]] && command -v curl >/dev/null 2>&1; then
   if curl -skf "$TESTS_URL" -o /dev/null 2>/dev/null; then
@@ -127,7 +127,7 @@ else
   info "SKIP_DASHBOARD=1 veya curl yok"
 fi
 
-step "7/7 Ban gecikmesi (opsiyonel, root)"
+step "7/8 Ban gecikmesi (opsiyonel, root)"
 if [[ "${SKIP_WEBHOOK:-0}" == "1" ]]; then
   info "SKIP_WEBHOOK=1 — bench_ban_latency atlandi"
   [[ -f "$EVIDENCE/bench-ban-latency.json" || -f bench-ban-latency.json ]] \
@@ -147,7 +147,21 @@ fi
 if [[ "${SKIP_SYNC:-0}" != "1" ]]; then
   bash scripts/sync_dashboard_data.sh >/dev/null 2>&1 || true
   bash scripts/sync_evidence_pack.sh >/dev/null 2>&1 || true
+  python3 scripts/sync_landing_tests_from_proof.py >/dev/null 2>&1 || true
 fi
+
+step "8/8 Landing parity (security.txt + test kartlari)"
+if [[ -f "$ROOT/landing/public/security.txt" ]] && [[ -f "$ROOT/landing/public/.well-known/security.txt" ]]; then
+  ok "security.txt + .well-known/security.txt"
+else
+  warn "security.txt eksik — landing/public/"
+fi
+if bash scripts/website_preview_gate.sh >/dev/null 2>&1; then
+  ok "website_preview_gate (76 test parity)"
+else
+  warn "website_preview_gate — python3 scripts/sync_landing_tests_from_proof.py"
+fi
+info "Canli site: https://ceniklinuxlogguardian.org/testler?utm_source=demo"
 
 echo ""
 echo "=== demo ozet ==="

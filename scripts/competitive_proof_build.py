@@ -21,6 +21,9 @@ INPUTS = {
     "fpClusterTrust": "fp-cluster-trust-report.json",
     "lineageLive": "lineage-live-report.json",
     "nginxConsult": "nginx-inline-consult-report.json",
+    "nginxHybrid": "nginx-hybrid-report.json",
+    "banProfileE2e": "ban-profile-e2e-report.json",
+    "ipv6BanE2e": "ipv6-ban-e2e-report.json",
     "owaspCorpus": "owasp-corpus-report.json",
     "trHostingCorpus": "tr-hosting-corpus-report.json",
     "threatIntelSync": "threat-intel-sync-report.json",
@@ -266,6 +269,96 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
                 if ok
                 else "API consult failed — sync_etc_rules + restart."
             ),
+            script="scripts/nginx_inline_consult_proof.sh",
+            date=str(consult.get("date") or "")[:10],
+        )
+
+    hybrid = data.get("nginxHybrid") or {}
+    if hybrid:
+        ok = hybrid.get("pass") is True
+        checks = hybrid.get("checks") or {}
+        sqli = checks.get("edge_sqli_blocked") or {}
+        row(
+            "nginx-hybrid",
+            "pass" if ok else "fail",
+            "nginx hibrit — inline consult + log replay",
+            (
+                f"mode={hybrid.get('mode', 'inline+log')}; edge_sqli={sqli.get('http_code', '—')}; "
+                f"replay_alerts={checks.get('log_replay_alerts', 0)}."
+                if ok
+                else "nginx_hybrid_proof FAIL — bash scripts/nginx_hybrid_proof.sh"
+            ),
+            "nginx hybrid — inline consult + log replay",
+            (
+                f"mode={hybrid.get('mode', 'inline+log')}; edge_sqli={sqli.get('http_code', '—')}; "
+                f"replay_alerts={checks.get('log_replay_alerts', 0)}."
+                if ok
+                else "nginx_hybrid_proof FAIL — bash scripts/nginx_hybrid_proof.sh"
+            ),
+            purpose="ModSec/Fail2ban farki: auth_request WAF + access_log tek zincir kaniti.",
+            purpose_en="ModSec/Fail2ban gap: auth_request WAF + access_log single-chain proof.",
+            metrics=[
+                {"label": "edge_sqli", "value": str(sqli.get("http_code") or "—")},
+                {"label": "replay", "value": str(checks.get("log_replay_alerts") or 0)},
+            ],
+            script="scripts/nginx_hybrid_proof.sh",
+            date=str(hybrid.get("date") or "")[:10],
+        )
+
+    ban_prof = data.get("banProfileE2e") or {}
+    if ban_prof:
+        ok = ban_prof.get("pass") is True
+        nchk = len(ban_prof.get("checks") or [])
+        row(
+            "ban-profile-e2e",
+            "pass" if ok else "fail",
+            "AUTO_BAN profil + consult cache + threat intel offline",
+            (
+                f"{nchk} statik kontrol PASS (AUTO_BAN_PROFILE, CONSULT_CACHE, GeoIP)."
+                if ok
+                else "ban_profile_e2e FAIL."
+            ),
+            "AUTO_BAN profile + consult cache + threat intel offline",
+            (
+                f"{nchk} static checks PASS (AUTO_BAN_PROFILE, CONSULT_CACHE, GeoIP)."
+                if ok
+                else "ban_profile_e2e FAIL."
+            ),
+            purpose="AUTO_BAN_PROFILE preset, consult cache, threat intel offline fallback.",
+            purpose_en="AUTO_BAN_PROFILE preset, consult cache, threat intel offline fallback.",
+            metrics=[{"label": "checks", "value": str(nchk)}],
+            script="scripts/ban_profile_e2e.sh",
+            date=str(ban_prof.get("date") or "")[:10],
+        )
+
+    ipv6 = data.get("ipv6BanE2e") or {}
+    if ipv6:
+        ok = ipv6.get("pass") is True
+        row(
+            "ipv6-ban-e2e",
+            "pass" if ok else "fail",
+            "IPv6 ban — ipset v6 + API/CLI",
+            (
+                f"via={ipv6.get('ban_via', '—')}; path={ipv6.get('ban_path', '—')}; "
+                f"ip={ipv6.get('test_ip', '—')}."
+                if ok
+                else "ipv6_ban_e2e FAIL — sudo bash scripts/ipv6_ban_e2e.sh"
+            ),
+            "IPv6 ban — ipset v6 + API/CLI",
+            (
+                f"via={ipv6.get('ban_via', '—')}; path={ipv6.get('ban_path', '—')}; "
+                f"ip={ipv6.get('test_ip', '—')}."
+                if ok
+                else "ipv6_ban_e2e FAIL — sudo bash scripts/ipv6_ban_e2e.sh"
+            ),
+            purpose="RFC 3849 doc prefix — v4-only rakiplere karsi ipset v6 kaniti.",
+            purpose_en="RFC 3849 doc prefix — ipset v6 proof vs v4-only rivals.",
+            metrics=[
+                {"label": "via", "value": str(ipv6.get("ban_via") or "—")},
+                {"label": "path", "value": str(ipv6.get("ban_path") or "—")},
+            ],
+            script="scripts/ipv6_ban_e2e.sh",
+            date=str(ipv6.get("date") or "")[:10],
         )
 
     ja3 = data.get("ja3Cluster") or {}

@@ -1,9 +1,9 @@
 {
-  "date": "2026-07-03T22:22:17.844170+00:00",
+  "date": "2026-07-05T10:06:23.388101+00:00",
   "pass": true,
   "domain": "ceniklinuxlogguardian.org",
-  "expected_tests": 75,
-  "live_cards": 75,
+  "expected_tests": 79,
+  "live_cards": null,
   "css_ok": true,
   "js_ok": true,
   "sri_ok": true,

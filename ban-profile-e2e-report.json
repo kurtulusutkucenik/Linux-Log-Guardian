@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-05T07:54:22.084757+00:00",
+  "script": "scripts/ban_profile_e2e.sh",
+  "pass": true,
+  "checks": [
+    "AUTO_BAN_PROFILE preset (main.c)",
+    "rules.conf AUTO_BAN_PROFILE yorumu",
+    "CONSULT_CACHE_TTL rules.conf",
+    "consult cache (api_server.c)",
+    "threat intel offline fallback",
+    "GeoIP zone cache"
+  ]
+}

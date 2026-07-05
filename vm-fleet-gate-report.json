@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-03T22:22:17.971763+00:00",
+  "date": "2026-07-05T10:06:56.420794+00:00",
   "pass": true,
   "dash_url": "https://localhost:8443",
   "host_agent": "node-kurtulus-01",
@@ -10,5 +10,7 @@
   "agent_count": 2,
   "host_keepalive_active": true,
   "laptop_ops_doc_ok": true,
+  "vm_skipped": false,
+  "laptop_host_only": false,
   "script": "scripts/vm_fleet_gate.sh"
 }

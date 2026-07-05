@@ -25,6 +25,7 @@ API_TOK=$(read_lg_api_token 2>/dev/null || true)
 API_AUTH=()
 if [[ -n "$API_TOK" ]]; then
   mapfile -t API_AUTH < <(lg_api_auth_curl)
+  API_AUTH+=(-H "X-Guardian-Token: $API_TOK")
 else
   echo "[WARN] API_TOKEN yok — sudo bash scripts/ensure_api_security.sh" >&2
 fi
@@ -48,7 +49,20 @@ if [[ "$api_up" -eq 1 ]]; then
 else
   echo "[WARN] API :${API_PORT} yanit vermiyor (16s beklendi)" >&2
   bash "$ROOT/scripts/ensure_guardian_api.sh" 2>/dev/null || true
-  fail "once: sudo systemctl restart log-guardian  (make install binary'i yukler, servisi yenilemez)"
+  if [[ "$(id -u)" -eq 0 ]] || sudo -n true 2>/dev/null; then
+    sudo systemctl restart log-guardian 2>/dev/null || systemctl restart log-guardian 2>/dev/null || true
+    sleep 4
+  fi
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if [[ ${#API_AUTH[@]} -gt 0 ]] && \
+       curl -sf --max-time 2 "${API_AUTH[@]}" "${BASE}/api/v1/metrics" >/dev/null 2>&1; then
+      api_up=1
+      echo "[OK] API :${API_PORT} restart sonrasi yanit veriyor"
+      break
+    fi
+    sleep 2
+  done
+  [[ "$api_up" -eq 1 ]] || fail "once: sudo systemctl restart log-guardian  (make install binary'i yukler, servisi yenilemez)"
 fi
 
 consult() {

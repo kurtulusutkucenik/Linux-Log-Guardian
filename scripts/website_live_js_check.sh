@@ -10,4 +10,15 @@ if [[ ! -x "$PY" ]] || ! "$PY" -c "import playwright" 2>/dev/null; then
   exit 0
 fi
 
+# Chromium binary yoksa CSS parity yeterli (gate css_ok ile devam eder)
+if ! "$PY" -c "
+from playwright.sync_api import sync_playwright
+with sync_playwright() as pw:
+    b = pw.chromium.launch(headless=True)
+    b.close()
+" 2>/dev/null; then
+  echo "[website_live_js_check] SKIP — chromium yok; once: $VENV/bin/playwright install chromium" >&2
+  exit 0
+fi
+
 exec "$PY" "$ROOT/scripts/website_live_js_check.py"

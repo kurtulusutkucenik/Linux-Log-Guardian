@@ -1,9 +1,9 @@
 {
-  "date": "2026-07-03T22:20:43.333695+00:00",
+  "date": "2026-07-05T07:51:50.619777+00:00",
   "pass": true,
   "mode": "cross-gnu",
   "host_arch": "x86_64",
   "target_arch": "aarch64",
-  "file": "./log-guardian.aarch64: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=b4aaba9ac71d5efadf1c3d030af04098c4e8ce4c, for GNU/Linux 3.7.0, not stripped",
+  "file": "./log-guardian.aarch64: ELF 64-bit LSB pie executable, ARM aarch64, version 1 (SYSV), dynamically linked, interpreter /lib/ld-linux-aarch64.so.1, BuildID[sha1]=fb891c37a931d325f73e785a7830e45920d346c5, for GNU/Linux 3.7.0, not stripped",
   "script": "scripts/build_arm64.sh"
 }

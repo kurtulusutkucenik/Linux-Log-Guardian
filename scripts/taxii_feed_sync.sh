@@ -45,7 +45,7 @@ load_fixture() {
   if [[ ! -f "$FIXTURE" ]]; then
     fail "TAXII_URL veya fixture yok ($FIXTURE)"
   fi
-  echo "[WARN] TAXII_URL yok — fixture kullaniliyor: $FIXTURE" >&2
+  echo "[INFO] TAXII_URL yok — fixture kullaniliyor: $FIXTURE" >&2
   cat "$FIXTURE"
 }
 

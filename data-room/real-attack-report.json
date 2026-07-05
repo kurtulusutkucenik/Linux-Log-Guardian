@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-03T22:10:08.583327+00:00",
+  "date": "2026-07-04T12:50:12.144784+00:00",
   "corpus": "corpus/real_attack_corpus.access",
   "manifest": "corpus/real_attack_manifest.json",
   "lines_total": 1000,
@@ -239,5 +239,6 @@
       }
     ],
     "date": "2026-06-26T11:04:11.685805+00:00"
-  }
+  },
+  "updated": "2026-07-04T12:50:12.181299+00:00"
 }

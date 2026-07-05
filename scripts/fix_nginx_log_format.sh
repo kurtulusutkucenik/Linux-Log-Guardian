@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SNIP_DST="/etc/nginx/snippets/log-guardian.conf"
 SNIP_SERVER_DST="/etc/nginx/snippets/log-guardian-server.conf"
+SNIP_RATE_DST="/etc/nginx/snippets/log-guardian-static-rate.conf"
 HTTP_INLINE="/etc/nginx/snippets/log-guardian-http-inline.conf"
+RATE_MARKER="log-guardian-static-rate"
 NGINX_MAIN="/etc/nginx/nginx.conf"
 HTTP_DROPIN_OLD="/etc/nginx/conf.d/00-log-guardian-http.conf"
 INCLUDE_LINE='include /etc/nginx/snippets/log-guardian-http-inline.conf;'
@@ -24,6 +26,7 @@ command -v nginx >/dev/null 2>&1 || { echo "nginx kurulu degil" >&2; exit 1; }
 install -d /etc/nginx/snippets
 install -m 644 "$ROOT/examples/nginx/snippets/log-guardian.conf" "$SNIP_DST"
 install -m 644 "$ROOT/examples/nginx/snippets/log-guardian-server.conf" "$SNIP_SERVER_DST"
+install -m 644 "$ROOT/examples/nginx/snippets/log-guardian-static-rate.conf" "$SNIP_RATE_DST"
 
 # log_format http{} icinde — nested include yerine inline (yukleme sirasi sorunu onlenir)
 cat >"$HTTP_INLINE" <<'EOF'
@@ -124,6 +127,61 @@ for path in sorted(candidates):
         shutil.copy2(path, bak)
         path.write_text(new, encoding="utf-8")
         print(f"[OK] access_log log_guardian -> {path} (yedek: {bak.name})")
+PY
+
+# Site: static rate limit (zones http{} icinde — log-guardian-http-inline.conf)
+python3 <<PY
+import glob
+import re
+import shutil
+from datetime import datetime
+from pathlib import Path
+
+INCLUDE = "    include /etc/nginx/snippets/log-guardian-static-rate.conf;  # $RATE_MARKER"
+SKIP = {
+    "/etc/nginx/snippets/log-guardian-http-inline.conf",
+    "/etc/nginx/conf.d/00-log-guardian-http.conf",
+}
+
+candidates: list[Path] = []
+for pattern in (
+    "/etc/nginx/sites-enabled/*",
+    "/etc/nginx/sites-available/default",
+    "/etc/nginx/conf.d/*.conf",
+):
+    for p in glob.glob(pattern):
+        candidates.append(Path(p))
+
+seen: set[str] = set()
+for path in sorted(candidates):
+    rp = str(path.resolve())
+    if rp in seen or not path.is_file():
+        continue
+    seen.add(rp)
+    if rp in SKIP or path.name == "00-log-guardian-http.conf":
+        continue
+    try:
+        text = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        continue
+    if "listen" not in text or "80" not in text:
+        continue
+    if "$RATE_MARKER" in text or re.search(r"limit_req\s+zone=lg_general", text):
+        print(f"[OK] rate limit zaten aktif: {path}")
+        continue
+    if re.search(r"include\s+.*log-guardian-server\.conf", text):
+        print(f"[OK] proxy server snippet (rate limit icinde): {path}")
+        continue
+    m = re.search(r"(listen\s+\[::\]:80[^;]*;)", text) or re.search(
+        r"(listen\s+80[^;]*;)", text
+    )
+    if not m:
+        continue
+    new = text[: m.end()] + "\n" + INCLUDE + text[m.end() :]
+    bak = path.with_suffix(path.suffix + f".bak.{datetime.now():%Y%m%d}")
+    shutil.copy2(path, bak)
+    path.write_text(new, encoding="utf-8")
+    print(f"[OK] rate limit include -> {path} (yedek: {bak.name})")
 PY
 
 if ! nginx -t 2>&1; then

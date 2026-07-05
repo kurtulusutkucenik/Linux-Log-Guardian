@@ -99,7 +99,7 @@ bash scripts/dashboard_refresh.sh
 bash scripts/website_preview_gate.sh
 ```
 
-Dashboard: `https://localhost:8443/tests` (**76 kart**) · Site: `cd landing && npm run dev`
+Dashboard: `https://localhost:8443/tests` (**79 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
 
 ---
 
@@ -113,7 +113,7 @@ Dashboard: `https://localhost:8443/tests` (**76 kart**) · Site: `cd landing && 
 
 ---
 
-## Laptop kanıt (76 test)
+## Laptop kanıt (79 test)
 
 | Kapı | Script |
 |------|--------|

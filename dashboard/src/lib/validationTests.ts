@@ -161,6 +161,32 @@ type NginxConsultReport = {
   nginx_snippet?: string;
 };
 
+type NginxHybridReport = {
+  date?: string;
+  pass?: boolean;
+  mode?: string;
+  checks?: {
+    log_replay_alerts?: number;
+    edge_sqli_blocked?: { http_code?: number };
+  };
+  note?: string;
+};
+
+type BanProfileE2eReport = {
+  date?: string;
+  pass?: boolean;
+  checks?: string[];
+};
+
+type Ipv6BanE2eReport = {
+  date?: string;
+  pass?: boolean;
+  test_ip?: string;
+  ban_via?: string;
+  ban_path?: string;
+  ipset_v6?: string;
+};
+
 type CorpusReport = {
   date?: string;
   pass?: boolean;
@@ -838,6 +864,9 @@ export type TestReports = {
   fpClusterTrust?: FpClusterTrustReport | null;
   lineageLive?: LineageLiveReport | null;
   nginxConsult?: NginxConsultReport | null;
+  nginxHybrid?: NginxHybridReport | null;
+  banProfileE2e?: BanProfileE2eReport | null;
+  ipv6BanE2e?: Ipv6BanE2eReport | null;
   owaspCorpus?: CorpusReport | null;
   trHostingCorpus?: CorpusReport | null;
   threatIntelSync?: ThreatIntelSyncReport | null;
@@ -1216,6 +1245,110 @@ export function evaluateValidationTests(
       ],
       date: fmtDate(consult.date),
       script: "scripts/nginx_inline_consult_proof.sh",
+    });
+  }
+
+  const hybrid = reports.nginxHybrid;
+  if (hybrid) {
+    const pass = hybrid.pass === true;
+    const sqli = hybrid.checks?.edge_sqli_blocked?.http_code;
+    const replay = hybrid.checks?.log_replay_alerts ?? 0;
+    out.push({
+      id: "nginx-hybrid",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "nginx hibrit — inline consult + log replay",
+        "nginx hybrid — inline consult + log replay",
+      ),
+      purpose: L(
+        locale,
+        "ModSec/Fail2ban farkı: auth_request WAF + access_log tek zincir kanıtı.",
+        "ModSec/Fail2ban gap: auth_request WAF + access_log single-chain proof.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `mode=${hybrid.mode ?? "inline+log"}; edge_sqli=${sqli ?? "—"}; replay_alerts=${replay}.`,
+            `mode=${hybrid.mode ?? "inline+log"}; edge_sqli=${sqli ?? "—"}; replay_alerts=${replay}.`,
+          )
+        : L(
+            locale,
+            "nginx_hybrid_proof FAIL — bash scripts/nginx_hybrid_proof.sh",
+            "nginx_hybrid_proof FAIL — bash scripts/nginx_hybrid_proof.sh",
+          ),
+      metrics: [
+        { label: "edge_sqli", value: String(sqli ?? "—") },
+        { label: "replay", value: String(replay) },
+      ],
+      date: fmtDate(hybrid.date),
+      script: "scripts/nginx_hybrid_proof.sh",
+    });
+  }
+
+  const banProf = reports.banProfileE2e;
+  if (banProf) {
+    const pass = banProf.pass === true;
+    const nchk = banProf.checks?.length ?? 0;
+    out.push({
+      id: "ban-profile-e2e",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "AUTO_BAN profil + consult cache + threat intel offline",
+        "AUTO_BAN profile + consult cache + threat intel offline",
+      ),
+      purpose: L(
+        locale,
+        "AUTO_BAN_PROFILE preset, consult cache, threat intel offline fallback.",
+        "AUTO_BAN_PROFILE preset, consult cache, threat intel offline fallback.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `${nchk} statik kontrol PASS (AUTO_BAN_PROFILE, CONSULT_CACHE, GeoIP).`,
+            `${nchk} static checks PASS (AUTO_BAN_PROFILE, CONSULT_CACHE, GeoIP).`,
+          )
+        : L(locale, "ban_profile_e2e FAIL", "ban_profile_e2e FAIL"),
+      metrics: [{ label: L(locale, "kontrol", "checks"), value: String(nchk) }],
+      date: fmtDate(banProf.date),
+      script: "scripts/ban_profile_e2e.sh",
+    });
+  }
+
+  const ipv6 = reports.ipv6BanE2e;
+  if (ipv6) {
+    const pass = ipv6.pass === true;
+    out.push({
+      id: "ipv6-ban-e2e",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "IPv6 ban — ipset v6 + API/CLI",
+        "IPv6 ban — ipset v6 + API/CLI",
+      ),
+      purpose: L(
+        locale,
+        "RFC 3849 doc prefix — v4-only rakiplere karşı ipset v6 kanıtı.",
+        "RFC 3849 doc prefix — ipset v6 proof vs v4-only rivals.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `via=${ipv6.ban_via ?? "—"}; path=${ipv6.ban_path ?? "—"}; ip=${ipv6.test_ip ?? "—"}.`,
+            `via=${ipv6.ban_via ?? "—"}; path=${ipv6.ban_path ?? "—"}; ip=${ipv6.test_ip ?? "—"}.`,
+          )
+        : L(
+            locale,
+            "ipv6_ban_e2e FAIL — sudo bash scripts/ipv6_ban_e2e.sh",
+            "ipv6_ban_e2e FAIL — sudo bash scripts/ipv6_ban_e2e.sh",
+          ),
+      metrics: [
+        { label: "via", value: ipv6.ban_via ?? "—" },
+        { label: "path", value: ipv6.ban_path ?? "—" },
+      ],
+      date: fmtDate(ipv6.date),
+      script: "scripts/ipv6_ban_e2e.sh",
     });
   }
 

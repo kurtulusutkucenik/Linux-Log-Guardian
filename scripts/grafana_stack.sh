@@ -80,7 +80,14 @@ for i in $(seq 1 45); do
   fi
   sleep 1
 done
-scrape_ok || echo "[grafana_stack] UYARI: scrape henuz hazir degil (log-guardian ayakta mi?)"
+scrape_ok || {
+  if ! curl -sf --max-time 3 http://127.0.0.1:9091/metrics 2>/dev/null \
+      | grep -q 'loganalyzer_api_auth_fail_total{tenant_id='; then
+    echo "[grafana_stack] UYARI: :9091 metrics bozuk — sudo bash scripts/install_binaries_systemd.sh" >&2
+  else
+    echo "[grafana_stack] UYARI: scrape henuz hazir degil (log-guardian ayakta mi?)" >&2
+  fi
+}
 
 export GRAFANA_URL="http://127.0.0.1:${GRAFANA_PORT}"
 export GRAFANA_USER GRAFANA_PASS

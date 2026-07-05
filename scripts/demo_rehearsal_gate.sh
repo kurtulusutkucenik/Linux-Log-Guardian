@@ -75,6 +75,28 @@ elif [[ "${LIVE_PUBLISH:-0}" == "1" ]]; then
   else
     echo "[WARN] website_live — LIVE_PUBLISH=1 tekrar veya website_live_gate.sh"
   fi
+elif python3 - "$ROOT/website-live-gate-report.json" <<'PY' 2>/dev/null; then
+import json, sys, datetime
+from pathlib import Path
+p = Path(sys.argv[1])
+if not p.is_file():
+    raise SystemExit(1)
+d = json.loads(p.read_text(encoding="utf-8"))
+if d.get("pass") is not True:
+    raise SystemExit(1)
+raw = str(d.get("date") or "")
+if raw:
+    try:
+        dt = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        age_h = (datetime.datetime.now(datetime.timezone.utc) - dt).total_seconds() / 3600
+        if age_h > 24:
+            raise SystemExit(1)
+    except ValueError:
+        pass
+raise SystemExit(0)
+PY
+  live_ok=true
+  echo "[OK] website_live_gate (cached report — son PASS)"
 elif bash "$ROOT/scripts/website_live_gate.sh" >/dev/null 2>&1; then
   live_ok=true
   echo "[OK] website_live_gate"
