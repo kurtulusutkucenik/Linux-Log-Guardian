@@ -2,7 +2,7 @@
 # Sprint AP — 08:00 demo / sunum hazırlık kapısı
 #   bash scripts/demo_rehearsal_gate.sh
 #   FULL=1 bash scripts/demo_rehearsal_gate.sh   # + security_closure (webhook: LIVE_WEBHOOK=1)
-#   LIVE_PUBLISH=1 bash scripts/demo_rehearsal_gate.sh  # canli site 70 kart yayini
+#   LIVE_PUBLISH=1 bash scripts/demo_rehearsal_gate.sh  # canli site 79 kart yayini
 #   SKIP_LIVE=1 bash scripts/demo_rehearsal_gate.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -238,6 +238,6 @@ else
   echo "[FAIL] demo_rehearsal_gate — yukaridaki JSON fail_reason" >&2
   gate_rc=1
 fi
-echo "  Canli 70 kart: LIVE_PUBLISH=1 bash scripts/demo_rehearsal_gate.sh"
+echo "  Canli 79 kart: LIVE_PUBLISH=1 bash scripts/demo_rehearsal_gate.sh"
 echo "  Tam prova: FULL=1 LIVE_WEBHOOK=1 bash scripts/demo_rehearsal_gate.sh"
 exit "$gate_rc"

@@ -384,7 +384,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/ban_policy_audit_e2e.sh",
-    "date": "2026-07-04"
+    "date": "2026-07-05"
   },
   {
     "id": "ban-profile-e2e",
@@ -504,15 +504,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "CrowdSec LAPI → log-guardian ban API",
     "titleEn": "CrowdSec LAPI → log-guardian ban API",
-    "verdict": "mode=dry-run; 50 karar; ban API dry-run; LAPI OK.",
-    "verdictEn": "mode=dry-run; 50 decisions; ban API dry-run; LAPI OK.",
+    "verdict": "mode=live-api; 50 karar; ban API OK; LAPI OK.",
+    "verdictEn": "mode=live-api; 50 decisions; ban API OK; LAPI OK.",
     "group": "proof",
     "purpose": "Dağıtık IP kararlarının kernel ban hattına aktarılmasını kanıtlar.",
     "purposeEn": "Proves distributed IP decisions reach the kernel ban path.",
     "metrics": [
       {
         "label": "mode",
-        "value": "dry-run"
+        "value": "live-api"
       },
       {
         "label": "karar",
@@ -520,7 +520,7 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "ban API",
-        "value": "dry-run"
+        "value": "OK"
       },
       {
         "label": "LAPI",
@@ -823,8 +823,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "GitHub ship — push oncesi tam kapı",
     "titleEn": "GitHub ship — full pre-push gate",
-    "verdict": "ship=yes; closure=yes; secret=yes; proof 73/73.",
-    "verdictEn": "ship=yes; closure=yes; secret=yes; proof 73/73.",
+    "verdict": "ship=yes; closure=yes; secret=yes; proof 79/79.",
+    "verdictEn": "ship=yes; closure=yes; secret=yes; proof 79/79.",
     "group": "proof",
     "purpose": "presentation_ship + security_closure + secret scan — git push hazirligi.",
     "purposeEn": "presentation_ship + security_closure + secret scan — git push readiness.",
@@ -835,11 +835,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "73/73"
+        "value": "79/79"
       }
     ],
     "script": "scripts/github_ship_gate.sh",
-    "date": "2026-06-30"
+    "date": "2026-07-05"
   },
   {
     "id": "grafana-alerts",
@@ -1111,15 +1111,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Lineage → incident otomatik (tek senaryo)",
     "titleEn": "Lineage → auto incident (single scenario)",
-    "verdict": "INC-6a4985f2-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
-    "verdictEn": "INC-6a4985f2-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
+    "verdict": "INC-6a4a2d35-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
+    "verdictEn": "INC-6a4a2d35-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
     "group": "proof",
     "purpose": "LOG_SQLI + EBPF_EXECVE sinyallerinden INC-* korelasyonu; tek otomatik incident kanıtı.",
     "purposeEn": "INC-* correlation from LOG_SQLI + EBPF_EXECVE signals; single auto-incident proof.",
     "metrics": [
       {
         "label": "INC",
-        "value": "INC-6a4985f2-2382"
+        "value": "INC-6a4a2d35-2382"
       },
       {
         "label": "IP",
@@ -1131,7 +1131,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/lineage_incident_e2e.sh",
-    "date": "2026-07-04"
+    "date": "2026-07-05"
   },
   {
     "id": "lineage-live",
@@ -1338,7 +1338,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/parser_fuzz_e2e.sh",
-    "date": "2026-07-04"
+    "date": "2026-07-05"
   },
   {
     "id": "phase100-fast-gate",
@@ -1372,8 +1372,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Presentation ship — sunum + GitHub zinciri",
     "titleEn": "Presentation ship — demo rehearsal + release chain",
-    "verdict": "demo=yes; release=yes; artefakt 3/3; proof 75/75.",
-    "verdictEn": "demo=yes; release=yes; artefakt 3/3; proof 75/75.",
+    "verdict": "demo=yes; release=yes; artefakt 3/3; proof 79/79.",
+    "verdictEn": "demo=yes; release=yes; artefakt 3/3; proof 79/79.",
     "group": "proof",
     "purpose": "demo_rehearsal + release_ready — tek komutta sunum ve ship.",
     "purposeEn": "demo_rehearsal + release_ready — one-command presentation and ship.",
@@ -1384,11 +1384,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "75/75"
+        "value": "79/79"
       }
     ],
     "script": "scripts/presentation_ship_gate.sh",
-    "date": "2026-06-30"
+    "date": "2026-07-05"
   },
   {
     "id": "prod-stack-e2e",
@@ -1828,15 +1828,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Website live — canli site /tests parity",
     "titleEn": "Website live — production /tests parity",
-    "verdict": "ceniklinuxlogguardian.org 79/79; CSS=yes.",
-    "verdictEn": "ceniklinuxlogguardian.org 79/79; CSS=yes.",
+    "verdict": "ceniklinuxlogguardian.org None/79; CSS=yes.",
+    "verdictEn": "ceniklinuxlogguardian.org None/79; CSS=yes.",
     "group": "proof",
     "purpose": "ceniklinuxlogguardian.org SRI + test kart parity.",
     "purposeEn": "Production domain SRI + test card parity.",
     "metrics": [
       {
         "label": "live",
-        "value": "79/79"
+        "value": "None/79"
       },
       {
         "label": "domain",

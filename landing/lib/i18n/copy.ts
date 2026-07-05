@@ -315,7 +315,7 @@ const CO_TR: PageCopy = {
     statusFail: "KALDI",
     statusPending: "BEKLİYOR",
     researcherBanner:
-      "Güvenlik araştırmacısı notu: Bu site e-ticaret veya WooCommerce değil. /products.json, /wp-json/, /api/item yok — 76 otomatik doğrulama testi burada.",
+      "Güvenlik araştırmacısı notu: Bu site e-ticaret veya WooCommerce değil. /products.json, /wp-json/, /api/item yok — 79 otomatik doğrulama testi burada.",
   },
 };
 
@@ -324,7 +324,7 @@ const CO_TR: PageCopy = {
 const SELECTED_BODIES_EN = [
   "Single chain: nginx log → OWASP CRS → ~20 ms kernel ban. Production in ~15 minutes.",
   "Fleet, SOC timeline, dashboards — an optional layer on your own server after install.",
-  "76 automated tests, competitive PDF, 72h soak — the same matrix as dashboard /tests.",
+  "79 automated tests, competitive PDF, 72h soak — the same matrix as dashboard /tests.",
   "Tenant-labeled Prometheus metrics, dashboards and alert rules — self-hosted observability.",
   "Multi-node fleet: agent sync, etcd mesh policy and targeted command dispatch — from one panel.",
   "TAXII/STIX threat feed + Telegram SOC: alert, ban and one-click 'ack' — live operator flow.",
@@ -434,7 +434,7 @@ const SETUP_DASHBOARD_EN: PageCopy["setup"]["dashboard"] = {
 const CO_EN: PageCopy = {
   marquee: [
     "nginx log → WAF → kernel ban",
-    "76 automated tests",
+    "79 automated tests",
     "72h soak PASS",
     "~20 ms kernel ban",
     "false positive 0.2%",
@@ -484,7 +484,7 @@ const CO_EN: PageCopy = {
       { k: "280,373 EPS · 16.93× ModSec", v: "On the same corpus with the same 121 OWASP CRS patterns (PCRE2 JIT), WAF/CRS throughput is 280,373 EPS — 16.93× faster than ModSec's 16,560 EPS. Measured and reproducible (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS parity", v: "121 OWASP CRS rules, 100% real-attack recall on a 1500-line corpus and full parity with ModSec — at 0.2% false positive." },
       { k: "Distributed attack coverage", v: "JA3 cluster detection + per-IP ban — 100% on an 80-IP live test. Fail2ban is single-IP; CrowdSec needs a separate signal network." },
-      { k: "Transparent, reproducible proof", v: "76 automated tests + a 14-file PDF/JSON evidence pack + 72h soak (864 samples, 0 errors). Rivals have no automatic proof or it's fragmented." },
+      { k: "Transparent, reproducible proof", v: "79 automated tests + a 14-file PDF/JSON evidence pack + 72h soak (864 samples, 0 errors). Rivals have no automatic proof or it's fragmented." },
       { k: "Self-hosted · MIT · made in Turkey", v: "Your data stays with you, no vendor lock-in, fully open source. SOC timeline, Prometheus metrics and Telegram ops in one panel (:8443)." },
     ],
     cols: ["Metric", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
@@ -672,7 +672,7 @@ const CO_EN: PageCopy = {
     statusFail: "FAIL",
     statusPending: "PENDING",
     researcherBanner:
-      "Security researcher note: This is not a shop or WooCommerce site. No /products.json, /wp-json/, or /api/item — the 76-gate verification matrix lives here.",
+      "Security researcher note: This is not a shop or WooCommerce site. No /products.json, /wp-json/, or /api/item — the 79-gate verification matrix lives here.",
   },
 };
 

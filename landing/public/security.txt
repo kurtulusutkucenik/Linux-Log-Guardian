@@ -5,6 +5,6 @@ Canonical: https://ceniklinuxlogguardian.org/.well-known/security.txt
 Policy: https://ceniklinuxlogguardian.org/testler/
 
 # Linux Log Guardian — static landing + proof matrix (NOT e-commerce / WooCommerce)
-# Verification tests (76 automated gates): https://ceniklinuxlogguardian.org/testler/
+# Verification tests (79 automated gates): https://ceniklinuxlogguardian.org/testler/
 # Proof PDF: https://ceniklinuxlogguardian.org/evidence/competitive-proof.pdf
 # Product scope: nginx log -> OWASP CRS WAF -> kernel ban (ipset/XDP), self-hosted MIT

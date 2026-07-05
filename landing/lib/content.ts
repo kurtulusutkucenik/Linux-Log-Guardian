@@ -1,5 +1,8 @@
 // Canlı siteden (ceniklinuxlogguardian.org) taşınan gerçek içerik — tek kaynak.
 
+/** competitive-proof validationTests count — keep in sync with scripts/sync_landing_tests_from_proof.py */
+export const PROOF_TEST_COUNT = 79;
+
 export const NAV = [
   { href: "#hero", label: "Ana sayfa", i18n: "nav_home" as const },
   { href: "#nedir", label: "Nedir", i18n: "nav_about" as const },
@@ -31,13 +34,13 @@ export const HERO = {
       "%100 gerçek saldırı recall + %100 OWASP CRS parity — 121 kural, 1500 satır corpus",
       "%0.2 false positive — 500 benign satırda 1 alarm; rakiplerde yüksek/orta",
       "72 saat VM soak — 864 örnek, 0 hata; rakiplerde otomatik kanıt yok",
-      "76 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
+      "79 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
       "3 araç yığını tek ürün: ban motoru + WAF/CRS + SOC/kanıt — ~15 dk kurulum",
     ],
     bold: [
       { v: "~20ms", l: "kernel ban" },
       { v: "%100", l: "recall" },
-      { v: "76", l: "otomatik test" },
+      { v: "79", l: "otomatik test" },
       { v: "3→1", l: "araç birleşimi" },
     ],
   },
@@ -80,7 +83,7 @@ export const PIPELINE = {
 
 export const MARQUEE_ITEMS = [
   "nginx log → WAF → kernel ban",
-  "76 otomatik test",
+  "79 otomatik test",
   "72h soak PASS",
   "~20 ms kernel ban",
   "false positive %0.2",
@@ -113,7 +116,7 @@ export const SELECTED = {
       tag: "//:Proof",
       kicker: "PROOF",
       title: 'Proof="79 test"',
-      body: "76 otomatik test, competitive PDF, 72h soak — dashboard /tests ile aynı matris.",
+      body: "79 otomatik test, competitive PDF, 72h soak — dashboard /tests ile aynı matris.",
       chips: ["79 test", "72h soak"],
     },
     {
@@ -260,7 +263,7 @@ export const VS = {
     },
     {
       k: "Şeffaf, tekrar üretilebilir kanıt",
-      v: "76 otomatik test + 14 dosyalık PDF/JSON kanıt paketi + 72h soak (864 örnek, 0 hata). Rakiplerde otomatik kanıt yok veya parçalı.",
+      v: "79 otomatik test + 14 dosyalık PDF/JSON kanıt paketi + 72h soak (864 örnek, 0 hata). Rakiplerde otomatik kanıt yok veya parçalı.",
     },
     {
       k: "Self-hosted · MIT · Türk yapımı",
@@ -492,7 +495,7 @@ export const METRICS = {
     {
       label: "Stabilite & kanıt",
       items: [
-        { value: "76", unit: "", label: "Otomatik test" },
+        { value: "79", unit: "", label: "Otomatik test" },
         { value: "72", unit: "saat", label: "VM soak süresi" },
         { value: "864", unit: "", label: "Soak örnek sayısı" },
         { value: "0", unit: "", label: "Soak hata" },
@@ -559,7 +562,7 @@ export const PACKAGES = {
       { v: "3→1", l: "Araç yığını" },
       { v: "~20ms", l: "Uçtan uca ban" },
       { v: "%100", l: "Recall + parity" },
-      { v: "76", l: "Otomatik test" },
+      { v: "79", l: "Otomatik test" },
     ],
   },
   tiers: {
@@ -598,7 +601,7 @@ export const PACKAGES = {
     },
     {
       title: "Şeffaf kanıt",
-      body: "76 otomatik test, 14 JSON/PDF dosya, 72h soak 864/0. Rakiplerde otomatik paket yok.",
+      body: "79 otomatik test, 14 JSON/PDF dosya, 72h soak 864/0. Rakiplerde otomatik paket yok.",
       stat: "79 test",
     },
     {
