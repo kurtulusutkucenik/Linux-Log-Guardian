@@ -48,6 +48,19 @@ Onarım sırası:
 | Yanlış WL/Sessiz | **Sesi aç** veya host undo | `bash scripts/telegram_operator_undo.sh <IP>` |
 | Doğrulama | Üç yüzey birlikte | Dashboard `#webhook-ops` · `#soc-timeline` · `/bans?search=` |
 
+**SOC derin link (harita ↔ timeline senkron filtre):**
+
+| Hash | Filtre |
+|------|--------|
+| `#soc-timeline` | Tümü |
+| `#soc-ban` | Ban |
+| `#soc-ack` | Telegram ack |
+| `#soc-lineage` | eBPF lineage |
+| `#soc-incident` | Incident |
+| `#soc-waf` | WAF |
+
+Örnek: `https://localhost:8443/#soc-ban` — nav badge · harita · timeline aynı ban katmanını gösterir.
+
 ```bash
 bash scripts/telegram_soc_gate.sh
 bash scripts/telegram_operator_undo_e2e.sh   # kanıt (RFC5737 IP)
@@ -92,7 +105,12 @@ VM guest (tek komut): `sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh`
 ## P4 — Kanıt / vitrin
 
 ```bash
-bash scripts/morning_operator_gate.sh   # laptop_core + presentation + :8443
+bash scripts/install_operator_cron.sh      # cron: günlük sabah + haftalık core kanıt
+bash scripts/install_audit_cron.sh         # cron: Pazartesi local_security_audit
+bash scripts/morning_operator_gate.sh   # laptop_core + presentation + :8443 (~30 sn)
+bash scripts/core_proof_refresh.sh        # haftalık Track A (nginx + ban + IPv6 + kanıt)
+bash scripts/finish_vitrin_plan.sh        # hepsi birden (GIF/VPS/commit haric); PUBLISH=1 canli site
+bash scripts/optional_track_refresh.sh    # opsiyonel: L7, Grafana, demo, landing export
 bash scripts/competitive_proof.sh
 bash scripts/sync_dashboard_data.sh
 bash scripts/dashboard_refresh.sh

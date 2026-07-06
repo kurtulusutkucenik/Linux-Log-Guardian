@@ -117,6 +117,13 @@ function statusBanEntries(bans: StatusBan[]): SocTimelineEntry[] {
   return out;
 }
 
+function ackDisplayTitle(key: string, operator: string): string {
+  if (isPublicIp(key)) return key;
+  if (!key) return operator;
+  if (key.length <= 28) return key;
+  return `${key.slice(0, 26)}…`;
+}
+
 function telegramAckEntries(acks: StatusAck[]): SocTimelineEntry[] {
   const out: SocTimelineEntry[] = [];
   for (const a of acks) {
@@ -127,10 +134,10 @@ function telegramAckEntries(acks: StatusAck[]): SocTimelineEntry[] {
       id: `ack-${a.ts ?? 0}-${key || operator}`,
       kind: "ack",
       ts: a.ts ?? 0,
-      title: ip ?? key ?? operator,
-      detail: ip ? `Gördüm · ${operator}` : `Gördüm · ${operator}`,
+      title: ackDisplayTitle(key, operator),
+      detail: `Gördüm · ${operator}`,
       ip,
-      href: ip ? `/bans?search=${encodeURIComponent(ip)}` : undefined,
+      href: ip ? `/bans?search=${encodeURIComponent(ip)}` : "#webhook-ops",
     });
   }
   return out;

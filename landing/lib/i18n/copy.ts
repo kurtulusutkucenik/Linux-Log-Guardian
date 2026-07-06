@@ -16,6 +16,7 @@ import {
   type LineSeries,
   type SetupStep,
 } from "@/lib/content";
+import { SHARE_TESTS_TG } from "@/lib/shareUrls";
 import type { Locale } from "./locales";
 
 type FooterLink = { label: string; href: string };
@@ -71,6 +72,8 @@ export type PageCopy = {
     bodyMatrix: string;
     ctaAll: string;
     ctaPdf: string;
+    ctaFullPack: string;
+    fullPackCmd: string;
     statLabels: string[];
     badges: string[];
   };
@@ -106,6 +109,8 @@ export type PageCopy = {
     eyebrow: string;
     title: string;
     note: string;
+    fullPackCmd: string;
+    demoCmd: string;
     files: string[];
     update: string;
   };
@@ -205,6 +210,8 @@ const CO_TR: PageCopy = {
     bodyMatrix: "ile birebir aynı matris.",
     ctaAll: "Tüm testleri gör",
     ctaPdf: "Kanıt PDF",
+    ctaFullPack: "Tam kanıt paketi",
+    fullPackCmd: "STABILITY=1 bash scripts/full_proof_pack.sh",
     statLabels: ["Toplam test", "Geçti", "Soak PASS", "Ban pipeline E2E"],
     badges: [
       "OWASP CRS parity %100",
@@ -242,8 +249,10 @@ const CO_TR: PageCopy = {
     eyebrow: EVIDENCE.eyebrow,
     title: EVIDENCE.title,
     note: EVIDENCE.note,
+    fullPackCmd: EVIDENCE.fullPackCmd,
+    demoCmd: EVIDENCE.demoCmd,
     files: EVIDENCE.files,
-    update: "Güncelle: bash scripts/sync_evidence_pack.sh",
+    update: "Güncelle: STABILITY=1 bash scripts/full_proof_pack.sh",
   },
   contact: {
     eyebrow: CONTACT.eyebrow,
@@ -274,6 +283,7 @@ const CO_TR: PageCopy = {
         links: [
           { label: "Kurulum rehberi", href: "#kurulum" },
           { label: "Testler", href: "/testler" },
+          { label: "Telegram paylaşım", href: SHARE_TESTS_TG },
           { label: "security.txt", href: "/.well-known/security.txt" },
           { label: "Kanıt PDF", href: "/evidence/competitive-proof.pdf" },
           { label: "Changelog", href: "https://github.com/kurtulusutkucenik/Linux-Log-Guardian/releases" },
@@ -544,6 +554,8 @@ const CO_EN: PageCopy = {
     bodyMatrix: "exactly the same matrix.",
     ctaAll: "See all tests",
     ctaPdf: "Proof PDF",
+    ctaFullPack: "Full proof pack",
+    fullPackCmd: "STABILITY=1 bash scripts/full_proof_pack.sh",
     statLabels: ["Total tests", "Passed", "Soak PASS", "Ban pipeline E2E"],
     badges: [
       "OWASP CRS parity 100%",
@@ -559,8 +571,10 @@ const CO_EN: PageCopy = {
     title: "Honest limits",
     items: [
       "Reactive architecture — the first request may pass until the log line drops; ModSec blocks the first request inline while we're reactive.",
-      "We don't absorb L3/L4 DDoS — we sit behind a CDN.",
-      "Distributed botnet — per-IP ban; no CrowdSec signal network.",
+      "We don't replace Cloudflare or commercial WAF — last defense at origin behind CDN.",
+      "We don't absorb L3/L4 DDoS — CDN + nginx rate limit first, then Log Guardian.",
+      "CrowdSec is complementary, not a rival — Guardian + CrowdSec LAPI signal → ban API.",
+      "Distributed botnet — per-IP ban; optional CrowdSec community signal layer.",
       "Does: log → CRS/WAF → ~20 ms kernel ban, proof PDF, Telegram ops, MIT self-hosted.",
     ],
     layersEyebrow: "//:Layers",
@@ -597,9 +611,11 @@ const CO_EN: PageCopy = {
   evidence: {
     eyebrow: "//:Evidence",
     title: "Evidence pack",
-    note: "Gates: laptop_sprint_gate.sh · 1h soak (laptop) · 72h soak (VM) PASS",
+    note: "One command: STABILITY=1 bash scripts/full_proof_pack.sh → PDF + release-pack.zip + data-room.zip",
+    fullPackCmd: EVIDENCE.fullPackCmd,
+    demoCmd: EVIDENCE.demoCmd,
     files: EVIDENCE.files,
-    update: "Update: bash scripts/sync_evidence_pack.sh",
+    update: "Update: STABILITY=1 bash scripts/full_proof_pack.sh",
   },
   contact: {
     eyebrow: "//:Contact",
@@ -631,6 +647,7 @@ const CO_EN: PageCopy = {
         links: [
           { label: "Setup guide", href: "#kurulum" },
           { label: "Tests", href: "/tests" },
+          { label: "Telegram share", href: SHARE_TESTS_TG },
           { label: "security.txt", href: "/.well-known/security.txt" },
           { label: "Proof PDF", href: "/evidence/competitive-proof.pdf" },
           { label: "Changelog", href: "https://github.com/kurtulusutkucenik/Linux-Log-Guardian/releases" },

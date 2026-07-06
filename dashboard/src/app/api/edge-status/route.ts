@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
+import { fetchBannedIps } from "@/lib/fetchBannedIps";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,7 @@ export async function GET() {
       whitelist_count?: number;
       ipset_entries?: number;
       bans_active?: number;
+      bans_active_db?: number;
       threat_intel_legacy_rows?: number;
       threat_intel_summary_rows?: number;
       date?: string;
@@ -51,6 +53,18 @@ export async function GET() {
   const dataMode: "live" | "proof" | "unknown" =
     ipc === "ok" && gate?.pass ? "live" : gate ? "proof" : "unknown";
 
+  const liveBans = await fetchBannedIps({ countOnly: true }).catch(() => ({
+    count: 0,
+    source: "empty",
+    bans: [],
+  }));
+  const liveCount = liveBans.count ?? 0;
+  const gateIpset = gate?.ipset_entries ?? 0;
+  const gateBans = gate?.bans_active ?? status?.db?.bans_active ?? 0;
+  const bansActive =
+    liveCount > 0 ? liveCount : gateIpset > 0 ? gateIpset : gateBans;
+  const ipsetEntries = liveCount > 0 ? liveCount : gateIpset;
+
   return NextResponse.json({
     data_mode: dataMode,
     gate_pass: gate?.pass === true,
@@ -65,8 +79,10 @@ export async function GET() {
     nginx_snippets: gate?.nginx_snippets ?? false,
     nginx_live: gate?.nginx_live ?? false,
     whitelist_count: gate?.whitelist_count ?? 0,
-    ipset_entries: gate?.ipset_entries ?? 0,
-    bans_active: gate?.bans_active ?? status?.db?.bans_active ?? 0,
+    ipset_entries: ipsetEntries,
+    bans_active: bansActive,
+    bans_active_db: gate?.bans_active_db ?? gateBans,
+    bans_source: liveCount > 0 ? liveBans.source : gateIpset > 0 ? "ipset" : "db",
     threat_intel_legacy_rows: gate?.threat_intel_legacy_rows ?? 0,
     threat_intel_summary_rows: gate?.threat_intel_summary_rows ?? 0,
   });

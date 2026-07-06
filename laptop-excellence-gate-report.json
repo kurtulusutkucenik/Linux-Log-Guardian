@@ -1,11 +1,11 @@
 {
-  "date": "2026-07-04T23:37:23.900545+00:00",
+  "date": "2026-07-05T10:56:55.016867+00:00",
   "pass": true,
-  "ok": 12,
-  "warn": 1,
+  "ok": 13,
+  "warn": 0,
   "fail": 0,
   "full_mode": false,
-  "proof_tests": 76,
-  "proof_pass": 74,
+  "proof_tests": 79,
+  "proof_pass": 79,
   "script": "scripts/laptop_excellence_gate.sh"
 }

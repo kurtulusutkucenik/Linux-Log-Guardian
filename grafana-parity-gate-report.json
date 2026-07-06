@@ -1,10 +1,13 @@
 {
-  "date": "2026-06-29T18:27:32.900364+00:00",
+  "date": "2026-07-05T16:53:52.662617+00:00",
   "pass": true,
-  "panel_metrics": 36,
-  "dashboard_metrics": 36,
+  "panel_metrics": 38,
+  "dashboard_metrics": 40,
   "missing_in_dashboard": [],
-  "missing_in_panels": [],
+  "missing_in_panels": [
+    "loganalyzer_dist_risk_enabled",
+    "loganalyzer_dist_risk_observe_total"
+  ],
   "core_missing": [],
   "script": "scripts/grafana_parity_gate.sh"
 }

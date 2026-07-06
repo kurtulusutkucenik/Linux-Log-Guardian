@@ -50,6 +50,9 @@ export default function ProofSection() {
             >
               {proof.ctaPdf}
             </a>
+            <code className="inline-flex items-center rounded-md border border-neon/30 bg-black/60 px-4 py-3 font-mono text-[11px] text-neon">
+              {proof.fullPackCmd}
+            </code>
           </div>
         </div>
 

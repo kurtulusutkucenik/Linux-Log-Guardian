@@ -19,12 +19,17 @@ Log Guardian **self-hosted** güvenlik yazılımıdır.
 | 3 | Dashboard JWT | `laptop_jwt_setup.sh` | Güçlü `DASHBOARD_ADMIN_PASSWORD` |
 | 4 | Webhook token | `.env.webhook.local` (gitignore) | `/etc/log-guardian/webhook.env` chmod 600 |
 | 5 | Telegram | POLL yeterli | WEBHOOK + HTTPS — [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
+| 6 | IPC token | `install.sh` üretir | `LOG_GUARDIAN_IPC_TOKEN` + `log-guardian` grubu — [TLS_PRODUCTION.md](TLS_PRODUCTION.md) |
+| 7 | FP trust prod | `install_fp_trust_prod.sh` (önerilir) | Yanlış ban riskini azaltır |
+| 8 | nginx rate limit | `examples/nginx/snippets/` | 30 r/s genel, 5 r/m login — [EDGE_PROTECTION.md](EDGE_PROTECTION.md) |
+| 9 | JWT rotasyonu | Opsiyonel | Bakım penceresi — [JWT_ROTATION.md](JWT_ROTATION.md) |
 
 ```bash
 # Laptop — API (parolaya dokunmaz):
 sudo bash scripts/ensure_api_security.sh
 bash scripts/sync_dashboard_api_token.sh
 bash scripts/laptop_jwt_setup.sh
+sudo bash scripts/install_fp_trust_prod.sh   # opsiyonel, önerilir
 bash scripts/laptop_harden_check.sh
 
 # İnternet sunucusu — tam sertleştirme:

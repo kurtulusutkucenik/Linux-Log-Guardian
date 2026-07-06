@@ -19,7 +19,7 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
   const highlightIp = searchParams.get("ip")?.trim() || "";
-  const { bans, totalCount, truncated, source, preview, loading, refreshing, refresh } =
+  const { bans, totalCount, truncated, source, preview, dataMode, loading, refreshing, refresh } =
     useBanPreview(PREVIEW_LIMIT);
   const spinning = loading || refreshing;
 
@@ -52,6 +52,11 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
               {t("bannedIpsProofMode")}
             </span>
           )}
+          {!preview && dataMode === "live" && source === "ipset" && totalCount > 0 && (
+            <span className="text-[10px] uppercase tracking-wide px-2 py-0.5 rounded border border-emerald-500/30 text-emerald-300 bg-emerald-500/10">
+              {t("bannedIpsLiveMode")}
+            </span>
+          )}
           <button
             type="button"
             onClick={() => void refresh()}
@@ -72,6 +77,23 @@ export function BannedIpsPanel({ compact = false, className = "" }: Props) {
 
       {preview && (
         <p className="text-xs text-amber-400/70 mb-3">{t("bannedIpsProofDesc")}</p>
+      )}
+
+      {totalCount > 0 && (
+        <div className="flex flex-wrap gap-2 mb-3 text-xs">
+          <Link
+            href="/#soc-ban"
+            className="px-2 py-1 rounded-md border border-violet-500/25 text-violet-200/90 hover:bg-violet-500/10"
+          >
+            {t("bannedIpsSocLink")}
+          </Link>
+          <Link
+            href="/#attack-world-map"
+            className="px-2 py-1 rounded-md border border-cyan-500/25 text-cyan-200/90 hover:bg-cyan-500/10"
+          >
+            {t("navAttackMap")}
+          </Link>
+        </div>
       )}
 
       {source && (

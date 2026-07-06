@@ -54,7 +54,7 @@ report_path, esc_path, support_path = sys.argv[1:4]
 esc = Path(esc_path).read_text(encoding="utf-8")
 support = Path(support_path).read_text(encoding="utf-8")
 
-sections = ["P1", "P2", "P3", "P4", "Telegram", "SIGUSR2", "edge_protection_gate"]
+sections = ["P1", "P2", "P3", "P4", "Telegram", "SIGUSR2", "edge_protection_gate", "SOC", "core_proof_refresh"]
 missing = [s for s in sections if s not in esc]
 link_ok = "ENTERPRISE_ESCALATION.md" in support
 

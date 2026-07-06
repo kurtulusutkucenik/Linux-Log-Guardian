@@ -545,7 +545,7 @@ export const PACKAGES = {
       name: "SOC & sinyal katmanı",
       company: "CrowdSec",
       replaces: "CrowdSec bouncer + ayrı konsol + manuel kanıt",
-      body: "CrowdSec parçalı mimarisine gerek yok. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
+      body: "CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
       metrics: ["79 test", "72h soak PASS", "14 kanıt dosyası"],
       color: "cyan" as const,
     },
@@ -775,13 +775,15 @@ export const SETUP = {
       },
     ] as SetupStep[],
   },
-  tip: "İpucu: JWT ve dashboard parolası için bash scripts/laptop_jwt_setup.sh. 3 dakikalık demo: SKIP_WEBHOOK=1 bash scripts/demo_3min.sh. Detaylı doküman: docs/QUICKSTART_NGINX.md · docs/LAPTOP_OPS.md · docs/SECURITY_PROFILES.md.",
+  tip: "İpucu: Tek komut kanıt — STABILITY=1 bash scripts/full_proof_pack.sh. 3 dk demo: SKIP_WEBHOOK=1 bash scripts/demo_3min.sh. Operasyon cron: bash scripts/install_operator_cron.sh. Detay: docs/QUICKSTART_NGINX.md · docs/LAPTOP_OPS.md · docs/JWT_ROTATION.md.",
 };
 
 export const EVIDENCE = {
   eyebrow: "//:Evidence",
   title: "Kanıt paketi",
-  note: "Kapılar: laptop_sprint_gate.sh · 1h soak (laptop) · 72h soak (VM) PASS",
+  note: "Tek komut: STABILITY=1 bash scripts/full_proof_pack.sh → PDF + release-pack.zip + data-room.zip",
+  fullPackCmd: "STABILITY=1 bash scripts/full_proof_pack.sh",
+  demoCmd: "SKIP_WEBHOOK=1 bash scripts/demo_3min.sh",
   files: [
     "competitive-proof.pdf",
     "competitive-proof.json",
@@ -805,8 +807,10 @@ export const HONEST = {
   title: "Dürüst sınırlar",
   items: [
     "Reaktif mimari — log satırı düşene kadar ilk istek geçebilir; ModSec inline'ın ilk isteği anında engellemesine karşı biz reaktifiz.",
-    "L3/L4 DDoS absorb etmiyoruz — CDN üstüne konuruz.",
-    "Dağıtık botnet — IP başına ban; CrowdSec sinyal ağı yok.",
+    "Cloudflare / ticari WAF yerine geçmiyoruz — CDN arkasında origin'de son savunma hattı (EDGE_PROTECTION.md).",
+    "L3/L4 DDoS absorb etmiyoruz — önce CDN + nginx rate limit, sonra Log Guardian.",
+    "CrowdSec rakip değil tamamlayıcı — Guardian + CrowdSec LAPI sinyali → ban API.",
+    "Dağıtık botnet — IP başına ban; topluluk sinyali isteğe bağlı CrowdSec katmanı.",
     "Yapar: log → CRS/WAF → ~20 ms kernel ban, kanıt PDF, Telegram ops, MIT self-hosted.",
   ],
 };

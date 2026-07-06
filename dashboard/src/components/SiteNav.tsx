@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { LOCALES } from "@/lib/i18n";
+import { scrollToAttackMap } from "./SocKindFilterContext";
 import { useLanguage } from "./LanguageProvider";
 import { BanNavBadge } from "./BanNavBadge";
 
@@ -51,7 +52,17 @@ export function SiteNav() {
           <Link href="/tests" className={linkClass("/tests")} id="nav-tests">
             {t("navTests")}
           </Link>
-          <Link href="/#attack-world-map" className={linkClass("/")} id="nav-attack-map">
+          <Link
+            href="/#attack-world-map"
+            className="nav-link"
+            id="nav-attack-map"
+            onClick={(e) => {
+              if (pathname !== "/") return;
+              e.preventDefault();
+              history.replaceState(null, "", "/#attack-world-map");
+              scrollToAttackMap();
+            }}
+          >
             {t("navAttackMap")}
           </Link>
           <Link href="/copilot" className={linkClass("/copilot")} id="nav-copilot">

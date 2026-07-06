@@ -1027,8 +1027,8 @@ export function evaluateValidationTests(
       status: pass ? "pass" : "fail",
       title: L(
         locale,
-        "Gerçek saldırı corpus'unda (SQLi/XSS/LFI/RCE/scanner) tespit oranını ölçüyoruz",
-        "We measure detection rate on a real attack corpus (SQLi/XSS/LFI/RCE/scanner)",
+        "Gerçek saldırı corpus'unda (26 kategori: SQLi, RFI, GraphQL, shellcmd, …) tespit oranını ölçüyoruz",
+        "We measure detection on a 26-category real attack corpus (SQLi, RFI, GraphQL, shellcmd, …)",
       ),
       purpose: L(
         locale,
@@ -1048,6 +1048,7 @@ export function evaluateValidationTests(
           ),
       metrics: [
         { label: L(locale, "Recall", "Recall"), value: `${recall.toFixed(1)}%` },
+        { label: L(locale, "Kategori", "Categories"), value: String(Object.keys(cats).length) },
         { label: L(locale, "Satır", "Lines"), value: String(real.lines_total ?? 0) },
         { label: L(locale, "Uyarı", "Alerts"), value: String(real.alerts_total ?? 0) },
       ],

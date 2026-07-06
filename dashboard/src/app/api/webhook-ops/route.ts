@@ -109,6 +109,9 @@ export async function GET() {
     undo_e2e_at: undo?.date ?? null,
     undo_e2e_ip: undo?.ip ?? null,
     undo_e2e_mode: undo?.mode ?? null,
+    webhook_sent: live?.webhook_sent_total ?? 0,
+    webhook_fail: live?.webhook_fail_total ?? 0,
+    webhook_drops: live?.webhook_queue_drops_total ?? 0,
     topics: {
       waf: n.telegram_topic_waf ?? 0,
       ban: n.telegram_topic_ban ?? 0,

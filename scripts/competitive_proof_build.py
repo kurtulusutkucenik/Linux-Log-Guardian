@@ -1590,14 +1590,16 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             "Attack map — geo marker + canli ban",
             (
                 f"{attack_map.get('markers', 0)} marker, kaynak={attack_map.get('data_source', '—')}; "
-                f"ack={attack_map.get('ack_markers', 0)} ban={attack_map.get('ban_markers', 0)}."
+                f"ack={attack_map.get('ack_markers', 0)} ban={attack_map.get('ban_markers', 0)}; "
+                f"nav={attack_map.get('nav_ban_count', '—')} parity={'OK' if attack_map.get('nav_parity_ok') else '—'}."
                 if ok
                 else str(attack_map.get("fail_reason") or "bash scripts/attack_map_e2e.sh")
             ),
             "Attack map — geo markers + live bans",
             (
                 f"{attack_map.get('markers', 0)} markers, source={attack_map.get('data_source', '—')}; "
-                f"ack={attack_map.get('ack_markers', 0)} ban={attack_map.get('ban_markers', 0)}."
+                f"ack={attack_map.get('ack_markers', 0)} ban={attack_map.get('ban_markers', 0)}; "
+                f"nav={attack_map.get('nav_ban_count', '—')} parity={'OK' if attack_map.get('nav_parity_ok') else '—'}."
                 if ok
                 else str(attack_map.get("fail_reason") or "bash scripts/attack_map_e2e.sh")
             ),
@@ -1607,6 +1609,7 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
                 {"label": "markers", "value": str(attack_map.get("markers", 0))},
                 {"label": "ack", "value": str(attack_map.get("ack_markers", 0))},
                 {"label": "ban", "value": str(attack_map.get("ban_markers", 0))},
+                {"label": "nav", "value": str(attack_map.get("nav_ban_count", "—"))},
                 {"label": "bans", "value": str(attack_map.get("bans_source") or "—")},
             ],
             script="scripts/attack_map_e2e.sh",
@@ -2320,14 +2323,16 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         ok = parser_fuzz.get("pass") is True
         runs = parser_fuzz.get("parse_runs", 0)
         corpus = parser_fuzz.get("corpus_lines", 0)
+        file_n = parser_fuzz.get("file_samples", 0)
         mut = parser_fuzz.get("mutations", 0)
+        file_bit = f"; file={file_n}" if file_n else ""
         verdict_tr = (
-            f"{runs} parse; corpus={corpus}; mutasyon={mut}."
+            f"{runs} parse; corpus={corpus}{file_bit}; mutasyon={mut}."
             if ok
             else "parser_fuzz_e2e FAIL."
         )
         verdict_en = (
-            f"{runs} parses; corpus={corpus}; mutations={mut}."
+            f"{runs} parses; corpus={corpus}{file_bit}; mutations={mut}."
             if ok
             else "parser_fuzz_e2e FAIL."
         )
@@ -2343,6 +2348,7 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             metrics=[
                 {"label": "runs", "value": str(runs)},
                 {"label": "corpus", "value": str(corpus)},
+                {"label": "file", "value": str(file_n)},
                 {"label": "mutations", "value": str(mut)},
             ],
             script="scripts/parser_fuzz_e2e.sh",

@@ -85,6 +85,19 @@ curl -sfk --max-time 4 "https://${DOMAIN}:${HTTPS_PORT}/api/tier" >/dev/null 2>&
   && check "TLS dashboard https://${DOMAIN}:${HTTPS_PORT}" 0 \
   || check "TLS dashboard https://${DOMAIN}:${HTTPS_PORT}" 1
 
+if [[ -f "$ROOT/attack-map-report.json" ]]; then
+  if python3 -c "
+import json
+d=json.load(open('$ROOT/attack-map-report.json'))
+raise SystemExit(0 if d.get('pass') and d.get('nav_parity_ok') else 1)
+" 2>/dev/null; then
+    parity=$(python3 -c "import json; d=json.load(open('$ROOT/attack-map-report.json')); print(f\"nav={d.get('nav_ban_count',0)} ban={d.get('ban_markers',0)}\")")
+    check "Attack map nav parity ($parity)" 0
+  else
+    check "Attack map nav parity (bash scripts/dashboard_refresh.sh)" 1
+  fi
+fi
+
 if systemctl --user is-enabled log-guardian-laptop-stack.service &>/dev/null; then
   check "Boot unit enabled (user systemd)" 0
 else

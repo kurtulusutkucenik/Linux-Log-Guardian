@@ -10,7 +10,7 @@ Son ölçüm: `STABILITY=1 bash scripts/full_proof_pack.sh` (laptop, 2026-06)
 
 | Metrik | Değer | Kaynak |
 |--------|-------|--------|
-| Gerçek saldırı recall (1K) | **%100** (1000 satır, 23 kategori) | `real-attack-report.json` |
+| Gerçek saldırı recall (1K) | **%100** (1000 satır, 26 kategori) | `real-attack-report.json` |
 | Corpus 10K recall | **%100** (10000 satır) | `real-attack-report-10k.json` |
 | Dağıtık cluster recall | **%100** (80 IP) | `ja3-cluster-report.json` |
 | JA3 TLS live | **PASS** (`:443`) | `ja3-cluster-report.json` → `live` |

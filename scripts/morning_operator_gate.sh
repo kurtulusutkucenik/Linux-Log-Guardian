@@ -95,7 +95,41 @@ else
   echo "[WARN] dashboard erisilemiyor"
 fi
 
-gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$core_ok" "$core_refreshed" "$ship_ok" "$dash_ok" <<'PY' | tail -1
+attack_ok=false
+if report_fresh_pass "$ROOT/attack-map-report.json" 12; then
+  if python3 -c "
+import json
+d=json.load(open('$ROOT/attack-map-report.json'))
+raise SystemExit(0 if d.get('pass') and d.get('nav_parity_ok') else 1)
+"; then
+    attack_ok=true
+    nav_n=$(python3 -c "import json; print(json.load(open('$ROOT/attack-map-report.json')).get('nav_ban_count',0))")
+    echo "[OK] attack_map nav parity (nav=${nav_n}, ≤12h)"
+  else
+    echo "[WARN] attack_map nav parity FAIL — bash scripts/dashboard_refresh.sh" >&2
+  fi
+else
+  echo "[WARN] attack_map raporu bayat/eksik (≤12h) — dashboard_refresh" >&2
+fi
+
+soc_ok=false
+if report_fresh_pass "$ROOT/telegram-soc-gate-report.json" 12; then
+  if python3 -c "
+import json
+d=json.load(open('$ROOT/telegram-soc-gate-report.json'))
+raise SystemExit(0 if d.get('pass') else 1)
+"; then
+    soc_ok=true
+    soc_n=$(python3 -c "import json; print(json.load(open('$ROOT/telegram-soc-gate-report.json')).get('soc_entries',0))")
+    echo "[OK] telegram_soc (soc=${soc_n}, ≤12h)"
+  else
+    echo "[WARN] telegram_soc raporu FAIL — bash scripts/dashboard_refresh.sh" >&2
+  fi
+else
+  echo "[WARN] telegram_soc raporu bayat/eksik (≤12h) — dashboard_refresh" >&2
+fi
+
+gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$core_ok" "$core_refreshed" "$ship_ok" "$dash_ok" "$attack_ok" "$soc_ok" <<'PY' | tail -1
 import json, datetime, sys
 from pathlib import Path
 
@@ -104,6 +138,8 @@ core_ok = sys.argv[3] == "true"
 core_refreshed = sys.argv[4] == "true"
 ship_ok = sys.argv[5] == "true"
 dash_ok = sys.argv[6] == "true"
+attack_ok = sys.argv[7] == "true"
+soc_ok = sys.argv[8] == "true"
 
 proof_n = proof_pass = 0
 cp_pass = False
@@ -130,6 +166,10 @@ if not ship_ok:
     reasons.append("presentation_ship")
 if not dash_ok:
     reasons.append("dashboard_8443")
+if dash_ok and not attack_ok:
+    reasons.append("attack_map_parity")
+if dash_ok and not soc_ok:
+    reasons.append("telegram_soc")
 if not cp_pass:
     reasons.append("competitive_proof")
 
@@ -141,6 +181,8 @@ out = {
     "laptop_core_refreshed": core_refreshed,
     "presentation_ship_ok": ship_ok,
     "dashboard_ok": dash_ok,
+    "attack_map_parity_ok": attack_ok,
+    "telegram_soc_ok": soc_ok,
     "proof_tests": proof_n,
     "proof_pass": proof_pass,
     "dash_url": "https://localhost:8443/tests",

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Activity,
@@ -13,7 +13,11 @@ import {
   Clock,
 } from "lucide-react";
 import { useLanguage } from "./LanguageProvider";
-import type { SocTimelineEntry, SocTimelineResponse } from "@/lib/socTimelineTypes";
+import { useBannedIps } from "@/context/BannedIpsContext";
+import { useSocKindFilter, scrollToAttackMap, type SocKindFilter } from "./SocKindFilterContext";
+import type { SocTimelineEntry, SocTimelineKind, SocTimelineResponse } from "@/lib/socTimelineTypes";
+
+const KIND_ORDER: SocTimelineKind[] = ["incident", "waf", "ban", "ack", "lineage"];
 
 function kindIcon(kind: SocTimelineEntry["kind"]) {
   switch (kind) {
@@ -66,6 +70,20 @@ function kindDotClass(kind: SocTimelineEntry["kind"]) {
   }
 }
 
+function kindChipClass(kind: SocTimelineKind, active: boolean): string {
+  const base = active
+    ? "border-white/25 bg-white/10 text-white"
+    : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80 hover:border-white/20";
+  const accent: Record<SocTimelineKind, string> = {
+    incident: active ? "border-amber-400/40 text-amber-200" : "",
+    waf: active ? "border-orange-400/40 text-orange-200" : "",
+    ban: active ? "border-red-400/40 text-red-200" : "",
+    ack: active ? "border-emerald-400/40 text-emerald-200" : "",
+    lineage: active ? "border-violet-400/40 text-violet-200" : "",
+  };
+  return `text-xs px-3 py-1.5 rounded-full border transition-colors ${base} ${accent[kind]}`;
+}
+
 function fmtTs(ts: number): string {
   if (!ts) return "—";
   return new Date(ts * 1000).toLocaleString(undefined, {
@@ -78,6 +96,8 @@ function fmtTs(ts: number): string {
 
 export function SocTimelinePanel() {
   const { t } = useLanguage();
+  const { kindFilter, setKindFilter } = useSocKindFilter();
+  const { totalCount: navBanCount, preview, dataMode, source } = useBannedIps();
   const [data, setData] = useState<SocTimelineResponse | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -103,19 +123,40 @@ export function SocTimelinePanel() {
     };
   }, []);
 
-  if (loading) {
-    return <div className="glass-panel h-48 animate-pulse" />;
-  }
-
   const entries = data?.entries ?? [];
 
-  const kindLabels: Record<SocTimelineEntry["kind"], string> = {
+  const kindLabels: Record<SocTimelineKind, string> = {
     incident: t("socKindIncident"),
     ban: t("socKindBan"),
     lineage: t("socKindLineage"),
     waf: t("socKindWaf"),
     ack: t("socKindAck"),
   };
+
+  const kindCounts = useMemo(() => {
+    const counts: Record<SocTimelineKind, number> = {
+      incident: 0,
+      ban: 0,
+      lineage: 0,
+      waf: 0,
+      ack: 0,
+    };
+    for (const entry of entries) counts[entry.kind]++;
+    return counts;
+  }, [entries]);
+
+  const filteredEntries = useMemo(() => {
+    if (kindFilter === "all") return entries;
+    return entries.filter((entry) => entry.kind === kindFilter);
+  }, [entries, kindFilter]);
+
+  const liveIpset =
+    !preview && dataMode === "live" && source === "ipset" && navBanCount > 0;
+  const banParityOk = liveIpset && kindCounts.ban > 0 && navBanCount === kindCounts.ban;
+
+  if (loading) {
+    return <div className="glass-panel h-48 animate-pulse" />;
+  }
 
   if (entries.length === 0) {
     return (
@@ -142,6 +183,21 @@ export function SocTimelinePanel() {
         <div className="flex items-center gap-2">
           <Clock className="w-5 h-5 text-primary" />
           <h2 className="text-lg font-semibold text-white">{t("socTimelineTitle")}</h2>
+          <span className="text-xs font-mono text-white/40 px-2 py-0.5 rounded-full bg-white/5 border border-white/10">
+            {filteredEntries.length}/{entries.length}
+          </span>
+          {kindFilter !== "all" && (
+            <>
+              <span className="text-[10px] text-cyan-400/60 normal-case">{t("socFilterLinked")}</span>
+              <button
+                type="button"
+                onClick={() => scrollToAttackMap()}
+                className="text-[10px] text-cyan-400/70 hover:text-cyan-300 hover:underline normal-case"
+              >
+                {t("socFilterMapLink")}
+              </button>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 text-xs text-white/40">
           {data?.data_mode === "live" && (
@@ -171,77 +227,137 @@ export function SocTimelinePanel() {
           lg={data.sources.lineage}
         </p>
       )}
+
+      <div className="flex flex-wrap gap-1.5 mb-3">
+        <button
+          type="button"
+          onClick={() => setKindFilter("all" as SocKindFilter)}
+          className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+            kindFilter === "all"
+              ? "border-primary/40 bg-primary/10 text-primary"
+              : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80 hover:border-white/20"
+          }`}
+        >
+          {t("socFilterAll")} {entries.length}
+        </button>
+        {KIND_ORDER.map((kind) => {
+          const count = kindCounts[kind];
+          if (count === 0) return null;
+          return (
+            <button
+              key={kind}
+              type="button"
+              onClick={() => setKindFilter(kind)}
+              className={kindChipClass(kind, kindFilter === kind)}
+            >
+              {kindLabels[kind]} {count}
+            </button>
+          );
+        })}
+      </div>
+
+      {kindCounts.ack > 0 && (
+        <p className="text-[10px] text-white/30 mb-2">{t("socAckChipHint")}</p>
+      )}
+      {kindFilter === "ban" && banParityOk && (
+        <p className="text-[10px] text-emerald-400/70 mb-2">{t("socBanParityHint")}</p>
+      )}
+      {filteredEntries.length > 3 && (
+        <p className="text-[10px] text-white/35 mb-2">
+          {filteredEntries.length} {t("socScrollHint")}
+        </p>
+      )}
+
       <p className="text-[10px] uppercase tracking-wider text-white/30 mb-4 flex items-center gap-1">
         <ChevronDown className="w-3 h-3" />
         {t("socTimelineFlow")}
       </p>
 
-      <div className="relative max-h-80 overflow-y-auto pr-1 pl-1">
-        <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-white/15 via-white/10 to-transparent pointer-events-none" />
-        <div className="space-y-1">
-          {entries.map((entry, idx) => {
-            const isLast = idx === entries.length - 1;
-            const inner = (
-              <div className="flex gap-3 items-stretch py-2 pl-8 pr-2 relative">
-                <div
-                  className={`absolute left-[7px] top-4 z-10 w-2.5 h-2.5 rounded-full border ${kindDotClass(entry.kind)}`}
-                />
-                {!isLast && (
+      {filteredEntries.length === 0 ? (
+        <p className="text-sm text-white/50 py-6 text-center">{t("socFilterNoMatch")}</p>
+      ) : (
+        <div className="relative max-h-80 overflow-y-auto pr-1 pl-1">
+          <div className="absolute left-[11px] top-2 bottom-2 w-px bg-gradient-to-b from-white/15 via-white/10 to-transparent pointer-events-none" />
+          <div className="space-y-1">
+            {filteredEntries.map((entry, idx) => {
+              const isLast = idx === filteredEntries.length - 1;
+              const inner = (
+                <div className="flex gap-3 items-stretch py-2 pl-8 pr-2 relative">
                   <div
-                    className={`absolute left-[11px] top-7 w-px h-[calc(100%-4px)] bg-gradient-to-b ${kindRailClass(entry.kind)} pointer-events-none`}
+                    className={`absolute left-[7px] top-4 z-10 w-2.5 h-2.5 rounded-full border ${kindDotClass(entry.kind)}`}
                   />
-                )}
-                {!isLast && (
-                  <div className="absolute left-[8px] bottom-0 text-[8px] text-white/25 leading-none pointer-events-none">
-                    ▼
-                  </div>
-                )}
-                <div className="mt-0.5 shrink-0">{kindIcon(entry.kind)}</div>
-                <div className="flex-1 min-w-0 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
-                  <div className="flex flex-wrap items-center gap-2 mb-0.5">
-                    <span className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">
-                      {kindLabels[entry.kind]}
-                    </span>
-                    <span className="text-xs text-white/35 font-mono">{fmtTs(entry.ts)}</span>
-                    {entry.risk != null && entry.risk >= 70 && (
-                      <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/25">
-                        risk {entry.risk.toFixed(0)}
+                  {!isLast && (
+                    <div
+                      className={`absolute left-[11px] top-7 w-px h-[calc(100%-4px)] bg-gradient-to-b ${kindRailClass(entry.kind)} pointer-events-none`}
+                    />
+                  )}
+                  {!isLast && (
+                    <div className="absolute left-[8px] bottom-0 text-[8px] text-white/25 leading-none pointer-events-none">
+                      ▼
+                    </div>
+                  )}
+                  <div className="mt-0.5 shrink-0">{kindIcon(entry.kind)}</div>
+                  <div className="flex-1 min-w-0 rounded-lg border border-white/5 bg-white/[0.02] px-3 py-2">
+                    <div className="flex flex-wrap items-center gap-2 mb-0.5">
+                      <span className="text-[10px] uppercase tracking-wider text-white/35 font-semibold">
+                        {kindLabels[entry.kind]}
                       </span>
+                      <span className="text-xs text-white/35 font-mono">{fmtTs(entry.ts)}</span>
+                      {entry.risk != null && entry.risk >= 70 && (
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-red-500/15 text-red-300 border border-red-500/25">
+                          risk {entry.risk.toFixed(0)}
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-sm text-white font-medium truncate">{entry.title}</p>
+                    <p className="text-xs text-white/50 font-mono truncate">{entry.detail}</p>
+                    {entry.ip && (
+                      <div className="flex flex-wrap items-center gap-2 mt-1">
+                        <Link
+                          href={`/bans?search=${encodeURIComponent(entry.ip)}`}
+                          className="text-[10px] text-cyan-400/60 font-mono truncate hover:text-cyan-300 hover:underline"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          IP · {entry.ip}
+                        </Link>
+                        {(entry.kind === "ban" || entry.kind === "ack") && (
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setKindFilter(entry.kind, { scroll: false });
+                              scrollToAttackMap();
+                            }}
+                            className="text-[10px] text-orange-300/70 hover:text-orange-200 hover:underline"
+                          >
+                            {t("socShowOnMap")}
+                          </button>
+                        )}
+                      </div>
                     )}
                   </div>
-                  <p className="text-sm text-white font-medium truncate">{entry.title}</p>
-                  <p className="text-xs text-white/50 font-mono truncate">{entry.detail}</p>
-                  {entry.ip && (
-                    <Link
-                      href={`/bans?search=${encodeURIComponent(entry.ip)}`}
-                      className="text-[10px] text-cyan-400/60 mt-1 font-mono truncate hover:text-cyan-300 hover:underline inline-block"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      IP · {entry.ip}
-                    </Link>
-                  )}
                 </div>
-              </div>
-            );
-            if (entry.href) {
-              return (
-                <Link
-                  key={entry.id}
-                  href={entry.href}
-                  className="block rounded-lg hover:bg-white/5 transition-colors"
-                >
-                  {inner}
-                </Link>
               );
-            }
-            return (
-              <div key={entry.id} className="rounded-lg">
-                {inner}
-              </div>
-            );
-          })}
+              if (entry.href) {
+                return (
+                  <Link
+                    key={entry.id}
+                    href={entry.href}
+                    className="block rounded-lg hover:bg-white/5 transition-colors"
+                  >
+                    {inner}
+                  </Link>
+                );
+              }
+              return (
+                <div key={entry.id} className="rounded-lg">
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -203,7 +203,7 @@ export async function GET(req: NextRequest) {
     summary: { total: tests.length, passed, failed, warned, pending },
     hint:
       tests.length === 0
-        ? "Run: bash scripts/competitive_suite.sh && bash scripts/soak_test.sh"
+        ? "Run: STABILITY=1 bash scripts/full_proof_pack.sh"
         : null,
   });
 }

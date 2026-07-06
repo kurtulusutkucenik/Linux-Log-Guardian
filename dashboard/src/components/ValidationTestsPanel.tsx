@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   CheckCircle2,
   Clock,
@@ -11,6 +11,7 @@ import {
   Search,
   Trophy,
   AlertTriangle,
+  Terminal,
 } from "lucide-react";
 import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
@@ -160,6 +161,12 @@ export function ValidationTestsPanel({
   const [data, setData] = useState<Payload | null>(null);
   const [filter, setFilter] = useState<FilterStatus>("all");
   const [search, setSearch] = useState("");
+  const [proofCopied, setProofCopied] = useState(false);
+
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get("q")?.trim();
+    if (q) setSearch(q);
+  }, []);
 
   const poll = useCallback(async () => {
     try {
@@ -174,6 +181,15 @@ export function ValidationTestsPanel({
 
   const tests = data?.tests ?? [];
   const summary = data?.summary;
+
+  useEffect(() => {
+    const hash = window.location.hash.replace(/^#/, "");
+    if (!hash.startsWith("test-") || tests.length === 0) return;
+    const id = window.setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }, 400);
+    return () => window.clearTimeout(id);
+  }, [tests.length]);
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -202,6 +218,14 @@ export function ValidationTestsPanel({
     if (id === "fail") return t("testsFilterFail");
     if (id === "warn") return t("testsFilterWarn");
     return t("testsFilterPending");
+  };
+
+  const copyProofPack = () => {
+    const cmd = t("testsProofPackCmd");
+    void navigator.clipboard.writeText(cmd).then(() => {
+      setProofCopied(true);
+      window.setTimeout(() => setProofCopied(false), 2000);
+    });
   };
 
   return (
@@ -235,6 +259,17 @@ export function ValidationTestsPanel({
               <ChevronRight className="w-3 h-3" />
             </Link>
           )}
+          <button
+            type="button"
+            onClick={copyProofPack}
+            title={t("testsProofPackTitle")}
+            className="text-xs text-white/50 hover:text-primary inline-flex items-center gap-1 border border-white/10 rounded-lg px-2 py-1.5 hover:bg-white/5 transition-colors max-w-[min(100%,18rem)]"
+          >
+            <Terminal className="w-3 h-3 shrink-0" />
+            <span className="truncate font-mono">
+              {proofCopied ? t("testsProofPackCopied") : t("testsProofPackCmd")}
+            </span>
+          </button>
           <Link
             href="/competitive-proof"
             target="_blank"

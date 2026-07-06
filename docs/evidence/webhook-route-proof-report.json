@@ -1,20 +1,18 @@
 {
-  "date": "2026-06-30T17:30:52Z",
+  "date": "2026-07-05T16:34:55Z",
   "pass": true,
-  "mode": "prod",
+  "mode": "dry-run",
   "route_enabled": true,
   "batch_sec": 10,
   "dry_run": {
-    "ok": false
+    "ok": true
   },
   "batch": {
     "ok": true
   },
   "prod_e2e": {
-    "ok": true,
-    "skipped": false
+    "ok": false,
+    "skipped": true
   },
-  "metrics_delta": 2,
-  "alerts_total": 2,
   "fail_reason": ""
 }

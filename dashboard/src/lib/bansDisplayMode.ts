@@ -14,6 +14,12 @@ type LiveDemoReport = {
   api?: string;
 };
 
+type ActiveBansFile = {
+  ips?: string[];
+  total_count?: number;
+  source?: string;
+};
+
 async function readJsonFile<T>(filePath: string): Promise<T | null> {
   try {
     const raw = await readFile(filePath, "utf8");
@@ -21,6 +27,18 @@ async function readJsonFile<T>(filePath: string): Promise<T | null> {
   } catch {
     return null;
   }
+}
+
+/** Demo rehearsal IP'leri disinda canli ipset ban varsa /bans + nav badge live moda gecer. */
+export function ipsetLiveOverridesDemo(demoIps: string[], active: ActiveBansFile): boolean {
+  const source = active.source || "ipset";
+  if (source !== "ipset") return false;
+  const liveIps = active.ips ?? [];
+  const total = active.total_count ?? liveIps.length;
+  if (total <= 0) return false;
+  if (total > demoIps.length) return true;
+  const demoSet = new Set(demoIps);
+  return liveIps.some((ip) => !demoSet.has(ip));
 }
 
 /** Laptop operator: CLEANUP → proof; live demo → yalnizca demo IP'leri (22k ipset degil). */
@@ -37,6 +55,12 @@ export async function resolveBansDisplayMode(
     }
     const ips = (demo.ips ?? []).filter((ip) => ip.includes("."));
     if (demo.pass === true && ips.length > 0) {
+      const active = await readJsonFile<ActiveBansFile>(
+        path.join(dataDir, "active_bans.json"),
+      );
+      if (active && ipsetLiveOverridesDemo(ips, active)) {
+        return { kind: "live" };
+      }
       return { kind: "live-demo", ips, api: demo.api };
     }
   }

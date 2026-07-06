@@ -15,6 +15,8 @@ import {
 } from "recharts";
 import { Activity, ExternalLink, Loader2, Radio } from "lucide-react";
 import { useLanguage } from "./LanguageProvider";
+import { useBannedIps } from "@/context/BannedIpsContext";
+import { scrollToSocTimeline, scrollToWebhookOps } from "./SocKindFilterContext";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { grafanaDashboardUrl } from "@/lib/grafanaPanels";
 import type { MessageKey } from "@/lib/i18n";
@@ -355,6 +357,7 @@ function telegramValueClass(id: string, v: number): string {
 
 export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
   const { t } = useLanguage();
+  const { totalCount: navBanCount } = useBannedIps();
   const [data, setData] = useState<Payload | null>(null);
   const [rangeSec, setRangeSec] = useState(3600);
   const [loading, setLoading] = useState(false);
@@ -515,7 +518,9 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
         (stats.ban_ok ?? 0) === 0 &&
         (stats.alerts ?? 0) === 0 && (
           <p className="text-xs text-amber-300/85 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2 font-mono">
-            {t("grafanaMiniZeroHint")}
+            {navBanCount > 0
+              ? t("grafanaMiniZeroHintWithBans").replace("{n}", String(navBanCount))
+              : t("grafanaMiniZeroHint")}
           </p>
         )}
 
@@ -634,17 +639,25 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           })}
         </div>
         <p className="text-[10px] text-white/30 mt-2 flex flex-wrap gap-x-2 gap-y-1">
-          <a href="#webhook-ops" className="text-violet-400/70 hover:text-violet-300 hover:underline">
+          <button
+            type="button"
+            onClick={() => scrollToWebhookOps()}
+            className="text-violet-400/70 hover:text-violet-300 hover:underline"
+          >
             {t("grafanaTelegramLinkOps")}
-          </a>
+          </button>
           <span>·</span>
           <a href="/bans" className="text-red-400/70 hover:text-red-300 hover:underline">
             {t("navBans")}
           </a>
           <span>·</span>
-          <a href="#soc-timeline" className="text-cyan-400/70 hover:text-cyan-300 hover:underline">
+          <button
+            type="button"
+            onClick={() => scrollToSocTimeline()}
+            className="text-cyan-400/70 hover:text-cyan-300 hover:underline"
+          >
             {t("attackMapSocLink")}
-          </a>
+          </button>
         </p>
       </div>
 

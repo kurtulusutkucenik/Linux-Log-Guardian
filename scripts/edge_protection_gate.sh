@@ -95,7 +95,8 @@ xdp_mode = status.get("xdp_mode", "?")
 daemon = status.get("daemon") or {}
 xdp_active = bool(daemon.get("xdp_active"))
 db = status.get("db") or {}
-bans_active = int(db.get("bans_active") or 0)
+bans_active_db = int(db.get("bans_active") or 0)
+bans_active = ipset_n if ipset_n > 0 else bans_active_db
 bp = status.get("ban_pipeline") or {}
 
 reasons = []
@@ -130,6 +131,7 @@ out = {
     "whitelist_count": whitelist_n,
     "ipset_entries": ipset_n,
     "bans_active": bans_active,
+    "bans_active_db": bans_active_db,
     "threat_intel_legacy_rows": threat_legacy,
     "threat_intel_summary_rows": threat_summary,
     "ban_pipeline_ipset": int(bp.get("ipset") or 0),

@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-05T07:40:07.695776+00:00",
+  "date": "2026-07-06T09:07:08.993517+00:00",
   "pass": true,
   "ipc": "ok",
   "xdp_mode": "ipset-fallback",
@@ -12,8 +12,9 @@
   "whitelist_count": 3,
   "ipset_entries": 0,
   "bans_active": 23,
+  "bans_active_db": 23,
   "threat_intel_legacy_rows": 0,
-  "threat_intel_summary_rows": 1707,
+  "threat_intel_summary_rows": 1881,
   "ban_pipeline_ipset": 0,
   "script": "scripts/edge_protection_gate.sh"
 }

@@ -1,9 +1,9 @@
 {
-  "date": "2026-06-29T18:27:29.325497+00:00",
+  "date": "2026-07-05T16:53:51.123688+00:00",
   "pass": true,
-  "doc_sections": 7,
+  "doc_sections": 9,
   "support_linked": true,
-  "operator_scripts": 6,
+  "operator_scripts": 13,
   "script": "scripts/enterprise_escalation_gate.sh",
   "live_gates_ok": 3,
   "live_gates_total": 3

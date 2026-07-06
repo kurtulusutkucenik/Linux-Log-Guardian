@@ -114,7 +114,7 @@ Snippet: `examples/nginx/snippets/log-guardian-inline-consult.conf` — `auth_re
 |------|-------|-------|
 | T1 | `real_attack_suite` + corpus + rakip kanıt | ✅ |
 | T1 | `live_attack_harness` + POST SQLi corpus | ✅ |
-| T1 | `bench_mixed` + corpus 1K (23 kategori) | ✅ |
+| T1 | `bench_mixed` + corpus 1K (26 kategori) | ✅ |
 | T2 | JA3/ASN clustering (offline distributed + canlı TLS) | ✅ |
 | T2 | nginx inline consult | ✅ API + snippet |
 | T2 | Corpus 10K recall | ✅ `corpus_10k_proof.sh` |

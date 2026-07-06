@@ -18,7 +18,7 @@ LIVE=1 bash scripts/real_attack_suite.sh
 
 | Katman | Dosya | Metrik |
 |--------|-------|--------|
-| Corpus | `corpus/real_attack_corpus.access` | 23 kategori, varsayılan **1000** satır (`REAL_ATTACK_CORPUS_LINES`) |
+| Corpus | `corpus/real_attack_corpus.access` | 26 kategori, varsayılan **1000** satır (`REAL_ATTACK_CORPUS_LINES`) |
 | Corpus 10K | `bash scripts/corpus_10k_proof.sh` | Ayrı kanıt: `real-attack-report-10k.json` (~5–10 dk) |
 | Manifest | `corpus/real_attack_manifest.json` | Kategori → satır indeksleri |
 | Replay | `scripts/real_attack_replay.py` | `attack_recall_pct` (tam corpus) |

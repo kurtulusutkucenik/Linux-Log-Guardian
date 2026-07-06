@@ -1,9 +1,10 @@
 {
-  "date": "2026-07-04",
+  "date": "2026-07-05",
   "pass": true,
   "mode": "deterministic",
-  "parse_runs": 536,
+  "parse_runs": 593,
   "mutations": 512,
-  "corpus_lines": 18,
+  "corpus_lines": 36,
+  "file_samples": 40,
   "binary": "tests/parser_fuzz_test"
 }

@@ -1,11 +1,12 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Globe2, MapPin } from "lucide-react";
 import { useLanguage } from "./LanguageProvider";
+import { useBannedIps } from "@/context/BannedIpsContext";
+import { useSocKindFilter, scrollToSocTimeline, type SocKindFilter } from "./SocKindFilterContext";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import type { AttackGeoResponse, AttackMarker } from "@/lib/attackMapTypes";
 
@@ -26,8 +27,26 @@ const AttackGlobe = dynamic(
 
 export type { AttackMarker };
 
+type MarkerKind = AttackMarker["kind"];
+
+const KIND_ORDER: MarkerKind[] = ["ban", "ack", "incident"];
+
+function kindChipClass(kind: MarkerKind, active: boolean): string {
+  const base = active
+    ? "border-white/25 bg-white/10 text-white"
+    : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80 hover:border-white/20";
+  const accent: Record<MarkerKind, string> = {
+    ban: active ? "border-orange-400/40 text-orange-200" : "",
+    incident: active ? "border-red-400/40 text-red-200" : "",
+    ack: active ? "border-emerald-400/40 text-emerald-200" : "",
+  };
+  return `text-xs px-3 py-1.5 rounded-full border transition-colors ${base} ${accent[kind]}`;
+}
+
 export function AttackWorldMap({ className = "" }: { className?: string }) {
   const { t } = useLanguage();
+  const { kindFilter, setKindFilter } = useSocKindFilter();
+  const { totalCount: navBanCount, preview, dataMode, source } = useBannedIps();
   const router = useRouter();
   const [markers, setMarkers] = useState<AttackMarker[]>([]);
   const [loading, setLoading] = useState(true);
@@ -64,6 +83,35 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
 
   useVisibleInterval(load, 12000);
 
+  const kindLabels: Record<MarkerKind, string> = {
+    ban: t("attackMapLegendBan"),
+    incident: t("attackMapLegendIncident"),
+    ack: t("attackMapLegendAck"),
+  };
+
+  const kindCounts = useMemo(() => {
+    const counts: Record<MarkerKind, number> = { ban: 0, incident: 0, ack: 0 };
+    for (const marker of markers) counts[marker.kind]++;
+    return counts;
+  }, [markers]);
+
+  const filteredMarkers = useMemo(() => {
+    if (kindFilter === "all") return markers;
+    if (kindFilter === "lineage" || kindFilter === "waf") return [];
+    return markers.filter((marker) => marker.kind === kindFilter);
+  }, [markers, kindFilter]);
+
+  const liveIpset =
+    !preview && dataMode === "live" && source === "ipset" && navBanCount > 0;
+  const mapParityOk =
+    liveIpset && dataSource === "live" && kindCounts.ban > 0 && navBanCount === kindCounts.ban;
+
+  useEffect(() => {
+    if (hover && !filteredMarkers.some((m) => m.ip === hover.ip)) {
+      setHover(null);
+    }
+  }, [filteredMarkers, hover]);
+
   const onPointClick = useCallback(
     (marker: AttackMarker) => {
       router.push(`/bans?search=${encodeURIComponent(marker.ip)}`);
@@ -78,9 +126,20 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
           <Globe2 className="w-5 h-5" />
           {t("attackMapTitle")}
           <span className="text-sm font-normal text-white/40">
-            ({markers.length}
-            {totalIps > markers.length ? ` / ${totalIps}` : ""})
+            ({filteredMarkers.length}
+            {markers.length !== filteredMarkers.length ? ` / ${markers.length}` : ""}
+            {totalIps > markers.length ? ` · ${totalIps} IP` : ""})
           </span>
+          {kindFilter !== "all" && (
+            <span className="text-[10px] font-normal text-cyan-400/60 normal-case">
+              {t("socFilterLinked")}
+            </span>
+          )}
+          {mapParityOk && (
+            <span className="text-[10px] font-normal text-emerald-400/70 normal-case">
+              {t("socMapParityHint")}
+            </span>
+          )}
         </h2>
         <div className="flex flex-wrap items-center gap-2">
           {dataSource === "live" && (
@@ -88,12 +147,16 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
               {t("attackMapLive")}
             </span>
           )}
-          <Link
-            href="#soc-timeline"
+          <button
+            type="button"
+            onClick={() => {
+              setKindFilter("all", { scroll: true });
+              scrollToSocTimeline();
+            }}
             className="text-xs text-cyan-400/70 hover:text-cyan-300 hover:underline"
           >
             {t("attackMapSocLink")} ↓
-          </Link>
+          </button>
           <button
             type="button"
             onClick={() => void load()}
@@ -105,6 +168,41 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
       </div>
 
       <p className="text-xs text-white/45 mb-1">{t("attackMapSubtitle")}</p>
+
+      {kindFilter === "lineage" || kindFilter === "waf" ? (
+        <p className="text-xs text-violet-300/70 mb-2">{t("attackMapFilterTimelineOnly")}</p>
+      ) : null}
+
+      {markers.length > 0 && (
+        <div className="flex flex-wrap gap-1.5 mb-2">
+          <button
+            type="button"
+            onClick={() => setKindFilter("all" as SocKindFilter, { scroll: true })}
+            className={`text-xs px-3 py-1.5 rounded-full border transition-colors ${
+              kindFilter === "all"
+                ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-200"
+                : "border-white/10 bg-white/[0.03] text-white/55 hover:text-white/80 hover:border-white/20"
+            }`}
+          >
+            {t("attackMapFilterAll")} {markers.length}
+          </button>
+          {KIND_ORDER.map((kind) => {
+            const count = kindCounts[kind];
+            if (count === 0) return null;
+            return (
+              <button
+                key={kind}
+                type="button"
+                onClick={() => setKindFilter(kind as SocKindFilter, { scroll: true })}
+                className={kindChipClass(kind, kindFilter === kind)}
+              >
+                {kindLabels[kind]} {count}
+              </button>
+            );
+          })}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 text-[10px] uppercase tracking-wide text-white/35 mb-2">
         <span className="flex items-center gap-1">
           <span className="w-2 h-2 rounded-full bg-orange-400" />
@@ -159,7 +257,7 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
       <div className="relative rounded-xl overflow-hidden border border-white/10 bg-[#060f24]">
         {!loading && (
           <AttackGlobe
-            markers={markers}
+            markers={filteredMarkers}
             defender={defender}
             defenderLabel={t("attackMapDefenderLabel")}
             arcToLabel={t("attackMapDefenderLabel")}
@@ -185,7 +283,14 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
           </div>
         )}
 
-        {hover && (
+        {!loading && markers.length > 0 && filteredMarkers.length === 0 && (
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-sm text-white/50 p-6 text-center pointer-events-none">
+            <MapPin className="w-8 h-8 opacity-40" />
+            <p>{t("attackMapFilterNoMatch")}</p>
+          </div>
+        )}
+
+        {hover && filteredMarkers.some((m) => m.ip === hover.ip) && (
           <div className="absolute bottom-3 left-3 right-3 sm:left-auto sm:right-3 sm:w-72 rounded-lg border border-white/15 bg-black/75 backdrop-blur px-3 py-2 text-xs z-10 pointer-events-none">
             <p className="font-mono text-orange-300">{hover.ip}</p>
             <p className="text-white/80 mt-0.5">
@@ -214,7 +319,7 @@ export function AttackWorldMap({ className = "" }: { className?: string }) {
           </div>
         )}
 
-        {dataSource === "report" && markers.length > 0 && (
+        {dataSource === "report" && filteredMarkers.length > 0 && (
           <div className="absolute top-3 left-3 text-[10px] uppercase tracking-wide text-white/35 bg-black/40 px-2 py-1 rounded border border-white/10 pointer-events-none">
             {t("attackMapReportSource")}
           </div>

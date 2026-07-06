@@ -103,7 +103,35 @@ if valid < 1:
   fi
 }
 
-python3 - "$REPORT" "$DASH_URL" "$marker_count" "$total_ips" "$data_source" "$geo_on" "$bans_src" "$ack_count" "$ban_count" "$inc_count" <<'PY'
+bans_count_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/bans?count_only=1") \
+  || fail "/api/bans?count_only=1 erisilemedi"
+
+read -r nav_count nav_preview nav_mode soc_ban_count <<<"$(python3 -c "
+import json, sys
+nav = json.loads(sys.argv[1])
+nav_count = int(nav.get('count') or 0)
+nav_preview = bool(nav.get('preview'))
+nav_mode = str(nav.get('data_mode') or 'live')
+soc = {}
+try:
+    soc = json.loads(sys.argv[2])
+except Exception:
+    pass
+soc_ban = sum(1 for e in (soc.get('entries') or []) if e.get('kind') == 'ban')
+print(nav_count, nav_preview, nav_mode, soc_ban)
+" "$bans_count_json" "$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/soc-timeline" 2>/dev/null || echo '{}')")"
+
+nav_parity_ok=1
+if [[ "$data_source" == "live" && "$bans_src" == "ipset" && "$nav_preview" != "True" && "$nav_mode" == "live" && "$ban_count" -gt 0 ]]; then
+  if [[ "$nav_count" -ne "$ban_count" ]]; then
+    fail "nav/ipset parity: nav badge=$nav_count map_ban=$ban_count (demo cache? bash scripts/dashboard_refresh.sh)"
+  fi
+  if [[ "$soc_ban_count" -gt 0 && "$soc_ban_count" -ne "$nav_count" ]]; then
+    fail "soc/ipset parity: timeline_ban=$soc_ban_count nav=$nav_count"
+  fi
+fi
+
+python3 - "$REPORT" "$DASH_URL" "$marker_count" "$total_ips" "$data_source" "$geo_on" "$bans_src" "$ack_count" "$ban_count" "$inc_count" "$nav_count" "$soc_ban_count" "$nav_parity_ok" <<'PY'
 import json, datetime, sys
 from pathlib import Path
 Path(sys.argv[1]).write_text(json.dumps({
@@ -118,9 +146,12 @@ Path(sys.argv[1]).write_text(json.dumps({
     "ack_markers": int(sys.argv[8]),
     "ban_markers": int(sys.argv[9]),
     "incident_markers": int(sys.argv[10]),
+    "nav_ban_count": int(sys.argv[11]),
+    "soc_ban_count": int(sys.argv[12]),
+    "nav_parity_ok": sys.argv[13] == "1",
 }, indent=2) + "\n", encoding="utf-8")
 PY
 
-echo "[OK] attack_map_e2e — $marker_count marker (ack=$ack_count ban=$ban_count), source=$data_source, bans=$bans_src"
+echo "[OK] attack_map_e2e — $marker_count marker (ack=$ack_count ban=$ban_count nav=$nav_count soc_ban=$soc_ban_count), source=$data_source, bans=$bans_src"
 echo "  Rapor: $REPORT"
 echo "  UI: ${DASH_URL}/ (Harita) Ctrl+Shift+R"

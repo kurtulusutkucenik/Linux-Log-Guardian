@@ -1,11 +1,24 @@
 "use client";
 
+import { useState } from "react";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { getCopy } from "@/lib/i18n/copy";
 
 export default function EvidencePack() {
   const { locale } = useI18n();
   const EVIDENCE = getCopy(locale).evidence;
+  const [copied, setCopied] = useState<"pack" | "demo" | null>(null);
+
+  const copyCmd = async (text: string, key: "pack" | "demo") => {
+    try {
+      await navigator.clipboard.writeText(text);
+      setCopied(key);
+      window.setTimeout(() => setCopied(null), 2000);
+    } catch {
+      /* ignore */
+    }
+  };
+
   return (
     <section id="kanit" className="mx-auto max-w-7xl px-6 py-24 lg:px-8">
       <div className="mx-auto max-w-3xl text-center">
@@ -16,6 +29,30 @@ export default function EvidencePack() {
           {EVIDENCE.title}
         </h2>
         <p className="mt-6 font-mono text-sm text-neutral-500">{EVIDENCE.note}</p>
+        <div className="mt-6 rounded-lg border border-neutral-800 bg-black/50 p-4 text-left font-mono text-xs text-neutral-400">
+          <p className="text-neutral-500"># Tek komut — rakiplerde yok</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="text-neon">{EVIDENCE.fullPackCmd}</p>
+            <button
+              type="button"
+              onClick={() => void copyCmd(EVIDENCE.fullPackCmd, "pack")}
+              className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400 hover:border-neon hover:text-neon"
+            >
+              {copied === "pack" ? "✓" : "copy"}
+            </button>
+          </div>
+          <p className="mt-3 text-neutral-500"># 3 dk demo</p>
+          <div className="mt-1 flex flex-wrap items-center gap-2">
+            <p className="text-cyan">{EVIDENCE.demoCmd}</p>
+            <button
+              type="button"
+              onClick={() => void copyCmd(EVIDENCE.demoCmd, "demo")}
+              className="rounded border border-neutral-700 px-2 py-0.5 text-[10px] text-neutral-400 hover:border-cyan hover:text-cyan"
+            >
+              {copied === "demo" ? "✓" : "copy"}
+            </button>
+          </div>
+        </div>
       </div>
 
       <div className="mt-14 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">

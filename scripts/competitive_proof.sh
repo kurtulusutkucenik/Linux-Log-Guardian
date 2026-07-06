@@ -11,6 +11,14 @@ bash "$ROOT/scripts/guardian_status_export.sh" 2>/dev/null || true
 bash "$ROOT/scripts/k8s_admission_test.sh" 2>/dev/null || true
 bash "$ROOT/scripts/ban_profile_e2e.sh" 2>/dev/null || true
 bash "$ROOT/scripts/dist_risk_proof_e2e.sh" 2>/dev/null || true
+if [[ "${REFRESH_CORE_PROOF:-0}" == "1" ]]; then
+  bash "$ROOT/scripts/nginx_hybrid_proof.sh" 2>/dev/null || true
+  if [[ "$(id -u)" -eq 0 ]]; then
+    bash "$ROOT/scripts/ipv6_ban_e2e.sh" 2>/dev/null || true
+  else
+    sudo bash "$ROOT/scripts/ipv6_ban_e2e.sh" 2>/dev/null || true
+  fi
+fi
 
 python3 scripts/competitive_proof_build.py -o competitive-proof.json
 python3 scripts/sync_landing_tests_from_proof.py || true

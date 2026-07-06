@@ -1,10 +1,10 @@
 {
-  "date": "2026-06-26T11:32:46.854852+00:00",
+  "date": "2026-07-05T20:34:02.854791+00:00",
   "corpus": "corpus/owasp_crs_test.access",
   "manifest": "corpus/owasp_crs_manifest.json",
   "lines_total": 199,
-  "alerts_total": 199,
-  "attack_recall_pct": 100.0,
+  "alerts_total": 223,
+  "attack_recall_pct": 112.1,
   "category_avg_recall_pct": 0.0,
   "target_recall_pct": 85.0,
   "categories": {},

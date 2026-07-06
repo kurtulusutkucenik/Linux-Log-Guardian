@@ -29,7 +29,7 @@ const BannedIpsContext = createContext<BannedIpsContextValue | null>(null);
 /** Global: yalnizca sayi (~200 byte). Onizleme panelde ayri yuklenir. */
 export function BannedIpsProvider({
   children,
-  pollMs = 30000,
+  pollMs = 15000,
 }: {
   children: ReactNode;
   pollMs?: number;
@@ -84,8 +84,13 @@ export function useBannedIps(): BannedIpsContextValue {
 
 /** Ban onizleme listesi — yalnizca panel/sayfa mount olunca (max 15 IP). */
 export function useBanPreview(limit = 15) {
-  const { totalCount, truncated: globalTrunc, refresh: refreshCount, preview: globalPreview } =
-    useBannedIps();
+  const {
+    totalCount,
+    truncated: globalTrunc,
+    refresh: refreshCount,
+    preview: globalPreview,
+    dataMode: globalDataMode,
+  } = useBannedIps();
   const [bans, setBans] = useState<BanRow[]>([]);
   const [truncated, setTruncated] = useState(false);
   const [source, setSource] = useState("");
@@ -120,6 +125,7 @@ export function useBanPreview(limit = 15) {
     truncated: truncated || globalTrunc,
     source,
     preview: preview || globalPreview,
+    dataMode: globalDataMode,
     loading,
     refreshing,
     refresh,

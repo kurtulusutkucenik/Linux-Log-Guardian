@@ -20,6 +20,10 @@ else
 fi
 bash "$ROOT/scripts/ops_gate_report.sh"
 
+bash "$ROOT/scripts/edge_protection_gate.sh" >/dev/null 2>&1 \
+  && echo "[OK] edge_protection_gate" \
+  || echo "[WARN] edge_protection_gate — bash scripts/edge_protection_gate.sh" >&2
+
 # Stale k8s-admission skip onlenir (go yoksa docker fallback — competitive_proof.sh ile ayni)
 bash "$ROOT/scripts/k8s_admission_test.sh" 2>/dev/null || true
 
@@ -59,6 +63,7 @@ if run_preview_gate; then
 else
   echo "[WARN] website_preview_gate FAIL — competitive-proof tazele + yeniden dene..."
   python3 "$ROOT/scripts/competitive_proof_build.py" || true
+  python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" || true
   if run_preview_gate; then
     echo "[OK] website_preview_gate (retry)"
   else
@@ -71,6 +76,10 @@ if python3 "$ROOT/scripts/competitive_proof_build.py"; then
 else
   echo "[WARN] competitive_proof_build — atlandi" >&2
 fi
+
+python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" \
+  && echo "[OK] sync_landing_tests_from_proof" \
+  || echo "[WARN] sync_landing_tests_from_proof — atlandi" >&2
 
 bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
   && echo "[OK] dashboard_tests_parity" \
@@ -137,6 +146,16 @@ wait_dashboard_tier() {
   return 1
 }
 
+# shellcheck source=scripts/lib/dashboard_cache.sh
+source "$ROOT/scripts/lib/dashboard_cache.sh"
+
+echo "[dashboard_refresh] Bans API cache temizleniyor (active_bans sync sonrasi)..."
+if wait_dashboard_tier; then
+  LG_ROOT="$ROOT" invalidate_dashboard_bans_cache || true
+else
+  echo "[WARN] dashboard hazir degil — bans cache bust atlandi" >&2
+fi
+
 if [[ "${SKIP_ATTACK_MAP:-0}" != "1" ]]; then
   echo "[dashboard_refresh] Attack map kaniti (dashboard hazir olunca)..."
   attack_ok=0
@@ -154,7 +173,21 @@ if [[ "${SKIP_ATTACK_MAP:-0}" != "1" ]]; then
   done
   if [[ "$attack_ok" == "1" ]]; then
     echo "[OK] attack_map_e2e"
+    bash "$ROOT/scripts/telegram_soc_gate.sh" >/dev/null 2>&1 \
+      && echo "[OK] telegram_soc_gate" \
+      || echo "[WARN] telegram_soc_gate — timeline/map/webhook zinciri" >&2
+    # SOC/attack_map sonrasi laptop_core + morning_operator raporlari tazele (77/79 onlenir)
+    SKIP_EDGE=1 bash "$ROOT/scripts/laptop_core_gate.sh" >/dev/null 2>&1 \
+      && echo "[OK] laptop_core_gate" \
+      || echo "[WARN] laptop_core_gate — :8443 veya telegram_soc" >&2
+    bash "$ROOT/scripts/morning_operator_gate.sh" >/dev/null 2>&1 \
+      && echo "[OK] morning_operator_gate" \
+      || echo "[WARN] morning_operator_gate" >&2
+    python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 \
+      && echo "[OK] competitive_proof_build (gate raporlari)" \
+      || echo "[WARN] competitive_proof_build — gate sonrasi" >&2
     bash "$ROOT/scripts/sync_dashboard_data.sh"
+    LG_ROOT="$ROOT" invalidate_dashboard_bans_cache || true
   else
     echo "[WARN] attack_map_e2e — atlandi (dashboard/login veya marker)" >&2
   fi
@@ -163,6 +196,12 @@ fi
 if [[ "${QUICK_PROOF:-0}" == "1" ]]; then
   echo "[dashboard_refresh] QUICK_PROOF=1 — competitive-proof JSON/PDF..."
   bash "$ROOT/scripts/quick_proof_refresh.sh" || echo "[WARN] quick_proof_refresh atlandi" >&2
+fi
+
+if bash "$ROOT/scripts/sync_evidence_pack.sh" >/dev/null 2>&1; then
+  echo "[OK] sync_evidence_pack -> docs/evidence/"
+else
+  echo "[WARN] sync_evidence_pack — atlandi" >&2
 fi
 
 echo "[OK] dashboard_refresh tamam"
@@ -188,9 +227,27 @@ if proof.is_file():
 if attack.is_file():
     a = json.loads(attack.read_text(encoding="utf-8"))
     if a.get("pass") is True:
-        lines.append(f"  attack_map: {a.get('markers', 0)} marker")
+        nav = a.get("nav_ban_count", "—")
+        parity = "OK" if a.get("nav_parity_ok") else "—"
+        lines.append(f"  attack_map: {a.get('markers', 0)} marker · nav={nav} parity={parity}")
     else:
         lines.append("  attack_map: WARN")
+edge = root / "edge-protection-gate-report.json"
+if edge.is_file():
+    e = json.loads(edge.read_text(encoding="utf-8"))
+    if e.get("pass") is True:
+        lines.append(f"  edge: {e.get('xdp_mode', '?')} · ipc={e.get('ipc', '?')}")
+    else:
+        lines.append(f"  edge: WARN ({e.get('fail_reason', '?')})")
+soc = root / "telegram-soc-gate-report.json"
+if soc.is_file():
+    s = json.loads(soc.read_text(encoding="utf-8"))
+    if s.get("pass") is True:
+        lines.append(
+            f"  telegram_soc: {s.get('soc_entries', 0)} entry · ack={s.get('soc_ack', 0)} lg={s.get('soc_lineage', 0)}"
+        )
+    else:
+        lines.append("  telegram_soc: WARN")
 if lines:
     print("")
     print("=== dashboard_refresh ozet ===")

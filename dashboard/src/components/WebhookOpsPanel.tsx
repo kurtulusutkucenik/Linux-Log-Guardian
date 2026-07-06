@@ -26,6 +26,9 @@ type WebhookOps = {
   undo_e2e_at?: string | null;
   undo_e2e_ip?: string | null;
   undo_e2e_mode?: string | null;
+  webhook_sent?: number;
+  webhook_fail?: number;
+  webhook_drops?: number;
 };
 
 export function WebhookOpsPanel() {
@@ -156,6 +159,46 @@ export function WebhookOpsPanel() {
           )}
         </div>
       </div>
+
+      {(data?.webhook_sent ?? 0) > 0 ||
+      (data?.webhook_fail ?? 0) > 0 ||
+      (data?.webhook_drops ?? 0) > 0 ? (
+        <div className="grid grid-cols-3 gap-2 mt-3">
+          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-white/35">{t("webhookOpsSent")}</p>
+            <p className="text-sm font-semibold text-emerald-300">{data?.webhook_sent ?? 0}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-white/35">{t("webhookOpsFail")}</p>
+            <p className="text-sm font-semibold text-rose-300">{data?.webhook_fail ?? 0}</p>
+          </div>
+          <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+            <p className="text-[10px] uppercase tracking-wide text-white/35">{t("webhookOpsDrops")}</p>
+            <p
+              className={`text-sm font-semibold ${
+                (data?.webhook_drops ?? 0) > 1000 ? "text-amber-300" : "text-white/80"
+              }`}
+              title={(data?.webhook_drops ?? 0) > 1000 ? t("webhookOpsDropsHint") : undefined}
+            >
+              {(data?.webhook_drops ?? 0).toLocaleString()}
+            </p>
+          </div>
+        </div>
+      ) : null}
+
+      <p className="text-[10px] text-white/30 mt-3 flex flex-wrap gap-x-2 gap-y-1">
+        <Link href="/#soc-ack" className="text-violet-400/70 hover:text-violet-300 hover:underline">
+          {t("socKindAck")}
+        </Link>
+        <span className="text-white/20">·</span>
+        <Link href="/bans" className="text-violet-400/70 hover:text-violet-300 hover:underline">
+          {t("navBans")}
+        </Link>
+        <span className="text-white/20">·</span>
+        <Link href="/tests?q=telegram" className="text-violet-400/70 hover:text-violet-300 hover:underline">
+          {t("testsViewAll")}
+        </Link>
+      </p>
     </div>
   );
 }

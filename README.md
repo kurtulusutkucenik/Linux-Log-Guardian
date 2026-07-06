@@ -47,7 +47,7 @@ nginx log → parser → WAF/CRS (PCRE2) → ban pipeline → ipset/XDP → Prom
 | **Ölçülebilir kanıt** | Her iddia PDF + JSON + [75 canlı test](https://www.ceniklinuxlogguardian.org/testler) ile doğrulanır |
 | **Self-hosted** | Veriniz sunucunuzda kalır; vendor lock-in yok |
 
-**Ne değildir:** Cloudflare veya CrowdStrike yerine geçmez — **origin katmanında** onları tamamlar. ModSecurity'nin inline regex hızında da değiliz; güçlü yan **entegrasyon + ban hızı + şeffaf kanıt**.
+**Ne değildir:** Cloudflare veya CrowdStrike yerine geçmez — **origin katmanında** onları tamamlar. ModSecurity'nin inline regex hızında da değiliz; güçlü yan **entegrasyon + ban hızı + şeffaf kanıt**. CrowdSec rakip değil tamamlayıcıdır — LAPI sinyali isteğe bağlı ban API'ye akar ([CROWDSEC_INTEGRATION.md](docs/CROWDSEC_INTEGRATION.md)).
 
 > **Prod:** Volumetrik DDoS için önce CDN → nginx `limit_req` → Log Guardian. Bkz. [EDGE_PROTECTION.md](docs/EDGE_PROTECTION.md)
 >
@@ -63,7 +63,7 @@ Son koşu: `bash scripts/competitive_suite.sh` → `docs/evidence/competitive-pr
 |--------|-------|----------|
 | Olay/saniye (EPS) | **280.373** | Parser + WAF hattı |
 | Ban gecikmesi | **20,23 ms** | Medyan, 21 örnek (ipset/XDP) |
-| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 23 kategori (Spring4Shell/OGNL/Text4Shell + PHP-CGI/SpEL + Confluence dahil) |
+| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 26 kategori (RFI, GraphQL, shellcmd + Spring4Shell/OGNL + PHP-CGI/SpEL + Confluence) |
 | OWASP CRS parity | **%100** | Aynı regex seti (PCRE2 JIT) |
 | False positive | **%0,2** ölçüldü | 500 benign satır · hedef <%0,5 |
 | 72h soak | **PASS** | 864 örnek, 0 hata |
@@ -153,6 +153,30 @@ access_log /var/log/nginx/access.log log_guardian;
 
 Adım adım: [QUICKSTART_NGINX.md](docs/QUICKSTART_NGINX.md) · Site: [kurulum rehberi](https://www.ceniklinuxlogguardian.org/#kurulum)
 
+### Operasyon ritmi (kod değişmeden)
+
+Kanıt bayatlamasını önlemek için cron kurun:
+
+```bash
+bash scripts/install_operator_cron.sh
+# Her gün 08:00 — morning_operator_gate (~30 sn)
+# Pazar 03:00 — core_proof_refresh (haftalık Track A)
+```
+
+Manuel: `bash scripts/morning_operator_gate.sh` · `bash scripts/core_proof_refresh.sh` · prod öncesi `bash scripts/local_security_audit.sh`
+
+Vitrin plani tek komut (GIF/VPS/commit haric): `bash scripts/finish_vitrin_plan.sh` · canli landing: `PUBLISH=1 bash scripts/finish_vitrin_plan.sh`
+
+### 3 dk demo
+
+```bash
+SKIP_WEBHOOK=1 bash scripts/demo_3min.sh
+```
+
+GIF kaydı: [DEMO_GIF.md](docs/DEMO_GIF.md) → `docs/assets/demo-3min.gif` (henüz yoksa komut yeterli; bkz. [docs/assets/README.md](docs/assets/README.md))
+
+<!-- GIF eklendikten sonra aktif: ![3 dk demo](docs/assets/demo-3min.gif) -->
+
 <details>
 <summary><b>Sorun giderme</b></summary>
 
@@ -189,12 +213,20 @@ Tier rehberleri: [ceniklinuxlogguardian.org/paketler](https://www.ceniklinuxlogg
 
 ## Kanıt paketi
 
-Tüm performans iddiaları yerelde yeniden üretilebilir — VPS veya internet şart değil:
+Tüm performans iddiaları yerelde yeniden üretilebilir — VPS veya internet şart değil.
+
+**Birincil CTA — tek komut güven** (Fail2ban/CrowdSec'te yok):
 
 ```bash
-bash scripts/rakip_kanit.sh              # PDF + real-attack + ZIP
-bash scripts/laptop_dev_gate.sh          # Offline kanıt kapısı
-bash scripts/github_release_pack.sh      # release-pack.zip
+STABILITY=1 bash scripts/full_proof_pack.sh
+# → competitive-proof.pdf + release-pack.zip + data-room.zip
+```
+
+Diğer:
+
+```bash
+bash scripts/rakip_kanit.sh              # hızlı offline kanıt
+bash scripts/laptop_dev_gate.sh          # offline kanıt kapısı
 bash scripts/demo_3min.sh                # 3 dakikalık demo
 ```
 
@@ -213,6 +245,8 @@ bash scripts/demo_3min.sh                # 3 dakikalık demo
 | 15 dk nginx kurulum | [QUICKSTART_NGINX.md](docs/QUICKSTART_NGINX.md) |
 | Laptop / VM operasyon | [LAPTOP_OPS.md](docs/LAPTOP_OPS.md) |
 | Edge / CDN katmanı | [EDGE_PROTECTION.md](docs/EDGE_PROTECTION.md) |
+| CrowdSec tamamlayıcı | [CROWDSEC_INTEGRATION.md](docs/CROWDSEC_INTEGRATION.md) |
+| JWT rotasyonu | [JWT_ROTATION.md](docs/JWT_ROTATION.md) |
 | Rakip karşılaştırma | [VS_RAKIPLER.md](docs/VS_RAKIPLER.md) |
 | Güvenlik | [SECURITY.md](SECURITY.md) |
 | Modül haritası (geliştirici) | [AGENTS.md](AGENTS.md) |
@@ -265,7 +299,7 @@ Open-source Linux edge security with **measurable proof** (PDF + JSON). Reads ng
 |--------|-------|
 | Events/sec (EPS) | **280,373** |
 | Ban latency | **20.23 ms** (median, 21 samples) |
-| Attack recall | **100%** (1K + 10K corpus, 23 categories incl. Spring4Shell/OGNL + PHP-CGI/SpEL + Confluence) |
+| Attack recall | **100%** (1K + 10K corpus, 26 categories incl. RFI, GraphQL, shellcmd + Spring4Shell/OGNL) |
 | CRS parity | **100%** |
 | False positive | **0.2%** measured (500 benign) — target <0.5% |
 | 72h soak | **PASS** (864 samples, 0 failures) |
@@ -303,8 +337,8 @@ Full guide: [QUICKSTART_NGINX.md](docs/QUICKSTART_NGINX.md)
 ### Proof
 
 ```bash
+STABILITY=1 bash scripts/full_proof_pack.sh
 bash scripts/rakip_kanit.sh
-bash scripts/laptop_dev_gate.sh
 ```
 
 [MIT](LICENSE) — Copyright (c) 2026 kurtulusutkucenik.

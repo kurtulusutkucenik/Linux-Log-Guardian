@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-30T18:45:30.035981+00:00",
+  "date": "2026-07-06T09:07:22.831283+00:00",
   "pass": true,
   "health_ok": true,
   "edge_protection_ok": null,
@@ -9,8 +9,8 @@
   "dashboard_ok": true,
   "xdp_mode": "ipset-fallback",
   "ipc": "ok",
-  "proof_tests": 75,
-  "proof_pass": 75,
+  "proof_tests": 79,
+  "proof_pass": 79,
   "dash_url": "https://localhost:8443/tests",
   "script": "scripts/laptop_core_gate.sh"
 }

@@ -18,6 +18,41 @@ bash scripts/dashboard_refresh.sh
 
 `cd landing && npm run dev` yalnızca `:3001` önizleme içindir; kanıt/kapı scriptleri repo kökünden koşulur.
 
+## Günlük / haftalık operasyon
+
+| Sıklık | Komut | Süre | Ne yapar |
+|--------|--------|------|----------|
+| **Her sabah** | `bash scripts/morning_operator_gate.sh` | ~30 sn | laptop_core + :8443 + attack_map + **telegram_soc** parity |
+| **Haftalık / demo öncesi** | `bash scripts/core_proof_refresh.sh` | ~5–10 dk | Track A: nginx hybrid + ban profile + IPv6 + competitive-proof sync |
+| **Vitrin plani (GIF/VPS haric)** | `bash scripts/finish_vitrin_plan.sh` | ~15–25 dk | cron + Track A + audit + landing + :8443; canli: `PUBLISH=1` |
+| **Opsiyonel katman** | `bash scripts/optional_track_refresh.sh` | ~10–15 dk | L7, Grafana alert e2e, demo_3min, landing export (canlı publish yok) |
+| **UI değiştiyse** | `bash scripts/dashboard_refresh.sh` | ~2–3 dk | Docker rebuild → `https://localhost:8443` |
+
+```bash
+# Günlük
+bash scripts/morning_operator_gate.sh
+
+# Haftalık core kanıt (IPv6 atlamak için SKIP_IPV6=1)
+bash scripts/core_proof_refresh.sh
+UI=1 bash scripts/core_proof_refresh.sh          # aynı + dashboard rebuild
+
+# Opsiyonel: L7 + Grafana + demo + landing (Cloudflare yok)
+bash scripts/optional_track_refresh.sh
+# Canlı site istenirse: PUBLISH=1 bash scripts/optional_track_refresh.sh
+```
+
+**Kural:** Ağır e2e’yi `morning_operator_gate` içine ekleme; haftalık paketler ayrı kalır. Tarayıcı: **Ctrl+Shift+R** on `https://localhost:8443/` (attack map · SOC timeline · `/tests`).
+
+**Cron (önerilen):**
+
+```bash
+bash scripts/install_operator_cron.sh
+# Her gün 08:00 — morning_operator_gate
+# Pazar 03:00 — core_proof_refresh
+```
+
+Haftalık güvenlik denetimi ayrı: `bash scripts/install_audit_cron.sh` (Pazartesi 09:00 `local_security_audit`).
+
 ## Script matrisi (hangi iş ne yapar?)
 
 | Script | Ne zaman | Parolaya dokunur? |
@@ -31,6 +66,7 @@ bash scripts/dashboard_refresh.sh
 | `sudo bash scripts/ensure_api_security.sh` | API `:8090` — bind + token + firewall | **Hayır** |
 | `bash scripts/api_fail_closed_test.sh` | Token yokken ban/consult 403 | Hayır |
 | `bash scripts/install_audit_cron.sh` | Haftalık `local_security_audit` cron | Hayır |
+| `bash scripts/install_operator_cron.sh` | Günlük sabah kapısı + haftalık core kanıt cron | Hayır |
 | `bash scripts/install_fp_report_cron.sh` | Haftalık FP raporu | Hayır |
 | `sudo bash scripts/rotate_api_token.sh` | API_TOKEN yenile + nginx/dashboard | Hayır |
 | `bash scripts/publish_soak_report.sh` | Soak JSON → `docs/evidence/` | Hayır |
@@ -91,6 +127,9 @@ bash scripts/dashboard_refresh.sh
 | `LIVE_API=1 bash scripts/crowdsec_bouncer_e2e.sh` | LAPI + ban API kanıtı | Hayır |
 | `bash scripts/honeypot_feed_e2e.sh` | Deception Prometheus metrikleri | Hayır |
 | `bash scripts/l7_probe_prod_e2e.sh` | Daemon L7 probe readiness | Hayır |
+| `bash scripts/morning_operator_gate.sh` | Sabah operatör kapısı (~30 sn, 79/79) | Hayır |
+| `bash scripts/core_proof_refresh.sh` | Haftalık Track A kanıt paketi | Kısmen (IPv6 sudo) |
+| `bash scripts/optional_track_refresh.sh` | Opsiyonel track (L7, Grafana, demo, landing) | Kısmen |
 
 **İnternet:** Threat feed listeleri ve API sync için gerekli. Core log→ban offline çalışır. Bkz. [THREAT_INTEL_SETUP.md](THREAT_INTEL_SETUP.md)
 
@@ -173,8 +212,8 @@ bash scripts/laptop_reboot_ready.sh
 | Katman | Hedef | Komut |
 |--------|--------|--------|
 | Core | daemon + analyzer + IPC | `ensure_daemon_env.sh` · `repair_no_xdp_stack.sh` |
-| Dashboard | 51/51 `/tests` | `dashboard_refresh.sh` |
-| Vitrin | canlı site 51 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
+| Dashboard | 79/79 `/tests` | `dashboard_refresh.sh` |
+| Vitrin | canlı site 79 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
 | Ban temizliği | ipset flush + kanıt modu | `FLUSH=1 bash scripts/laptop_ban_cleanup.sh` |
 | CF cache | SRI drift sonrası | `LG_CF_PURGE=1` veya `bash scripts/website_cf_purge.sh` |
 | Filo | host + VM Online | `host_fleet_agent_setup.sh` · `vm_fleet_agent_setup.sh` |

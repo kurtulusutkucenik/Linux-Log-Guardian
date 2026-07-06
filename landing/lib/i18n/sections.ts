@@ -117,7 +117,7 @@ const TR: SectionCopy = {
       company: "CrowdSec",
       name: "SOC & sinyal katmanı",
       replaces: "CrowdSec bouncer + ayrı konsol + manuel kanıt",
-      body: "CrowdSec parçalı mimarisine gerek yok. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
+      body: "CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
       metrics: ["79 test", "72h soak PASS", "14 kanıt dosyası"],
     },
   ],

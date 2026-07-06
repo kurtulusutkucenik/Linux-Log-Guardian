@@ -1,6 +1,6 @@
 "use client";
 
-import { ShieldBan, RefreshCw, ChevronLeft, ChevronRight, Search, Globe2, CheckCircle2 } from "lucide-react";
+import { ShieldBan, RefreshCw, ChevronLeft, ChevronRight, Search, Globe2, CheckCircle2, FlaskConical, Clock3 } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, Suspense } from "react";
@@ -19,7 +19,12 @@ function isIpv4(s: string): boolean {
 function BansPageContent() {
   const { t } = useLanguage();
   const searchParams = useSearchParams();
-  const { refresh: refreshGlobal, source: ctxSource } = useBannedIps();
+  const {
+    refresh: refreshGlobal,
+    source: ctxSource,
+    dataMode: ctxDataMode,
+    preview: ctxPreview,
+  } = useBannedIps();
   const [manualIp, setManualIp] = useState("");
   const [filter, setFilter] = useState("");
   const [activeSearch, setActiveSearch] = useState("");
@@ -141,17 +146,40 @@ function BansPageContent() {
               {t("bannedIpsProofMode")}
             </span>
           )}
+          {!preview &&
+            !ctxPreview &&
+            ctxDataMode === "live" &&
+            (source || ctxSource) === "ipset" &&
+            totalCount > 0 && (
+              <span className="text-xs px-2 py-1 rounded-md bg-emerald-500/10 border border-emerald-500/30 text-emerald-300">
+                {t("bannedIpsLiveMode")}
+              </span>
+            )}
           {source && (
             <span className="text-xs font-mono px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/40">
               {source}
             </span>
           )}
           <Link
+            href="/#soc-ban"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-violet-500/10 border border-violet-500/25 text-sm text-violet-200 hover:bg-violet-500/15 transition-colors"
+          >
+            <Clock3 className="w-4 h-4" />
+            {t("bannedIpsSocLink")}
+          </Link>
+          <Link
             href="/#attack-world-map"
             className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-cyan-500/10 border border-cyan-500/25 text-sm text-cyan-200 hover:bg-cyan-500/15 transition-colors"
           >
             <Globe2 className="w-4 h-4" />
             {t("navAttackMap")}
+          </Link>
+          <Link
+            href="/tests"
+            className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-500/10 border border-emerald-500/25 text-sm text-emerald-200 hover:bg-emerald-500/15 transition-colors"
+          >
+            <FlaskConical className="w-4 h-4" />
+            {t("bannedIpsTestsLink")}
           </Link>
           <button
             type="button"

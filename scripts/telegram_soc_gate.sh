@@ -108,6 +108,8 @@ by_ip = acks_api.get("by_ip") or {}
 bans_acks = len(by_ip) if isinstance(by_ip, dict) else 0
 soc_ack = sum(1 for e in entries if e.get("kind") == "ack")
 soc_ban = sum(1 for e in entries if e.get("kind") == "ban")
+soc_lineage = sum(1 for e in entries if e.get("kind") == "lineage")
+soc_waf = sum(1 for e in entries if e.get("kind") == "waf")
 map_ack = sum(1 for m in markers if m.get("kind") == "ack")
 map_ban = sum(1 for m in markers if m.get("kind") == "ban")
 prod_ok = ops.get("prod_e2e_ok") is True
@@ -136,6 +138,8 @@ out = {
     "soc_entries": len(entries),
     "soc_ack": soc_ack,
     "soc_ban": soc_ban,
+    "soc_lineage": soc_lineage,
+    "soc_waf": soc_waf,
     "map_markers": len(markers),
     "map_ack": map_ack,
     "map_ban": map_ban,
@@ -151,7 +155,7 @@ if not ok:
 Path(report_path).write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 if not ok:
     raise SystemExit(out["fail_reason"])
-print(f"soc={len(entries)} ack={soc_ack} map={len(markers)} bans_acks={bans_acks} webhook={'OK' if webhook_ok else 'FAIL'}")
+print(f"soc={len(entries)} ack={soc_ack} ban={soc_ban} lg={soc_lineage} map={len(markers)} bans_acks={bans_acks} webhook={'OK' if webhook_ok else 'FAIL'}")
 PY
 
 echo "[OK] telegram_soc_gate — timeline + map + webhook + bans ack"

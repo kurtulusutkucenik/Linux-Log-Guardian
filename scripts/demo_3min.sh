@@ -162,6 +162,7 @@ else
   warn "website_preview_gate — python3 scripts/sync_landing_tests_from_proof.py"
 fi
 info "Canli site: https://ceniklinuxlogguardian.org/testler?utm_source=demo"
+info "Telegram : https://ceniklinuxlogguardian.org/testler?utm_source=tg"
 
 echo ""
 echo "=== demo ozet ==="

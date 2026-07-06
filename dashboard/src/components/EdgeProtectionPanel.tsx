@@ -4,11 +4,14 @@ import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Globe, RefreshCw, Shield } from "lucide-react";
 import { useLanguage } from "./LanguageProvider";
+import { useBannedIps } from "@/context/BannedIpsContext";
+import { useSocKindFilter, type SocKindFilter } from "./SocKindFilterContext";
 
 type EdgeStatus = {
   data_mode?: "live" | "proof" | "unknown";
   gate_pass?: boolean;
   gate_at?: string | null;
+  gate_fail_reason?: string | null;
   ipc?: string;
   xdp_mode?: string;
   xdp_active?: boolean;
@@ -20,6 +23,8 @@ type EdgeStatus = {
   whitelist_count?: number;
   ipset_entries?: number;
   bans_active?: number;
+  bans_active_db?: number;
+  bans_source?: string;
   threat_intel_legacy_rows?: number;
   threat_intel_summary_rows?: number;
 };
@@ -31,6 +36,8 @@ function statClass(ok: boolean | undefined): string {
 
 export function EdgeProtectionPanel() {
   const { t } = useLanguage();
+  const { totalCount: navBanCount, preview: banPreview } = useBannedIps();
+  const { kindFilter, setKindFilter } = useSocKindFilter();
   const [data, setData] = useState<EdgeStatus | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -64,6 +71,13 @@ export function EdgeProtectionPanel() {
       : data?.xdp_mode === "ipset-fallback"
         ? t("edgeXdpIpset")
         : (data?.xdp_mode ?? "—");
+
+  const liveBanCount =
+    !banPreview && navBanCount > 0
+      ? navBanCount
+      : (data?.bans_active ?? 0);
+  const ipsetDisplay =
+    !banPreview && navBanCount > 0 ? navBanCount : (data?.ipset_entries ?? 0);
 
   return (
     <div className="glass-panel p-5 border border-orange-500/15" id="edge-protection">
@@ -101,6 +115,41 @@ export function EdgeProtectionPanel() {
         </p>
       )}
 
+      {!data?.gate_pass && data?.gate_fail_reason && (
+        <p className="text-xs text-amber-300/90 mb-3">
+          {t("edgeGateFail")}: {data.gate_fail_reason}
+        </p>
+      )}
+
+      <div className="flex flex-wrap items-center gap-1.5 mb-3">
+        <span className="text-[10px] uppercase tracking-wide text-white/35 mr-1">
+          {t("edgeSocLinks")}:
+        </span>
+        {(
+          [
+            ["all", t("socFilterAll")],
+            ["incident", t("socKindIncident")],
+            ["ban", t("edgeSocBan")],
+            ["ack", t("edgeSocAck")],
+            ["waf", t("socKindWaf")],
+            ["lineage", t("edgeSocLineage")],
+          ] as const
+        ).map(([filter, label]) => (
+          <button
+            key={filter}
+            type="button"
+            onClick={() => setKindFilter(filter as SocKindFilter, { scroll: true })}
+            className={`text-[10px] px-2 py-0.5 rounded-full border transition-colors ${
+              kindFilter === filter
+                ? "border-orange-400/50 bg-orange-500/15 text-orange-100"
+                : "border-orange-500/25 text-orange-200/80 hover:text-orange-100 hover:border-orange-400/40"
+            }`}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatIpc")}</p>
@@ -122,7 +171,7 @@ export function EdgeProtectionPanel() {
         <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatIpset")}</p>
           <p className="text-sm font-semibold text-white/80">
-            {data?.ipset_entries ?? 0}
+            {ipsetDisplay}
             <span className="text-white/35 text-xs ml-1">
               WL {data?.whitelist_count ?? 0}
             </span>
@@ -141,7 +190,22 @@ export function EdgeProtectionPanel() {
           )}
         </span>
         <span>
-          {t("edgeBansActive")}: {data?.bans_active ?? 0}
+          {t("edgeBansActive")}:{" "}
+          {liveBanCount > 0 ? (
+            <Link
+              href="/bans"
+              className="text-orange-300/90 hover:text-orange-200 hover:underline"
+              title={
+                (data?.bans_active_db ?? 0) > liveBanCount
+                  ? `${t("edgeBansDbHint")} (${data?.bans_active_db})`
+                  : undefined
+              }
+            >
+              {liveBanCount}
+            </Link>
+          ) : (
+            liveBanCount
+          )}
         </span>
       </div>
 
@@ -150,7 +214,7 @@ export function EdgeProtectionPanel() {
           {t("testsViewAll")}
         </Link>
         {" · "}
-        <Link href="/tests?q=edge" className="text-orange-400/70 hover:text-orange-300 hover:underline">
+        <Link href="/tests?q=edge#test-edge-protection-gate" className="text-orange-400/70 hover:text-orange-300 hover:underline">
           {t("edgeGateLink")}
         </Link>
       </p>

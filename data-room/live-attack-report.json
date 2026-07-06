@@ -1,5 +1,5 @@
 {
-  "date": "2026-06-26T11:04:11.685805+00:00",
+  "date": "2026-07-05T20:14:13.670251+00:00",
   "host": "127.0.0.1",
   "port": 80,
   "nginx_up": false,
@@ -45,9 +45,9 @@
       "duration_sec": 4,
       "threads": 3,
       "rps_per_thread": 50,
-      "sent": 300,
-      "refused": 300,
-      "timeout": 300,
+      "sent": 297,
+      "refused": 297,
+      "timeout": 297,
       "nginx_up": false,
       "replay_alerts": 0,
       "pass": true
@@ -83,8 +83,8 @@
     "mode": "rfc5737_replay"
   },
   "summary": {
-    "sent_total": 525,
-    "refused_total": 525,
+    "sent_total": 522,
+    "refused_total": 522,
     "replay_alerts": 0,
     "ban_evidence": true,
     "ban_evidence_waf": true,

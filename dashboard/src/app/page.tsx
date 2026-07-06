@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import axios from "axios";
 import { useLanguage } from "@/components/LanguageProvider";
+import { SocKindFilterProvider } from "@/components/SocKindFilterContext";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 
@@ -500,15 +501,14 @@ export default function FleetDashboard() {
         </div>
       </div>
 
-      {/* ── Saldırı haritası ─────────────────────────────────────────── */}
-      <AttackWorldMap />
-
-      {/* ── SOC tek timeline (incident · ban · lineage) ─────────────── */}
-      <SocTimelinePanel />
+      {/* ── Saldırı haritası + SOC (paylaşılan tür filtresi) ───────── */}
+      <SocKindFilterProvider>
+        <AttackWorldMap />
+        <SocTimelinePanel />
+        <EdgeProtectionPanel />
+      </SocKindFilterProvider>
 
       <WebhookOpsPanel />
-
-      <EdgeProtectionPanel />
 
       <LineageL7Panel />
 
