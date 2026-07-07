@@ -29,7 +29,20 @@ Log Guardian **MIT Core** + opsiyonel **Pro/Enterprise** katmanları.
 | Filo çoklu host | 2+ agent Online | `fleet-multi-node-report.json` · `vm-fleet-gate-report.json` |
 | Dağıtık saldırı riski | /24 + UA bonus ≤+20 | `dist-risk-proof-report.json` |
 | Edge kapısı | nginx + ban yolu | `edge-protection-gate-report.json` |
+| Edge checklist | laptop/prod 15 madde | `edge-protection-checklist-report.json` |
 | Telegram operatör | ack + undo | `telegram-soc-gate-report.json` |
+| Sabah operatör | 80/80 + core zincir | `morning-operator-gate-report.json` |
+
+## E9 doğrulama (tek komut)
+
+Müşteri data room öncesi veya haftalık L2 kontrol:
+
+```bash
+bash scripts/enterprise_e9_verify.sh
+# Hizli (sabah gate atla): SKIP_MORNING=1 bash scripts/enterprise_e9_verify.sh
+```
+
+Rapor: `enterprise-e9-verify-report.json` — escalation + edge checklist + docs consistency (+ isteğe bağlı morning gate).
 
 ## Laptop kanıt paketi (GitHub push olmadan)
 
@@ -41,9 +54,17 @@ bash scripts/release_ready_check.sh    # artefakt kapısı
 bash scripts/release_ready_gate.sh     # ZIP + docs + live + filo zinciri
 ```
 
-Dashboard vitrin: `https://localhost:8443/tests` (**79 kart**) · site: `https://ceniklinuxlogguardian.org/tests`
+Dashboard vitrin: `https://localhost:8443/tests` (**80 kart**) · site: `https://ceniklinuxlogguardian.org/tests`
 
-Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · sabah matris: `bash scripts/morning_operator_gate.sh` · kapı: `bash scripts/enterprise_escalation_gate.sh`
+Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · E9 tek kapı: `bash scripts/enterprise_e9_verify.sh` · sabah: `bash scripts/morning_operator_gate.sh` · kapı: `bash scripts/enterprise_escalation_gate.sh`
+
+### Operatör cron (özet)
+
+```bash
+bash scripts/install_operator_cron.sh
+```
+
+Günlük sabah gate · haftalık core kanıt · intel DB prune · güvenlik haftalık (E9 dahil) · aylık `POST_INSTALL_STRICT` + E9 + edge checklist (internet-facing). Detay: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) § P4.
 
 Filo demo (host): `bash scripts/vm_demo_host.sh` → `node-kurtulus-01` + `node-vm-02` Online · çoklu dispatch: `bash scripts/fleet_multi_node_e2e.sh`
 

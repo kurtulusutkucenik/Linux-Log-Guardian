@@ -5,7 +5,7 @@
   "warn": 0,
   "fail": 0,
   "full_mode": false,
-  "proof_tests": 79,
-  "proof_pass": 79,
+  "proof_tests": 80,
+  "proof_pass": 80,
   "script": "scripts/laptop_excellence_gate.sh"
 }

@@ -44,8 +44,8 @@ copy_if() {
 for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-status.json \
   crs-parity-report.json tenant-isolation-report.json competitive-proof.json compliance-report.json \
   soak-report.json soak-report.short.json ops-gate-report.json competitive-proof.pdf real-attack-report.json live-attack-report.json ja3-cluster-report.json \
-  ja3-cluster-ban-live.json dashboard-ban-api-report.json webhook-route-proof-report.json webhook-telegram-live-report.json webhook-telegram-ack-live-report.json telegram-operator-undo-e2e-report.json telegram-soc-gate-report.json bans-telegram-ops-report.json edge-protection-gate-report.json grafana-parity-gate-report.json website-preview-gate-report.json enterprise-escalation-gate-report.json vm-host-prep-gate-report.json docs-consistency-gate-report.json vm-fleet-gate-report.json laptop-excellence-gate-report.json website-live-gate-report.json release-ready-gate-report.json demo-rehearsal-gate-report.json presentation-ship-gate-report.json demo-video-gate-report.json github-ship-gate-report.json laptop-core-gate-report.json morning-operator-gate-report.json \
-  fleet-multi-node-report.json grafana-provision-report.json attack-map-report.json \
+  ja3-cluster-ban-live.json dashboard-ban-api-report.json webhook-route-proof-report.json webhook-telegram-live-report.json webhook-telegram-ack-live-report.json telegram-operator-undo-e2e-report.json telegram-soc-gate-report.json bans-telegram-ops-report.json edge-protection-gate-report.json edge-protection-checklist-report.json grafana-parity-gate-report.json website-preview-gate-report.json enterprise-escalation-gate-report.json enterprise-e9-verify-report.json vm-host-prep-gate-report.json docs-consistency-gate-report.json vm-fleet-gate-report.json laptop-excellence-gate-report.json website-live-gate-report.json release-ready-gate-report.json demo-rehearsal-gate-report.json presentation-ship-gate-report.json demo-video-gate-report.json github-ship-gate-report.json laptop-core-gate-report.json morning-operator-gate-report.json \
+  fleet-multi-node-report.json fleet-command-sign-report.json fleet-prune-cmds-report.json grafana-provision-report.json attack-map-report.json \
   proof-replay-webhook-ban.json dashboard-live-demo.json wasm-status.json \
   auth-log-report.json journald-ingest-report.json siem-export-report.json crowdsec-bouncer-report.json \
   honeypot-feed-report.json l7-probe-prod-report.json \
@@ -58,7 +58,7 @@ for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-sta
   owasp-corpus-report.json tr-hosting-corpus-report.json customer-corpus-report.json \
   threat-intel-sync-report.json threat-intel-prod-report.json taxii-feed-report.json \
   parser-fuzz-report.json ban-policy-audit-report.json ban-profile-e2e-report.json \
-  dist-risk-proof-report.json lineage-incident-report.json \
+  dist-risk-proof-report.json lineage-incident-report.json intel-ban-db-report.json \
   eps-architecture-report.json \
   prod-stack-e2e-report.json phase100-fast-gate-report.json vm-sprint-proof.json; do
   copy_if "$f"

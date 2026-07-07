@@ -40,6 +40,9 @@ export type LiveMetricsSnapshot = {
   ban_pipeline_ipc: number;
   ban_pipeline_xdp: number;
   ban_pipeline_failed: number;
+  ban_events_total: number;
+  intel_ban_legacy_rows: number;
+  intel_ban_summary_rows: number;
   threat_last_sync_ts: number;
   threat_last_applied: number;
   threat_last_failed: number;
@@ -90,6 +93,9 @@ export function parseGuardianMetrics(body: string): LiveMetricsSnapshot {
     ban_pipeline_ipc: num("loganalyzer_ban_pipeline_ipc"),
     ban_pipeline_xdp: num("loganalyzer_ban_pipeline_xdp"),
     ban_pipeline_failed: num("loganalyzer_ban_pipeline_failed"),
+    ban_events_total: num("loganalyzer_ban_events_total"),
+    intel_ban_legacy_rows: num("loganalyzer_intel_ban_legacy_rows"),
+    intel_ban_summary_rows: num("loganalyzer_intel_ban_summary_rows"),
     threat_last_sync_ts: num("loganalyzer_threat_last_sync_ts"),
     threat_last_applied: num("loganalyzer_threat_last_applied"),
     threat_last_failed: num("loganalyzer_threat_last_failed"),

@@ -1,70 +1,106 @@
 {
-  "date": "2026-06-09T17:49:30.951352+00:00",
+  "date": "2026-07-06T15:25:55.039972+00:00",
   "corpus": "corpus/customer_anonymized.access",
   "manifest": "corpus/customer_anonymized_manifest.json",
-  "lines_total": 600,
-  "alerts_total": 600,
-  "attack_recall_pct": 100.0,
-  "category_avg_recall_pct": 100.0,
+  "lines_total": 800,
+  "alerts_total": 801,
+  "attack_recall_pct": 100.1,
+  "category_avg_recall_pct": 100.1,
   "target_recall_pct": 80.0,
   "categories": {
+    "api_abuse": {
+      "lines": 46,
+      "alerts": 46,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "api_bola": {
+      "lines": 45,
+      "alerts": 45,
+      "recall_pct": 100.0,
+      "pass": true
+    },
     "benign": {
-      "lines": 180,
-      "alerts": 180,
+      "lines": 108,
+      "alerts": 108,
       "recall_pct": 100.0,
       "pass": true
     },
     "brute": {
-      "lines": 83,
-      "alerts": 83,
+      "lines": 47,
+      "alerts": 47,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "jwt_abuse": {
+      "lines": 46,
+      "alerts": 46,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "jwt_alg_confusion": {
+      "lines": 46,
+      "alerts": 46,
       "recall_pct": 100.0,
       "pass": true
     },
     "lfi": {
-      "lines": 82,
-      "alerts": 82,
+      "lines": 46,
+      "alerts": 46,
       "recall_pct": 100.0,
       "pass": true
     },
     "log4shell": {
-      "lines": 1,
-      "alerts": 1,
+      "lines": 45,
+      "alerts": 45,
       "recall_pct": 100.0,
       "pass": true
     },
     "nosql": {
-      "lines": 1,
-      "alerts": 1,
+      "lines": 45,
+      "alerts": 45,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "oauth_abuse": {
+      "lines": 46,
+      "alerts": 46,
+      "recall_pct": 100.0,
+      "pass": true
+    },
+    "path_traversal_variant": {
+      "lines": 47,
+      "alerts": 47,
       "recall_pct": 100.0,
       "pass": true
     },
     "rce": {
-      "lines": 1,
-      "alerts": 1,
+      "lines": 45,
+      "alerts": 45,
       "recall_pct": 100.0,
       "pass": true
     },
     "scanner": {
-      "lines": 83,
-      "alerts": 83,
-      "recall_pct": 100.0,
+      "lines": 47,
+      "alerts": 48,
+      "recall_pct": 102.1,
       "pass": true
     },
     "sqli": {
-      "lines": 86,
-      "alerts": 86,
+      "lines": 50,
+      "alerts": 50,
       "recall_pct": 100.0,
       "pass": true
     },
     "ssrf": {
-      "lines": 1,
-      "alerts": 1,
+      "lines": 45,
+      "alerts": 45,
       "recall_pct": 100.0,
       "pass": true
     },
     "xss": {
-      "lines": 82,
-      "alerts": 82,
+      "lines": 46,
+      "alerts": 46,
       "recall_pct": 100.0,
       "pass": true
     }

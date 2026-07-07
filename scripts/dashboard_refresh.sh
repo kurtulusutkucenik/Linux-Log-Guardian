@@ -23,6 +23,20 @@ bash "$ROOT/scripts/ops_gate_report.sh"
 bash "$ROOT/scripts/edge_protection_gate.sh" >/dev/null 2>&1 \
   && echo "[OK] edge_protection_gate" \
   || echo "[WARN] edge_protection_gate — bash scripts/edge_protection_gate.sh" >&2
+bash "$ROOT/scripts/edge_protection_checklist.sh" >/dev/null 2>&1 \
+  && echo "[OK] edge_protection_checklist" \
+  || echo "[WARN] edge_protection_checklist" >&2
+
+refresh_grafana_ops_gates() {
+  bash "$ROOT/scripts/grafana_parity_gate.sh" >/dev/null 2>&1 \
+    && echo "[OK] grafana_parity_gate" \
+    || echo "[WARN] grafana_parity_gate — bash scripts/grafana_parity_gate.sh" >&2
+  bash "$ROOT/scripts/enterprise_escalation_gate.sh" >/dev/null 2>&1 \
+    && echo "[OK] enterprise_escalation_gate" \
+    || echo "[WARN] enterprise_escalation_gate" >&2
+}
+
+# enterprise_e9_verify — grafana_parity sonrasi (asagida refresh_grafana_ops_gates)
 
 # Stale k8s-admission skip onlenir (go yoksa docker fallback — competitive_proof.sh ile ayni)
 bash "$ROOT/scripts/k8s_admission_test.sh" 2>/dev/null || true
@@ -32,7 +46,15 @@ if [[ "${SKIP_FLEET_PRUNE:-0}" != "1" ]]; then
   STALE_HOURS="${STALE_HOURS:-48}" bash "$ROOT/scripts/fleet_prune_stale.sh" \
     && echo "[OK] fleet_prune_stale (${STALE_HOURS:-48}h)" \
     || echo "[WARN] fleet_prune_stale — atlandi" >&2
+  bash "$ROOT/scripts/fleet_prune_pending_commands.sh" \
+    && echo "[OK] fleet_prune_pending_commands" \
+    || echo "[WARN] fleet_prune_pending_commands — atlandi" >&2
 fi
+
+# ban_events DB raporu (ban mantigina dokunmaz)
+WARN_ONLY=1 bash "$ROOT/scripts/intel_ban_db_ops_check.sh" \
+  && echo "[OK] intel_ban_db_ops_check" \
+  || echo "[WARN] intel_ban_db_ops_check — atlandi" >&2
 
 ensure_observability_stack() {
   if ! command -v docker >/dev/null 2>&1 || ! docker info >/dev/null 2>&1; then
@@ -53,6 +75,7 @@ ensure_observability_stack() {
 }
 
 ensure_observability_stack
+refresh_grafana_ops_gates
 
 run_preview_gate() {
   bash "$ROOT/scripts/website_preview_gate.sh"
@@ -72,6 +95,9 @@ else
 fi
 
 if python3 "$ROOT/scripts/competitive_proof_build.py"; then
+  bash "$ROOT/scripts/proof_meta_gates_refresh.sh" \
+    || echo "[WARN] proof_meta_gates_refresh — once ops_gate_report + competitive_proof_build" >&2
+  python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
   echo "[OK] competitive_proof_build"
 else
   echo "[WARN] competitive_proof_build — atlandi" >&2
@@ -88,12 +114,27 @@ bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
 bash "$ROOT/scripts/sync_dashboard_data.sh"
 
 echo "[dashboard_refresh] Dashboard image rebuild (--build zorunlu — kod degisince)"
-docker compose -f docker-compose.prod.yml build dashboard
+DASHBOARD_SRC_REV="$(
+  find "$ROOT/dashboard/src" -type f \( -name '*.ts' -o -name '*.tsx' \) -print0 2>/dev/null \
+    | sort -z | xargs -0 sha256sum 2>/dev/null | sha256sum | cut -c1-16
+)"
+DASHBOARD_SRC_REV="${DASHBOARD_SRC_REV:-dev}"
+export DASHBOARD_BUILD_REV="${DASHBOARD_BUILD_REV:-$(date -u +%Y%m%d%H%M)}"
+BUILD_OPTS=(
+  --build-arg "DASHBOARD_SRC_REV=${DASHBOARD_SRC_REV}"
+  --build-arg "NEXT_PUBLIC_DASHBOARD_BUILD_REV=${DASHBOARD_BUILD_REV}"
+)
+if [[ "${NO_CACHE:-0}" == "1" ]]; then
+  BUILD_OPTS+=(--no-cache)
+  echo "[dashboard_refresh] NO_CACHE=1 — tam image rebuild"
+fi
+docker compose -f docker-compose.prod.yml build "${BUILD_OPTS[@]}" dashboard
 
 echo "[dashboard_refresh] Container yeniden baslatiliyor..."
 docker compose -f docker-compose.prod.yml rm -sf dashboard 2>/dev/null || true
 docker rm -f log-guardian-dashboard 2>/dev/null || true
 docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps dashboard
+echo "[OK] dashboard build rev: ${DASHBOARD_BUILD_REV}"
 
 if [[ -f /etc/log-guardian/rules.conf ]]; then
   TOK=$(grep -E '^API_TOKEN=' /etc/log-guardian/rules.conf 2>/dev/null | tail -1 | cut -d= -f2- || true)
@@ -126,6 +167,10 @@ if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx grafana-lg; then
   bash "$ROOT/scripts/grafana_provision.sh" >/dev/null 2>&1 \
     && echo "[OK] grafana_provision (DIST risk paneli dahil)" \
     || echo "[WARN] grafana_provision — Grafana :3002?" >&2
+  refresh_grafana_ops_gates
+  SKIP_MORNING=1 bash "$ROOT/scripts/enterprise_e9_verify.sh" >/dev/null 2>&1 \
+    && echo "[OK] enterprise_e9_verify" \
+    || echo "[WARN] enterprise_e9_verify — bash scripts/enterprise_e9_verify.sh" >&2
 fi
 
 wait_dashboard_tier() {
@@ -183,9 +228,12 @@ if [[ "${SKIP_ATTACK_MAP:-0}" != "1" ]]; then
     bash "$ROOT/scripts/morning_operator_gate.sh" >/dev/null 2>&1 \
       && echo "[OK] morning_operator_gate" \
       || echo "[WARN] morning_operator_gate" >&2
+    refresh_grafana_ops_gates
     python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 \
       && echo "[OK] competitive_proof_build (gate raporlari)" \
       || echo "[WARN] competitive_proof_build — gate sonrasi" >&2
+    bash "$ROOT/scripts/proof_meta_gates_refresh.sh" >/dev/null 2>&1 || true
+    python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" >/dev/null 2>&1 || true
     bash "$ROOT/scripts/sync_dashboard_data.sh"
     LG_ROOT="$ROOT" invalidate_dashboard_bans_cache || true
   else
@@ -206,52 +254,16 @@ fi
 
 echo "[OK] dashboard_refresh tamam"
 echo "  Hard refresh: Ctrl+Shift+R on /tests"
-python3 - "$ROOT" <<'PY'
-import json
-from pathlib import Path
-root = Path(__import__("sys").argv[1])
-preview = root / "website-preview-gate-report.json"
-proof = root / "competitive-proof.json"
-attack = root / "attack-map-report.json"
-lines = []
-if preview.is_file():
-    r = json.loads(preview.read_text(encoding="utf-8"))
-    sf = int(r.get("site_fail") or 0)
-    shown = int(r.get("site_tests") or 0) if sf == 0 else int(r.get("site_pass") or 0)
-    exp = int(r.get("expected_tests") or 0)
-    lines.append(f"  website_preview: {shown}/{exp} pass")
-if proof.is_file():
-    t = json.loads(proof.read_text(encoding="utf-8")).get("validationTests") or []
-    p = sum(1 for x in t if x.get("status") == "pass")
-    lines.append(f"  competitive_proof: {p}/{len(t)} pass")
-if attack.is_file():
-    a = json.loads(attack.read_text(encoding="utf-8"))
-    if a.get("pass") is True:
-        nav = a.get("nav_ban_count", "—")
-        parity = "OK" if a.get("nav_parity_ok") else "—"
-        lines.append(f"  attack_map: {a.get('markers', 0)} marker · nav={nav} parity={parity}")
-    else:
-        lines.append("  attack_map: WARN")
-edge = root / "edge-protection-gate-report.json"
-if edge.is_file():
-    e = json.loads(edge.read_text(encoding="utf-8"))
-    if e.get("pass") is True:
-        lines.append(f"  edge: {e.get('xdp_mode', '?')} · ipc={e.get('ipc', '?')}")
-    else:
-        lines.append(f"  edge: WARN ({e.get('fail_reason', '?')})")
-soc = root / "telegram-soc-gate-report.json"
-if soc.is_file():
-    s = json.loads(soc.read_text(encoding="utf-8"))
-    if s.get("pass") is True:
-        lines.append(
-            f"  telegram_soc: {s.get('soc_entries', 0)} entry · ack={s.get('soc_ack', 0)} lg={s.get('soc_lineage', 0)}"
-        )
-    else:
-        lines.append("  telegram_soc: WARN")
-if lines:
-    print("")
-    print("=== dashboard_refresh ozet ===")
-    for ln in lines:
-        print(ln)
-    print("[OK] dashboard_refresh — kanit + site senkron")
-PY
+if bash "$ROOT/scripts/dashboard_tests_live_count.sh" 2>/dev/null; then
+  echo "[OK] dashboard_tests_live_count"
+else
+  echo "[WARN] dashboard_tests_live_count — /api/tests != competitive-proof (Ctrl+Shift+R)" >&2
+fi
+SUMMARY_JSON="${LG_LAST_VITRIN_JSON:-$HOME/lg-last-vitrin.json}"
+python3 "$ROOT/scripts/lg_last_vitrin_summary.py" \
+  --root "$ROOT" \
+  --out "$SUMMARY_JSON" \
+  --source "scripts/dashboard_refresh.sh" \
+  --print-summary \
+  --title "=== dashboard_refresh ozet ===" || true
+echo "[OK] dashboard_refresh — kanit + site senkron"

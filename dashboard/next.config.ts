@@ -12,6 +12,10 @@ const nextConfig: NextConfig = {
         ],
       },
       {
+        source: "/tests",
+        headers: [{ key: "Cache-Control", value: "no-store, max-age=0" }],
+      },
+      {
         source: "/(.*)",
         headers: [
           { key: "X-Frame-Options", value: "DENY" },

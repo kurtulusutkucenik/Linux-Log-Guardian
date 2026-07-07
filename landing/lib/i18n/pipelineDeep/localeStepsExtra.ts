@@ -13,7 +13,7 @@ export const STEPS_PT: PipelineStepDeep[] = [
     lg: "Um único binário lê logs nginx — sem agente Fail2ban/CrowdSec separado.",
     rivals:
       "CrowdSec exige agente separado e API central. Fail2ban lê logs mas não chega à camada WAF — arquitetura fragmentada.",
-    proof: "75 testes automáticos · gate de instalação PASS",
+    proof: "80 testes automáticos · gate de instalação PASS",
   },
   {
     what:
@@ -83,7 +83,7 @@ export const STEPS_PT: PipelineStepDeep[] = [
     lg: "Métricas + dashboard + prova num produto — sem consola SaaS CrowdSec nem stack Grafana fragmentada.",
     rivals:
       "Fail2ban: métricas/export limitados. CrowdSec quer SaaS gerido ou setup self-hosted fragmentado. ModSecurity emite logs sem timeline SOC nem pack de prova automático.",
-    proof: "75 testes · competitive-proof.json · dashboard /tests",
+    proof: "80 testes · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -170,7 +170,7 @@ export const STEPS_NL: PipelineStepDeep[] = [
     lg: "Metrieken + dashboard + bewijs in één product — geen CrowdSec SaaS-console of versnipperde Grafana-stack.",
     rivals:
       "Fail2ban: beperkte metrieken/export. CrowdSec wil managed SaaS of versnipperde self-hosted setup. ModSecurity levert logs zonder SOC-timeline of automatisch bewijspakket.",
-    proof: "75 tests · competitive-proof.json · dashboard /tests",
+    proof: "80 tests · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -257,7 +257,7 @@ export const STEPS_UZ: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + isbot bitta mahsulotda; CrowdSec SaaS konsoli yoki bo'lak Grafana kerak emas.",
     rivals:
       "Fail2ban metrika/export cheklangan. CrowdSec managed SaaS yoki bo'lak self-hosted. ModSecurity log beradi lekin SOC timeline va avtomatik isbot paketi yo'q.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -431,7 +431,7 @@ export const STEPS_TK: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + subutnama bir önümde; CrowdSec SaaS konsoly ýa-da bölek Grafana gerek däl.",
     rivals:
       "Fail2ban metrika/export çäkli. CrowdSec managed SaaS ýa-da bölek self-hosted. ModSecurity log berýär ýöne SOC timeline we awtomatik subutnama paketi ýok.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -518,7 +518,7 @@ export const STEPS_CRH: PipelineStepDeep[] = [
     lg: "Metrik + dashboard + delil tek mahsulatta; CrowdSec SaaS konsolu ya da parçalı Grafana kerek degil.",
     rivals:
       "Fail2ban metrik/export sınırlı. CrowdSec managed SaaS ya da parçalı self-hosted. ModSecurity log verir amma SOC timeline ve avtomatik delil paketi yoq.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -605,7 +605,7 @@ export const STEPS_GAG: PipelineStepDeep[] = [
     lg: "Metrik + dashboard + kanıt tek üründe; CrowdSec SaaS konsolu veya parçalı Grafana kurulumu gerekmez.",
     rivals:
       "Fail2ban metrik/export sınırlı. CrowdSec managed SaaS konsolu veya self-hosted parça kurulum. ModSecurity log üretir ama SOC timeline ve otomatik kanıt paketi sunmaz.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -692,7 +692,7 @@ export const STEPS_TT: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + delil ber önəmdä; CrowdSec SaaS konsoly ya da öleşle Grafana kirek tügel.",
     rivals:
       "Fail2ban metrika/export cheklän. CrowdSec managed SaaS ya da öleşle self-hosted. ModSecurity log verä, amma SOC timeline yoq.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -779,7 +779,7 @@ export const STEPS_BA: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + delil ber önömdä; CrowdSec SaaS konsoly ya da öleşle Grafana kirek tügel.",
     rivals:
       "Fail2ban metrika/export cheklän. CrowdSec managed SaaS ya da öleşle self-hosted. ModSecurity log verä, amma SOC timeline häm avtomatik delil paketi yoq.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -866,7 +866,7 @@ export const STEPS_CV: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + delil pĕr produkt-ra; CrowdSec SaaS konsoly ya da pĕş-pĕşe Grafana kirek mar.",
     rivals:
       "Fail2ban metrika/export cheklĕ. CrowdSec managed SaaS ya da pĕş-pĕşe self-hosted. ModSecurity log parat, numai SOC timeline tata avtomatik delil paketĕ çuk.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -953,7 +953,7 @@ export const STEPS_UG: PipelineStepDeep[] = [
     lg: "Metrika + dashboard + isbot bitta mahsulotda; CrowdSec SaaS konsoli yoki bo'lak Grafana kerak emas.",
     rivals:
       "Fail2ban metrika/export cheklangan. CrowdSec managed SaaS yoki bo'lak self-hosted. ModSecurity log beradi lekin SOC timeline va avtomatik isbot paketi yo'q.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -1040,7 +1040,7 @@ export const STEPS_SAH: PipelineStepDeep[] = [
     lg: "Metrics + dashboard + proof биир продукт; CrowdSec SaaS console эбэтэр piecemeal Grafana кэриэкпэт.",
     rivals:
       "Fail2ban metrics/export чого. CrowdSec managed SaaS эбэтэр piecemeal self-hosted. ModSecurity log, нo SOC timeline эбэтэр auto proof pack суох.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 

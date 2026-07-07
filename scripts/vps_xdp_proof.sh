@@ -6,6 +6,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# shellcheck source=scripts/lib/vm_guest.sh
+source "$ROOT/scripts/lib/vm_guest.sh" 2>/dev/null || true
+
 FAIL=0
 ok() { echo "[OK] $*"; }
 warn() { echo "[WARN] $*"; }
@@ -16,6 +19,11 @@ LG_BIN="${LG_BIN:-/usr/local/bin/log-guardian}"
 METRICS_PORT="${METRICS_PORT:-9091}"
 
 echo "=== vps_xdp_proof ==="
+
+if [[ "${VPS_XDP_SKIP:-0}" != "1" ]] && lg_is_vbox_guest 2>/dev/null; then
+  warn "VirtualBox guest — VPS_XDP_SKIP=1 (kernel-XDP VPS'te; VM'de ipset-fallback normal)"
+  VPS_XDP_SKIP=1
+fi
 
 if [[ "${VPS_XDP_SKIP:-0}" == "1" ]]; then
   warn "VPS_XDP_SKIP=1 — laptop/Wi-Fi modu (ipset fallback normal)"

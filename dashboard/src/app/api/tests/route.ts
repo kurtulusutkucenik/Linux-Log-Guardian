@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
-import { evaluateValidationTests, type TestReports } from "@/lib/validationTests";
+import { enrichGateTestDocs } from "@/lib/gateTestDocs";
+import { alignTestsToProof, evaluateValidationTests, type TestReports } from "@/lib/validationTests";
 
 export const dynamic = "force-dynamic";
 
@@ -40,7 +41,7 @@ export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, owaspCorpus, trHostingCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
+  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, owaspCorpus, trHostingCorpus, customerCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, intelBanDb, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
     await Promise.all([
       readJson("ops-gate-report.json"),
       readJson("crs-parity-report.json"),
@@ -58,6 +59,7 @@ export async function GET(req: NextRequest) {
       readJson("ipv6-ban-e2e-report.json"),
       readJson("owasp-corpus-report.json"),
       readJson("tr-hosting-corpus-report.json"),
+      readJson("customer-corpus-report.json"),
       readJson("threat-intel-sync-report.json"),
       readBestSoak(),
       readJson("soak-report.short.json"),
@@ -75,6 +77,7 @@ export async function GET(req: NextRequest) {
       readJson("telegram-soc-gate-report.json"),
       readJson("bans-telegram-ops-report.json"),
       readJson("edge-protection-gate-report.json"),
+      readJson("intel-ban-db-report.json"),
       readJson("grafana-parity-gate-report.json"),
       readJson("website-preview-gate-report.json"),
       readJson("enterprise-escalation-gate-report.json"),
@@ -133,6 +136,7 @@ export async function GET(req: NextRequest) {
     ipv6BanE2e: ipv6BanE2e as TestReports["ipv6BanE2e"],
     owaspCorpus: owaspCorpus as TestReports["owaspCorpus"],
     trHostingCorpus: trHostingCorpus as TestReports["trHostingCorpus"],
+    customerCorpus: customerCorpus as TestReports["customerCorpus"],
     threatIntelSync: threatIntelSync as TestReports["threatIntelSync"],
     soak: soak as TestReports["soak"],
     soakShort: soakShort as TestReports["soakShort"],
@@ -150,6 +154,7 @@ export async function GET(req: NextRequest) {
     telegramSocGate: telegramSocGate as TestReports["telegramSocGate"],
     bansTelegramOps: bansTelegramOps as TestReports["bansTelegramOps"],
     edgeProtectionGate: edgeProtectionGate as TestReports["edgeProtectionGate"],
+    intelBanDb: intelBanDb as TestReports["intelBanDb"],
     grafanaParityGate: grafanaParityGate as TestReports["grafanaParityGate"],
     websitePreviewGate: websitePreviewGate as TestReports["websitePreviewGate"],
     enterpriseEscalationGate: enterpriseEscalationGate as TestReports["enterpriseEscalationGate"],
@@ -191,7 +196,25 @@ export async function GET(req: NextRequest) {
     meshEtcdLive: meshEtcdLive as TestReports["meshEtcdLive"],
   };
 
-  const tests = evaluateValidationTests(reports, locale);
+  const evaluated = evaluateValidationTests(reports, locale);
+
+  const proofRaw = await readJson("competitive-proof.json");
+  const proofTests =
+    proofRaw &&
+    typeof proofRaw === "object" &&
+    Array.isArray((proofRaw as { validationTests?: unknown }).validationTests)
+      ? (proofRaw as { validationTests: unknown[] }).validationTests
+      : null;
+  const proofExpected = proofTests?.length ?? null;
+  const proofTestIds =
+    proofTests?.map((t) => String((t as { id?: string }).id ?? "")).filter(Boolean) ?? null;
+
+  const aligned =
+    proofTests && proofTests.length > 0
+      ? alignTestsToProof(evaluated, proofTests as { id?: string }[], locale)
+      : evaluated;
+  const tests = enrichGateTestDocs(aligned, locale);
+
   const passed = tests.filter((t) => t.status === "pass").length;
   const failed = tests.filter((t) => t.status === "fail").length;
   const warned = tests.filter((t) => t.status === "warn").length;
@@ -201,9 +224,16 @@ export async function GET(req: NextRequest) {
     available: tests.length > 0,
     tests,
     summary: { total: tests.length, passed, failed, warned, pending },
+    proof_expected: proofExpected,
+    proof_test_ids: proofTestIds,
+    parity_ok: proofExpected == null || tests.length === proofExpected,
     hint:
       tests.length === 0
         ? "Run: STABILITY=1 bash scripts/full_proof_pack.sh"
         : null,
+  }, {
+    headers: {
+      "Cache-Control": "no-store, max-age=0",
+    },
   });
 }

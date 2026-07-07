@@ -3,7 +3,7 @@
 Generated: 2026-07-05T07:55:00.260855+00:00
 
 ## Measured metrics
-- Validation tests: 79/79 pass (dashboard /tests)
+- Validation tests: 80/80 pass (dashboard /tests)
 - Real attack recall (1K): 100.0%
 - Real attack recall (10K): 100.2%
 - Distributed cluster recall: 100.0%

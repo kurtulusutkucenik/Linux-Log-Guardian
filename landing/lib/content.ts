@@ -1,7 +1,11 @@
 // Canlı siteden (ceniklinuxlogguardian.org) taşınan gerçek içerik — tek kaynak.
 
-/** competitive-proof validationTests count — keep in sync with scripts/sync_landing_tests_from_proof.py */
-export const PROOF_TEST_COUNT = 79;
+/** competitive-proof validationTests count — sync_landing_tests_from_proof.py ile guncellenir */
+export const PROOF_TEST_COUNT = 80;
+
+const T = PROOF_TEST_COUNT;
+const T_TEST = `${T} test`;
+const T_AUTO = `${T} otomatik test`;
 
 export const NAV = [
   { href: "#hero", label: "Ana sayfa", i18n: "nav_home" as const },
@@ -16,7 +20,7 @@ export const NAV = [
 export const HERO = {
   badge: "//:LOG→BAN · SYSTEM ONLINE",
   title: "Linux Log Guardian",
-  bullets: ["~20 ms kernel ban", "79 otomatik test", "72h soak PASS"],
+  bullets: ["~20 ms kernel ban", T_AUTO, "72h soak PASS"],
   tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   chips: ["açık kaynak · MIT", "72h soak PASS"],
   reach: "3,65k+ ziyaret · 56 ülke · kanıt PDF",
@@ -34,13 +38,13 @@ export const HERO = {
       "%100 gerçek saldırı recall + %100 OWASP CRS parity — 121 kural, 1500 satır corpus",
       "%0.2 false positive — 500 benign satırda 1 alarm; rakiplerde yüksek/orta",
       "72 saat VM soak — 864 örnek, 0 hata; rakiplerde otomatik kanıt yok",
-      "79 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
+      `${T_AUTO} + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir`,
       "3 araç yığını tek ürün: ban motoru + WAF/CRS + SOC/kanıt — ~15 dk kurulum",
     ],
     bold: [
       { v: "~20ms", l: "kernel ban" },
       { v: "%100", l: "recall" },
-      { v: "79", l: "otomatik test" },
+      { v: String(T), l: "otomatik test" },
       { v: "3→1", l: "araç birleşimi" },
     ],
   },
@@ -83,7 +87,7 @@ export const PIPELINE = {
 
 export const MARQUEE_ITEMS = [
   "nginx log → WAF → kernel ban",
-  "79 otomatik test",
+  T_AUTO,
   "72h soak PASS",
   "~20 ms kernel ban",
   "false positive %0.2",
@@ -115,9 +119,9 @@ export const SELECTED = {
     {
       tag: "//:Proof",
       kicker: "PROOF",
-      title: 'Proof="79 test"',
-      body: "79 otomatik test, competitive PDF, 72h soak — dashboard /tests ile aynı matris.",
-      chips: ["79 test", "72h soak"],
+      title: `Proof="${T_TEST}"`,
+      body: `${T_AUTO}, competitive PDF, 72h soak — dashboard /tests ile aynı matris.`,
+      chips: [T_TEST, "72h soak"],
     },
     {
       tag: "//:Metrics",
@@ -198,7 +202,7 @@ export const WHY = {
     {
       n: "02",
       title: "Şeffaf kanıt",
-      body: "competitive-proof PDF, 79 test, 72h soak — rakiplerde yok veya parçalı.",
+      body: `competitive-proof PDF, ${T_TEST}, 72h soak — rakiplerde yok veya parçalı.`,
     },
     {
       n: "03",
@@ -263,7 +267,7 @@ export const VS = {
     },
     {
       k: "Şeffaf, tekrar üretilebilir kanıt",
-      v: "79 otomatik test + 14 dosyalık PDF/JSON kanıt paketi + 72h soak (864 örnek, 0 hata). Rakiplerde otomatik kanıt yok veya parçalı.",
+      v: `${T_AUTO} + 14 dosyalık PDF/JSON kanıt paketi + 72h soak (864 örnek, 0 hata). Rakiplerde otomatik kanıt yok veya parçalı.`,
     },
     {
       k: "Self-hosted · MIT · Türk yapımı",
@@ -291,7 +295,7 @@ export const VS = {
         ["Kısa stabilite (5 dk)", "PASS (0 fail)", "—", "—", "—"],
         ["72h soak", "PASS (864/0)", "—", "—", "—"],
         ["Kanıt paketi PDF+JSON", "Otomatik (14 dosya)", "Yok", "Kısmi", "Modül modül"],
-        ["Otomatik test matrisi", "79 test", "—", "Kısmi", "—"],
+        ["Otomatik test matrisi", T_TEST, "—", "Kısmi", "—"],
         ["SOC timeline / dashboard", "Var (:8443)", "—", "Konsol", "—"],
         ["Telegram ops + ack", "Var (tek-tık)", "—", "Kısmi", "—"],
         ["Kurulum süresi", "~15 dk", "dakikalar", "dakikalar", "saatler (tuning)"],
@@ -495,7 +499,7 @@ export const METRICS = {
     {
       label: "Stabilite & kanıt",
       items: [
-        { value: "79", unit: "", label: "Otomatik test" },
+        { value: String(T), unit: "", label: "Otomatik test" },
         { value: "72", unit: "saat", label: "VM soak süresi" },
         { value: "864", unit: "", label: "Soak örnek sayısı" },
         { value: "0", unit: "", label: "Soak hata" },
@@ -545,8 +549,8 @@ export const PACKAGES = {
       name: "SOC & sinyal katmanı",
       company: "CrowdSec",
       replaces: "CrowdSec bouncer + ayrı konsol + manuel kanıt",
-      body: "CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
-      metrics: ["79 test", "72h soak PASS", "14 kanıt dosyası"],
+      body: `CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, ${T_TEST}, 14 kanıt dosyası, Telegram ops — tek panel.`,
+      metrics: [T_TEST, "72h soak PASS", "14 kanıt dosyası"],
       color: "cyan" as const,
     },
   ],
@@ -562,7 +566,7 @@ export const PACKAGES = {
       { v: "3→1", l: "Araç yığını" },
       { v: "~20ms", l: "Uçtan uca ban" },
       { v: "%100", l: "Recall + parity" },
-      { v: "79", l: "Otomatik test" },
+      { v: String(T), l: "Otomatik test" },
     ],
   },
   tiers: {
@@ -601,8 +605,8 @@ export const PACKAGES = {
     },
     {
       title: "Şeffaf kanıt",
-      body: "79 otomatik test, 14 JSON/PDF dosya, 72h soak 864/0. Rakiplerde otomatik paket yok.",
-      stat: "79 test",
+      body: `${T_AUTO}, 14 JSON/PDF dosya, 72h soak 864/0. Rakiplerde otomatik paket yok.`,
+      stat: T_TEST,
     },
     {
       title: "Türk yapımı · MIT",

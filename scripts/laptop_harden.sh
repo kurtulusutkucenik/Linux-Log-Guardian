@@ -96,6 +96,18 @@ else
   warn "  Manuel: sudo bash scripts/firewall_api_bind.sh install"
 fi
 
+# 8443 dis LAN — internet-facing (VM NAT 10.0.2.0/24 izinli)
+if bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then
+  # shellcheck source=scripts/firewall_dashboard_bind.sh
+  source "$ROOT/scripts/firewall_dashboard_bind.sh"
+  if fw_dash=$(lg_firewall_dashboard_bind_install 2>/dev/null); then
+    ok "${fw_dash}: ${LG_DASHBOARD_PORT:-8443} localhost + docker + VM NAT"
+  else
+    warn "${LG_DASHBOARD_PORT:-8443} dashboard firewall eklenemedi"
+    warn "  Manuel: sudo bash scripts/firewall_dashboard_bind.sh install"
+  fi
+fi
+
 # 3) webhook.env izinleri + Telegram secret
 if [[ -f "$WEBHOOK_ENV" ]]; then
   chmod 600 "$WEBHOOK_ENV"

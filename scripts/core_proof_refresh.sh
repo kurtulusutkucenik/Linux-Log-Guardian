@@ -41,5 +41,6 @@ fi
 echo ""
 echo "[OK] core_proof_refresh tamam"
 echo "  nginx-hybrid-report.json  ban-profile-e2e-report.json  ipv6-ban-e2e-report.json"
-echo "  competitive-proof.json  (79/79)"
+proof_n=$(python3 -c "import json; print(len(json.load(open('$ROOT/competitive-proof.json')).get('validationTests',[])))" 2>/dev/null || echo "?")
+echo "  competitive-proof.json  (${proof_n}/${proof_n})"
 [[ "${UI:-0}" == "1" ]] || echo "  UI: bash scripts/dashboard_refresh.sh"

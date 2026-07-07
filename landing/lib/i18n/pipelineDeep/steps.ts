@@ -83,7 +83,7 @@ export const STEPS_TR: PipelineStepDeep[] = [
     lg: "Metrik + dashboard + kanıt tek üründe; CrowdSec SaaS konsolu veya parçalı Grafana kurulumu gerekmez.",
     rivals:
       "Fail2ban metrik/export sınırlı. CrowdSec managed SaaS konsolu veya self-hosted parça kurulum. ModSecurity log üretir ama SOC timeline ve otomatik kanıt paketi sunmaz.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -170,6 +170,6 @@ export const STEPS_EN: PipelineStepDeep[] = [
     lg: "Metrics + dashboard + proof in one product — no CrowdSec SaaS console or piecemeal Grafana stack.",
     rivals:
       "Fail2ban has limited metrics/export. CrowdSec wants managed SaaS or self-hosted piecemeal setup. ModSecurity emits logs but no SOC timeline or automatic proof pack.",
-    proof: "75 tests · competitive-proof.json · dashboard /tests",
+    proof: "80 tests · competitive-proof.json · dashboard /tests",
   },
 ];

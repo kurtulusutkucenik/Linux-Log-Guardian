@@ -9,13 +9,8 @@ cd "$ROOT"
 fail() { echo "[prod_hosting_activate] FAIL: $*" >&2; exit 1; }
 ok() { echo "[OK] $*"; }
 
-lg_is_vbox_guest() {
-  command -v systemd-detect-virt >/dev/null 2>&1 \
-    && [[ "$(systemd-detect-virt 2>/dev/null)" == "oracle" ]] && return 0
-  grep -qiE 'virtualbox|innotek' /sys/class/dmi/id/product_name 2>/dev/null && return 0
-  [[ "${HOSTNAME:-}" == *VirtualBox* ]] && return 0
-  return 1
-}
+# shellcheck source=scripts/lib/vm_guest.sh
+source "$ROOT/scripts/lib/vm_guest.sh" 2>/dev/null || true
 
 [[ "$(id -u)" -eq 0 ]] || fail "sudo gerekli"
 
@@ -49,6 +44,21 @@ fi
 
 bash "$ROOT/scripts/sprint_prod_proof.sh"
 ok "sprint_prod_proof"
+
+if lg_is_vbox_guest 2>/dev/null; then
+  echo "--- VM demo gate (VPS yok — ipset-fallback) ---"
+  if bash "$ROOT/scripts/vm_demo_gate.sh"; then
+    ok "vm_demo_gate"
+  else
+    echo "[WARN] vm_demo_gate FAIL — sudo bash scripts/repair_no_xdp_stack.sh" >&2
+    echo "       newgrp log-guardian && bash scripts/post_install_verify.sh" >&2
+  fi
+  if VPS_XDP_SKIP=1 bash "$ROOT/scripts/vps_xdp_proof.sh"; then
+    ok "vps_xdp_proof (VM skip)"
+  else
+    echo "[WARN] vps_xdp_proof — VPS_XDP_SKIP=1 ile tekrar" >&2
+  fi
+fi
 
 echo ""
 echo "[OK] prod_hosting_activate — RULES_VERIFY + STIX + mesh=none + kanit"

@@ -1,0 +1,11 @@
+{
+  "date": "2026-07-06T14:22:49.952830+00:00",
+  "pass": true,
+  "dash_url": "https://localhost:8443",
+  "command_id": "30e47e42-0ff3-4c03-bc18-a7937ba8a69c",
+  "signature_len": 64,
+  "require_sig": true,
+  "verify_ok": true,
+  "tamper_reject": true,
+  "script": "scripts/fleet_command_sign_e2e.sh"
+}

@@ -2,6 +2,7 @@ import Navbar from "@/components/Navbar";
 import Hero from "@/components/Hero";
 import StatsMarquee from "@/components/StatsMarquee";
 import AboutSection from "@/components/AboutSection";
+import SectorUseCases from "@/components/SectorUseCases";
 import PackageMergeSection from "@/components/PackageMergeSection";
 import MetricsBand from "@/components/MetricsBand";
 import PipelineSection from "@/components/PipelineSection";
@@ -25,6 +26,7 @@ export default function Home() {
         <Hero />
         <StatsMarquee />
         <AboutSection />
+        <SectorUseCases />
         <PackageMergeSection />
         <MetricsBand />
         <PipelineSection />

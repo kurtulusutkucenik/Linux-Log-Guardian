@@ -10,6 +10,9 @@ RULES="${LG_RULES:-/etc/log-guardian/rules.conf}"
 RUN_USER="${SUDO_USER:-}"
 QUIET="${REPAIR_QUIET:-0}"
 
+# shellcheck source=scripts/lib/vm_guest.sh
+source "$ROOT/scripts/lib/vm_guest.sh" 2>/dev/null || true
+
 run_step() {
   if [[ "$QUIET" == "1" ]]; then
     "$@" >/dev/null 2>&1 || "$@"
@@ -25,6 +28,10 @@ fi
 IFACE="${IFACE:-eth0}"
 
 echo "[repair_no_xdp_stack] iface=$IFACE"
+
+if lg_is_vbox_guest 2>/dev/null && ! lg_guest_has_outbound 2>/dev/null; then
+  lg_vm_offline_geoip_quiet
+fi
 
 install -d -m 0755 /var/lib/ipset
 install -d -m 0755 /var/log/nginx
@@ -73,6 +80,9 @@ if [[ -f "$RULES" ]]; then
   [[ -n "$mp" && "$mp" != "0" ]] && METRICS_PORT="$mp"
 fi
 METRICS_WAIT="${LG_METRICS_WAIT_SEC:-90}"
+if lg_is_vbox_guest 2>/dev/null; then
+  METRICS_WAIT="${LG_METRICS_WAIT_SEC:-180}"
+fi
 echo "[repair_no_xdp_stack] metrics bekleniyor (:${METRICS_PORT}, max ${METRICS_WAIT}s — WASM cold start)..."
 metrics_ok=0
 for _ in $(seq 1 "$METRICS_WAIT"); do

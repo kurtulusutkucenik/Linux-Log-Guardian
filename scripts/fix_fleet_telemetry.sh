@@ -25,6 +25,18 @@ grep -q '^SAAS_TOKEN=' "$RULES" && sed -i "s|^SAAS_TOKEN=.*|SAAS_TOKEN=${TOKEN}|
 grep -q '^AGENT_ID=' "$RULES" && sed -i "s|^AGENT_ID=.*|AGENT_ID=${AGENT_ID}|" "$RULES" || echo "AGENT_ID=${AGENT_ID}" >> "$RULES"
 grep -q '^TENANT_ID=' "$RULES" || echo 'TENANT_ID=default' >> "$RULES"
 
+FLEET_HMAC_KEY="${FLEET_COMMAND_HMAC_KEY:-log-guardian-fleet-command-dev-key}"
+if [[ -f "$ROOT/.env" ]]; then
+  # shellcheck disable=SC1090
+  set -a && source "$ROOT/.env" && set +a
+  FLEET_HMAC_KEY="${FLEET_COMMAND_HMAC_KEY:-$FLEET_HMAC_KEY}"
+fi
+grep -q '^FLEET_COMMAND_HMAC_KEY=' "$RULES" \
+  && sed -i "s|^FLEET_COMMAND_HMAC_KEY=.*|FLEET_COMMAND_HMAC_KEY=${FLEET_HMAC_KEY}|" "$RULES" \
+  || echo "FLEET_COMMAND_HMAC_KEY=${FLEET_HMAC_KEY}" >> "$RULES"
+grep -q '^FLEET_COMMAND_REQUIRE_SIG=' "$RULES" \
+  || echo 'FLEET_COMMAND_REQUIRE_SIG=1' >> "$RULES"
+
 chmod 640 "$RULES"
 chown root:log-guardian "$RULES" 2>/dev/null || true
 

@@ -152,6 +152,7 @@ const dict = {
     attackMapFilterTimelineOnly:
       "Lineage ve WAF yalnızca SOC timeline'da — harita ban · incident · Telegram ack gösterir.",
     socTimelineTitle: "SOC zaman çizelgesi",
+    socTimelineExportCsv: "CSV indir",
     webhookOpsTitle: "Webhook / Telegram",
     webhookOpsSubtitle: "P2 batch özeti · CRIT/ban anında · WARN pencerede birleşir",
     webhookOpsRoute: "Route (#waf/#ban)",
@@ -170,6 +171,10 @@ const dict = {
     webhookOpsDrops: "Kuyruk drop",
     webhookOpsDropsHint:
       "Yüksek drop — servis yeniden başlatınca sıfırlanır; canlı kuyruk 0 ise geçmiş sayaçtır",
+    webhookOpsDropsRunbook:
+      "Drop sıfırlama: sudo log-guardian webhook-metrics-reset —",
+    webhookOpsDropsDocLink: "WEBHOOK_SETUP.md",
+    webhookOpsDropsTestLink: "webhook-route-proof testi",
     edgeProtectionTitle: "Edge koruma",
     edgeProtectionSubtitle: "nginx rate limit · log format · XDP/ipset ban · threat intel özeti",
     edgeGateOk: "Edge kapısı geçti",
@@ -190,6 +195,16 @@ const dict = {
     edgeThreatSummary: "Threat intel özet",
     edgeBansActive: "Aktif ban",
     edgeBansDbHint: "SQLite toplam (geçmiş) — canlı ipset sayısı nav ile aynı",
+    edgeBanDbRows: "ban_events DB",
+    edgeBanDbLink: "intel-ban-db",
+    edgeBanDbRunbook:
+      "Prune: sudo log-guardian ban-db-prune --ttl-days 7 · Grafana lg-ban-db-size",
+    edgeBanDbStale: "stale satır",
+    edgeBanDbStaleHint:
+      "TTL dışı satırlar — Pazar cron veya sudo log-guardian ban-db-prune --ttl-days 7",
+    edgeChecklistTitle: "Edge checklist (laptop)",
+    edgeChecklistWarn: "uyarı",
+    edgeE9Title: "E9 runbook",
     lineageL7Title: "Wasm · L7 · Lineage",
     lineageL7Subtitle: "Opsiyonel katman — native plugin, eBPF L7 probe, syscall lineage",
     socTimelineSubtitle: "Incident · WAF · ban · Telegram ack · eBPF lineage — tek akış",
@@ -283,6 +298,8 @@ const dict = {
     incidentsClose: "Kapat",
     fpPanelWarmup:
       "FP öğrenme ısınıyor — 30 gün / ~100 temiz örnekten sonra false alarm düşer",
+    fpPanelColdStart:
+      "Soğuk başlangıç — FP trust kapalı veya yeni kurulum; birkaç gün temiz trafikten sonra EMA güvenilir olur",
     fpPanelEma: "Temiz IP EMA",
     fpPanelTrusted: "güvenilir",
     fpPanelSuppressed: "bastırılan",
@@ -377,6 +394,7 @@ const dict = {
     testStatusWarn: "Uyarı",
     testStatusPending: "Bekliyor",
     testNoDate: "tarih yok",
+    testGateDocLink: "Runbook",
     testsDownloadPdf: "Kanıt PDF",
     testsProofPackCmd: "STABILITY=1 bash scripts/full_proof_pack.sh",
     testsProofPackTitle: "Tam kanıt paketi (Track A+B)",
@@ -391,6 +409,7 @@ const dict = {
     testsFilterPending: "Bekleyen",
     testsAllPassedTitle: "Tüm doğrulama testleri geçti",
     testsAllPassedSubtitle: "ölçülebilir kanıt raporu — pazarlama vaadi değil, JSON/PDF.",
+    testsProofDriftFixed: "drift düzeltildi",
     testsSearchPlaceholder: "Test ara…",
     testsNoResults: "Eşleşen test yok",
     bannedIpsSearchPlaceholder: "IP filtrele…",
@@ -518,6 +537,7 @@ const dict = {
     attackMapFilterTimelineOnly:
       "Lineage and WAF live in the SOC timeline only — map shows ban · incident · Telegram ack.",
     socTimelineTitle: "SOC timeline",
+    socTimelineExportCsv: "Export CSV",
     webhookOpsTitle: "Webhook / Telegram",
     webhookOpsSubtitle: "P2 batch summary · CRIT/ban instant · WARN merged in window",
     webhookOpsRoute: "Route (#waf/#ban)",
@@ -536,6 +556,10 @@ const dict = {
     webhookOpsDrops: "Queue drops",
     webhookOpsDropsHint:
       "High drops — counters reset on restart; if live queue is 0 this is historical",
+    webhookOpsDropsRunbook:
+      "Reset drops: sudo log-guardian webhook-metrics-reset —",
+    webhookOpsDropsDocLink: "WEBHOOK_SETUP.md",
+    webhookOpsDropsTestLink: "webhook-route-proof test",
     edgeProtectionTitle: "Edge protection",
     edgeProtectionSubtitle: "nginx rate limit · log format · XDP/ipset ban · threat intel summary",
     edgeGateOk: "Edge gate passed",
@@ -556,6 +580,16 @@ const dict = {
     edgeThreatSummary: "Threat intel summary",
     edgeBansActive: "Active bans",
     edgeBansDbHint: "SQLite total (historical) — live ipset matches nav badge",
+    edgeBanDbRows: "ban_events DB",
+    edgeBanDbLink: "intel-ban-db",
+    edgeBanDbRunbook:
+      "Prune: sudo log-guardian ban-db-prune --ttl-days 7 · Grafana lg-ban-db-size",
+    edgeBanDbStale: "stale rows",
+    edgeBanDbStaleHint:
+      "Rows past TTL — Sunday cron or sudo log-guardian ban-db-prune --ttl-days 7",
+    edgeChecklistTitle: "Edge checklist (laptop)",
+    edgeChecklistWarn: "warn",
+    edgeE9Title: "E9 runbook",
     lineageL7Title: "Wasm · L7 · Lineage",
     lineageL7Subtitle: "Optional layer — native plugin, eBPF L7 probe, syscall lineage",
     socTimelineSubtitle: "Incident · WAF · ban · Telegram ack · eBPF lineage — unified stream",
@@ -649,6 +683,8 @@ const dict = {
     incidentsClose: "Close",
     fpPanelWarmup:
       "FP learn warming up — false alarms drop after ~30 days / 100 clean samples",
+    fpPanelColdStart:
+      "Cold start — FP trust off or fresh install; EMA stabilizes after a few days of clean traffic",
     fpPanelEma: "Clean IP EMA",
     fpPanelTrusted: "trusted",
     fpPanelSuppressed: "suppressed",
@@ -743,6 +779,7 @@ const dict = {
     testStatusWarn: "Warn",
     testStatusPending: "Pending",
     testNoDate: "no date",
+    testGateDocLink: "Runbook",
     testsDownloadPdf: "Proof PDF",
     testsProofPackCmd: "STABILITY=1 bash scripts/full_proof_pack.sh",
     testsProofPackTitle: "Full proof pack (Track A+B)",
@@ -757,6 +794,7 @@ const dict = {
     testsFilterPending: "Pending",
     testsAllPassedTitle: "All validation tests passed",
     testsAllPassedSubtitle: "measurable proof reports — not marketing claims, JSON/PDF.",
+    testsProofDriftFixed: "drift corrected",
     testsSearchPlaceholder: "Search tests…",
     testsNoResults: "No matching tests",
     bannedIpsSearchPlaceholder: "Filter IP…",

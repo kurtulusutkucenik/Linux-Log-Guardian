@@ -9,6 +9,10 @@ export type ValidationTestResult = {
   metrics: { label: string; value: string }[];
   date?: string;
   script: string;
+  badge?: string;
+  /** Repo runbook — gateTestDocs.ts */
+  docHref?: string;
+  docLabel?: string;
 };
 
 type Locale = "tr" | "en";
@@ -194,6 +198,7 @@ type CorpusReport = {
   alerts_total?: number;
   attack_recall_pct?: number;
   target_recall_pct?: number;
+  categories?: Record<string, { lines?: number; alerts?: number; recall_pct?: number; pass?: boolean }>;
 };
 
 type ThreatIntelSyncReport = {
@@ -336,6 +341,20 @@ type EdgeProtectionGateReport = {
   threat_intel_legacy_rows?: number;
   threat_intel_summary_rows?: number;
   fail_reason?: string;
+  script?: string;
+};
+
+type IntelBanDbReport = {
+  date?: string;
+  pass?: boolean;
+  ban_events_total?: number;
+  intel_legacy_rows?: number;
+  intel_summary_rows?: number;
+  stale_rows?: number;
+  intel_ban_db_ttl_days?: number;
+  max_total_rows?: number;
+  fail_reason?: string;
+  notes?: string[];
   script?: string;
 };
 
@@ -720,6 +739,8 @@ type FleetMultiNodeReport = {
   online_count?: number;
   dispatch_target?: string;
   test_ip?: string;
+  command_hmac?: boolean;
+  hmac_verify?: boolean;
   fail_reason?: string;
 };
 
@@ -869,6 +890,7 @@ export type TestReports = {
   ipv6BanE2e?: Ipv6BanE2eReport | null;
   owaspCorpus?: CorpusReport | null;
   trHostingCorpus?: CorpusReport | null;
+  customerCorpus?: CorpusReport | null;
   threatIntelSync?: ThreatIntelSyncReport | null;
   soak?: SoakReport | null;
   soakShort?: SoakReport | null;
@@ -886,6 +908,7 @@ export type TestReports = {
   telegramSocGate?: TelegramSocGateReport | null;
   bansTelegramOps?: BansTelegramOpsReport | null;
   edgeProtectionGate?: EdgeProtectionGateReport | null;
+  intelBanDb?: IntelBanDbReport | null;
   grafanaParityGate?: GrafanaParityGateReport | null;
   websitePreviewGate?: WebsitePreviewGateReport | null;
   enterpriseEscalationGate?: EnterpriseEscalationGateReport | null;
@@ -949,31 +972,7 @@ export function evaluateValidationTests(
 ): ValidationTestResult[] {
   const out: ValidationTestResult[] = [];
 
-  const ops = reports.opsGates;
-  if (ops?.gates?.length) {
-    for (const gate of ops.gates) {
-      const pass = gate.pass === true;
-      const warnN = gate.warn ?? 0;
-      out.push({
-        id: gate.id,
-        /* pass=true → green (competitive-proof ile ayni); WARN metrikte kalir */
-        status: pass ? "pass" : "fail",
-        title: L(locale, gate.title ?? gate.id, gate.titleEn ?? gate.title ?? gate.id),
-        purpose: L(locale, gate.purpose ?? "", gate.purposeEn ?? gate.purpose ?? ""),
-        verdict: L(
-          locale,
-          gate.verdict ?? (pass ? (warnN > 0 ? "GECTI (WARN bilgi)" : "GECTI") : "FAIL"),
-          gate.verdictEn ?? gate.verdict ?? (pass ? (warnN > 0 ? "PASS (WARN info)" : "PASS") : "FAIL"),
-        ),
-        metrics: gate.metrics ?? [
-          { label: "FAIL", value: String(gate.fail ?? 0) },
-          { label: "WARN", value: String(warnN) },
-        ],
-        date: fmtDate(ops.date),
-        script: gate.script ?? "scripts/ops_gate_report.sh",
-      });
-    }
-  }
+  /* Ops kapilari competitive-proof + alignTestsToProof — ops-gate-report tekrar eklenmez (88 drift). */
 
   const crs = reports.crs;
   if (crs) {
@@ -1027,8 +1026,8 @@ export function evaluateValidationTests(
       status: pass ? "pass" : "fail",
       title: L(
         locale,
-        "Gerçek saldırı corpus'unda (26 kategori: SQLi, RFI, GraphQL, shellcmd, …) tespit oranını ölçüyoruz",
-        "We measure detection on a 26-category real attack corpus (SQLi, RFI, GraphQL, shellcmd, …)",
+        "Gerçek saldırı corpus'unda (30 kategori: SQLi, RFI, GraphQL, path traversal, JWT alg, BOLA, …) tespit oranını ölçüyoruz",
+        "We measure detection on a 30-category real attack corpus (SQLi, RFI, GraphQL, path traversal, JWT alg, BOLA, …)",
       ),
       purpose: L(
         locale,
@@ -1157,22 +1156,49 @@ export function evaluateValidationTests(
   }
 
   const trHost = reports.trHostingCorpus;
+  const custCorp = reports.customerCorpus;
   if (trHost) {
     const recall = trHost.attack_recall_pct ?? 0;
     const pass = trHost.pass === true;
+    const custAtk =
+      custCorp?.pass && custCorp.categories
+        ? Object.keys(custCorp.categories).filter((k) => k !== "benign").length
+        : 0;
+    const custSuffix =
+      custCorp?.pass && custAtk > 0
+        ? L(
+            locale,
+            ` · customer_corpus %${(custCorp.attack_recall_pct ?? 0).toFixed(0)} (${custAtk} attack cat)`,
+            ` · customer_corpus ${(custCorp.attack_recall_pct ?? 0).toFixed(0)}% (${custAtk} attack cats)`,
+          )
+        : "";
     out.push({
       id: "tr-hosting-corpus",
       status: pass ? "pass" : "fail",
       title: L(locale, "TR hosting tarzı corpus recall", "TR hosting-style corpus recall"),
       purpose: L(
         locale,
-        "Türkçe path ve anonymized IP ile hosting senaryosu recall kanıtı.",
-        "Hosting scenario recall proof with Turkish paths and anonymized IPs.",
+        "Türkçe path ve anonymized IP ile hosting senaryosu recall kanıtı; customer corpus API/JWT/path traversal.",
+        "Hosting scenario recall proof with Turkish paths, anonymized IPs; customer corpus API/JWT/path traversal.",
       ),
       verdict: pass
-        ? L(locale, `%${recall.toFixed(1)} recall — ${trHost.lines_total ?? 0} satır.`, `${recall.toFixed(1)}% recall — ${trHost.lines_total ?? 0} lines.`)
+        ? L(
+            locale,
+            `%${recall.toFixed(1)} recall — ${trHost.lines_total ?? 0} satır${custSuffix}.`,
+            `${recall.toFixed(1)}% recall — ${trHost.lines_total ?? 0} lines${custSuffix}.`,
+          )
         : L(locale, "TR hosting corpus FAIL — scripts/tr_hosting_corpus_proof.sh", "TR hosting corpus FAIL"),
-      metrics: [{ label: L(locale, "Recall", "Recall"), value: `${recall.toFixed(1)}%` }],
+      metrics: [
+        { label: L(locale, "Recall", "Recall"), value: `${recall.toFixed(1)}%` },
+        ...(custAtk > 0
+          ? [
+              {
+                label: L(locale, "Customer cat", "Customer cats"),
+                value: String(custAtk),
+              },
+            ]
+          : []),
+      ],
       date: fmtDate(trHost.date),
       script: "scripts/tr_hosting_corpus_proof.sh",
     });
@@ -2161,6 +2187,46 @@ export function evaluateValidationTests(
     });
   }
 
+  const intelDb = reports.intelBanDb;
+  if (intelDb) {
+    const pass = intelDb.pass === true;
+    const legacy = intelDb.intel_legacy_rows ?? 0;
+    const total = intelDb.ban_events_total ?? 0;
+    const ttl = intelDb.intel_ban_db_ttl_days ?? 7;
+    out.push({
+      id: "intel-ban-db",
+      status: pass ? "pass" : "warn",
+      title: L(
+        locale,
+        "INTEL_BAN_DB — ban_events boyut + TTL",
+        "INTEL_BAN_DB — ban_events size + TTL",
+      ),
+      purpose: L(
+        locale,
+        "SQLite ban_events şişme kontrolü — ban mantığına dokunmaz; Grafana lg-ban-db-size.",
+        "SQLite ban_events bloat check — does not change ban logic; Grafana lg-ban-db-size.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `ban_events ${total}; legacy ${legacy}; stale ${intelDb.stale_rows ?? 0}; TTL ${ttl}g.`,
+            `ban_events ${total}; legacy ${legacy}; stale ${intelDb.stale_rows ?? 0}; TTL ${ttl}d.`,
+          )
+        : L(
+            locale,
+            (intelDb.notes ?? [intelDb.fail_reason ?? "intel_ban_db"]).join("; "),
+            (intelDb.notes ?? [intelDb.fail_reason ?? "intel_ban_db"]).join("; "),
+          ),
+      metrics: [
+        { label: "rows", value: String(total) },
+        { label: "legacy", value: String(legacy) },
+        { label: "TTL", value: `${ttl}d` },
+      ],
+      date: fmtDate(intelDb.date),
+      script: "scripts/intel_ban_db_ops_check.sh",
+    });
+  }
+
   const grafanaParity = reports.grafanaParityGate;
   if (grafanaParity) {
     const pass = grafanaParity.pass === true;
@@ -2980,6 +3046,9 @@ export function evaluateValidationTests(
         { label: "online", value: String(fleetMulti.online_count ?? 0) },
         { label: "target", value: fleetMulti.dispatch_target ?? "—" },
         ...(fleetMode ? [{ label: "mode", value: fleetMode }] : []),
+        ...(fleetMulti.command_hmac
+          ? [{ label: "HMAC", value: "OK" }]
+          : []),
       ],
       date: fmtDate(fleetMulti.date),
       script: "scripts/fleet_multi_node_e2e.sh",
@@ -3395,6 +3464,7 @@ export function evaluateValidationTests(
       ],
       date: fmtDate(crowdsec.date),
       script: "scripts/crowdsec_bouncer_e2e.sh",
+      badge: L(locale, "tamamlayıcı", "complementary"),
     });
   }
 
@@ -3751,4 +3821,51 @@ export function evaluateValidationTests(
   });
 
   return out;
+}
+
+type ProofTestCard = {
+  id?: string;
+  status?: TestStatus;
+  title?: string;
+  titleEn?: string;
+  purpose?: string;
+  purposeEn?: string;
+  verdict?: string;
+  verdictEn?: string;
+  metrics?: { label: string; value: string }[];
+  date?: string;
+  script?: string;
+  badge?: string;
+  badgeEn?: string;
+};
+
+function proofCardToResult(card: ProofTestCard, locale: Locale): ValidationTestResult {
+  return {
+    id: String(card.id ?? ""),
+    status: card.status ?? "pending",
+    title: L(locale, card.title ?? card.id ?? "", card.titleEn ?? card.title ?? ""),
+    purpose: L(locale, card.purpose ?? "", card.purposeEn ?? card.purpose ?? ""),
+    verdict: L(locale, card.verdict ?? "", card.verdictEn ?? card.verdict ?? ""),
+    metrics: card.metrics ?? [],
+    date: card.date,
+    script: card.script ?? "",
+    badge: card.badge
+      ? L(locale, card.badge, card.badgeEn ?? card.badge)
+      : undefined,
+  };
+}
+
+/** competitive-proof.json kanonik liste — evaluateValidationTests drift (88 vs 80) onlenir */
+export function alignTestsToProof(
+  evaluated: ValidationTestResult[],
+  proofTests: ProofTestCard[],
+  locale: Locale = "tr",
+): ValidationTestResult[] {
+  const byId = new Map(evaluated.map((t) => [t.id, t]));
+  return proofTests
+    .map((card) => {
+      const id = String(card.id ?? "");
+      return byId.get(id) ?? proofCardToResult(card, locale);
+    })
+    .filter((t) => t.id);
 }

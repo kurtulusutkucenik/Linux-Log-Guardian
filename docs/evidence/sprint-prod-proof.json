@@ -1,6 +1,6 @@
 {
-  "date": "2026-06-24",
-  "pass": true,
+  "date": "2026-07-06",
+  "pass": false,
   "rules_verify": true,
   "siem_format_stix": true,
   "siem_forwarder": true,
@@ -8,11 +8,11 @@
   "block_countries": "CN,RU,KP",
   "siem_e2e": {
     "pass": true,
-    "format": "stix"
+    "format": "json"
   },
   "post_install": {
-    "fail": 0,
-    "warn": 0
+    "fail": 1,
+    "warn": 3
   },
   "vm_context": "host",
   "scripts": [

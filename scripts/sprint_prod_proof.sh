@@ -65,7 +65,12 @@ elif command -v VBoxManage >/dev/null 2>&1; then
 fi
 
 pass=0
-if [[ "$rules_verify" -eq 1 && "$siem_stix" -eq 1 && "$siem_fwd" -eq 1 && "$mesh_none" -eq 1 \
+if [[ "$vm_gate" == "guest" ]]; then
+  # VM demo: post_install + RULES_VERIFY yeterli; tam SIEM e2e host'ta kosar
+  if [[ "$rules_verify" -eq 1 && "$post_fail" -eq 0 ]]; then
+    pass=1
+  fi
+elif [[ "$rules_verify" -eq 1 && "$siem_stix" -eq 1 && "$siem_fwd" -eq 1 && "$mesh_none" -eq 1 \
     && "$post_fail" -eq 0 && "$siem_pass" == "true" && "$siem_fmt" == "stix" ]]; then
   pass=1
 fi

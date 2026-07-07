@@ -257,6 +257,20 @@ static const char *enterprise_ognl_patterns[] = {
     NULL
 };
 
+/* ── OAuth 2.0 / OIDC abuse — redirect_uri hijack, PKCE downgrade ───────
+ * Ultra-spesifik; legitim OAuth callback'lerde nadiren görülür.          */
+static const char *oauth_abuse_patterns[] = {
+    "redirect_uri=//evil",
+    "redirect_uri=https://evil",
+    "redirect_uri=http://evil",
+    "code_challenge_method=plain",
+    "response_type=token&redirect",
+    "grant_type=password&username=",
+    "/oauth/authorize?redirect_uri=http",
+    "/oauth/token?grant_type=client",
+    NULL
+};
+
 /* ── Bilinen Tarayıcı / Scanner User-Agent İmzaları ─────────────── */
 static const char *scanner_ua_patterns[] = {
     "sqlmap",
@@ -429,6 +443,11 @@ WafResult waf_analyze(StrView url, StrView body,
         if (gql_hit) {
             add_match(&r, WAF_CAT_METHOD_ABUSE, 8,
                       "GraphQL introspection veya API abuse");
+        }
+        if (scan_patterns(url_s, url_l, oauth_abuse_patterns) ||
+            scan_patterns(body_s, body_l, oauth_abuse_patterns)) {
+            add_match(&r, WAF_CAT_METHOD_ABUSE, 8,
+                      "OAuth/OIDC abuse (redirect_uri/PKCE)");
         }
     }
 

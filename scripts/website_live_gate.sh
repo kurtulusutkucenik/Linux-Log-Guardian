@@ -151,7 +151,8 @@ if not ok:
     if "css_check_fail" in reasons and css_text.strip():
         out["css_detail"] = css_text.strip().splitlines()[-1][:200]
     if "js_check_fail" in reasons and js_text.strip():
-        out["js_detail"] = js_text.strip().splitlines()[-1][:200]
+        fail_lines = [ln for ln in js_text.strip().splitlines() if "[FAIL]" in ln]
+        out["js_detail"] = (fail_lines[0] if fail_lines else js_text.strip().splitlines()[-1])[:240]
 Path(report_path).write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
 print(json.dumps(out, indent=2))
 if not ok:

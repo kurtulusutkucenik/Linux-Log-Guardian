@@ -255,6 +255,8 @@ bash scripts/telegram_operator_undo_e2e.sh   # kanıt (RFC5737 IP)
 
 **P2 escalation** (alarm gitmiyor / yanlış sessiz): [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) § P2 — önce `telegram_soc_gate`, sonra `webhook.env` token/chat ve `WEBHOOK_DRY_RUN=0`.
 
+**E9 runbook** (SLA + vitrin zinciri): [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · `bash scripts/enterprise_e9_verify.sh`
+
 Laptop kanıt (VPS yok): `.env.webhook.local` + `bash scripts/webhook_apply_local.sh` — token'ları Git'e commit etmeyin.
 
 ---

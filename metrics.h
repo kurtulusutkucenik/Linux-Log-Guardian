@@ -76,6 +76,9 @@ typedef struct {
     long api_requests_total;     /* REST API istek sayisi          */
     long api_auth_fail_total;    /* API 403 (token yok/hatali)     */
     long api_rate_limited_total; /* API 429 rate limit             */
+    long ban_events_total;       /* SQLite ban_events satir sayisi */
+    long intel_ban_legacy_rows;  /* threat-intel legacy (beklenen 0) */
+    long intel_ban_summary_rows; /* threat-intel-summary ozet satirlari */
 } MetricsSnapshot;
 
 /* main.c bu fonksiyonu çağırarak anlık sayaçları metrics modülüne iletir */

@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import TerminalInstall from "@/components/ui/TerminalInstall";
@@ -7,7 +8,7 @@ import Reveal from "@/components/ui/Reveal";
 import { HERO } from "@/lib/content";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { getSections } from "@/lib/i18n/sections";
-import { brandName } from "@/lib/i18n/copy";
+import { brandName, getCopy } from "@/lib/i18n/copy";
 
 function PraiseValue({ value }: { value: string }) {
   if (value === "100") {
@@ -33,6 +34,15 @@ export default function Hero() {
   const { locale } = useI18n();
   const s = getSections(locale);
   const name = brandName(locale);
+  const evidence = getCopy(locale).evidence;
+  const [proofCopied, setProofCopied] = useState(false);
+
+  const copyProofPack = () => {
+    void navigator.clipboard.writeText(evidence.fullPackCmd).then(() => {
+      setProofCopied(true);
+      window.setTimeout(() => setProofCopied(false), 2000);
+    });
+  };
 
   return (
     <section
@@ -148,6 +158,14 @@ export default function Hero() {
             >
               {s.hero_cta_tests}
             </Link>
+            <a
+              href="/evidence/competitive-proof.pdf"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center rounded-md border border-neutral-600 bg-panel px-5 py-3 text-sm font-semibold text-neutral-200 transition-all hover:border-neon/40 hover:text-white sm:px-6 sm:py-3.5"
+            >
+              {s.hero_cta_pdf}
+            </a>
             <Link
               href="#kurulum"
               className="inline-flex items-center justify-center rounded-md bg-neon px-5 py-3 text-sm font-semibold text-black shadow-[0_0_20px_rgba(255,59,59,0.3)] transition-all hover:shadow-[0_0_35px_rgba(255,59,59,0.6)] sm:px-6 sm:py-3.5"
@@ -163,6 +181,17 @@ export default function Hero() {
               {s.hero_cta_github}
             </a>
           </div>
+          <button
+            type="button"
+            onClick={copyProofPack}
+            title={evidence.fullPackCmd}
+            className="inline-flex w-full max-w-xl items-center gap-2 rounded-lg border border-neon/35 bg-neon/5 px-4 py-2.5 text-left font-mono text-[11px] text-neon transition-colors hover:border-neon/55 hover:bg-neon/10 sm:text-xs"
+          >
+            <span className="shrink-0 text-[10px] uppercase tracking-wider text-neon/70">
+              {proofCopied ? "✓" : "proof"}
+            </span>
+            <span className="truncate">{evidence.fullPackCmd}</span>
+          </button>
           <p className="font-mono text-[11px] leading-relaxed text-neutral-500">
             {s.hero_researcher_note}
           </p>

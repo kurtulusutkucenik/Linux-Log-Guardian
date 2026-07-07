@@ -194,6 +194,12 @@ else
   ok "laptop_harden_check atlandi (servis kapali)"
 fi
 
+if WARN_ONLY=1 bash "$ROOT/scripts/intel_ban_db_ops_check.sh" >/dev/null 2>&1; then
+  ok "intel_ban_db (TTL + boyut)"
+else
+  warn "intel_ban_db — WARN_ONLY=1 bash scripts/intel_ban_db_ops_check.sh"
+fi
+
 echo ""
 echo "=== ozet ==="
 echo "  FAIL: $fail   WARN: $warn"

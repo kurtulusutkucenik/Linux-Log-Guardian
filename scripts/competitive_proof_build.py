@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -26,6 +27,7 @@ INPUTS = {
     "ipv6BanE2e": "ipv6-ban-e2e-report.json",
     "owaspCorpus": "owasp-corpus-report.json",
     "trHostingCorpus": "tr-hosting-corpus-report.json",
+    "customerCorpus": "customer-corpus-report.json",
     "threatIntelSync": "threat-intel-sync-report.json",
     "compliance": "compliance-report.json",
     "tenantIsolation": "tenant-isolation-report.json",
@@ -42,6 +44,7 @@ INPUTS = {
     "telegramSocGate": "telegram-soc-gate-report.json",
     "bansTelegramOps": "bans-telegram-ops-report.json",
     "edgeProtectionGate": "edge-protection-gate-report.json",
+    "intelBanDb": "intel-ban-db-report.json",
     "grafanaParityGate": "grafana-parity-gate-report.json",
     "websitePreviewGate": "website-preview-gate-report.json",
     "enterpriseEscalationGate": "enterprise-escalation-gate-report.json",
@@ -174,6 +177,25 @@ def code_stats() -> dict[str, Any]:
     return {"sourceFiles": len(files), "sourceLines": lines, "byExtension": by_ext}
 
 
+def normalize_proof_counts(tests: list[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Gate raporlarindaki eski proof_tests (79) -> guncel kart sayisi."""
+    if not tests:
+        return tests
+    n = len(tests)
+    pn = sum(1 for t in tests if t.get("status") == "pass")
+    proof = f"{pn}/{n}"
+    ratio_re = re.compile(r"^\d+/\d+$")
+    for t in tests:
+        for field in ("verdict", "verdictEn"):
+            v = t.get(field)
+            if v and "proof " in v:
+                t[field] = re.sub(r"proof \d+/\d+", f"proof {proof}", v)
+        for m in t.get("metrics") or []:
+            if m.get("label") == "proof" and ratio_re.match(str(m.get("value", ""))):
+                m["value"] = proof
+    return tests
+
+
 def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
     """Dashboard /tests ile ayni mantik — PDF icin TR+EN ozet."""
     out: list[dict[str, Any]] = []
@@ -192,6 +214,8 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         script: str = "",
         date: str = "",
         group: str = "proof",
+        badge: str = "",
+        badge_en: str = "",
     ) -> None:
         label = {"pass": "GECTI", "fail": "KALDI", "pending": "BEKLEMEDE", "warn": "UYARI"}.get(
             status, status.upper()
@@ -219,6 +243,9 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             entry["script"] = script
         if date:
             entry["date"] = date
+        if badge:
+            entry["badge"] = badge
+            entry["badgeEn"] = badge_en or badge
         out.append(entry)
 
     live = data.get("liveAttack") or {}
@@ -743,24 +770,38 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         )
 
     tr_host = data.get("trHostingCorpus") or {}
+    cust = data.get("customerCorpus") or {}
     if tr_host:
         recall = tr_host.get("attack_recall_pct", 0)
         ok = tr_host.get("pass") is True
+        cust_note = ""
+        cust_metrics: list[dict[str, str]] = []
+        if cust.get("pass"):
+            atk_cats = {k: v for k, v in (cust.get("categories") or {}).items() if k != "benign"}
+            cust_note = (
+                f" · customer_corpus %{cust.get('attack_recall_pct', 0)} "
+                f"({len(atk_cats)} attack cat, log_guardian format)"
+            )
+            cust_metrics = [
+                {"label": "customer recall", "value": f"{cust.get('attack_recall_pct', 0)}%"},
+                {"label": "attack cats", "value": str(len(atk_cats))},
+            ]
         row(
             "tr-hosting-corpus",
             "pass" if ok else "fail",
             "TR hosting corpus (sentetik anonymized)",
             (
-                f"%{recall} recall — {tr_host.get('lines_total', 0)} satir."
+                f"%{recall} recall — {tr_host.get('lines_total', 0)} satir{cust_note}."
                 if ok
                 else "TR hosting corpus recall dusuk."
             ),
             "TR hosting corpus (synthetic anonymized)",
             (
-                f"{recall}% recall — {tr_host.get('lines_total', 0)} lines."
+                f"{recall}% recall — {tr_host.get('lines_total', 0)} lines{cust_note}."
                 if ok
                 else "Low TR hosting corpus recall."
             ),
+            metrics=cust_metrics or None,
         )
 
     ti = data.get("threatIntelSync") or {}
@@ -1018,6 +1059,39 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/edge_protection_gate.sh",
             date=str(edge_gate.get("date") or "")[:10],
+        )
+
+    intel_db = data.get("intelBanDb") or {}
+    if intel_db:
+        ok = intel_db.get("pass") is True
+        legacy = int(intel_db.get("intel_legacy_rows") or 0)
+        total = int(intel_db.get("ban_events_total") or 0)
+        row(
+            "intel-ban-db",
+            "pass" if ok else "warn",
+            "INTEL_BAN_DB — ban_events boyut + TTL",
+            (
+                f"ban_events {total}; legacy {legacy}; stale {intel_db.get('stale_rows', 0)}; "
+                f"TTL {intel_db.get('intel_ban_db_ttl_days', 7)}g."
+                if ok
+                else "; ".join(intel_db.get("notes") or [intel_db.get("fail_reason") or "intel_ban_db"])
+            ),
+            "INTEL_BAN_DB — ban_events size + TTL",
+            (
+                f"ban_events {total}; legacy {legacy}; stale {intel_db.get('stale_rows', 0)}; "
+                f"TTL {intel_db.get('intel_ban_db_ttl_days', 7)}d."
+                if ok
+                else "; ".join(intel_db.get("notes") or [intel_db.get("fail_reason") or "intel_ban_db"])
+            ),
+            purpose="SQLite ban_events sisme kontrolu — ban mantigina dokunmaz.",
+            purpose_en="SQLite ban_events bloat check — does not change ban logic.",
+            metrics=[
+                {"label": "rows", "value": str(total)},
+                {"label": "legacy", "value": str(legacy)},
+                {"label": "TTL", "value": f"{intel_db.get('intel_ban_db_ttl_days', 7)}d"},
+            ],
+            script="scripts/intel_ban_db_ops_check.sh",
+            date=str(intel_db.get("date") or "")[:10],
         )
 
     grafana_parity = data.get("grafanaParityGate") or {}
@@ -1902,7 +1976,8 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             (
                 f"{fleet_multi.get('agent_count', 0)} agent, "
                 f"{fleet_multi.get('online_count', 0)} online; "
-                f"dispatch→{fleet_multi.get('dispatch_target', '—')}."
+                f"dispatch→{fleet_multi.get('dispatch_target', '—')}; "
+                f"HMAC={'OK' if fleet_multi.get('command_hmac') else '—'}."
                 if ok
                 else str(fleet_multi.get("fail_reason") or "bash scripts/fleet_multi_node_e2e.sh")
             ),
@@ -1910,7 +1985,8 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             (
                 f"{fleet_multi.get('agent_count', 0)} agents, "
                 f"{fleet_multi.get('online_count', 0)} online; "
-                f"dispatch→{fleet_multi.get('dispatch_target', '—')}."
+                f"dispatch→{fleet_multi.get('dispatch_target', '—')}; "
+                f"HMAC={'OK' if fleet_multi.get('command_hmac') else '—'}."
                 if ok
                 else str(fleet_multi.get("fail_reason") or "bash scripts/fleet_multi_node_e2e.sh")
             ),
@@ -1920,6 +1996,7 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
                 {"label": "agents", "value": str(fleet_multi.get("agent_count") or 0)},
                 {"label": "online", "value": str(fleet_multi.get("online_count") or 0)},
                 {"label": "target", "value": str(fleet_multi.get("dispatch_target") or "—")},
+                {"label": "HMAC", "value": "OK" if fleet_multi.get("command_hmac") else "—"},
             ],
             script="scripts/fleet_multi_node_e2e.sh",
             date=str(fleet_multi.get("date") or "")[:10],
@@ -2270,8 +2347,8 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             verdict_tr,
             "CrowdSec LAPI → log-guardian ban API",
             verdict_en,
-            purpose="Dağıtık IP kararlarının kernel ban hattına aktarılmasını kanıtlar.",
-            purpose_en="Proves distributed IP decisions reach the kernel ban path.",
+            purpose="CrowdSec tamamlayici (LAPI) — kernel ban hattina karar aktarimi; Fail2ban yerine degil.",
+            purpose_en="CrowdSec complementary (LAPI) — sync decisions to kernel ban path; not a Fail2ban replacement.",
             metrics=[
                 {"label": "mode", "value": str(crowdsec.get("mode") or "—")},
                 {"label": "karar", "value": str(crowdsec.get("decisions_synced", 0))},
@@ -2280,6 +2357,8 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/crowdsec_bouncer_e2e.sh",
             date=str(crowdsec.get("date") or "")[:10],
+            badge="tamamlayıcı",
+            badge_en="complementary",
         )
 
     taxii = data.get("taxiiFeed") or {}
@@ -3071,7 +3150,7 @@ def main() -> int:
         "positioning": positioning_block(),
         "sections": sections,
         "missingInputs": missing,
-        "validationTests": validation_tests(merged),
+        "validationTests": normalize_proof_counts(validation_tests(merged)),
         "scorecard": scorecard(merged),
         "versusCompetitors": versus_competitors(merged),
     }

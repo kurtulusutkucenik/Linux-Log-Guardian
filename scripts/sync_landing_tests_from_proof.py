@@ -44,9 +44,29 @@ export interface TestEntry {
   metrics?: TestMetric[];
   script?: string;
   date?: string;
+  badge?: string;
+  badgeEn?: string;
 }
 
 export const TESTS: TestEntry[] = """
+
+
+def patch_proof_test_count(n: int) -> None:
+    content = ROOT / "landing/lib/content.ts"
+    if not content.is_file():
+        return
+    text = content.read_text(encoding="utf-8")
+    import re
+
+    new_text, count = re.subn(
+        r"export const PROOF_TEST_COUNT = \d+;",
+        f"export const PROOF_TEST_COUNT = {n};",
+        text,
+        count=1,
+    )
+    if count:
+        content.write_text(new_text, encoding="utf-8")
+        print(f"[OK] PROOF_TEST_COUNT -> {n} (landing/lib/content.ts)")
 
 
 def main() -> int:
@@ -62,6 +82,7 @@ def main() -> int:
     OUT.write_text(f"{HEADER}{body};\n", encoding="utf-8")
     n = len(tests)
     pass_n = sum(1 for t in tests if t.get("status") == "pass")
+    patch_proof_test_count(n)
     print(f"[OK] sync_landing_tests_from_proof -> {OUT} ({pass_n}/{n} pass)")
     return 0
 

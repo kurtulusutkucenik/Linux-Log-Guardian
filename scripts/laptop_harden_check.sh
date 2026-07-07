@@ -112,6 +112,23 @@ if docker ps --format '{{.Names}}' 2>/dev/null | grep -q log-guardian-dashboard;
   fi
 fi
 
+# Dashboard :8443 LAN (Caddy 0.0.0.0 bind — internet-facing icin risk)
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-caddy; then
+  # shellcheck source=scripts/firewall_dashboard_bind.sh
+  source "$ROOT/scripts/firewall_dashboard_bind.sh" 2>/dev/null || true
+  if declare -F lg_firewall_dashboard_bind_check >/dev/null 2>&1 \
+      && lg_firewall_dashboard_bind_check 2>/dev/null; then
+    m=$(lg_firewall_dashboard_bind_method 2>/dev/null || echo "?")
+    check "Dashboard :8443 firewall ($m)" 0
+  elif bash "$ROOT/scripts/check_dashboard_tls_bind.sh" >/dev/null 2>&1; then
+    check "Dashboard :8443 LAN kapali" 0
+  elif bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
+    check "Dashboard :8443 LAN kapali (internet-facing)" 1
+  else
+    echo "[WARN] Dashboard :8443 LAN acik — laptop demo OK; prod: sudo bash scripts/firewall_dashboard_bind.sh install" >&2
+  fi
+fi
+
 if [[ "$fail" -eq 0 ]]; then
   if command -v docker >/dev/null 2>&1; then
     bash "$ROOT/scripts/laptop_observability_check.sh" 2>/dev/null \

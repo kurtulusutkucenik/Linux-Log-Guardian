@@ -246,7 +246,16 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         "loganalyzer_api_auth_fail_total{tenant_id=\"%s\"} %ld\n"
         "# HELP loganalyzer_api_rate_limited_total API 429 rate limit\n"
         "# TYPE loganalyzer_api_rate_limited_total counter\n"
-        "loganalyzer_api_rate_limited_total{tenant_id=\"%s\"} %ld\n",
+        "loganalyzer_api_rate_limited_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_ban_events_total SQLite ban_events satir sayisi (gecmis dahil)\n"
+        "# TYPE loganalyzer_ban_events_total gauge\n"
+        "loganalyzer_ban_events_total{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_intel_ban_legacy_rows threat-intel legacy satir (beklenen 0)\n"
+        "# TYPE loganalyzer_intel_ban_legacy_rows gauge\n"
+        "loganalyzer_intel_ban_legacy_rows{tenant_id=\"%s\"} %ld\n"
+        "# HELP loganalyzer_intel_ban_summary_rows threat-intel-summary ozet satirlari\n"
+        "# TYPE loganalyzer_intel_ban_summary_rows gauge\n"
+        "loganalyzer_intel_ban_summary_rows{tenant_id=\"%s\"} %ld\n",
         g_tenant_label, s->total_lines,
         g_tenant_label, s->parse_errors,
         g_tenant_label, s->total_bytes,
@@ -303,7 +312,10 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         g_tenant_label, s->webhook_quiet_active,
         g_tenant_label, s->api_requests_total,
         g_tenant_label, s->api_auth_fail_total,
-        g_tenant_label, s->api_rate_limited_total);
+        g_tenant_label, s->api_rate_limited_total,
+        g_tenant_label, s->ban_events_total,
+        g_tenant_label, s->intel_ban_legacy_rows,
+        g_tenant_label, s->intel_ban_summary_rows);
 }
 
 static void handle_client(int cfd) {

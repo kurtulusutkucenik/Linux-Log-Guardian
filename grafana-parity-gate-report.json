@@ -1,8 +1,8 @@
 {
-  "date": "2026-07-05T16:53:52.662617+00:00",
+  "date": "2026-07-07T09:50:52.245212+00:00",
   "pass": true,
-  "panel_metrics": 38,
-  "dashboard_metrics": 40,
+  "panel_metrics": 41,
+  "dashboard_metrics": 43,
   "missing_in_dashboard": [],
   "missing_in_panels": [
     "loganalyzer_dist_risk_enabled",

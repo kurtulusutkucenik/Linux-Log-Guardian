@@ -170,7 +170,7 @@ else
 fi
 
 if bash "$ROOT/scripts/docs_consistency_gate.sh" >/dev/null 2>&1; then
-  gate_ok "docs_consistency_gate (79 test + §8b)"
+  gate_ok "docs_consistency_gate (${proof_n:-80} test + §8b)"
 else
   gate_warn "docs_consistency_gate — docs/HOSTING_RUNBOOK veya proof sayisi"
 fi

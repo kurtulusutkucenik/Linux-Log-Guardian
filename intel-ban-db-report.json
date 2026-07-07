@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-07T09:56:57.179516+00:00",
+  "pass": true,
+  "db_path": "/etc/log-guardian/events.db",
+  "intel_ban_db_ttl_days": 7,
+  "ban_events_total": 1039,
+  "intel_legacy_rows": 0,
+  "intel_summary_rows": 850,
+  "stale_rows": 0,
+  "db_bytes": 47468544,
+  "max_total_rows": 50000,
+  "script": "scripts/intel_ban_db_ops_check.sh"
+}

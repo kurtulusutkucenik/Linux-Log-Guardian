@@ -41,7 +41,34 @@ bash scripts/optional_track_refresh.sh
 # Canlı site istenirse: PUBLISH=1 bash scripts/optional_track_refresh.sh
 ```
 
-**Kural:** Ağır e2e’yi `morning_operator_gate` içine ekleme; haftalık paketler ayrı kalır. Tarayıcı: **Ctrl+Shift+R** on `https://localhost:8443/` (attack map · SOC timeline · `/tests`).
+**Kural:** Ağır e2e’yi `morning_operator_gate` içine ekleme; haftalık paketler ayrı kalır. Sabah gate önce `proof_meta_gates_refresh` + çift `competitive_proof_build` yapar; yalnızca proof geçici düşükse ikinci build sonrası **recovery** (Telegram spam önlenir). Tarayıcı: **Ctrl+Shift+R** on `https://localhost:8443/` (attack map · SOC timeline · `/tests`).
+
+**Operatör kısayolları:**
+
+| Ne | Nerede |
+|----|--------|
+| Son vitrin koşusu | `~/lg-last-vitrin.json` (`dashboard_refresh.sh` veya `finish_vitrin_plan.sh` sonunda) |
+| INTEL ban DB kontrol | `WARN_ONLY=1 bash scripts/intel_ban_db_ops_check.sh` → `intel-ban-db-report.json` |
+| Edge checklist ozet | `bash scripts/edge_protection_checklist.sh` → `edge-protection-checklist-report.json` |
+| E9 Enterprise runbook | `bash scripts/enterprise_e9_verify.sh` → `enterprise-e9-verify-report.json` |
+| Sabah gate uyarısı | 80/80 değilse, JWT >90g veya intel_ban_db → Telegram (`operator_telegram_notify.sh`) |
+| Gate test deep link | Aşağıdaki tablo — `https://localhost:8443/tests#test-<id>` |
+
+**Gate deep link’leri** (`:8443/tests`):
+
+| Gate | Deep link |
+|------|-----------|
+| Sabah operatör | `#test-morning-operator-gate` |
+| Laptop core | `#test-laptop-core-gate` |
+| Edge koruma | `#test-edge-protection-gate` |
+| Telegram SOC | `#test-telegram-soc-gate` |
+| Website preview | `#test-website-preview-gate` |
+| Presentation ship | `#test-presentation-ship-gate` |
+| Nginx hybrid | `#test-nginx-hybrid` |
+| IPv6 ban e2e | `#test-ipv6-ban-e2e` |
+| CrowdSec bouncer | `#test-crowdsec-bouncer` |
+
+Tam URL örneği: `https://localhost:8443/tests#test-morning-operator-gate`
 
 **Cron (önerilen):**
 
@@ -103,7 +130,7 @@ Haftalık güvenlik denetimi ayrı: `bash scripts/install_audit_cron.sh` (Pazart
 | `bash scripts/website_deploy_gate.sh` | Landing build + `landing/out` + wrangler doğrulama | Hayır |
 | `bash scripts/website_publish.sh` | Canlı site güncelleme (landing/out → Cloudflare Pages) | Hayır |
 | `bash scripts/pre_push_secret_scan.sh` | GitHub öncesi token tarama | Hayır |
-| `bash scripts/website_preview_gate.sh` | Landing /tests parity (79/79, offline) | Hayır |
+| `bash scripts/website_preview_gate.sh` | Landing /tests parity (80/80, offline) | Hayır |
 | `bash scripts/soak_status.sh` | Soak PID + rapor özeti | Hayır |
 | `bash scripts/dashboard_stack.sh` | Grafana + TLS dashboard + JWT | Hayır |
 | `bash scripts/laptop_stack_boot.sh` | Eksik container’ları ayağa kaldır (reboot sonrası) | Hayır |
@@ -127,7 +154,7 @@ Haftalık güvenlik denetimi ayrı: `bash scripts/install_audit_cron.sh` (Pazart
 | `LIVE_API=1 bash scripts/crowdsec_bouncer_e2e.sh` | LAPI + ban API kanıtı | Hayır |
 | `bash scripts/honeypot_feed_e2e.sh` | Deception Prometheus metrikleri | Hayır |
 | `bash scripts/l7_probe_prod_e2e.sh` | Daemon L7 probe readiness | Hayır |
-| `bash scripts/morning_operator_gate.sh` | Sabah operatör kapısı (~30 sn, 79/79) | Hayır |
+| `bash scripts/morning_operator_gate.sh` | Sabah operatör kapısı (~30 sn, 80/80) | Hayır |
 | `bash scripts/core_proof_refresh.sh` | Haftalık Track A kanıt paketi | Kısmen (IPv6 sudo) |
 | `bash scripts/optional_track_refresh.sh` | Opsiyonel track (L7, Grafana, demo, landing) | Kısmen |
 
@@ -212,8 +239,8 @@ bash scripts/laptop_reboot_ready.sh
 | Katman | Hedef | Komut |
 |--------|--------|--------|
 | Core | daemon + analyzer + IPC | `ensure_daemon_env.sh` · `repair_no_xdp_stack.sh` |
-| Dashboard | 79/79 `/tests` | `dashboard_refresh.sh` |
-| Vitrin | canlı site 79 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
+| Dashboard | 80/80 `/tests` | `dashboard_refresh.sh` |
+| Vitrin | canlı site 80 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
 | Ban temizliği | ipset flush + kanıt modu | `FLUSH=1 bash scripts/laptop_ban_cleanup.sh` |
 | CF cache | SRI drift sonrası | `LG_CF_PURGE=1` veya `bash scripts/website_cf_purge.sh` |
 | Filo | host + VM Online | `host_fleet_agent_setup.sh` · `vm_fleet_agent_setup.sh` |
@@ -370,6 +397,16 @@ journalctl --user -u log-guardian-fleet-keepalive -f   # [fleet_push] OK agent=n
 **Not:** `vm_sync_from_host.sh` tek basina keepalive baslatmaz — sync sonrasi yukaridaki setup veya `vm_refresh_from_host`.
 
 **Host eski OFFLINE dugumler:** `STALE_HOURS=1 bash scripts/fleet_prune_stale.sh` (dashboard DB); UI `stale_hours=6` ile gizler.
+
+**Takili fleet komutlari:** `bash scripts/fleet_prune_pending_commands.sh` (`DRY_RUN=1` önizleme, varsayılan `STALE_HOURS=48`) — yalnızca 48h+ bekleyen `pending`/`delivered` komutlar kapatılır; `dashboard_refresh.sh` otomatik çağırır.
+
+**ban_events DB prune:** `sudo log-guardian ban-db-prune --ttl-days 7` · haftalik cron: `bash scripts/install_operator_cron.sh` (Pazar 04:30, `stale>=500`) · `bash scripts/intel_ban_db_prune_cron.sh`
+
+**Cron prune (sudo sifresiz):** `scripts/sudoers-ban-db-prune.example` → `/etc/sudoers.d/log-guardian-ban-db-prune` (`visudo -f`). Binary yolu `which log-guardian` ile dogrula.
+
+**Dashboard :8443 LAN:** internet-facing icin `sudo bash scripts/firewall_dashboard_bind.sh install` (localhost + docker + VM NAT `10.0.2.0/24`). Kontrol: `bash scripts/check_dashboard_tls_bind.sh`
+
+**POST_INSTALL_STRICT (aylik):** `install_operator_cron.sh` ayin 1'i 05:00 — `operator_post_install_strict.sh` (internet-facing tespitinde nginx limit + WASM + dashboard bind)
 
 **Host filo agent (reboot-safe):**
 

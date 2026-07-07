@@ -1004,12 +1004,17 @@ static int cmd_health_check(void)
 
 static int cmd_ban_db_prune(int argc, char **argv)
 {
+    operator_load_rules();
     int ttl_days = g_intel_ban_db_ttl_days;
     for (int i = 2; i < argc; i++) {
         if (strcmp(argv[i], "--all") == 0)
             ttl_days = 0;
+        else if (strcmp(argv[i], "--ttl-days") == 0 && i + 1 < argc) {
+            ttl_days = atoi(argv[++i]);
+            if (ttl_days < 0)
+                ttl_days = 0;
+        }
     }
-    operator_load_rules();
     int pruned = db_prune_intel_ban_events(g_db_path, ttl_days);
     if (pruned < 0) {
         fprintf(stderr, "[ERR] ban-db-prune: %s acilamadi\n", g_db_path);
@@ -2175,6 +2180,19 @@ static void load_rules_file(const char *path) {
             memcpy(g_agent_sync_config.agent_id, val, n);
             g_agent_sync_config.agent_id[n] = '\0';
         }
+        else if (strcmp(key, "FLEET_COMMAND_HMAC_KEY") == 0) {
+            if (!getenv("FLEET_COMMAND_HMAC_KEY")) {
+                size_t n = strlen(val);
+                if (n >= sizeof(g_agent_sync_config.fleet_hmac_key))
+                    n = sizeof(g_agent_sync_config.fleet_hmac_key) - 1;
+                memcpy(g_agent_sync_config.fleet_hmac_key, val, n);
+                g_agent_sync_config.fleet_hmac_key[n] = '\0';
+            }
+        }
+        else if (strcmp(key, "FLEET_COMMAND_REQUIRE_SIG") == 0 && is_number) {
+            if (!getenv("FLEET_COMMAND_REQUIRE_SIG"))
+                g_agent_sync_config.fleet_require_sig = (int)parsed != 0;
+        }
         else if (strcmp(key, "SIEM_FORWARDER_ENABLED") == 0 && is_number) {
             if (!getenv("SIEM_FORWARDER_ENABLED"))
                 g_siem_config.enabled = (int)parsed != 0;
@@ -2860,7 +2878,7 @@ static void usage(const char *prog) {
             "    %s unban <IP>                  Ban kaldir\n"
             "    %s crs-stats                   PCRE/CRS yukleme istatistigi\n"
             "    %s lineage-stats [--demo] [--path FILE]  Attack tree ozeti\n"
-            "    %s ban-db-prune [--db FILE] [--all]  threat-intel DB kirp\n"
+            "    %s ban-db-prune [--db FILE] [--ttl-days N] [--all]  threat-intel DB kirp\n"
             "    %s webhook-test [alert|crit|crit-chain|ban|trap|batch]  Bildirim testi\n"
             "    %s webhook-metrics-reset [--all]  webhook.metrics sifirla (varsayilan: fail)\n"
             "    %s daily-summary [--force]  Gunluk ozet Telegram DM (operator)\n"
@@ -4282,6 +4300,14 @@ int main(int argc, char *argv[]) {
                                                      &msnap.telegram_ack_24h);
                     (void)db_unacked_count_path(g_db_path, since,
                                                 &msnap.telegram_unacked_24h);
+                    {
+                        DbBanDbGauge bdg;
+                        if (db_ban_db_gauge_path(g_db_path, &bdg) == 0) {
+                            msnap.ban_events_total       = bdg.ban_events_total;
+                            msnap.intel_ban_legacy_rows = bdg.intel_legacy_rows;
+                            msnap.intel_ban_summary_rows = bdg.intel_summary_rows;
+                        }
+                    }
                 }
                 metrics_update(&msnap);
             }

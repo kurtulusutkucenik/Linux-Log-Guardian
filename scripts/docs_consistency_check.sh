@@ -53,11 +53,27 @@ else
   bad "laptop_soak_72h SOAK_TEST'te yok"
 fi
 
+if grep -q 'edge_protection_checklist' docs/EDGE_PROTECTION.md docs/LAPTOP_OPS.md 2>/dev/null; then
+  ok "edge_protection_checklist dokumante"
+else
+  bad "edge_protection_checklist eksik (EDGE_PROTECTION/LAPTOP_OPS)"
+fi
+
+[[ -x scripts/edge_protection_checklist.sh ]] && ok "edge_protection_checklist.sh" || bad "edge_protection_checklist.sh eksik"
+
 if grep -q 'install_fp_trust_prod' docs/HOSTING_RUNBOOK_TR.md docs/LAPTOP_OPS.md; then
   ok "install_fp_trust_prod dokumante"
 else
   bad "install_fp_trust_prod eksik"
 fi
+
+if grep -q 'enterprise_e9_verify' docs/ENTERPRISE_SUPPORT.md docs/LAPTOP_OPS.md 2>/dev/null; then
+  ok "enterprise_e9_verify dokumante"
+else
+  bad "enterprise_e9_verify eksik (ENTERPRISE_SUPPORT/LAPTOP_OPS)"
+fi
+
+[[ -x scripts/enterprise_e9_verify.sh ]] && ok "enterprise_e9_verify.sh" || bad "enterprise_e9_verify.sh eksik"
 
 # Sprint AK — 64+ test vitrin + HOSTING_RUNBOOK Telegram cross-link
 if [[ -f competitive-proof.json ]]; then
@@ -69,6 +85,12 @@ if [[ -f competitive-proof.json ]]; then
   fi
 else
   bad "competitive-proof.json yok"
+fi
+
+if grep -rq '75 test' landing/lib landing/public/og.svg 2>/dev/null; then
+  bad "landing bayat '75 test' — landing/lib/content.ts PROOF_TEST_COUNT ile hizala"
+else
+  ok "landing test sayisi (75 test yok)"
 fi
 
 if grep -qE '8b\. Telegram|§8b' docs/HOSTING_RUNBOOK_TR.md \
@@ -86,7 +108,7 @@ else
   bad "ENTERPRISE_ESCALATION hosting §8b link eksik"
 fi
 
-for doc_pat in '79 kart:docs/ENTERPRISE_SUPPORT.md' '79/79:docs/COMPETITIVE_STATUS.md' '79 test:docs/SCOPE_COVERAGE.md'; do
+for doc_pat in "${proof_n} kart:docs/ENTERPRISE_SUPPORT.md" "${proof_n}/${proof_n}:docs/COMPETITIVE_STATUS.md" "${proof_n} test:docs/SCOPE_COVERAGE.md"; do
   label="${doc_pat%%:*}"
   docf="${doc_pat#*:}"
   if grep -q "$label" "$docf" 2>/dev/null; then

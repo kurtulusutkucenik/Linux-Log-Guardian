@@ -8,6 +8,7 @@ import {
   Bell,
   CheckCircle2,
   ChevronDown,
+  Download,
   GitBranch,
   ShieldAlert,
   Clock,
@@ -18,6 +19,27 @@ import { useSocKindFilter, scrollToAttackMap, type SocKindFilter } from "./SocKi
 import type { SocTimelineEntry, SocTimelineKind, SocTimelineResponse } from "@/lib/socTimelineTypes";
 
 const KIND_ORDER: SocTimelineKind[] = ["incident", "waf", "ban", "ack", "lineage"];
+
+function csvCell(value: string | number | undefined | null): string {
+  const s = value == null ? "" : String(value);
+  return `"${s.replace(/"/g, '""')}"`;
+}
+
+function downloadSocCsv(entries: SocTimelineEntry[], filename: string) {
+  const header = "ts,kind,title,detail,ip,risk\n";
+  const rows = entries
+    .map((e) =>
+      [e.ts, e.kind, e.title, e.detail, e.ip ?? "", e.risk ?? ""].map(csvCell).join(","),
+    )
+    .join("\n");
+  const blob = new Blob([header + rows], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  a.click();
+  URL.revokeObjectURL(url);
+}
 
 function kindIcon(kind: SocTimelineEntry["kind"]) {
   switch (kind) {
@@ -218,6 +240,21 @@ export function SocTimelinePanel() {
           <Link href="/attack-tree" className="text-primary/80 hover:text-primary hover:underline">
             {t("socTimelineAttackTree")} →
           </Link>
+          {filteredEntries.length > 0 && (
+            <button
+              type="button"
+              onClick={() =>
+                downloadSocCsv(
+                  filteredEntries,
+                  `soc-timeline-${kindFilter === "all" ? "all" : kindFilter}.csv`,
+                )
+              }
+              className="inline-flex items-center gap-1 text-primary/80 hover:text-primary hover:underline"
+            >
+              <Download className="w-3 h-3" />
+              {t("socTimelineExportCsv")}
+            </button>
+          )}
         </div>
       </div>
       <p className="text-xs text-white/40 mb-2">{t("socTimelineSubtitle")}</p>

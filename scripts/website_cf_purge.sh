@@ -5,6 +5,8 @@
 # Publish ile: LG_CF_PURGE=1 LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/lib/cf_env.sh
+source "$ROOT/scripts/lib/cf_env.sh"
 DOMAIN="${LG_WEBSITE_DOMAIN:-ceniklinuxlogguardian.org}"
 TOKEN="${LG_CF_API_TOKEN:-${CLOUDFLARE_API_TOKEN:-}}"
 ZONE="${LG_CF_ZONE_ID:-}"

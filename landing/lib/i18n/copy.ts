@@ -13,6 +13,7 @@ import {
   LAYERS,
   CONTACT,
   SETUP,
+  PROOF_TEST_COUNT,
   type LineSeries,
   type SetupStep,
 } from "@/lib/content";
@@ -50,6 +51,10 @@ export type PageCopy = {
     groups: { label: string; honest: boolean; winners: number[]; rows: string[][] }[];
     note: string;
     legend: string;
+    crowdsecBadge: string;
+    crowdsecComplementary: string;
+    pdfCta: string;
+    testsCta: string;
   };
   charts: {
     eyebrow: string;
@@ -187,6 +192,11 @@ const CO_TR: PageCopy = {
     groups: VS.groups.map((g) => ({ label: g.label, honest: g.honest, winners: g.winners, rows: g.rows })),
     note: VS.note,
     legend: "Kırmızı = o satırda üstün olan",
+    crowdsecBadge: "tamamlayıcı",
+    crowdsecComplementary:
+      "CrowdSec rakip değil — LAPI sinyali kernel ban hattına tamamlayıcı katman (crowdsec-bouncer testi).",
+    pdfCta: "Rakip karşılaştırma PDF — 1 sayfa",
+    testsCta: `${PROOF_TEST_COUNT} doğrulama testi →`,
   },
   charts: {
     eyebrow: CHARTS.eyebrow,
@@ -325,7 +335,7 @@ const CO_TR: PageCopy = {
     statusFail: "KALDI",
     statusPending: "BEKLİYOR",
     researcherBanner:
-      "Güvenlik araştırmacısı notu: Bu site e-ticaret veya WooCommerce değil. /products.json, /wp-json/, /api/item yok — 79 otomatik doğrulama testi burada.",
+      `Güvenlik araştırmacısı notu: Bu site e-ticaret veya WooCommerce değil. /products.json, /wp-json/, /api/item yok — ${PROOF_TEST_COUNT} otomatik doğrulama testi burada.`,
   },
 };
 
@@ -334,7 +344,7 @@ const CO_TR: PageCopy = {
 const SELECTED_BODIES_EN = [
   "Single chain: nginx log → OWASP CRS → ~20 ms kernel ban. Production in ~15 minutes.",
   "Fleet, SOC timeline, dashboards — an optional layer on your own server after install.",
-  "79 automated tests, competitive PDF, 72h soak — the same matrix as dashboard /tests.",
+  `${PROOF_TEST_COUNT} automated tests, competitive PDF, 72h soak — the same matrix as dashboard /tests.`,
   "Tenant-labeled Prometheus metrics, dashboards and alert rules — self-hosted observability.",
   "Multi-node fleet: agent sync, etcd mesh policy and targeted command dispatch — from one panel.",
   "TAXII/STIX threat feed + Telegram SOC: alert, ban and one-click 'ack' — live operator flow.",
@@ -360,7 +370,7 @@ const VS_ROWS_EN_0: string[][] = [
   ["Short stability (5 min)", "PASS (0 fail)", "—", "—", "—"],
   ["72h soak", "PASS (864/0)", "—", "—", "—"],
   ["Evidence pack PDF+JSON", "Automatic (14 files)", "None", "Partial", "Module by module"],
-  ["Automated test matrix", "79 tests", "—", "Partial", "—"],
+  ["Automated test matrix", "80 tests", "—", "Partial", "—"],
   ["SOC timeline / dashboard", "Yes (:8443)", "—", "Console", "—"],
   ["Telegram ops + ack", "Yes (one-click)", "—", "Partial", "—"],
   ["Setup time", "~15 min", "minutes", "minutes", "hours (tuning)"],
@@ -444,7 +454,7 @@ const SETUP_DASHBOARD_EN: PageCopy["setup"]["dashboard"] = {
 const CO_EN: PageCopy = {
   marquee: [
     "nginx log → WAF → kernel ban",
-    "79 automated tests",
+    `${PROOF_TEST_COUNT} automated tests`,
     "72h soak PASS",
     "~20 ms kernel ban",
     "false positive 0.2%",
@@ -494,7 +504,7 @@ const CO_EN: PageCopy = {
       { k: "280,373 EPS · 16.93× ModSec", v: "On the same corpus with the same 121 OWASP CRS patterns (PCRE2 JIT), WAF/CRS throughput is 280,373 EPS — 16.93× faster than ModSec's 16,560 EPS. Measured and reproducible (bench-vs-modsec.json)." },
       { k: "100% recall + 100% CRS parity", v: "121 OWASP CRS rules, 100% real-attack recall on a 1500-line corpus and full parity with ModSec — at 0.2% false positive." },
       { k: "Distributed attack coverage", v: "JA3 cluster detection + per-IP ban — 100% on an 80-IP live test. Fail2ban is single-IP; CrowdSec needs a separate signal network." },
-      { k: "Transparent, reproducible proof", v: "79 automated tests + a 14-file PDF/JSON evidence pack + 72h soak (864 samples, 0 errors). Rivals have no automatic proof or it's fragmented." },
+      { k: "Transparent, reproducible proof", v: `${PROOF_TEST_COUNT} automated tests + a 14-file PDF/JSON evidence pack + 72h soak (864 samples, 0 errors). Rivals have no automatic proof or it's fragmented.` },
       { k: "Self-hosted · MIT · made in Turkey", v: "Your data stays with you, no vendor lock-in, fully open source. SOC timeline, Prometheus metrics and Telegram ops in one panel (:8443)." },
     ],
     cols: ["Metric", "Log Guardian", "Fail2ban", "CrowdSec", "ModSec + CRS"],
@@ -505,6 +515,11 @@ const CO_EN: PageCopy = {
     note:
       "Honest limit: in some areas rivals are clearly better (red cells). ModSec + CRS blocks the first request inline instantly (we're reactive — the first request may pass until the log line drops); CrowdSec is strong in its distributed community signal network and managed SaaS console. In return, on the same corpus with the same 121 CRS patterns our WAF/CRS throughput is 280,373 EPS — 16.93× ModSec's 16,560 EPS (bench-vs-modsec.json).",
     legend: "Red = the winner in that row",
+    crowdsecBadge: "complementary",
+    crowdsecComplementary:
+      "CrowdSec is not a rival — LAPI signal is a complementary layer to the kernel ban path (crowdsec-bouncer test).",
+    pdfCta: "Competitive comparison PDF — 1 page",
+    testsCta: `${PROOF_TEST_COUNT} validation tests →`,
   },
   charts: {
     eyebrow: "//:Charts",
@@ -689,7 +704,7 @@ const CO_EN: PageCopy = {
     statusFail: "FAIL",
     statusPending: "PENDING",
     researcherBanner:
-      "Security researcher note: This is not a shop or WooCommerce site. No /products.json, /wp-json/, or /api/item — the 79-gate verification matrix lives here.",
+      `Security researcher note: This is not a shop or WooCommerce site. No /products.json, /wp-json/, or /api/item — the ${PROOF_TEST_COUNT}-gate verification matrix lives here.`,
   },
 };
 
@@ -1304,7 +1319,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     selectedBodies: [
       "Une seule chaîne : log nginx → OWASP CRS → ban noyau ~20 ms. En production en ~15 minutes.",
       "Flotte, timeline SOC, tableaux de bord — une couche optionnelle sur votre propre serveur après l'installation.",
-      "75 tests automatiques, PDF comparatif, soak 72h — la même matrice que dashboard /tests.",
+      "80 tests automatiques, PDF comparatif, soak 72h — la même matrice que dashboard /tests.",
       "Métriques Prometheus par tenant, tableaux de bord et règles d'alerte — observabilité auto-hébergée.",
       "Flotte multi-nœuds : sync d'agents, politique etcd mesh et envoi de commandes ciblé — depuis un seul panneau.",
       "Flux de menaces TAXII/STIX + SOC Telegram : alerte, ban et 'ack' en un clic — flux opérateur en direct.",
@@ -1323,7 +1338,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       { k: "280 373 EPS · 16,93× ModSec", v: "Sur le même corpus avec les mêmes 121 patterns OWASP CRS (PCRE2 JIT), le débit WAF/CRS atteint 280 373 EPS — 16,93× plus rapide que les 16 560 EPS de ModSec. Mesuré et reproductible (bench-vs-modsec.json)." },
       { k: "100% de rappel + 100% de parité CRS", v: "121 règles OWASP CRS, 100% de rappel d'attaques réelles sur un corpus de 1500 lignes et parité complète avec ModSec — à 0,2% de faux positifs." },
       { k: "Couverture des attaques distribuées", v: "Détection de cluster JA3 + ban par IP — 100% sur un test en direct de 80 IP. Fail2ban est mono-IP ; CrowdSec exige un réseau de signaux séparé." },
-      { k: "Preuve transparente et reproductible", v: "75 tests automatiques + un pack de preuves de 14 fichiers + soak 72h (864 échantillons, 0 erreur). Les rivaux n'ont pas de preuve automatique ou elle est fragmentée." },
+      { k: "Preuve transparente et reproductible", v: "80 tests automatiques + un pack de preuves de 14 fichiers + soak 72h (864 échantillons, 0 erreur). Les rivaux n'ont pas de preuve automatique ou elle est fragmentée." },
       { k: "Auto-hébergé · MIT · conçu en Turquie", v: "Vos données restent chez vous, aucun verrouillage fournisseur, entièrement open source. Timeline SOC, métriques Prometheus et exploitation Telegram dans un seul panneau (:8443)." },
     ],
     vsNote:
@@ -1369,7 +1384,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Stabilité courte (5 min)", "PASS (0 échec)", "—", "—", "—"],
       ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
       ["Pack de preuves PDF+JSON", "Automatique (14 fichiers)", "Aucun", "Partiel", "Module par module"],
-      ["Matrice de tests auto", "75 tests", "—", "Partiel", "—"],
+      ["Matrice de tests auto", "80 tests", "—", "Partiel", "—"],
       ["Timeline SOC / tableau de bord", "Oui (:8443)", "—", "Console", "—"],
       ["Ops Telegram + ack", "Oui (un clic)", "—", "Partiel", "—"],
       ["Temps d'installation", "~15 min", "minutes", "minutes", "heures (réglage)"],
@@ -1676,7 +1691,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
     selectedBodies: [
       "Uma só cadeia: log do nginx → OWASP CRS → ban de kernel ~20 ms. Em produção em ~15 minutos.",
       "Frota, timeline SOC, painéis — uma camada opcional no seu próprio servidor após a instalação.",
-      "75 testes automáticos, PDF comparativo, soak 72h — a mesma matriz que dashboard /tests.",
+      "80 testes automáticos, PDF comparativo, soak 72h — a mesma matriz que dashboard /tests.",
       "Métricas Prometheus por tenant, painéis e regras de alerta — observabilidade self-hosted.",
       "Frota multi-nó: sync de agentes, política etcd mesh e envio de comandos direcionado — a partir de um painel.",
       "Feed de ameaças TAXII/STIX + SOC Telegram: alerta, ban e 'ack' com um clique — fluxo de operador ao vivo.",
@@ -1695,7 +1710,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       { k: "280.373 EPS · 16,93× ModSec", v: "No mesmo corpus com os mesmos 121 padrões OWASP CRS (PCRE2 JIT), o throughput WAF/CRS é de 280.373 EPS — 16,93× mais rápido que os 16.560 EPS do ModSec. Medido e reproduzível (bench-vs-modsec.json)." },
       { k: "100% de recall + 100% de paridade CRS", v: "121 regras OWASP CRS, 100% de recall de ataques reais num corpus de 1500 linhas e paridade total com o ModSec — a 0,2% de falsos positivos." },
       { k: "Cobertura de ataques distribuídos", v: "Deteção de cluster JA3 + ban por IP — 100% num teste ao vivo de 80 IP. O Fail2ban é de IP único; o CrowdSec precisa de uma rede de sinais à parte." },
-      { k: "Prova transparente e reproduzível", v: "75 testes automáticos + um pacote de provas de 14 ficheiros + soak 72h (864 amostras, 0 erros). Os rivais não têm prova automática ou é fragmentada." },
+      { k: "Prova transparente e reproduzível", v: "80 testes automáticos + um pacote de provas de 14 ficheiros + soak 72h (864 amostras, 0 erros). Os rivais não têm prova automática ou é fragmentada." },
       { k: "Self-hosted · MIT · feito na Turquia", v: "Os seus dados ficam consigo, sem lock-in de fornecedor, totalmente open source. Timeline SOC, métricas Prometheus e operação Telegram num só painel (:8443)." },
     ],
     vsNote:
@@ -1741,7 +1756,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Estabilidade curta (5 min)", "PASS (0 falhas)", "—", "—", "—"],
       ["Soak 72h", "PASS (864/0)", "—", "—", "—"],
       ["Pacote de evidências PDF+JSON", "Automático (14 ficheiros)", "Nenhum", "Parcial", "Módulo a módulo"],
-      ["Matriz de testes automática", "75 testes", "—", "Parcial", "—"],
+      ["Matriz de testes automática", "80 testes", "—", "Parcial", "—"],
       ["Timeline SOC / painel", "Sim (:8443)", "—", "Consola", "—"],
       ["Ops Telegram + ack", "Sim (um clique)", "—", "Parcial", "—"],
       ["Tempo de instalação", "~15 min", "minutos", "minutos", "horas (ajuste)"],
@@ -1865,7 +1880,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Korte stabiliteit (5 min)", "PASS (0 fouten)", "—", "—", "—"],
       ["72u soak", "PASS (864/0)", "—", "—", "—"],
       ["Bewijspakket PDF+JSON", "Automatisch (14 bestanden)", "Geen", "Gedeeltelijk", "Module voor module"],
-      ["Automatische testmatrix", "75 tests", "—", "Gedeeltelijk", "—"],
+      ["Automatische testmatrix", "80 tests", "—", "Gedeeltelijk", "—"],
       ["SOC-tijdlijn / dashboard", "Ja (:8443)", "—", "Console", "—"],
       ["Telegram-ops + ack", "Ja (één klik)", "—", "Gedeeltelijk", "—"],
       ["Installatietijd", "~15 min", "minuten", "minuten", "uren (tuning)"],
@@ -2485,7 +2500,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Qısa sabitlik (5 dəq)", "PASS (0 uğursuzluq)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Sübut paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoxdur", "Qismən", "Modul-modul"],
-      ["Avtomat test matrisi", "75 test", "—", "Qismən", "—"],
+      ["Avtomat test matrisi", "80 test", "—", "Qismən", "—"],
       ["SOC vaxt xətti / dashboard", "Bəli (:8443)", "—", "Konsol", "—"],
       ["Telegram əməliyyat + ack", "Bəli (bir klik)", "—", "Qismən", "—"],
       ["Quraşdırma vaxtı", "~15 dəq", "dəqiqə", "dəqiqə", "saat (tənzimləmə)"],
@@ -2733,7 +2748,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Qisqa barqarorlik (5 daq)", "PASS (0 nosozlik)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Dalil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yo'q", "Qisman", "Modul-modul"],
-      ["Avtomat test matritsasi", "75 test", "—", "Qisman", "—"],
+      ["Avtomat test matritsasi", "80 test", "—", "Qisman", "—"],
       ["SOC vaqt chizig'i / dashboard", "Ha (:8443)", "—", "Konsol", "—"],
       ["Telegram operatsiya + ack", "Ha (bir bosish)", "—", "Qisman", "—"],
       ["O'rnatish vaqti", "~15 daq", "daqiqa", "daqiqa", "soat (sozlash)"],
@@ -2981,7 +2996,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Gysga durnuklylyk (5 min)", "PASS (0 şowsuzlyk)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Subutnama paketi PDF+JSON", "Awtomatik (14 faýl)", "Ýok", "Kismen", "Modul-modul"],
-      ["Awtomat test matrisasy", "75 test", "—", "Kismen", "—"],
+      ["Awtomat test matrisasy", "80 test", "—", "Kismen", "—"],
       ["SOC wagt çyzygy / dashboard", "Hawa (:8443)", "—", "Konsol", "—"],
       ["Telegram operasiýa + ack", "Hawa (bir basyş)", "—", "Kismen", "—"],
       ["Gurnama wagty", "~15 min", "minut", "minut", "sagat (sazlama)"],
@@ -3477,7 +3492,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Qısqa istiqrarlıq (5 daq)", "PASS (0 muvafaqiyetsizlik)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Delil paketi PDF+JSON", "Avtomatik (14 fayl)", "Yoq", "Qısmen", "Modul-modul"],
-      ["Avtomat test matritsası", "75 test", "—", "Qısmen", "—"],
+      ["Avtomat test matritsası", "80 test", "—", "Qısmen", "—"],
       ["SOC vaqıt sızığı / dashboard", "Ebet (:8443)", "—", "Konsol", "—"],
       ["Telegram ameliyat + ack", "Ebet (bir basuv)", "—", "Qısmen", "—"],
       ["Qurulım vaqtı", "~15 daq", "daqqa", "daqqa", "saat (sazlav)"],
@@ -3601,7 +3616,7 @@ const BODY_OVERRIDES: Partial<Record<Locale, BodyOverride>> = {
       ["Kısa stabillik (5 dak)", "PASS (0 başarısızlık)", "—", "—", "—"],
       ["72s soak", "PASS (864/0)", "—", "—", "—"],
       ["Delil paketi PDF+JSON", "Avtomat (14 fayl)", "Yok", "Kısmen", "Modul-modul"],
-      ["Avtomat test matritsası", "75 test", "—", "Kısmen", "—"],
+      ["Avtomat test matritsası", "80 test", "—", "Kısmen", "—"],
       ["SOC zaman çizgisi / dashboard", "Ya (:8443)", "—", "Konsol", "—"],
       ["Telegram operatsiya + ack", "Ya (bir basış)", "—", "Kısmen", "—"],
       ["Kuruluş zamanı", "~15 dak", "dakka", "dakka", "saat (ayarlama)"],

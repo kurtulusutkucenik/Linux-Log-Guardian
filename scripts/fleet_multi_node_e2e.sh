@@ -125,6 +125,36 @@ dispatch=$(dash_curl -sf -b "$COOKIE_JAR" \
 
 echo "$dispatch" | grep -q '"command"' || fail "dispatch yaniti: $dispatch"
 
+echo "[3b] fleet HMAC imza"
+HMAC_KEY="${FLEET_COMMAND_HMAC_KEY:-log-guardian-fleet-command-dev-key}"
+hmac_ok=false
+if bash "$ROOT/scripts/fleet_command_sign_e2e.sh" 2>/dev/null; then
+  hmac_ok=true
+  echo "[OK] fleet_command_sign_e2e"
+else
+  python3 - "$dispatch" "$HMAC_KEY" <<'PY' || fail "fleet HMAC imza dogrulanamadi"
+import hashlib, hmac, json, sys
+disp=json.loads(sys.argv[1])
+key=sys.argv[2]
+cmd=disp.get("command") or {}
+sig=(cmd.get("signature") or "").strip()
+if not sig:
+    raise SystemExit("signature yok")
+digest="|".join([
+    cmd.get("id",""), cmd.get("tenantId",""), cmd.get("commandType",""),
+    cmd.get("payload",""), cmd.get("targetAgentId") or "",
+])
+calc=hmac.new(key.encode(), digest.encode(), hashlib.sha256).hexdigest()
+if calc!=sig:
+    raise SystemExit(f"imza uyusmadi {calc[:12]} != {sig[:12]}")
+print("[OK] dispatch HMAC inline")
+PY
+  hmac_ok=true
+fi
+
+HMAC_PY="True"
+$hmac_ok || HMAC_PY="False"
+
 echo "[4] dispatch dogrulama — hedef $AGENT_B"
 python3 -c "
 import json,sys
@@ -166,6 +196,8 @@ report={
   'online_count': int('$online_count'),
   'dispatch_target': '$AGENT_B',
   'test_ip': '$TEST_IP',
+  'command_hmac': ${HMAC_PY},
+  'hmac_verify': ${HMAC_PY},
 }
 Path('$REPORT').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
 "

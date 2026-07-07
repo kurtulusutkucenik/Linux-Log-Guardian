@@ -1,6 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
+import Link from "next/link";
 import { useI18n } from "@/lib/i18n/I18nProvider";
 import { getCopy } from "@/lib/i18n/copy";
 
@@ -61,7 +62,17 @@ export default function VsTable() {
                         i === 1 ? "text-white" : "text-neutral-400"
                       }`}
                     >
-                      {col}
+                      <span className="inline-flex flex-wrap items-center gap-1.5">
+                        {col}
+                        {i === 3 && (
+                          <span
+                            className="normal-case rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-semibold tracking-normal text-cyan-300"
+                            title={VS.crowdsecComplementary}
+                          >
+                            {VS.crowdsecBadge}
+                          </span>
+                        )}
+                      </span>
                     </th>
                   ))}
                 </tr>
@@ -120,6 +131,23 @@ export default function VsTable() {
         <p className="mx-auto mt-6 max-w-4xl rounded-lg border border-neutral-800 bg-black/40 p-5 text-sm leading-relaxed text-neutral-400">
           {VS.note}
         </p>
+
+        <div className="mx-auto mt-8 flex flex-wrap items-center justify-center gap-4">
+          <a
+            href="/evidence/competitive-proof.pdf"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-md border border-neon/30 bg-neon/10 px-5 py-2.5 text-sm font-semibold text-neon ring-1 ring-neon/25 transition-all hover:bg-neon/20"
+          >
+            {VS.pdfCta}
+          </a>
+          <Link
+            href="/testler"
+            className="inline-flex items-center justify-center rounded-md border border-neutral-700 bg-panel px-5 py-2.5 text-sm font-medium text-neutral-300 transition-all hover:border-neutral-500 hover:text-white"
+          >
+            {VS.testsCta}
+          </Link>
+        </div>
       </div>
     </section>
   );

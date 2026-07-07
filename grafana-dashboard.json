@@ -131,7 +131,10 @@
         { "expr": "loganalyzer_ban_pipeline_ipc{tenant_id=\"$tenant\"}", "legendFormat": "bp_ipc", "instant": true, "refId": "bp_ipc", "format": "table" },
         { "expr": "loganalyzer_ban_pipeline_ipset{tenant_id=\"$tenant\"}", "legendFormat": "bp_ipset", "instant": true, "refId": "bp_ipset", "format": "table" },
         { "expr": "loganalyzer_api_auth_fail_total{tenant_id=\"$tenant\"}", "legendFormat": "api_auth_fail", "instant": true, "refId": "api_403", "format": "table" },
-        { "expr": "loganalyzer_api_requests_total{tenant_id=\"$tenant\"}", "legendFormat": "api_requests", "instant": true, "refId": "api_req", "format": "table" }
+        { "expr": "loganalyzer_api_requests_total{tenant_id=\"$tenant\"}", "legendFormat": "api_requests", "instant": true, "refId": "api_req", "format": "table" },
+        { "expr": "loganalyzer_ban_events_total{tenant_id=\"$tenant\"}", "legendFormat": "ban_events_db", "instant": true, "refId": "ban_db", "format": "table" },
+        { "expr": "loganalyzer_intel_ban_legacy_rows{tenant_id=\"$tenant\"}", "legendFormat": "intel_legacy", "instant": true, "refId": "intel_legacy", "format": "table" },
+        { "expr": "loganalyzer_intel_ban_summary_rows{tenant_id=\"$tenant\"}", "legendFormat": "intel_summary", "instant": true, "refId": "intel_summary", "format": "table" }
       ]
     },
     {

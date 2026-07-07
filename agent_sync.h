@@ -9,6 +9,8 @@ typedef struct {
     char token[128];
     char agent_id[128];
     int interval_sec;
+    char fleet_hmac_key[128];
+    int fleet_require_sig;
 } AgentSyncConfig;
 
 extern AgentSyncConfig g_agent_sync_config;

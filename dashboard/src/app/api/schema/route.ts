@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { createSignedFleetCommand } from '@/lib/fleetCommandSign';
 
 export const dynamic = 'force-dynamic';
 
@@ -91,13 +92,11 @@ export async function POST(request: Request) {
       await writeFile(filePath, jsonContent, 'utf8');
 
       // Fleet'e PUSH_SCHEMA komutu gönder
-      await (prisma as any).agentCommand.create({
-        data: {
-          tenantId,
-          commandType: 'PUSH_SCHEMA',
-          payload: filePath,
-          status: 'pending',
-        },
+      await createSignedFleetCommand(prisma, {
+        tenantId,
+        commandType: 'PUSH_SCHEMA',
+        payload: filePath,
+        status: 'pending',
       });
     } catch (fsErr) {
       console.error('Schema file write error:', fsErr);

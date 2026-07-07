@@ -8,6 +8,7 @@
 #include "rules_fleet.h"
 #include "firewall.h"
 #include "ban_pipeline.h"
+#include "crypto_utils.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -21,7 +22,9 @@ AgentSyncConfig g_agent_sync_config = {
     .url = "",
     .token = "",
     .agent_id = "",
-    .interval_sec = 5
+    .interval_sec = 5,
+    .fleet_hmac_key = "",
+    .fleet_require_sig = 0
 };
 
 static pthread_t g_sync_thread;
@@ -165,6 +168,62 @@ static void fleet_ack_command(const char *cmd_id, const char *status, const char
     curl_easy_cleanup(curl);
 }
 
+static void fleet_hmac_load_env(void)
+{
+    if (g_agent_sync_config.fleet_hmac_key[0])
+        return;
+    const char *env = getenv("FLEET_COMMAND_HMAC_KEY");
+    if (env && strlen(env) >= 16) {
+        size_t n = strlen(env);
+        if (n >= sizeof(g_agent_sync_config.fleet_hmac_key))
+            n = sizeof(g_agent_sync_config.fleet_hmac_key) - 1;
+        memcpy(g_agent_sync_config.fleet_hmac_key, env, n);
+        g_agent_sync_config.fleet_hmac_key[n] = '\0';
+    }
+    if (!g_agent_sync_config.fleet_require_sig) {
+        const char *req = getenv("FLEET_COMMAND_REQUIRE_SIG");
+        g_agent_sync_config.fleet_require_sig =
+            (req && strcmp(req, "0") == 0) ? 0 :
+            (g_agent_sync_config.fleet_hmac_key[0] ? 1 : 0);
+    }
+}
+
+static int fleet_verify_command_sig(const char *id, const char *tenant_id,
+                                    const char *cmd_type, const char *payload,
+                                    const char *target_agent, const char *sig_hex)
+{
+    fleet_hmac_load_env();
+
+    if (!g_agent_sync_config.fleet_hmac_key[0]) {
+        return g_agent_sync_config.fleet_require_sig ? 0 : 1;
+    }
+    if (!sig_hex || !sig_hex[0]) {
+        return g_agent_sync_config.fleet_require_sig ? 0 : 1;
+    }
+
+    char msg[4608];
+    snprintf(msg, sizeof(msg), "%s|%s|%s|%s|%s",
+             id ? id : "",
+             tenant_id ? tenant_id : "",
+             cmd_type ? cmd_type : "",
+             payload ? payload : "",
+             target_agent ? target_agent : "");
+
+    uint8_t mac[32];
+    hmac_sha256((const uint8_t *)g_agent_sync_config.fleet_hmac_key,
+                strlen(g_agent_sync_config.fleet_hmac_key),
+                (const uint8_t *)msg, strlen(msg), mac);
+
+    char calc_hex[65];
+    static const char hexdig[] = "0123456789abcdef";
+    for (int i = 0; i < 32; i++) {
+        calc_hex[i * 2]     = hexdig[(mac[i] >> 4) & 0x0F];
+        calc_hex[i * 2 + 1] = hexdig[mac[i] & 0x0F];
+    }
+    calc_hex[64] = '\0';
+    return secure_equals(calc_hex, sig_hex);
+}
+
 static void process_commands(const char *json) {
     if (!json) return;
 
@@ -181,18 +240,40 @@ static void process_commands(const char *json) {
 
     while ((p = strstr(p, "\"commandType\":\"")) != NULL) {
         char cmd_type[64] = {0};
-        char payload[512] = {0};
+        char payload[4096] = {0};
         char cmd_id[64]   = {0};
+        char tenant_id[64] = {0};
+        char target_agent[128] = {0};
+        char signature[128] = {0};
         /* commandType */
         const char *ct = p + 15; /* '"commandType":"' den sonra */
         int i = 0;
         while (*ct && *ct != '"' && i < 63) cmd_type[i++] = *ct++;
 
-        /* Aynı nesne içinde payload ve id'yi bul (max 512 byte ileri bak) */
-        char local[512];
-        snprintf(local, sizeof(local), "%.*s", 512, p);
+        /* Nesne basindan itibaren alanlari parse et (id commandType'dan once gelebilir) */
+        const char *obj_start = p;
+        int back = 0;
+        while (obj_start > json && back < 1200 && *obj_start != '{') {
+            obj_start--;
+            back++;
+        }
+        char local[4608];
+        size_t fwd = strlen(p);
+        if (fwd > 3200) fwd = 3200;
+        snprintf(local, sizeof(local), "%.*s%.*s", back, obj_start, (int)fwd, p);
         EXTRACT_STR(local, "payload", payload, sizeof(payload));
         EXTRACT_STR(local, "id",      cmd_id,  sizeof(cmd_id));
+        EXTRACT_STR(local, "tenantId", tenant_id, sizeof(tenant_id));
+        EXTRACT_STR(local, "targetAgentId", target_agent, sizeof(target_agent));
+        EXTRACT_STR(local, "signature", signature, sizeof(signature));
+
+        if (!fleet_verify_command_sig(cmd_id, tenant_id, cmd_type, payload,
+                                      target_agent, signature)) {
+            log_rl(LOG_WARNING, "[Fleet] komut imzasi gecersiz — atlandi id=%s type=%s",
+                   cmd_id[0] ? cmd_id : "?", cmd_type);
+            p += 15;
+            continue;
+        }
 
         /* ── BAN_IP ───────────────────────────────────────────────── */
         int cmd_ok = 1;
@@ -428,6 +509,7 @@ static void *sync_thread_func(void *arg) {
 }
 
 void agent_sync_init(void) {
+    fleet_hmac_load_env();
     if (!g_agent_sync_config.enabled || g_agent_sync_config.url[0] == '\0') {
         return;
     }

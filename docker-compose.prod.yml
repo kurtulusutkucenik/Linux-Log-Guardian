@@ -32,6 +32,9 @@ services:
     build:
       context: ./dashboard
       dockerfile: Dockerfile
+      args:
+        DASHBOARD_SRC_REV: ${DASHBOARD_SRC_REV:-dev}
+        NEXT_PUBLIC_DASHBOARD_BUILD_REV: ${DASHBOARD_BUILD_REV:-dev}
     container_name: log-guardian-dashboard
     expose:
       - "3000"
@@ -56,6 +59,8 @@ services:
       - INCIDENTS_ALLOW_SNAPSHOT=0
       - MARKETPLACE_SIGN_KEY=${MARKETPLACE_SIGN_KEY:-log-guardian-marketplace-dev-key}
       - MARKETPLACE_REQUIRE_SIG=${MARKETPLACE_REQUIRE_SIG:-1}
+      - FLEET_COMMAND_HMAC_KEY=${FLEET_COMMAND_HMAC_KEY:-log-guardian-fleet-command-dev-key}
+      - FLEET_COMMAND_REQUIRE_SIG=${FLEET_COMMAND_REQUIRE_SIG:-1}
       - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://ban-api-relay:18090}
       - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://ban-api-relay:18090}
       - GUARDIAN_API_TOKEN=${GUARDIAN_API_TOKEN:-}

@@ -194,6 +194,13 @@ if command -v nginx >/dev/null 2>&1; then
   else
     warn "inline consult eksik — sudo bash $SCRIPTS/fix_nginx_inline_consult.sh"
   fi
+  if bash "$SCRIPTS/check_nginx_rate_limit.sh" >/dev/null 2>&1; then
+    ok "nginx rate limit (lg_general)"
+  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
+    bad "nginx rate limit eksik — sudo bash $SCRIPTS/fix_nginx_log_format.sh (docs/EDGE_PROTECTION.md)"
+  else
+    warn "rate limit eksik — sudo bash $SCRIPTS/fix_nginx_log_format.sh (docs/EDGE_PROTECTION.md)"
+  fi
 fi
 
 # --- FP trust store ---
@@ -251,9 +258,25 @@ if bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
   if grep -qE '^WASM_PROD_STRICT=1' "$CONF" 2>/dev/null \
       || grep -q 'WASM_PROD_STRICT' /etc/log-guardian/env 2>/dev/null; then
     ok "WASM_PROD_STRICT (internet-facing)"
+  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
+    bad "WASM_PROD_STRICT yok — rules.conf veya env (unsigned wasm riski)"
   else
     warn "WASM_PROD_STRICT yok — rules.conf veya env (unsigned wasm riski)"
   fi
+  if bash "$SCRIPTS/check_dashboard_tls_bind.sh" >/dev/null 2>&1; then
+    ok "dashboard TLS bind (LAN kapali)"
+  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
+    bad "dashboard :8443 LAN acik — sudo bash scripts/firewall_dashboard_bind.sh install"
+  else
+    warn "dashboard :8443 LAN acik — sudo bash scripts/firewall_dashboard_bind.sh install"
+  fi
+fi
+
+# --- Intel ban DB (TTL + boyut; ban mantigina dokunmaz) ---
+if WARN_ONLY=1 bash "$SCRIPTS/intel_ban_db_ops_check.sh" >/dev/null 2>&1; then
+  ok "intel_ban_db (TTL + boyut)"
+else
+  warn "intel_ban_db — WARN_ONLY=1 bash scripts/intel_ban_db_ops_check.sh"
 fi
 
 # --- Opsiyonel audit ---

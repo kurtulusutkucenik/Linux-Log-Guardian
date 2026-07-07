@@ -67,8 +67,16 @@ fi
 
 upsert_key SIEM_FORMAT stix
 if [[ -n "$SAVED_BC" ]]; then
-  upsert_key BLOCK_COUNTRIES "$SAVED_BC"
-  ok "BLOCK_COUNTRIES geri yuklendi ($SAVED_BC)"
+  # shellcheck source=scripts/lib/vm_guest.sh
+  source "$ROOT/scripts/lib/vm_guest.sh" 2>/dev/null || true
+  if lg_is_vbox_guest 2>/dev/null && ! lg_guest_has_outbound 2>/dev/null; then
+    upsert_key BLOCK_COUNTRIES ""
+    echo "[INFO] VM offline — BLOCK_COUNTRIES atlandi (ipdeny indirme yok; GEOIP_OFFLINE_CSV aktif)"
+    lg_vm_offline_geoip_quiet 2>/dev/null || true
+  else
+    upsert_key BLOCK_COUNTRIES "$SAVED_BC"
+    ok "BLOCK_COUNTRIES geri yuklendi ($SAVED_BC)"
+  fi
 fi
 
 echo "[INFO] Tek restart — rules_verify + STIX prod"
@@ -101,7 +109,13 @@ fi
 ok "SIEM_FORMAT=stix prod ($CONF)"
 
 echo "--- repair_no_xdp_stack (metrics/IPC hazir) ---"
-REPAIR_QUIET=1 bash "$ROOT/scripts/repair_no_xdp_stack.sh"
+REPAIR_QUIET=1 bash "$ROOT/scripts/repair_no_xdp_stack.sh" || {
+  echo "[WARN] repair_no_xdp_stack ilk deneme — VM offline geoip + tekrar" >&2
+  # shellcheck source=scripts/lib/vm_guest.sh
+  source "$ROOT/scripts/lib/vm_guest.sh" 2>/dev/null || true
+  lg_vm_offline_geoip_quiet 2>/dev/null || true
+  LG_METRICS_WAIT_SEC=240 REPAIR_QUIET=1 bash "$ROOT/scripts/repair_no_xdp_stack.sh"
+}
 ok "repair_no_xdp_stack"
 
 echo "--- post_install_verify ---"

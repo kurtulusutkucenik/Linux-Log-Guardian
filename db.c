@@ -987,6 +987,46 @@ static int db_count_since(sqlite3 *db, const char *sql, time_t since_ts, long *o
     return 0;
 }
 
+int db_ban_db_gauge_path(const char *db_path, DbBanDbGauge *out)
+{
+    if (!db_path || !db_path[0] || !out)
+        return -1;
+    memset(out, 0, sizeof(*out));
+
+    sqlite3 *db = NULL;
+    if (sqlite3_open_v2(db_path, &db, SQLITE_OPEN_READONLY, NULL) != SQLITE_OK) {
+        if (db)
+            sqlite3_close(db);
+        return -1;
+    }
+
+    sqlite3_stmt *stmt = NULL;
+    if (sqlite3_prepare_v2(db, "SELECT COUNT(*) FROM ban_events;", -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            out->ban_events_total = (long)sqlite3_column_int64(stmt, 0);
+        sqlite3_finalize(stmt);
+    }
+    if (sqlite3_prepare_v2(db,
+            "SELECT COUNT(*) FROM ban_events "
+            "WHERE reason='threat-intel' AND ip != 'system';",
+            -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            out->intel_legacy_rows = (long)sqlite3_column_int64(stmt, 0);
+        sqlite3_finalize(stmt);
+    }
+    if (sqlite3_prepare_v2(db,
+            "SELECT COUNT(*) FROM ban_events "
+            "WHERE ip='system' AND reason LIKE 'threat-intel-summary:%';",
+            -1, &stmt, NULL) == SQLITE_OK) {
+        if (sqlite3_step(stmt) == SQLITE_ROW)
+            out->intel_summary_rows = (long)sqlite3_column_int64(stmt, 0);
+        sqlite3_finalize(stmt);
+    }
+
+    sqlite3_close(db);
+    return 0;
+}
+
 int db_daily_summary_path(const char *db_path, time_t since_ts, DbDailySummary *out)
 {
     if (!db_path || !db_path[0] || !out)

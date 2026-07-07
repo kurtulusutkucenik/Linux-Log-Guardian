@@ -111,4 +111,13 @@ typedef struct {
 /* Son since_ts (unix) itibari gunluk ozet sayilari */
 int db_daily_summary_path(const char *db_path, time_t since_ts, DbDailySummary *out);
 
+/* Prometheus / ops — ban_events DB boyutu (ban mantigina dokunmaz) */
+typedef struct {
+    long ban_events_total;
+    long intel_legacy_rows;
+    long intel_summary_rows;
+} DbBanDbGauge;
+
+int db_ban_db_gauge_path(const char *db_path, DbBanDbGauge *out);
+
 #endif /* DB_H */

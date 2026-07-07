@@ -1,0 +1,9 @@
+# log-guardian ban-db-prune — haftalik intel DB prune (NOPASSWD)
+# Repoya commit ETME. Kurulum:
+#   sudo visudo -f /etc/sudoers.d/log-guardian-ban-db-prune
+#   (asagidaki satiri OPERATOR_USER ile degistir)
+#
+# OPERATOR_USER ALL=(root) NOPASSWD: /usr/local/bin/log-guardian ban-db-prune *
+#
+# Binary farkli yoldaysa: which log-guardian
+# Cron: bash scripts/install_operator_cron.sh (Pazar 04:30)

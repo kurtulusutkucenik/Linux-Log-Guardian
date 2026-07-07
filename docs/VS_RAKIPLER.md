@@ -13,7 +13,7 @@ Son koşu: `STABILITY=1 bash scripts/full_proof_pack.sh` → `competitive-proof.
 | Metrik | Log Guardian | Fail2ban | CrowdSec | ModSecurity + CRS |
 |--------|-------------|----------|----------|-------------------|
 | **Log → WAF → kernel ban** | Tek binary + daemon | ❌ (sadece ban) | 🟡 (bouncer ayrı) | 🟡 (WAF ayrı, ban ayrı) |
-| **Gerçek saldırı recall** | **%100** (1K + 10K, 26 kategori) | — | — | CRS parity %100 (aynı regex seti) |
+| **Gerçek saldırı recall** | **%100** (1K + 10K, 30 kategori) | — | — | CRS parity %100 (aynı regex seti) |
 | **Dağıtık / JA3 cluster** | **%100** (80 IP) + TLS :443 | — | Sinyal tabanlı | — |
 | **nginx inline consult** | **PASS** (`/api/v1/consult`) | — | — | Ayrı modül |
 | **False positive** | **%0.2** (500 benign) | Yüksek (regex yok) | Orta | CRS'ye bağlı |
@@ -33,7 +33,7 @@ Son koşu: `STABILITY=1 bash scripts/full_proof_pack.sh` → `competitive-proof.
 | **Ne yapar** | Log satırına göre iptables ban (filtre kuralları) |
 | **Eksik** | WAF yok, SQLi/XSS/LFI imzası yok, kernel XDP yok |
 | **Bizim fark** | Aynı nginx log'unda CRS + anomaly + **~20 ms** ipset/XDP ban |
-| **Kanıt** | `real-attack-report.json` — Fail2ban'ın tek başına yakalayamayacağı 26 kategori (RFI, GraphQL, shellcmd + Spring4Shell, Text4Shell, OGNL, Log4Shell, PHP-CGI, SpEL, Confluence WebWork dahil) |
+| **Kanıt** | `real-attack-report.json` — Fail2ban'ın tek başına yakalayamayacağı 30 kategori (RFI, GraphQL, path traversal, JWT alg, BOLA, oauth_abuse + Spring4Shell, Text4Shell, OGNL, Log4Shell, PHP-CGI, SpEL, Confluence WebWork dahil) |
 
 ---
 

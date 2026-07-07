@@ -11,7 +11,7 @@ nginx access log → WAF/CRS → ipset/XDP ban · tek C binary · MIT lisanslı
 [![CI](https://github.com/kurtulusutkucenik/Linux-Log-Guardian/actions/workflows/build.yml/badge.svg)](https://github.com/kurtulusutkucenik/Linux-Log-Guardian/actions/workflows/build.yml)
 [![Website](https://img.shields.io/badge/Site-ceniklinuxlogguardian.org-0ea5e9)](https://www.ceniklinuxlogguardian.org)
 
-[Web sitesi](https://www.ceniklinuxlogguardian.org) · [75 test](https://www.ceniklinuxlogguardian.org/testler) · [Sürümler](https://www.ceniklinuxlogguardian.org/paketler) · [Kurulum](docs/QUICKSTART_NGINX.md) · [GitHub](https://github.com/kurtulusutkucenik/Linux-Log-Guardian)
+[Web sitesi](https://www.ceniklinuxlogguardian.org) · [80 test](https://www.ceniklinuxlogguardian.org/testler) · [Sürümler](https://www.ceniklinuxlogguardian.org/paketler) · [Kurulum](docs/QUICKSTART_NGINX.md) · [GitHub](https://github.com/kurtulusutkucenik/Linux-Log-Guardian)
 
 </div>
 
@@ -63,7 +63,7 @@ Son koşu: `bash scripts/competitive_suite.sh` → `docs/evidence/competitive-pr
 |--------|-------|----------|
 | Olay/saniye (EPS) | **280.373** | Parser + WAF hattı |
 | Ban gecikmesi | **20,23 ms** | Medyan, 21 örnek (ipset/XDP) |
-| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 26 kategori (RFI, GraphQL, shellcmd + Spring4Shell/OGNL + PHP-CGI/SpEL + Confluence) |
+| Gerçek saldırı recall | **%100** | 1K + 10K satır corpus, 30 kategori (RFI, GraphQL, path traversal, JWT alg, BOLA, oauth_abuse + Spring4Shell/OGNL + PHP-CGI/SpEL + Confluence) |
 | OWASP CRS parity | **%100** | Aynı regex seti (PCRE2 JIT) |
 | False positive | **%0,2** ölçüldü | 500 benign satır · hedef <%0,5 |
 | 72h soak | **PASS** | 864 örnek, 0 hata |
@@ -287,7 +287,7 @@ Site önizleme: `cd landing && npm run dev` → http://localhost:3000
 
 **nginx access log → WAF/CRS → kernel ban** — one integrated chain, self-hosted, MIT licensed.
 
-[Website](https://www.ceniklinuxlogguardian.org) · [75 tests](https://www.ceniklinuxlogguardian.org/tests) · [Editions](https://www.ceniklinuxlogguardian.org/paketler) · [Setup](docs/QUICKSTART_NGINX.md)
+[Website](https://www.ceniklinuxlogguardian.org) · [80 tests](https://www.ceniklinuxlogguardian.org/tests) · [Editions](https://www.ceniklinuxlogguardian.org/paketler) · [Setup](docs/QUICKSTART_NGINX.md)
 
 </div>
 
@@ -299,7 +299,7 @@ Open-source Linux edge security with **measurable proof** (PDF + JSON). Reads ng
 |--------|-------|
 | Events/sec (EPS) | **280,373** |
 | Ban latency | **20.23 ms** (median, 21 samples) |
-| Attack recall | **100%** (1K + 10K corpus, 26 categories incl. RFI, GraphQL, shellcmd + Spring4Shell/OGNL) |
+| Attack recall | **100%** (1K + 10K corpus, 30 categories incl. RFI, GraphQL, path traversal, JWT alg, BOLA, oauth_abuse + Spring4Shell/OGNL) |
 | CRS parity | **100%** |
 | False positive | **0.2%** measured (500 benign) — target <0.5% |
 | 72h soak | **PASS** (864 samples, 0 failures) |

@@ -93,6 +93,7 @@ VM veya agent Offline ise önce keepalive, sonra dispatch:
 ```bash
 bash scripts/vm_fleet_gate.sh
 bash scripts/fleet_multi_node_e2e.sh
+STALE_HOURS=48 bash scripts/fleet_prune_pending_commands.sh   # >48h takili komutlar
 bash scripts/vm_demo_host.sh          # host: VM bekle + filo kapısı
 ```
 
@@ -105,19 +106,61 @@ VM guest (tek komut): `sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh`
 ## P4 — Kanıt / vitrin
 
 ```bash
-bash scripts/install_operator_cron.sh      # cron: günlük sabah + haftalık core kanıt
-bash scripts/install_audit_cron.sh         # cron: Pazartesi local_security_audit
-bash scripts/morning_operator_gate.sh   # laptop_core + presentation + :8443 (~30 sn)
-bash scripts/core_proof_refresh.sh        # haftalık Track A (nginx + ban + IPv6 + kanıt)
-bash scripts/finish_vitrin_plan.sh        # hepsi birden (GIF/VPS/commit haric); PUBLISH=1 canli site
-bash scripts/optional_track_refresh.sh    # opsiyonel: L7, Grafana, demo, landing export
-bash scripts/competitive_proof.sh
+bash scripts/install_operator_cron.sh      # cron matrisi (asagida)
+bash scripts/morning_operator_gate.sh      # gunluk sabah (~30 sn)
+bash scripts/core_proof_refresh.sh         # haftalik Track A
+bash scripts/finish_vitrin_plan.sh         # tam vitrin; PUBLISH=1 canli site
+bash scripts/competitive_proof_build.py
 bash scripts/sync_dashboard_data.sh
 bash scripts/dashboard_refresh.sh
 bash scripts/website_preview_gate.sh
+bash scripts/enterprise_e9_verify.sh       # E9 tek kapı (dok + zincir)
 ```
 
-Dashboard: `https://localhost:8443/tests` (**79 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
+### Operatör cron (`install_operator_cron.sh`)
+
+| Zaman | Script | Log |
+|-------|--------|-----|
+| Her gün 08:00 | `morning_operator_gate.sh` | `~/lg-morning-operator-gate.log` |
+| Pazar 03:00 | `core_proof_refresh.sh` | `~/lg-core-proof-refresh.log` |
+| Pazar 03:15 | `fleet_prune_pending_commands.sh` (48h+) | `~/lg-fleet-prune-cmds.log` |
+| Pazar 04:30 | `intel_ban_db_prune_cron.sh` | `~/lg-intel-ban-db-prune.log` |
+| Pazartesi 06:00 | `operator_security_weekly.sh` | `~/lg-operator-security-weekly.log` |
+| Ayın 1'i 05:00 | `operator_post_install_strict.sh` | `~/lg-post-install-strict.log` |
+
+Internet-facing strict (manuel): `POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh`
+
+Dashboard: `https://localhost:8443/tests` (**80 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
+
+---
+
+## P3c — Dashboard / internet-facing güvenlik
+
+Laptop demo `:8443` LAN açık olabilir; **internet-facing** makinede kapatın:
+
+```bash
+sudo bash scripts/firewall_dashboard_bind.sh install
+bash scripts/check_dashboard_tls_bind.sh
+bash scripts/laptop_harden_check.sh
+```
+
+VM filo (VirtualBox NAT `10.0.2.0/24`) firewall kuralında izinlidir — `docker-compose` `127.0.0.1:8443` bind filo telemetry'yi kırabilir.
+
+---
+
+## P3d — Intel ban DB (TTL / boyut)
+
+Ban mantığına dokunmaz; özet satır + TTL prune:
+
+```bash
+WARN_ONLY=1 bash scripts/intel_ban_db_ops_check.sh
+sudo log-guardian ban-db-prune --ttl-days 7
+bash scripts/intel_ban_db_prune_cron.sh
+```
+
+Haftalık cron için sudoers: `scripts/sudoers-ban-db-prune.example` → `/etc/sudoers.d/log-guardian-ban-db-prune`
+
+Edge checklist özeti: `bash scripts/edge_protection_checklist.sh` → `edge-protection-checklist-report.json`
 
 ---
 
@@ -131,13 +174,16 @@ Dashboard: `https://localhost:8443/tests` (**79 kart**) · Site: `https://cenikl
 
 ---
 
-## Laptop kanıt (79 test)
+## Laptop kanıt (80 test)
 
 | Kapı | Script |
 |------|--------|
+| E9 zincir | `enterprise_e9_verify.sh` |
 | Kurulum | `post_install_verify.sh` |
+| Sabah operatör | `morning_operator_gate.sh` |
 | Telegram SOC | `telegram_soc_gate.sh` |
 | Edge | `edge_protection_gate.sh` |
+| Edge checklist | `edge_protection_checklist.sh` |
 | Grafana parity | `grafana_parity_gate.sh` |
 | Site preview | `website_preview_gate.sh` |
 | VM host prep | `vm_host_prep_gate.sh` |
@@ -149,6 +195,7 @@ Dashboard: `https://localhost:8443/tests` (**79 kart**) · Site: `https://cenikl
 | Demo rehearsal | `demo_rehearsal_gate.sh` |
 
 ```bash
+bash scripts/enterprise_e9_verify.sh
 bash scripts/enterprise_escalation_gate.sh
 bash scripts/vm_host_prep_gate.sh
 bash scripts/docs_consistency_gate.sh

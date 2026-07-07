@@ -73,6 +73,7 @@ model AgentCommand {
   executed       Boolean   @default(false)
   status         String    @default("pending") // "pending", "delivered", "executed", "failed"
   executedAt     DateTime?
+  signature      String?   // HMAC-SHA256(id|tenant|type|payload|target)
   createdAt      DateTime  @default(now())
 }
 

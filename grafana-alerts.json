@@ -214,6 +214,48 @@
             "summary": "Async webhook kuyrugu doldu — WEBHOOK_COOLDOWN veya alarm hacmini ayarlayin."
           },
           "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-ban-db-size",
+          "title": "Log Guardian ban_events DB buyuk",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "loganalyzer_ban_events_total{tenant_id=~\".+\"} > 50000",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "30m",
+          "annotations": {
+            "summary": "ban_events satir sayisi yuksek — sudo log-guardian ban-db-prune --ttl-days 7 (INTEL_BAN_DB_TTL_DAYS). Ban mantigi degismez."
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-intel-ban-legacy",
+          "title": "Log Guardian threat-intel legacy satir",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 300, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "loganalyzer_intel_ban_legacy_rows{tenant_id=~\".+\"} > 0",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "15m",
+          "annotations": {
+            "summary": "threat-intel legacy ban_events satiri var (beklenen 0) — sudo bash scripts/enable_threat_intel_prod.sh"
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
         }
       ]
     }

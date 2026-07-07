@@ -74,7 +74,7 @@ export function FpMetricsPanel() {
             </p>
           )}
         </div>
-        {trust?.enabled && (
+        {trust?.enabled ? (
           <div className="flex-1 min-w-[200px]">
             <div className="flex justify-between text-[10px] text-white/40 mb-1">
               <span>{t("fpPanelEma")}</span>
@@ -94,6 +94,8 @@ export function FpMetricsPanel() {
               <p className="text-[10px] text-amber-300/90 mt-1">{t("fpPanelWarmup")}</p>
             )}
           </div>
+        ) : (
+          <p className="text-[10px] text-amber-300/90 max-w-md">{t("fpPanelColdStart")}</p>
         )}
       </div>
     </div>

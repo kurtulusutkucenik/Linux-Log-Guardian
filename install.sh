@@ -859,6 +859,20 @@ if [[ "${THREAT_INTEL_OK:-0}" -ne 1 ]]; then
     warn "  sudo bash scripts/enable_threat_intel_prod.sh"
     warn "  kanit: sudo bash scripts/threat_intel_prod_proof.sh"
 fi
-if [[ "${NGINX_FORMAT_OK:-0}" -ne 1 ]] && command -v nginx >/dev/null 2>&1 && [[ "${NGINX_ENFORCE_STRICT:-0}" == "1" ]]; then
+if [[ "${NGINX_ENFORCE_STRICT:-0}" == "1" ]] && command -v nginx >/dev/null 2>&1 && [[ "${NGINX_FORMAT_OK:-0}" -ne 1 ]]; then
     error "NGINX_ENFORCE_STRICT=1 — kurulum log_guardian olmadan tamamlanamaz"
 fi
+echo ""
+echo -e "${BOLD}Guvenlik checklist (docs/QUICKSTART_NGINX.md #1-9)${NC}"
+echo -e "  1 Parola       : ${CYAN}sudo bash scripts/ensure_api_security.sh${NC}  (internet: laptop_harden.sh)"
+echo -e "  2 API :8090    : ${CYAN}scripts/ensure_api_security.sh${NC} + firewall"
+echo -e "  3 Dashboard JWT: ${CYAN}bash scripts/laptop_jwt_setup.sh${NC}"
+echo -e "  4 Webhook env  : ${CYAN}/etc/log-guardian/webhook.env chmod 600${NC}"
+echo -e "  5 Telegram     : ${CYAN}docs/WEBHOOK_SETUP.md${NC}"
+echo -e "  6 IPC token    : ${CYAN}docs/TLS_PRODUCTION.md${NC}"
+echo -e "  7 FP trust     : ${CYAN}sudo bash scripts/install_fp_trust_prod.sh${NC}  (onerilir)"
+echo -e "  8 nginx limit  : ${CYAN}bash scripts/check_nginx_rate_limit.sh${NC}"
+echo -e "  9 JWT rotate   : ${CYAN}docs/JWT_ROTATION.md${NC}"
+echo -e "  Opsiyonel      : ${CYAN}WASM_PROD_STRICT=1${NC} internet-facing · ${CYAN}docs/WASM_PROD_CHECKLIST.md${NC}"
+echo -e "  Dogrula        : ${CYAN}bash scripts/laptop_harden_check.sh${NC}"
+echo -e "  Internet-facing: ${CYAN}POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh${NC}  (nginx limit + WASM_PROD_STRICT)"

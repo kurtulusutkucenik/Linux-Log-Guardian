@@ -32,6 +32,9 @@ REQUIRED_SCRIPTS=(
   scripts/telegram_soc_gate.sh
   scripts/telegram_operator_undo.sh
   scripts/edge_protection_gate.sh
+  scripts/edge_protection_checklist.sh
+  scripts/enterprise_e9_verify.sh
+  scripts/morning_operator_gate.sh
   scripts/grafana_parity_gate.sh
   scripts/website_preview_gate.sh
   scripts/website_live_gate.sh
@@ -54,7 +57,11 @@ report_path, esc_path, support_path = sys.argv[1:4]
 esc = Path(esc_path).read_text(encoding="utf-8")
 support = Path(support_path).read_text(encoding="utf-8")
 
-sections = ["P1", "P2", "P3", "P4", "Telegram", "SIGUSR2", "edge_protection_gate", "SOC", "core_proof_refresh"]
+sections = [
+    "P1", "P2", "P3", "P3c", "P3d", "P4",
+    "Telegram", "SIGUSR2", "edge_protection_gate", "edge_protection_checklist",
+    "enterprise_e9_verify", "morning_operator", "SOC", "core_proof_refresh",
+]
 missing = [s for s in sections if s not in esc]
 link_ok = "ENTERPRISE_ESCALATION.md" in support
 
@@ -70,7 +77,7 @@ out = {
     "pass": ok,
     "doc_sections": len(sections) - len(missing),
     "support_linked": link_ok,
-    "operator_scripts": 13,
+    "operator_scripts": 16,
     "script": "scripts/enterprise_escalation_gate.sh",
 }
 if not ok:

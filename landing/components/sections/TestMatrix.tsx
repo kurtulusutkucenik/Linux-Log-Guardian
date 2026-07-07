@@ -32,17 +32,27 @@ function Card({
   const title = isEn ? t.titleEn ?? t.title : t.title;
   const purpose = isEn ? t.purposeEn ?? t.purpose : t.purpose;
   const verdict = isEn ? t.verdictEn ?? t.verdict : t.verdict;
+  const badge = isEn ? t.badgeEn ?? t.badge : t.badge;
   return (
     <li
       className={`group relative flex flex-col overflow-hidden rounded-xl border ${meta.ring} bg-panel-alt p-5 transition-all duration-300 hover:-translate-y-0.5 hover:border-neutral-700`}
     >
       <span className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-neon/30 to-transparent opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       <div className="flex items-start justify-between gap-3">
-        <div className="flex items-start gap-2">
+        <div className="flex items-start gap-2 min-w-0">
           <Icon className={`mt-0.5 h-4 w-4 shrink-0 ${meta.text}`} strokeWidth={1.5} />
-          <h3 className="font-display text-sm font-bold leading-snug text-white">
-            {title}
-          </h3>
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="font-display text-sm font-bold leading-snug text-white">
+                {title}
+              </h3>
+              {badge && (
+                <span className="rounded-full border border-cyan-500/30 bg-cyan-500/10 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-cyan-300">
+                  {badge}
+                </span>
+              )}
+            </div>
+          </div>
         </div>
         <span
           className={`shrink-0 rounded-full border px-2 py-0.5 font-mono text-[9px] tracking-widest ${meta.ring} ${meta.text}`}

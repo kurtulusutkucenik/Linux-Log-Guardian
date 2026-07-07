@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { executeGuardianBan } from '@/lib/guardianBanExec';
+import { createSignedFleetCommand } from '@/lib/fleetCommandSign';
 
 export const dynamic = 'force-dynamic';
 
@@ -80,14 +81,12 @@ export async function POST(request: Request) {
     }
 
     // AgentCommand olarak kaydet
-    const command = await prisma.agentCommand.create({
-      data: {
-        tenantId,
-        targetAgentId: targetAgentId || null,
-        commandType: action.action,
-        payload,
-        executed: false,
-      },
+    const command = await createSignedFleetCommand(prisma, {
+      tenantId,
+      targetAgentId: targetAgentId || null,
+      commandType: action.action,
+      payload,
+      executed: false,
     });
 
     const targetDesc = targetAgentId

@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import { Bell, MessageSquare, RefreshCw } from "lucide-react";
+import { webhookSetupDocHref } from "@/lib/gateTestDocs";
 import { useLanguage } from "./LanguageProvider";
 
 type WebhookOps = {
@@ -182,6 +183,26 @@ export function WebhookOpsPanel() {
             >
               {(data?.webhook_drops ?? 0).toLocaleString()}
             </p>
+            {(data?.webhook_drops ?? 0) > 0 && (
+              <p className="text-[10px] text-amber-300/80 mt-1 leading-snug">
+                {t("webhookOpsDropsRunbook")}{" "}
+                <a
+                  href={webhookSetupDocHref()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-violet-400/80 hover:text-violet-300 hover:underline"
+                >
+                  {t("webhookOpsDropsDocLink")}
+                </a>
+                {" · "}
+                <Link
+                  href="/tests#test-webhook-route-proof"
+                  className="text-violet-400/80 hover:text-violet-300 hover:underline"
+                >
+                  {t("webhookOpsDropsTestLink")}
+                </Link>
+              </p>
+            )}
           </div>
         </div>
       ) : null}

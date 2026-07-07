@@ -3,7 +3,7 @@ import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import Reveal from "@/components/ui/Reveal";
-import { PACKAGES } from "@/lib/content";
+import { PACKAGES, PROOF_TEST_COUNT } from "@/lib/content";
 import { buildPageMetadata } from "@/lib/seo";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -166,7 +166,7 @@ export default function PaketlerPage() {
                 href="/testler"
                 className="rounded-md border border-neutral-700 px-8 py-3.5 text-sm font-medium text-neutral-300 hover:text-white"
               >
-                75 testi gör
+                {PROOF_TEST_COUNT} testi gör
               </Link>
             </div>
           </div>

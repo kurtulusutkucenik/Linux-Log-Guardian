@@ -9,8 +9,10 @@ export const PUBLIC_PATHS = ["/", "/paketler/", "/testler/", "/tests/"] as const
 
 export type PublicPath = (typeof PUBLIC_PATHS)[number];
 
+import { PROOF_TEST_COUNT } from "./content";
+
 const DEFAULT_DESCRIPTION =
-  "Open-source (MIT) self-hosted security. nginx access log → OWASP CRS/WAF → ~20 ms kernel ban. Single chain, 79 automated tests, 72h soak PASS.";
+  `Open-source (MIT) self-hosted security. nginx access log → OWASP CRS/WAF → ~20 ms kernel ban. Single chain, ${PROOF_TEST_COUNT} automated tests, 72h soak PASS.`;
 
 export function hreflangCode(locale: Locale): string {
   return locale === "zh" ? "zh-CN" : locale;

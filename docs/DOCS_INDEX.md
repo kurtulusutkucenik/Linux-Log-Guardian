@@ -15,7 +15,7 @@
 | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) | Telegram / webhook |
 | [SOAK_TEST.md](SOAK_TEST.md) | 72 saat stabilite |
 | [HOSTING_RUNBOOK_TR.md](HOSTING_RUNBOOK_TR.md) | Hosting operatör |
-| [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) | Enterprise SLA + checklist |
+| [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) | Enterprise SLA + checklist · `enterprise_e9_verify.sh` |
 | [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | P1–P4 operatör escalation |
 | [INSTALL_STEP_BY_STEP.md](INSTALL_STEP_BY_STEP.md) | Adım adım kurulum |
 | [PERSONAL_TEST.md](PERSONAL_TEST.md) | Kişisel doğrulama |

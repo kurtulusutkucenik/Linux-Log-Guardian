@@ -1,0 +1,137 @@
+{
+  "date": "2026-07-07T09:49:41.011881+00:00",
+  "pass": true,
+  "laptop_profile": true,
+  "items": [
+    {
+      "id": "edge-protection-gate",
+      "scope": "both",
+      "label": "edge_protection_gate",
+      "status": "pass",
+      "note": "rapor pass"
+    },
+    {
+      "id": "dist-risk-proof",
+      "scope": "both",
+      "label": "dist_risk_proof_e2e",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "dist-risk-metrics",
+      "scope": "both",
+      "label": ":9091 loganalyzer_dist_risk_*",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "laptop-core-gate",
+      "scope": "laptop",
+      "label": "laptop_core_gate",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "nginx-snippets",
+      "scope": "both",
+      "label": "nginx snippet aktif",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "nginx-t",
+      "scope": "both",
+      "label": "nginx -t",
+      "status": "pass",
+      "note": "nginx aktif + snippet (root -t gerekmez)"
+    },
+    {
+      "id": "nginx-rate-limit",
+      "scope": "both",
+      "label": "lg_general rate limit",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "prod-nic-xdp",
+      "scope": "both",
+      "label": "prod_nic_xdp_check",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "intel-ban-db",
+      "scope": "both",
+      "label": "threat_intel ozet DB + TTL",
+      "status": "pass",
+      "note": "stale=0"
+    },
+    {
+      "id": "intel-ban-prune-sudo",
+      "scope": "laptop",
+      "label": "ban-db-prune NOPASSWD cron",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "whitelist",
+      "scope": "both",
+      "label": "WHITELIST (loopback+)",
+      "status": "pass",
+      "note": "count=3"
+    },
+    {
+      "id": "dashboard-firewall",
+      "scope": "both",
+      "label": "dashboard :8443 LAN",
+      "status": "pass",
+      "note": "firewall_dashboard_bind"
+    },
+    {
+      "id": "website-live",
+      "scope": "laptop",
+      "label": "Cloudflare Pages /tests parity",
+      "status": "pass",
+      "note": "80 kart"
+    },
+    {
+      "id": "cdn-real-ip",
+      "scope": "prod",
+      "label": "CDN origin real_ip snippet",
+      "status": "pass",
+      "note": ""
+    },
+    {
+      "id": "nginx-attack-test",
+      "scope": "both",
+      "label": "nginx_attack_test kaniti",
+      "status": "pass",
+      "note": "rapor mevcut"
+    },
+    {
+      "id": "enterprise-e9",
+      "scope": "both",
+      "label": "E9 runbook zinciri",
+      "status": "pass",
+      "note": "proof=80/80"
+    },
+    {
+      "id": "fleet-command-sign",
+      "scope": "both",
+      "label": "fleet komut HMAC imzasi",
+      "status": "pass",
+      "note": ""
+    }
+  ],
+  "summary": {
+    "pass": 17,
+    "warn": 0,
+    "fail": 0,
+    "skip": 0,
+    "total": 17
+  },
+  "laptop_fail_ids": [],
+  "laptop_warn_ids": [],
+  "script": "scripts/edge_protection_checklist.sh",
+  "doc": "docs/EDGE_PROTECTION.md"
+}

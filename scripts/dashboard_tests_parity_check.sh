@@ -23,7 +23,7 @@ proof_set = set(proof_ids)
 dash = Path(sys.argv[2]).read_text(encoding="utf-8")
 static_ids = set(re.findall(r'out\.push\(\{\s*\n\s*id:\s*\"([^\"]+)\"', dash))
 
-# ops-gate-report.json gates[] → dashboard evaluateValidationTests ops loop (gate.id)
+# ops-gate-report.json gates[] — competitive-proof + alignTestsToProof (evaluateValidationTests ops dongusu kaldirildi)
 ops_path = Path(sys.argv[3])
 ops_ids: set[str] = set()
 if ops_path.is_file():

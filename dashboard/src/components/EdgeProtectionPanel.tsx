@@ -27,6 +27,36 @@ type EdgeStatus = {
   bans_source?: string;
   threat_intel_legacy_rows?: number;
   threat_intel_summary_rows?: number;
+  intel_ban_db?: {
+    pass?: boolean;
+    ban_events_total?: number;
+    intel_legacy_rows?: number;
+    intel_summary_rows?: number;
+    stale_rows?: number;
+    ttl_days?: number;
+    max_total_rows?: number;
+    at?: string | null;
+    data_source?: "live" | "report";
+  };
+  edge_checklist?: {
+    pass?: boolean;
+    at?: string | null;
+    pass_n?: number;
+    warn_n?: number;
+    fail_n?: number;
+    total?: number;
+    fail_ids?: string[];
+    warn_ids?: string[];
+  } | null;
+  enterprise_e9?: {
+    pass?: boolean;
+    at?: string | null;
+    competitive_proof?: string | null;
+    enterprise_escalation?: boolean;
+    edge_checklist?: boolean;
+    morning_operator?: boolean;
+    docs_consistency?: boolean;
+  } | null;
 };
 
 function statClass(ok: boolean | undefined): string {
@@ -179,15 +209,76 @@ export function EdgeProtectionPanel() {
         </div>
       </div>
 
+      {(data?.edge_checklist || data?.enterprise_e9) && (
+        <div className="mt-3 rounded-lg border border-white/10 bg-black/20 px-3 py-2 space-y-2">
+          {data.edge_checklist && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-white/50">{t("edgeChecklistTitle")}</span>
+              <span
+                className={
+                  data.edge_checklist.pass
+                    ? "text-emerald-300 font-medium"
+                    : "text-amber-300 font-medium"
+                }
+              >
+                {data.edge_checklist.pass_n}/{data.edge_checklist.total}
+                {(data.edge_checklist.warn_n ?? 0) > 0 &&
+                  ` · ${data.edge_checklist.warn_n} ${t("edgeChecklistWarn")}`}
+              </span>
+            </div>
+          )}
+          {data.enterprise_e9 && (
+            <div className="flex flex-wrap items-center justify-between gap-2 text-xs">
+              <span className="text-white/50">{t("edgeE9Title")}</span>
+              <span
+                className={
+                  data.enterprise_e9.pass
+                    ? "text-emerald-300 font-medium"
+                    : "text-amber-300 font-medium"
+                }
+              >
+                {data.enterprise_e9.pass ? "OK" : "—"}
+                {data.enterprise_e9.competitive_proof
+                  ? ` · ${data.enterprise_e9.competitive_proof}`
+                  : ""}
+              </span>
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="flex flex-wrap items-center gap-3 mt-3 text-[10px] text-white/35">
         <span className="inline-flex items-center gap-1">
           <Globe className="w-3 h-3" />
-          {t("edgeThreatSummary")}: {data?.threat_intel_summary_rows ?? 0}
-          {(data?.threat_intel_legacy_rows ?? 0) > 0 && (
+          {t("edgeThreatSummary")}: {data?.intel_ban_db?.intel_summary_rows ?? data?.threat_intel_summary_rows ?? 0}
+          {(data?.intel_ban_db?.intel_legacy_rows ?? data?.threat_intel_legacy_rows ?? 0) > 0 && (
             <span className="text-amber-400/80">
-              · legacy {data?.threat_intel_legacy_rows}
+              · legacy {data?.intel_ban_db?.intel_legacy_rows ?? data?.threat_intel_legacy_rows}
             </span>
           )}
+        </span>
+        <span
+          className={
+            (data?.intel_ban_db?.pass === false ||
+              (data?.intel_ban_db?.ban_events_total ?? 0) >
+                (data?.intel_ban_db?.max_total_rows ?? 50000))
+              ? "text-amber-400/90"
+              : ""
+          }
+          title={t("edgeBanDbRunbook")}
+        >
+          {t("edgeBanDbRows")}: {data?.intel_ban_db?.ban_events_total ?? "—"}
+          {data?.intel_ban_db?.data_source === "live" ? " · live" : ""}
+        </span>
+        <span
+          className={
+            (data?.intel_ban_db?.stale_rows ?? 0) >= 500
+              ? "text-amber-400/90"
+              : ""
+          }
+          title={t("edgeBanDbStaleHint")}
+        >
+          {t("edgeBanDbStale")}: {data?.intel_ban_db?.stale_rows ?? "—"}
         </span>
         <span>
           {t("edgeBansActive")}:{" "}
@@ -216,6 +307,10 @@ export function EdgeProtectionPanel() {
         {" · "}
         <Link href="/tests?q=edge#test-edge-protection-gate" className="text-orange-400/70 hover:text-orange-300 hover:underline">
           {t("edgeGateLink")}
+        </Link>
+        {" · "}
+        <Link href="/tests?q=intel#test-intel-ban-db" className="text-orange-400/70 hover:text-orange-300 hover:underline">
+          {t("edgeBanDbLink")}
         </Link>
       </p>
     </div>

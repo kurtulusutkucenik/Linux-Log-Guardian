@@ -1,4 +1,11 @@
 import type { Locale } from "./locales";
+import { PROOF_TEST_COUNT } from "../content";
+
+const T = PROOF_TEST_COUNT;
+const T_TEST = `${T} test`;
+const T_TESTS = `${T} tests`;
+const T_AUTO = `${T} otomatik test`;
+const T_AUTO_EN = `${T} automated tests`;
 
 export type SectionCopy = {
   hero_badge: string;
@@ -14,6 +21,7 @@ export type SectionCopy = {
   hero_cta_setup: string;
   hero_cta_github: string;
   hero_cta_tests: string;
+  hero_cta_pdf: string;
   hero_researcher_note: string;
   about_eyebrow: string;
   about_title: string;
@@ -45,7 +53,7 @@ export type SectionCopy = {
 
 const TR: SectionCopy = {
   hero_badge: "//:LOG→BAN · SYSTEM ONLINE",
-  hero_bullets: ["~20 ms kernel ban", "79 otomatik test", "72h soak PASS"],
+  hero_bullets: ["~20 ms kernel ban", T_AUTO, "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · tek zincir · self-hosted",
   hero_chips: ["açık kaynak · MIT", "72h soak PASS"],
   hero_reach: "3,65k+ ziyaret · 56 ülke · kanıt PDF",
@@ -56,13 +64,13 @@ const TR: SectionCopy = {
     "%100 gerçek saldırı recall + %100 OWASP CRS parity — 121 kural, 1500 satır corpus",
     "%0.2 false positive — 500 benign satırda 1 alarm; rakiplerde yüksek/orta",
     "72 saat VM soak — 864 örnek, 0 hata; rakiplerde otomatik kanıt yok",
-    "79 otomatik test + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir",
+    `${T_AUTO} + 14 dosyalık kanıt paketi — PDF/JSON, tekrar üretilebilir`,
     "3 araç yığını tek ürün: Fail2ban + ModSecurity + CrowdSec — ~15 dk kurulum",
   ],
   hero_praise_bold: [
     { v: "~20ms", l: "kernel ban" },
     { v: "100", l: "recall" },
-    { v: "79", l: "otomatik test" },
+    { v: String(T), l: "otomatik test" },
     { v: "3→1", l: "araç birleşimi" },
   ],
   hero_side_title:
@@ -71,7 +79,8 @@ const TR: SectionCopy = {
     "nginx access log satırından ipset ban'a kadar tek hat: parser, OWASP CRS/WAF değerlendirme ve ~20 ms kernel ban. Rakipler parçalı mimari sunar — biz ölçülmüş, tekrar üretilebilir PDF/JSON kanıtıyla tek zincirde birleştiririz. Türkiye'de geliştirildi, MIT lisansıyla açık kaynak, tamamen self-hosted.",
   hero_cta_setup: "15 dk kurulum",
   hero_cta_github: "GitHub kaynak",
-  hero_cta_tests: "79 testi gör",
+  hero_cta_tests: `${T} testi gör`,
+  hero_cta_pdf: "Kanıt PDF",
   hero_researcher_note:
     "Güvenlik araştırmacısı? WooCommerce veya mağaza API değil — doğrulama matrisi /testler · security.txt",
   about_eyebrow: "//:Nedir",
@@ -117,8 +126,8 @@ const TR: SectionCopy = {
       company: "CrowdSec",
       name: "SOC & sinyal katmanı",
       replaces: "CrowdSec bouncer + ayrı konsol + manuel kanıt",
-      body: "CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, 79 test, 14 kanıt dosyası, Telegram ops — tek panel.",
-      metrics: ["79 test", "72h soak PASS", "14 kanıt dosyası"],
+      body: `CrowdSec parçalı mimarisine gerek yok — isteğe bağlı LAPI sinyali ban API'ye akar. Prometheus, SOC timeline, ${T_TEST}, 14 kanıt dosyası, Telegram ops — tek panel.`,
+      metrics: [T_TEST, "72h soak PASS", "14 kanıt dosyası"],
     },
   ],
   metrics_title: "Sitede gösterilen tüm sayısal değerler",
@@ -140,7 +149,7 @@ const TR: SectionCopy = {
     },
     {
       title: "Şeffaf kanıt",
-      body: "competitive-proof PDF, 79 test, 72h soak — rakiplerde yok veya parçalı.",
+      body: `competitive-proof PDF, ${T_TEST}, 72h soak — rakiplerde yok veya parçalı.`,
     },
     {
       title: "MIT · Türkiye",
@@ -168,7 +177,7 @@ const TR: SectionCopy = {
     },
   ],
   stats: [
-    { value: "79", label: "Otomatik test" },
+    { value: String(T), label: "Otomatik test" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
     { value: "56", label: "Ülke erişimi" },
@@ -179,7 +188,7 @@ const TR: SectionCopy = {
 
 const EN: SectionCopy = {
   hero_badge: "//:LOG→BAN · SYSTEM ONLINE",
-  hero_bullets: ["~20 ms kernel ban", "79 automated tests", "72h soak PASS"],
+  hero_bullets: ["~20 ms kernel ban", T_AUTO_EN, "72h soak PASS"],
   hero_tagline: "nginx access log → WAF/CRS → kernel ban · single chain · self-hosted",
   hero_chips: ["open source · MIT", "72h soak PASS"],
   hero_reach: "3.65k+ visits · 56 countries · proof PDF",
@@ -190,13 +199,13 @@ const EN: SectionCopy = {
     "100% real attack recall + 100% OWASP CRS parity — 121 rules, 1500-line corpus",
     "0.2% false positive — 1 alarm in 500 benign lines; rivals higher/medium",
     "72h VM soak — 864 samples, 0 errors; no automatic proof in rivals",
-    "79 automated tests + 14-file evidence pack — PDF/JSON, reproducible",
+    `${T_AUTO_EN} + 14-file evidence pack — PDF/JSON, reproducible`,
     "Fail2ban + ModSecurity + CrowdSec in one chain — ~15 min setup",
   ],
   hero_praise_bold: [
     { v: "~20ms", l: "kernel ban" },
     { v: "100", l: "recall" },
-    { v: "79", l: "auto tests" },
+    { v: String(T), l: "auto tests" },
     { v: "3→1", l: "tool merge" },
   ],
   hero_side_title:
@@ -205,7 +214,8 @@ const EN: SectionCopy = {
     "Single chain from nginx access log line to ipset ban: parser, OWASP CRS/WAF evaluation and ~20 ms kernel ban. Rivals offer piecemeal architecture — we merge in one chain with measured, reproducible PDF/JSON proof. Built in Turkey, MIT open source, fully self-hosted.",
   hero_cta_setup: "15 min setup",
   hero_cta_github: "GitHub source",
-  hero_cta_tests: "See 79 tests",
+  hero_cta_tests: `See ${T_TESTS}`,
+  hero_cta_pdf: "Proof PDF",
   hero_researcher_note:
     "Security researcher? Not WooCommerce or a shop API — verification matrix at /testler · security.txt",
   about_eyebrow: "//:About",
@@ -251,8 +261,8 @@ const EN: SectionCopy = {
       company: "CrowdSec",
       name: "SOC & signal layer",
       replaces: "CrowdSec bouncer + separate console + manual proof",
-      body: "No CrowdSec piecemeal stack. Prometheus, SOC timeline, 79 tests, 14 evidence files, Telegram ops — one panel.",
-      metrics: ["79 tests", "72h soak PASS", "14 evidence files"],
+      body: `No CrowdSec piecemeal stack. Prometheus, SOC timeline, ${T_TESTS}, 14 evidence files, Telegram ops — one panel.`,
+      metrics: [T_TESTS, "72h soak PASS", "14 evidence files"],
     },
   ],
   metrics_title: "All numerical values on this site",
@@ -271,7 +281,7 @@ const EN: SectionCopy = {
     title: ["Single chain", "Transparent proof", "MIT · Turkey", "Honest limits", "3-in-1", "Kernel speed", "Distributed attacks", "Operator flow"][i],
     body: [
       "nginx log → OWASP CRS → ~20 ms kernel ban. No Fail2ban + ModSec + script pile.",
-      "competitive-proof PDF, 79 tests, 72h soak — missing or fragmented in rivals.",
+      `competitive-proof PDF, ${T_TESTS}, 72h soak — missing or fragmented in rivals.`,
       "Open source, Turkish docs, self-hosted — no vendor lock-in.",
       "ModSec blocks the first request inline; we're reactive. CDN absorbs L3/L4. In return our WAF/CRS speed is 16.93× ModSec on the same corpus.",
       "Fail2ban, ModSecurity, CrowdSec not separate — ban + WAF + SOC in one product.",
@@ -281,7 +291,7 @@ const EN: SectionCopy = {
     ][i],
   })),
   stats: [
-    { value: "79", label: "Automated tests" },
+    { value: String(T), label: "Automated tests" },
     { value: "72h", label: "Soak PASS" },
     { value: "~20ms", label: "Kernel ban" },
     { value: "56", label: "Countries" },
@@ -345,7 +355,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Der messbar belegte, single-chain self-hosted Security-Stack aus der Türkei — Konkurrenten stückweise, wir alles in einem.",
     hero_cta_setup: "15 Min Setup",
     hero_cta_github: "GitHub-Quelle",
-    hero_cta_tests: "79 Tests ansehen",
+    hero_cta_tests: "80 Tests ansehen",
     about_title: "Was ist Linux Log Guardian?",
     about_intro:
       "Ein Open-Source (MIT), self-hosted Sicherheitsprodukt aus der Türkei. Liest nginx-Access-Logs in Echtzeit, wertet mit OWASP CRS/WAF aus und bannt Angreifer-IPs auf Kernel-Ebene per ipset in ~20 ms — eine Kette, keine Drittanbieter-Cloud.",
@@ -368,7 +378,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "La stack de sécurité self-hosted à preuve mesurable et chaîne unique de la Turquie — les rivaux fragmentés, nous tout-en-un.",
     hero_cta_setup: "Installation 15 min",
     hero_cta_github: "Source GitHub",
-    hero_cta_tests: "Voir 79 tests",
+    hero_cta_tests: "Voir 80 tests",
     about_title: "Qu'est-ce que Linux Log Guardian ?",
     about_intro:
       "Un produit de sécurité open source (MIT), auto-hébergé, conçu en Turquie. Lit les logs d'accès nginx en temps réel, évalue avec OWASP CRS/WAF et bannit les IP attaquantes au niveau noyau via ipset en ~20 ms — une seule chaîne, sans cloud tiers.",
@@ -391,7 +401,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "El stack de seguridad autoalojado de cadena única y prueba medible de Turquía — los rivales fragmentados, nosotros todo en uno.",
     hero_cta_setup: "Instalación 15 min",
     hero_cta_github: "Código GitHub",
-    hero_cta_tests: "Ver 79 pruebas",
+    hero_cta_tests: "Ver 80 pruebas",
     about_title: "¿Qué es Linux Log Guardian?",
     about_intro:
       "Un producto de seguridad de código abierto (MIT), autoalojado, desarrollado en Turquía. Lee los logs de acceso de nginx en tiempo real, evalúa con OWASP CRS/WAF y banea las IP atacantes a nivel de kernel con ipset en ~20 ms — una sola cadena, sin nube de terceros.",
@@ -414,7 +424,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Турецкий self-hosted стек безопасности с измеримым доказательством и единой цепочкой — конкуренты по частям, мы всё в одном.",
     hero_cta_setup: "Установка 15 мин",
     hero_cta_github: "Исходники GitHub",
-    hero_cta_tests: "79 тестов",
+    hero_cta_tests: "80 тестов",
     about_title: "Что такое Linux Log Guardian?",
     about_intro:
       "Открытый (MIT), self-hosted продукт безопасности, разработанный в Турции. Читает access-логи nginx в реальном времени, оценивает через OWASP CRS/WAF и банит IP атакующих на уровне ядра через ipset за ~20 мс — одна цепочка, без стороннего облака.",
@@ -437,7 +447,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "A stack de segurança self-hosted de cadeia única e prova mensurável da Turquia — rivais fragmentados, nós tudo-em-um.",
     hero_cta_setup: "Instalação 15 min",
     hero_cta_github: "Código GitHub",
-    hero_cta_tests: "Ver 79 testes",
+    hero_cta_tests: "Ver 80 testes",
     about_title: "O que é o Linux Log Guardian?",
     about_intro:
       "Um produto de segurança open source (MIT), self-hosted, feito na Turquia. Lê logs de acesso do nginx em tempo real, avalia com OWASP CRS/WAF e bane IPs atacantes ao nível do kernel via ipset em ~20 ms — uma só cadeia, sem nuvem de terceiros.",
@@ -460,7 +470,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Turkije's meetbaar bewezen, single-chain self-hosted security-stack — concurrenten versnipperd, wij alles-in-één.",
     hero_cta_setup: "15 min installatie",
     hero_cta_github: "GitHub-broncode",
-    hero_cta_tests: "Bekijk 79 tests",
+    hero_cta_tests: "Bekijk 80 tests",
     about_title: "Wat is Linux Log Guardian?",
     about_intro:
       "Een open-source (MIT), self-hosted beveiligingsproduct uit Turkije. Leest nginx-accesslogs in realtime, evalueert met OWASP CRS/WAF en bant aanvaller-IP's op kernelniveau via ipset in ~20 ms — één keten, zonder externe cloud.",
@@ -482,7 +492,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "土耳其打造的可衡量证据、单链路自托管安全栈——竞品零散，我们一体化。",
     hero_cta_setup: "15分钟安装",
     hero_cta_github: "GitHub 源码",
-    hero_cta_tests: "查看 79 项测试",
+    hero_cta_tests: "查看 80 项测试",
     about_title: "什么是 Linux Log Guardian？",
     about_intro:
       "一款在土耳其开发的开源（MIT）自托管安全产品。实时读取 nginx 访问日志，使用 OWASP CRS/WAF 评估，并通过 ipset 在内核层约 20 毫秒封禁攻击者 IP——单一链路，无第三方云。",
@@ -505,7 +515,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "トルコ発、測定可能な証拠と単一チェーンのセルフホスト型セキュリティスタック——競合は断片的、私たちはオールインワン。",
     hero_cta_setup: "15分で導入",
     hero_cta_github: "GitHub ソース",
-    hero_cta_tests: "79テストを見る",
+    hero_cta_tests: "80テストを見る",
     about_title: "Linux Log Guardian とは？",
     about_intro:
       "トルコで開発されたオープンソース（MIT）のセルフホスト型セキュリティ製品。nginx アクセスログをリアルタイムに読み取り、OWASP CRS/WAF で評価し、攻撃者 IP を ipset でカーネルレベルに約20msでBAN——単一チェーン、サードパーティクラウド不要。",
@@ -528,7 +538,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "튀르키예의 측정 가능한 증거, 단일 체인 셀프호스팅 보안 스택 — 경쟁사는 조각조각, 우리는 올인원.",
     hero_cta_setup: "15분 설치",
     hero_cta_github: "GitHub 소스",
-    hero_cta_tests: "79개 테스트 보기",
+    hero_cta_tests: "80개 테스트 보기",
     about_title: "Linux Log Guardian이란?",
     about_intro:
       "튀르키예에서 개발된 오픈소스(MIT) 셀프호스팅 보안 제품입니다. nginx 액세스 로그를 실시간으로 읽고 OWASP CRS/WAF로 평가하여 공격자 IP를 ipset으로 커널 수준에서 약 20ms 만에 차단합니다 — 단일 체인, 제3자 클라우드 불필요.",
@@ -551,7 +561,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "منظومة أمن ذاتية الاستضافة من تركيا بسلسلة واحدة ودليل قابل للقياس — المنافسون مجزّأون، ونحن الكل في واحد.",
     hero_cta_setup: "تثبيت 15 دقيقة",
     hero_cta_github: "مصدر GitHub",
-    hero_cta_tests: "شاهد 79 اختباراً",
+    hero_cta_tests: "شاهد 80 اختباراً",
     about_title: "ما هو Linux Log Guardian؟",
     about_intro:
       "منتج أمني مفتوح المصدر (MIT) ذاتي الاستضافة طُوِّر في تركيا. يقرأ سجلات وصول nginx فورياً، ويقيّمها عبر OWASP CRS/WAF، ويحظر عناوين IP المهاجمة على مستوى النواة عبر ipset في نحو 17 مللي ثانية — سلسلة واحدة، بدون سحابة طرف ثالث.",
@@ -574,7 +584,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Türkiyənin ölçülə bilən sübutlu, tək zəncir self-hosted təhlükəsizlik yığını — rəqiblər parça-parça, biz hamısı bir arada.",
     hero_cta_setup: "15 dəq quraşdırma",
     hero_cta_github: "GitHub mənbə",
-    hero_cta_tests: "79 testə bax",
+    hero_cta_tests: "80 testə bax",
     about_title: "Linux Log Guardian nədir?",
     about_intro:
       "Türkiyədə hazırlanmış tam açıq mənbəli (MIT) self-hosted təhlükəsizlik məhsulu. nginx giriş loglarını real vaxtda oxuyur, OWASP CRS/WAF ilə qiymətləndirir və hücumçu IP-ni ipset ilə kernel səviyyəsində ~20 ms-də banlayır — tək zəncir, üçüncü tərəf buludu olmadan.",
@@ -597,7 +607,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Түркияның өлшенетін дәлелді, бір тізбекті self-hosted қауіпсіздік стегі — бәсекелестер бөлшек, біз бәрі бір жерде.",
     hero_cta_setup: "15 мин орнату",
     hero_cta_github: "GitHub бастапқы коды",
-    hero_cta_tests: "79 тестті көру",
+    hero_cta_tests: "80 тестті көру",
     about_title: "Linux Log Guardian деген не?",
     about_intro:
       "Түркияда жасалған ашық кодты (MIT) self-hosted қауіпсіздік өнімі. nginx кіру журналдарын нақты уақытта оқиды, OWASP CRS/WAF арқылы бағалайды және шабуылшы IP-ді ipset арқылы ядро деңгейінде ~20 мс-та бұғаттайды — бір тізбек, үшінші тарап бұлтысыз.",
@@ -620,7 +630,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Turkiyaning o'lchanadigan dalilli, yagona zanjirli self-hosted xavfsizlik steki — raqiblar bo'lak, biz hammasi bir joyda.",
     hero_cta_setup: "15 daq o'rnatish",
     hero_cta_github: "GitHub manba",
-    hero_cta_tests: "79 testni ko'rish",
+    hero_cta_tests: "80 testni ko'rish",
     about_title: "Linux Log Guardian nima?",
     about_intro:
       "Turkiyada ishlab chiqilgan ochiq kodli (MIT) self-hosted xavfsizlik mahsuloti. nginx kirish loglarini real vaqtda o'qiydi, OWASP CRS/WAF bilan baholaydi va hujumchi IP'ni ipset orqali yadro darajasida ~20 ms da bloklaydi — yagona zanjir, uchinchi tomon buluti holda.",
@@ -643,7 +653,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Түркиянын өлчөнгөн далилдүү, бирдиктүү чынжырлуу self-hosted коопсуздук стеги — атаандаштар бөлүк, биз баары бир жерде.",
     hero_cta_setup: "15 мүн орнотуу",
     hero_cta_github: "GitHub булагы",
-    hero_cta_tests: "79 тестти көрүү",
+    hero_cta_tests: "80 тестти көрүү",
     about_title: "Linux Log Guardian деген эмне?",
     about_intro:
       "Түркияда иштелип чыккан ачык коддуу (MIT) self-hosted коопсуздук продукту. nginx кирүү логдорун реалдуу убакытта окуйт, OWASP CRS/WAF менен баалайт жана чабуулчу IP'ни ipset аркылуу ядро деңгээлинде ~20 мс ичинде бөгөттөйт — бирдиктүү чынжыр, үчүнчү тараптын булутусуз.",
@@ -666,7 +676,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Türkiýäniň ölçäp bolýan subutnamaly, ýeke zynjyrly self-hosted howpsuzlyk stegi — bäsdeşler bölek, biz hemmesi bir ýerde.",
     hero_cta_setup: "15 min gurnama",
     hero_cta_github: "GitHub çeşme",
-    hero_cta_tests: "79 testi gör",
+    hero_cta_tests: `${T} testi gör`,
     about_title: "Linux Log Guardian näme?",
     about_intro:
       "Türkiýede işlenip düzülen açyk çeşmeli (MIT) self-hosted howpsuzlyk önümi. nginx giriş loglaryny hakyky wagtda okaýar, OWASP CRS/WAF bilen bahalandyrýar we hüjümçi IP-ni ipset arkaly ýadro derejesinde ~20 ms-da baglaýar — ýeke zynjyr, üçünji tarap bulutsyz.",
@@ -687,7 +697,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec аерыммы? Бер продукт, бер дәлил, бер урнаштыру.",
     hero_cta_setup: "15 мин урнаштыру",
     hero_cta_github: "GitHub чыганагы",
-    hero_cta_tests: "79 тестны күрү",
+    hero_cta_tests: "80 тестны күрү",
     about_title: "Linux Log Guardian нәрсә ул?",
     pkg_title: "3не 1дә — аерым урнаштыру юк",
     pkg_tagline: "Өч көндәш корал · бер чылбыр · үлчәнгән дәлил",
@@ -706,7 +716,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec айырыммы? Бер продукт, бер дәлил, бер урынлаштырыу.",
     hero_cta_setup: "15 мин урынлаштырыу",
     hero_cta_github: "GitHub сығанағы",
-    hero_cta_tests: "79 тестты ҡарау",
+    hero_cta_tests: "80 тестты ҡарау",
     about_title: "Linux Log Guardian нимә ул?",
     pkg_title: "3-те 1-ҙә — айырым урынлаштырыу юҡ",
     pkg_tagline: "Өс көндәш ҡорал · бер сылбыр · үлсәнгән дәлил",
@@ -723,7 +733,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx кӗрӳ журналӗ → WAF/CRS → kernel ban · пӗр сӑнчӑр · self-hosted",
     hero_cta_setup: "15 мин вырнаҫтарни",
     hero_cta_github: "GitHub çӑлкуҫӗ",
-    hero_cta_tests: "79 тест пӑх",
+    hero_cta_tests: "80 тест пӑх",
     about_title: "Linux Log Guardian мӗн вӑл?",
     pkg_title: "3-е 1-те — уйрӑм вырнаҫтарни ҫук",
     pkg_tagline: "Виҫӗ конкурент хатӗр · пӗр сӑнчӑр · виҫнӗ кӑтарту",
@@ -740,7 +750,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx كىرىش خاتىرىسى → WAF/CRS → يادرو دەرىجىسىدە چەكلەش · بىرلا زەنجىر · ئۆز مۇلازىمېتىر",
     hero_cta_setup: "15 مىنۇت ئورنىتىش",
     hero_cta_github: "GitHub مەنبە",
-    hero_cta_tests: "79 سىناقنى كۆرۈش",
+    hero_cta_tests: "80 سىناقنى كۆرۈش",
     about_title: "Linux Log Guardian نېمە؟",
     pkg_title: "3 بىرگە — ئايرىم ئورنىتىش يوق",
     pkg_tagline: "ئۈچ رەقىب قورال · بىرلا زەنجىر · ئۆلچەنگەن ئىسپات",
@@ -759,7 +769,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec ayrı-ayrımı? Bir mahsul, bir delil, bir qurulım.",
     hero_cta_setup: "15 daq qurulım",
     hero_cta_github: "GitHub menba",
-    hero_cta_tests: "79 testni köster",
+    hero_cta_tests: "80 testni köster",
     about_title: "Linux Log Guardian nedir?",
     pkg_title: "3-ü 1-de — ayrı qurulım yoq",
     pkg_tagline: "Üç raqip alet · tek zıncır · ölçengen delil",
@@ -778,7 +788,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
       "Fail2ban + ModSecurity + CrowdSec ayırı-ayırı mı? Bir ürün, bir delil, bir kurma.",
     hero_cta_setup: "15 dak kurma",
     hero_cta_github: "GitHub kaynaa",
-    hero_cta_tests: "79 testi gör",
+    hero_cta_tests: `${T} testi gör`,
     about_title: "Linux Log Guardian nedir?",
     pkg_title: "3'ü 1'dä — ayırı kurma yok",
     pkg_tagline: "Üç rakip alet · tek zincir · ölçülü delil",
@@ -795,7 +805,7 @@ const SHORT_OVERRIDES: Partial<Record<Locale, ShortOverride>> = {
     hero_tagline: "nginx киирии сурунаала → WAF/CRS → kernel ban · биир сиэп · self-hosted",
     hero_cta_setup: "15 мүн олохтооһун",
     hero_cta_github: "GitHub төрдө",
-    hero_cta_tests: "79 туруору көр",
+    hero_cta_tests: "80 туруору көр",
     about_title: "Linux Log Guardian диэн тугуй?",
     pkg_title: "3 биирдэ — араас олохтооһун суох",
     pkg_tagline: "Үс күрэхтэһээччи тэрил · биир сиэп · кээмэйдэммит туоһу",
@@ -849,7 +859,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Au lieu d'installer Fail2ban, ModSecurity et CrowdSec séparément, Log Guardian réunit les trois dans un seul paquet auto-hébergé.",
     why_bodies: [
       "log nginx → OWASP CRS → ban noyau ~20 ms. Pas de tas Fail2ban + ModSec + scripts.",
-      "PDF competitive-proof, 75 tests, soak 72h — absent ou fragmenté chez les rivaux.",
+      "PDF competitive-proof, 80 tests, soak 72h — absent ou fragmenté chez les rivaux.",
       "Open source, docs turques, auto-hébergé — aucun verrouillage fournisseur.",
       "Pas l'EPS inline de ModSec ; le CDN absorbe le L3/L4. Intégration à l'origine + vitesse.",
       "Fail2ban, ModSecurity, CrowdSec non séparés — ban + WAF + SOC en un seul produit.",
@@ -860,7 +870,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Pas de Fail2ban séparé. De la ligne de log au ban noyau ipset/XDP ~20 ms — policy, tenant, FP trust dans un pipeline.",
       "Pas de module ModSecurity séparé. OWASP CRS 121 règles, PCRE2 JIT — un seul passage depuis la ligne de log nginx.",
-      "Pas de pile CrowdSec fragmentée. Prometheus, timeline SOC, 75 tests, 14 fichiers de preuve, exploitation Telegram — un seul panneau.",
+      "Pas de pile CrowdSec fragmentée. Prometheus, timeline SOC, 80 tests, 14 fichiers de preuve, exploitation Telegram — un seul panneau.",
     ],
   },
   es: {
@@ -927,7 +937,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Em vez de instalar Fail2ban, ModSecurity e CrowdSec separadamente, o Log Guardian junta os três num só pacote self-hosted.",
     why_bodies: [
       "log do nginx → OWASP CRS → ban de kernel ~20 ms. Sem pilha de Fail2ban + ModSec + scripts.",
-      "PDF competitive-proof, 75 testes, soak 72h — ausente ou fragmentado nos rivais.",
+      "PDF competitive-proof, 80 testes, soak 72h — ausente ou fragmentado nos rivais.",
       "Open source, docs em turco, self-hosted — sem lock-in de fornecedor.",
       "Não o EPS inline do ModSec; o CDN absorve L3/L4. Integração na origem + velocidade.",
       "Fail2ban, ModSecurity, CrowdSec não separados — ban + WAF + SOC num só produto.",
@@ -938,7 +948,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Sem Fail2ban à parte. Da linha de log ao ban de kernel ipset/XDP ~20 ms — policy, tenant, FP trust num pipeline.",
       "Sem módulo ModSecurity à parte. OWASP CRS 121 regras, PCRE2 JIT — uma só passagem desde a linha de log do nginx.",
-      "Sem stack fragmentado do CrowdSec. Prometheus, timeline SOC, 75 testes, 14 ficheiros de prova, operação Telegram — um só painel.",
+      "Sem stack fragmentado do CrowdSec. Prometheus, timeline SOC, 80 testes, 14 ficheiros de prova, operação Telegram — um só painel.",
     ],
   },
   nl: {
@@ -953,7 +963,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "In plaats van Fail2ban, ModSecurity en CrowdSec apart te installeren, voegt Log Guardian alle drie samen in één self-hosted pakket.",
     why_bodies: [
       "nginx-log → OWASP CRS → kernel-ban ~20 ms. Geen Fail2ban + ModSec + scripthoop.",
-      "competitive-proof-PDF, 75 tests, 72h-soak — bij concurrenten ontbrekend of versnipperd.",
+      "competitive-proof-PDF, 80 tests, 72h-soak — bij concurrenten ontbrekend of versnipperd.",
       "Open source, Turkse docs, self-hosted — geen vendor lock-in.",
       "Niet de inline-EPS van ModSec; CDN absorbeert L3/L4. Origin-integratie + snelheid.",
       "Fail2ban, ModSecurity, CrowdSec niet apart — ban + WAF + SOC in één product.",
@@ -964,7 +974,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Geen aparte Fail2ban. Van logregel tot ipset/XDP-kernel-ban ~20 ms — policy, tenant, FP trust in één pipeline.",
       "Geen aparte ModSecurity-module. OWASP CRS 121 regels, PCRE2 JIT — één doorloop vanaf de nginx-logregel.",
-      "Geen versnipperde CrowdSec-stack. Prometheus, SOC-timeline, 75 tests, 14 bewijsbestanden, Telegram-beheer — één paneel.",
+      "Geen versnipperde CrowdSec-stack. Prometheus, SOC-timeline, 80 tests, 14 bewijsbestanden, Telegram-beheer — één paneel.",
     ],
   },
   zh: {
@@ -1083,7 +1093,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Fail2ban, ModSecurity və CrowdSec-i ayrıca quraşdırmaq əvəzinə, Log Guardian üçünü bir self-hosted paketdə birləşdirir.",
     why_bodies: [
       "nginx logu → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + skript yığını yoxdur.",
-      "competitive-proof PDF, 75 test, 72 saat soak — rəqiblərdə yoxdur və ya parçalı.",
+      "competitive-proof PDF, 80 test, 72 saat soak — rəqiblərdə yoxdur və ya parçalı.",
       "Açıq mənbə, türkcə sənədlər, self-hosted — vendor asılılığı yoxdur.",
       "CDN L3/L4-ü udur. Origin-də inteqrasiya + sürət.",
       "Fail2ban, ModSecurity, CrowdSec ayrı deyil — ban + WAF + SOC bir məhsulda.",
@@ -1094,7 +1104,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Ayrıca Fail2ban yoxdur. Log sətrindən ipset/XDP kernel bana ~20 ms — siyasət, tenant, FP trust bir pipeline-da.",
       "Ayrıca ModSecurity modulu yoxdur. OWASP CRS 121 qayda, PCRE2 JIT — nginx log sətrindən bir keçid.",
-      "Parçalı CrowdSec steki yoxdur. Prometheus, SOC zaman xətti, 75 test, 14 sübut faylı, Telegram idarəetmə — bir panel.",
+      "Parçalı CrowdSec steki yoxdur. Prometheus, SOC zaman xətti, 80 test, 14 sübut faylı, Telegram idarəetmə — bir panel.",
     ],
   },
   kk: {
@@ -1135,7 +1145,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Fail2ban, ModSecurity va CrowdSec'ni alohida o'rnatish o'rniga, Log Guardian uchtasini bitta self-hosted paketda birlashtiradi.",
     why_bodies: [
       "nginx logi → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + skript uyumi yo'q.",
-      "competitive-proof PDF, 75 test, 72 soat soak — raqiblarda yo'q yoki bo'lak.",
+      "competitive-proof PDF, 80 test, 72 soat soak — raqiblarda yo'q yoki bo'lak.",
       "Ochiq kod, turkcha hujjatlar, self-hosted — vendor qaramligi yo'q.",
       "CDN L3/L4'ni yutadi. Origin'da integratsiya + tezlik.",
       "Fail2ban, ModSecurity, CrowdSec alohida emas — ban + WAF + SOC bitta mahsulotda.",
@@ -1146,7 +1156,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Alohida Fail2ban yo'q. Log qatoridan ipset/XDP kernel banga ~20 ms — siyosat, tenant, FP trust bitta pipeline'da.",
       "Alohida ModSecurity moduli yo'q. OWASP CRS 121 qoida, PCRE2 JIT — nginx log qatoridan bir o'tish.",
-      "Bo'lak CrowdSec steki yo'q. Prometheus, SOC vaqt chizig'i, 75 test, 14 dalil fayli, Telegram boshqaruvi — bitta panel.",
+      "Bo'lak CrowdSec steki yo'q. Prometheus, SOC vaqt chizig'i, 80 test, 14 dalil fayli, Telegram boshqaruvi — bitta panel.",
     ],
   },
   ky: {
@@ -1187,7 +1197,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Fail2ban, ModSecurity we CrowdSec-i aýratyn gurnamagyň ýerine, Log Guardian üçüsini bir self-hosted pakete birleşdirýär.",
     why_bodies: [
       "nginx logy → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + skript üýşmegi ýok.",
-      "competitive-proof PDF, 75 test, 72 sagat soak — bäsdeşlerde ýok ýa-da bölek.",
+      "competitive-proof PDF, 80 test, 72 sagat soak — bäsdeşlerde ýok ýa-da bölek.",
       "Açyk çeşme, türkçe resminamalar, self-hosted — wendor garaşlylygy ýok.",
       "CDN L3/L4-i siňdirýär. Origin-de integrasiýa + tizlik.",
       "Fail2ban, ModSecurity, CrowdSec aýratyn däl — ban + WAF + SOC bir önümde.",
@@ -1198,7 +1208,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Aýratyn Fail2ban ýok. Log setirinden ipset/XDP kernel bana ~20 ms — syýasat, tenant, FP trust bir pipeline-da.",
       "Aýratyn ModSecurity moduly ýok. OWASP CRS 121 düzgün, PCRE2 JIT — nginx log setirinden bir geçiş.",
-      "Bölek CrowdSec steki ýok. Prometheus, SOC wagt çyzygy, 75 test, 14 subutnama faýly, Telegram dolandyryş — bir panel.",
+      "Bölek CrowdSec steki ýok. Prometheus, SOC wagt çyzygy, 80 test, 14 subutnama faýly, Telegram dolandyryş — bir panel.",
     ],
   },
   tt: {
@@ -1291,7 +1301,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Fail2ban, ModSecurity ve CrowdSec'ni ayrı qurmaq yerine, Log Guardian üçüsini bir self-hosted pakette birleştire.",
     why_bodies: [
       "nginx logu → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + skript yığını yoq.",
-      "competitive-proof PDF, 75 test, 72 saat soak — raqiplerde yoq ya da parça-parça.",
+      "competitive-proof PDF, 80 test, 72 saat soak — raqiplerde yoq ya da parça-parça.",
       "Açıq kod, türkçe vesiqalar, self-hosted — vendor bağlılığı yoq.",
       "CDN L3/L4'ni yuta. Origin'de integratsiya + tezlik.",
       "Fail2ban, ModSecurity, CrowdSec ayrı degil — ban + WAF + SOC bir mahsulda.",
@@ -1302,7 +1312,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Ayrı Fail2ban yoq. Log satırından ipset/XDP kernel banğa ~20 ms — siyaset, tenant, FP trust bir pipeline'da.",
       "Ayrı ModSecurity modul yoq. OWASP CRS 121 qaide, PCRE2 JIT — nginx log satırından bir keçüv.",
-      "Parça-parça CrowdSec stek yoq. Prometheus, SOC vaqıt sızığı, 75 test, 14 delil faylı, Telegram idare — bir pan'el.",
+      "Parça-parça CrowdSec stek yoq. Prometheus, SOC vaqıt sızığı, 80 test, 14 delil faylı, Telegram idare — bir pan'el.",
     ],
   },
   gag: {
@@ -1317,7 +1327,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
       "Fail2ban, ModSecurity hem CrowdSec'i ayırı kurmak erinä, Log Guardian üçünü bir self-hosted pakettä birleştirer.",
     why_bodies: [
       "nginx logu → OWASP CRS → ~20 ms kernel ban. Fail2ban + ModSec + skript yıını yok.",
-      "competitive-proof PDF, 75 test, 72 saat soak — rakiplerdä yok osaydı parça-parça.",
+      "competitive-proof PDF, 80 test, 72 saat soak — rakiplerdä yok osaydı parça-parça.",
       "Açık kod, türkçä dokumentlär, self-hosted — vendor baalantısı yok.",
       "CDN L3/L4'ü yudêr. Origin'dä integratsiya + hız.",
       "Fail2ban, ModSecurity, CrowdSec ayırı diil — ban + WAF + SOC bir üründä.",
@@ -1328,7 +1338,7 @@ const SECTION_BODIES: Partial<Record<Locale, SectionBody>> = {
     merge_bodies: [
       "Ayırı Fail2ban yok. Log satırından ipset/XDP kernel bana ~20 ms — politika, tenant, FP trust bir pipeline'dä.",
       "Ayırı ModSecurity modül yok. OWASP CRS 121 kural, PCRE2 JIT — nginx log satırından bir geçmäk.",
-      "Parça-parça CrowdSec stek yok. Prometheus, SOC zaman çizgisi, 75 test, 14 delil dosyası, Telegram işlemäk — bir panel.",
+      "Parça-parça CrowdSec stek yok. Prometheus, SOC zaman çizgisi, 80 test, 14 delil dosyası, Telegram işlemäk — bir panel.",
     ],
   },
   ug: {

@@ -17,13 +17,49 @@ import Link from "next/link";
 import { useLanguage } from "./LanguageProvider";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import type { ValidationTestResult } from "@/lib/validationTests";
+import type { ProofMeta } from "@/lib/proofMeta";
 
 type Payload = {
   available: boolean;
   tests: ValidationTestResult[];
   summary?: { total: number; passed: number; failed: number; warned?: number; pending: number };
+  proof_expected?: number;
+  proof_test_ids?: string[];
+  parity_ok?: boolean;
   hint?: string | null;
 };
+
+function proofAlignedTests(
+  list: ValidationTestResult[],
+  proofExpected?: number,
+  proofIds?: string[],
+): ValidationTestResult[] {
+  if (!proofExpected || !proofIds?.length || list.length <= proofExpected) return list;
+  const order = new Map(proofIds.map((id, i) => [id, i]));
+  return list
+    .filter((t) => order.has(t.id))
+    .sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0));
+}
+
+function normalizeTestsPayload(raw: Payload, proofMeta?: ProofMeta | null): Payload {
+  const expected = raw.proof_expected ?? proofMeta?.expected;
+  const ids =
+    raw.proof_test_ids?.length ? raw.proof_test_ids : proofMeta?.testIds;
+  if (!expected || !ids?.length || !raw.tests?.length || raw.tests.length <= expected) {
+    return raw;
+  }
+  const tests = proofAlignedTests(raw.tests, expected, ids);
+  const passed = tests.filter((t) => t.status === "pass").length;
+  const failed = tests.filter((t) => t.status === "fail").length;
+  const warned = tests.filter((t) => t.status === "warn").length;
+  const pending = tests.filter((t) => t.status === "pending").length;
+  return {
+    ...raw,
+    tests,
+    summary: { total: tests.length, passed, failed, warned, pending },
+    parity_ok: tests.length === expected,
+  };
+}
 
 type FilterStatus = "all" | ValidationTestResult["status"];
 
@@ -72,7 +108,14 @@ function TestCard({ test }: { test: ValidationTestResult }) {
         <div className="flex items-start gap-3 min-w-0">
           <FlaskConical className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div className="min-w-0">
-            <h3 className="text-sm font-semibold text-white leading-snug">{test.title}</h3>
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-sm font-semibold text-white leading-snug">{test.title}</h3>
+              {test.badge && (
+                <span className="rounded border border-cyan-500/30 bg-cyan-500/10 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-cyan-300">
+                  {test.badge}
+                </span>
+              )}
+            </div>
             <p className="text-xs text-white/45 mt-1 line-clamp-2">{test.purpose}</p>
           </div>
         </div>
@@ -99,7 +142,20 @@ function TestCard({ test }: { test: ValidationTestResult }) {
 
       <div className="flex items-center justify-between gap-2 pt-1 border-t border-white/5 text-[10px] text-white/35">
         <span className="font-mono truncate">{test.script}</span>
-        <span className="shrink-0">{test.date ?? t("testNoDate")}</span>
+        <div className="flex items-center gap-2 shrink-0">
+          {test.docHref && (
+            <a
+              href={test.docHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-primary/80 hover:text-primary hover:underline max-w-[10rem] truncate"
+              title={test.docLabel ?? test.docHref}
+            >
+              {test.docLabel ?? t("testGateDocLink")}
+            </a>
+          )}
+          <span>{test.date ?? t("testNoDate")}</span>
+        </div>
       </div>
     </article>
   );
@@ -142,20 +198,16 @@ function SummaryHero({
   );
 }
 
-const FILTER_TABS: { id: FilterStatus; countKey: keyof NonNullable<Payload["summary"]> }[] = [
-  { id: "all", countKey: "total" },
-  { id: "pass", countKey: "passed" },
-  { id: "warn", countKey: "warned" },
-  { id: "fail", countKey: "failed" },
-  { id: "pending", countKey: "pending" },
-];
+const FILTER_TABS: FilterStatus[] = ["all", "pass", "warn", "fail", "pending"];
 
 export function ValidationTestsPanel({
   compact = false,
   showHeaderLink = false,
+  proofMeta = null,
 }: {
   compact?: boolean;
   showHeaderLink?: boolean;
+  proofMeta?: ProofMeta | null;
 }) {
   const { t, locale } = useLanguage();
   const [data, setData] = useState<Payload | null>(null);
@@ -170,17 +222,56 @@ export function ValidationTestsPanel({
 
   const poll = useCallback(async () => {
     try {
-      const res = await fetch(`/api/tests?locale=${locale}`);
-      setData(await res.json());
+      const res = await fetch(`/api/tests?locale=${locale}&_=${Date.now()}`, {
+        cache: "no-store",
+        headers: { Pragma: "no-cache" },
+      });
+      if (!res.ok) return;
+      setData(normalizeTestsPayload(await res.json(), proofMeta));
     } catch {
       setData({ available: false, tests: [] });
     }
-  }, [locale]);
+  }, [locale, proofMeta]);
 
   useVisibleInterval(poll, 60000, true);
 
-  const tests = data?.tests ?? [];
-  const summary = data?.summary;
+  const tests = useMemo(
+    () =>
+      proofAlignedTests(
+        data?.tests ?? [],
+        data?.proof_expected ?? proofMeta?.expected,
+        data?.proof_test_ids?.length ? data.proof_test_ids : proofMeta?.testIds,
+      ),
+    [data?.tests, data?.proof_expected, data?.proof_test_ids, proofMeta?.expected, proofMeta?.testIds],
+  );
+
+  /** competitive-proof kanonik — passed/total ayni listeden (88 drift UI'da gorunmez) */
+  const displayStats = useMemo(() => {
+    const list = tests;
+    const expected = data?.proof_expected ?? proofMeta?.expected;
+    const total = expected && expected > 0 ? expected : list.length;
+    const passed = list.filter((t) => t.status === "pass").length;
+    const failed = list.filter((t) => t.status === "fail").length;
+    const warned = list.filter((t) => t.status === "warn").length;
+    const pending = list.filter((t) => t.status === "pending").length;
+    const cappedPassed =
+      expected && expected > 0 && passed > expected ? Math.min(passed, expected) : passed;
+    return { total, passed: cappedPassed, failed, warned, pending };
+  }, [tests, data?.proof_expected, proofMeta?.expected]);
+
+  const buildRev = process.env.NEXT_PUBLIC_DASHBOARD_BUILD_REV;
+
+  /** Eski JS bundle: API/proof 80 iken kart listesi 88 — tek seferlik reload */
+  useEffect(() => {
+    const expected = data?.proof_expected ?? proofMeta?.expected;
+    if (!expected || expected <= 0) return;
+    const rawLen = data?.tests?.length ?? 0;
+    if (rawLen <= expected) return;
+    const key = "lg-tests-stale-reload";
+    if (sessionStorage.getItem(key) === "1") return;
+    sessionStorage.setItem(key, "1");
+    window.location.reload();
+  }, [data?.proof_expected, data?.tests?.length, proofMeta?.expected]);
 
   useEffect(() => {
     const hash = window.location.hash.replace(/^#/, "");
@@ -206,11 +297,10 @@ export function ValidationTestsPanel({
 
   const visible = compact ? filtered.slice(0, 4) : filtered;
   const allPassed =
-    summary &&
-    summary.total > 0 &&
-    summary.passed === summary.total &&
-    summary.failed === 0 &&
-    (summary.warned ?? 0) === 0;
+    displayStats.total > 0 &&
+    displayStats.passed === displayStats.total &&
+    displayStats.failed === 0 &&
+    displayStats.warned === 0;
 
   const filterLabel = (id: FilterStatus) => {
     if (id === "all") return t("testsFilterAll");
@@ -239,15 +329,24 @@ export function ValidationTestsPanel({
           <p className="text-sm text-white/45 mt-1">{t("testsSectionSubtitle")}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2 shrink-0">
-          {summary && summary.total > 0 && (
+          {displayStats.total > 0 && (
             <div className="flex items-center gap-2 text-xs font-mono text-white/50 px-3 py-1.5 rounded-full bg-white/5 border border-white/10">
-              <span>{summary.total} {t("testsTotalLabel")}</span>
-              <span className="text-emerald-400">{summary.passed} ✓</span>
-              {(summary.warned ?? 0) > 0 && (
-                <span className="text-amber-400">{summary.warned} ⚠</span>
+              <span>
+                {displayStats.total} {t("testsTotalLabel")}
+                {data?.proof_expected && data.proof_expected === displayStats.total ? (
+                  <span className="text-cyan-400/80 ml-1">proof</span>
+                ) : null}
+              </span>
+              <span className="text-emerald-400">{displayStats.passed} ✓</span>
+              {displayStats.warned > 0 && (
+                <span className="text-amber-400">{displayStats.warned} ⚠</span>
               )}
-              {summary.failed > 0 && <span className="text-rose-400">{summary.failed} ✗</span>}
-              {summary.pending > 0 && <span className="text-amber-400">{summary.pending} …</span>}
+              {displayStats.failed > 0 && (
+                <span className="text-rose-400">{displayStats.failed} ✗</span>
+              )}
+              {displayStats.pending > 0 && (
+                <span className="text-amber-400">{displayStats.pending} …</span>
+              )}
             </div>
           )}
           {showHeaderLink && (
@@ -282,15 +381,24 @@ export function ValidationTestsPanel({
         </div>
       </div>
 
-      {!compact && allPassed && summary && (
-        <SummaryHero passed={summary.passed} total={summary.total} />
+      {!compact && allPassed && (
+        <SummaryHero passed={displayStats.passed} total={displayStats.total} />
       )}
 
       {!compact && tests.length > 0 && (
         <div className="flex flex-col sm:flex-row gap-3 sm:items-center">
           <div className="flex flex-wrap gap-1.5">
-            {FILTER_TABS.map(({ id, countKey }) => {
-              const count = summary?.[countKey] ?? 0;
+            {FILTER_TABS.map((id) => {
+              const count =
+                id === "all"
+                  ? displayStats.total
+                  : id === "pass"
+                    ? displayStats.passed
+                    : id === "warn"
+                      ? displayStats.warned
+                      : id === "fail"
+                        ? displayStats.failed
+                        : displayStats.pending;
               if (id !== "all" && count === 0) return null;
               const active = filter === id;
               return (
@@ -348,8 +456,16 @@ export function ValidationTestsPanel({
           href="/tests"
           className="glass-panel p-3 text-center text-sm text-primary hover:bg-white/5 transition-colors"
         >
-          {t("testsViewAll")} ({tests.length})
+          {t("testsViewAll")} ({displayStats.total})
         </Link>
+      )}
+
+      {!compact && (data?.proof_expected ?? proofMeta?.expected) && displayStats.total > 0 && (
+        <p className="text-[10px] text-center font-mono text-cyan-400/60">
+          competitive-proof {displayStats.passed}/{data?.proof_expected ?? proofMeta?.expected}
+          {data?.parity_ok === false ? ` · ${t("testsProofDriftFixed")}` : ""}
+          {buildRev && buildRev !== "unknown" ? ` · build ${buildRev}` : ""}
+        </p>
       )}
     </section>
   );

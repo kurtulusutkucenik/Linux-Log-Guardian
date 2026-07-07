@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-06T09:07:24.905676+00:00",
+  "date": "2026-07-07T09:51:27.285769+00:00",
   "pass": true,
   "laptop_core_ok": true,
   "laptop_core_refreshed": false,
@@ -7,8 +7,8 @@
   "dashboard_ok": true,
   "attack_map_parity_ok": true,
   "telegram_soc_ok": true,
-  "proof_tests": 79,
-  "proof_pass": 79,
+  "proof_tests": 80,
+  "proof_pass": 80,
   "dash_url": "https://localhost:8443/tests",
   "script": "scripts/morning_operator_gate.sh"
 }

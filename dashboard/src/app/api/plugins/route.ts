@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { createSignedFleetCommand } from '@/lib/fleetCommandSign';
 
 export const dynamic = 'force-dynamic';
 
@@ -68,13 +69,11 @@ export async function POST(request: Request) {
     });
 
     // Fleet'e PUSH_WASM_PLUGIN komutu gönder
-    await (prisma as any).agentCommand.create({
-      data: {
-        tenantId,
-        commandType: 'PUSH_WASM_PLUGIN',
-        payload: filePath,
-        status: 'pending',
-      },
+    await createSignedFleetCommand(prisma, {
+      tenantId,
+      commandType: 'PUSH_WASM_PLUGIN',
+      payload: filePath,
+      status: 'pending',
     });
 
     return NextResponse.json({

@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
 import { executeGuardianBan } from '@/lib/guardianBanExec';
 import { invalidateAllBansCache } from '@/lib/bansCache';
+import { validateFleetCommand } from '@/lib/fleetCommandValidate';
+import {
+  createSignedFleetCommand,
+  verifyFleetCommandSignature,
+} from '@/lib/fleetCommandSign';
 
 export const dynamic = 'force-dynamic';
 
@@ -45,17 +50,19 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'asc' },
     });
 
-    if (commands.length > 0) {
+    const deliverable = commands.filter((cmd) => verifyFleetCommandSignature(cmd));
+
+    if (deliverable.length > 0) {
       await prisma.agentCommand.updateMany({
         where: {
-          id: { in: commands.map((c) => c.id) },
+          id: { in: deliverable.map((c) => c.id) },
           status: 'pending',
         },
         data: { status: 'delivered' },
       });
     }
 
-    return NextResponse.json({ commands });
+    return NextResponse.json({ commands: deliverable });
   } catch (error) {
     console.error('Fetch commands error:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
@@ -76,6 +83,11 @@ export async function POST(request: Request) {
     const body = await request.json();
     const { commandType, payload, targetAgentId, targetTenantId, reason: banReason } = body;
 
+    const validationErr = validateFleetCommand(body);
+    if (validationErr) {
+      return NextResponse.json({ error: validationErr }, { status: 400 });
+    }
+
     if (!commandType || !payload) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 });
     }
@@ -83,13 +95,11 @@ export async function POST(request: Request) {
     // Admin istediği tenant'a komut atabilir, normal kullanıcı sadece kendi tenant'ına atabilir
     const finalTenantId = userRole === 'admin' && targetTenantId ? targetTenantId : userTenant;
 
-    const command = await prisma.agentCommand.create({
-      data: {
-        tenantId: finalTenantId as string,
-        targetAgentId: targetAgentId || null,
-        commandType,
-        payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
-      },
+    const command = await createSignedFleetCommand(prisma, {
+      tenantId: finalTenantId as string,
+      targetAgentId: targetAgentId || null,
+      commandType,
+      payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
     });
 
     let immediateBan = null as Awaited<ReturnType<typeof executeGuardianBan>> | null;
