@@ -48,6 +48,7 @@ bash scripts/optional_track_refresh.sh
 | Ne | Nerede |
 |----|--------|
 | Son vitrin koşusu | `~/lg-last-vitrin.json` (`dashboard_refresh.sh` veya `finish_vitrin_plan.sh` sonunda) |
+| Dashboard canlı `/api/tests` | `bash scripts/dashboard_tests_live_count.sh` → `dashboard-tests-live-report.json` |
 | INTEL ban DB kontrol | `WARN_ONLY=1 bash scripts/intel_ban_db_ops_check.sh` → `intel-ban-db-report.json` |
 | Edge checklist ozet | `bash scripts/edge_protection_checklist.sh` → `edge-protection-checklist-report.json` |
 | E9 Enterprise runbook | `bash scripts/enterprise_e9_verify.sh` → `enterprise-e9-verify-report.json` |
@@ -120,7 +121,8 @@ Haftalık güvenlik denetimi ayrı: `bash scripts/install_audit_cron.sh` (Pazart
 | `FULL=1 bash scripts/laptop_excellence_gate.sh` | + canlı site + filo e2e + release_ready | Hayır |
 | `bash scripts/laptop_reboot_ready.sh` | Reboot sonrası stack + filo tek komut | Kısmen (daemon env sudo) |
 | `bash scripts/laptop_release_gate.sh` | Sprint + `.deb` + site gate (GitHub öncesi) | Hayır |
-| `bash scripts/optional_polish_refresh.sh` | Fleet prune + site/dashboard test parity (51/51) | Hayır |
+| `bash scripts/optional_polish_refresh.sh` | Fleet prune + site/dashboard test parity (80/80) | Hayır |
+| `bash scripts/dashboard_tests_live_count.sh` | `/api/tests` canlı kart sayısı == competitive-proof | Hayır |
 | `bash scripts/laptop_optional_layers_preflight.sh` | L7 + webhook durum (sudo yok) | Hayır |
 | `sudo bash scripts/laptop_optional_layers_on.sh` | L7 eBPF + Telegram webhook prod + filo | Kısmen |
 | `bash scripts/test_deb_local.sh` | `.deb` extract doğrulama (dpkg -i değil) | Hayır |
@@ -457,6 +459,8 @@ Script yoksa (ilk sefer): `bash /mnt/lg/scripts/vm_bootstrap_from_host.sh`
 | Sadece docs/script | sync + `vm_demo_gate` |
 | C kaynak (.c) | sync + **`vm_build_binary`** + `vm_demo_gate` |
 | Dashboard | laptop `dashboard_refresh.sh` (VM değil) |
+
+**HOST otomasyon:** `bash scripts/vm_host_refresh.sh --exec` (VBox guestcontrol; `~/.config/log-guardian/vm-guest.pass`). Başarısızsa VM içinde: `sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh`. **HOST doğrulama:** `bash scripts/vm_demo_gate.sh --verify-only` (FAIL=0).
 
 Opsiyonel demo kanıtı (laptop — Grafana stack):
 

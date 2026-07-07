@@ -104,7 +104,9 @@ if preview.is_file():
     r = json.loads(preview.read_text(encoding="utf-8"))
     if r.get("pass") is True:
         sf = int(r.get("site_fail") or 0)
-        shown = int(r.get("site_tests") or 0) if sf == 0 else int(r.get("site_pass") or 0)
+        shown = int(r.get("site_pass_all") or r.get("site_tests") or 0)
+        if sf > 0:
+            shown = int(r.get("site_pass_all") or r.get("site_pass") or 0)
         exp = int(r.get("expected_tests") or 0)
         print(f"  website_preview: {shown}/{exp} pass")
     else:

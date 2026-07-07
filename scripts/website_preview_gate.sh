@@ -56,6 +56,7 @@ pairs = re.findall(r'"id"\s*:\s*"([^"]+)"[^}]*?"status"\s*:\s*"(pass|fail)"', sr
 # Self + canli site ayri kapilarda; yerel preview bunlari saymaz
 SKIP_SELF = {"website-preview-gate"}
 SKIP_EXTERNAL = {"website-live-gate", "release-ready-gate", "demo-rehearsal-gate", "presentation-ship-gate", "demo-video-gate", "github-ship-gate", "laptop-core-gate", "morning-operator-gate", "bans-telegram-ops"}
+pass_all = sum(1 for _, s in pairs if s == "pass")
 pass_n = sum(1 for i, s in pairs if s == "pass" and i not in SKIP_SELF)
 fail_n = sum(1 for i, s in pairs if s == "fail" and i not in SKIP_SELF | SKIP_EXTERNAL)
 min_pass = expected - len(SKIP_SELF) - len(SKIP_EXTERNAL)
@@ -74,6 +75,7 @@ out = {
     "expected_tests": expected,
     "site_tests": len(ids),
     "site_pass": pass_n,
+    "site_pass_all": pass_all,
     "site_fail": fail_n,
     "has_grafana_parity": "grafana-parity-gate" in ids,
     "has_edge_gate": "edge-protection-gate" in ids,
@@ -108,7 +110,9 @@ import json, sys
 r = json.load(open(sys.argv[1]))
 expected = int(r.get("expected_tests") or 0)
 site_fail = int(r.get("site_fail") or 0)
-shown = int(r.get("site_tests") or 0) if site_fail == 0 else int(r.get("site_pass") or 0)
+shown = int(r.get("site_pass_all") or r.get("site_tests") or 0)
+if site_fail > 0:
+    shown = int(r.get("site_pass_all") or r.get("site_pass") or 0)
 print(f"{shown}/{expected} test")
 PY
 )"

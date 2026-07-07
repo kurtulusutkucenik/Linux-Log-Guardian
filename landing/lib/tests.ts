@@ -322,15 +322,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Attack map — geo marker + canli ban",
     "titleEn": "Attack map — geo markers + live bans",
-    "verdict": "2 marker, kaynak=live; ack=1 ban=1; nav=1 parity=OK.",
-    "verdictEn": "2 markers, source=live; ack=1 ban=1; nav=1 parity=OK.",
+    "verdict": "5 marker, kaynak=live; ack=1 ban=4; nav=4 parity=OK.",
+    "verdictEn": "5 markers, source=live; ack=1 ban=4; nav=4 parity=OK.",
     "group": "proof",
     "purpose": "Ana sayfa kure haritasinda /api/attack-geo ile ban IP konumlarini kanitlar.",
     "purposeEn": "Proves banned IP locations on the home globe via /api/attack-geo.",
     "metrics": [
       {
         "label": "markers",
-        "value": "2"
+        "value": "5"
       },
       {
         "label": "ack",
@@ -338,11 +338,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "ban",
-        "value": "1"
+        "value": "4"
       },
       {
         "label": "nav",
-        "value": "1"
+        "value": "4"
       },
       {
         "label": "bans",
@@ -390,7 +390,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/ban_policy_audit_e2e.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "ban-profile-e2e",
@@ -638,7 +638,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/demo_rehearsal_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "demo-video-gate",
@@ -851,7 +851,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/github_ship_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "grafana-alerts",
@@ -947,15 +947,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "INTEL_BAN_DB — ban_events boyut + TTL",
     "titleEn": "INTEL_BAN_DB — ban_events size + TTL",
-    "verdict": "ban_events 1037; legacy 0; stale 0; TTL 7g.",
-    "verdictEn": "ban_events 1037; legacy 0; stale 0; TTL 7d.",
+    "verdict": "ban_events 1047; legacy 0; stale 0; TTL 7g.",
+    "verdictEn": "ban_events 1047; legacy 0; stale 0; TTL 7d.",
     "group": "proof",
     "purpose": "SQLite ban_events sisme kontrolu — ban mantigina dokunmaz.",
     "purposeEn": "SQLite ban_events bloat check — does not change ban logic.",
     "metrics": [
       {
         "label": "rows",
-        "value": "1037"
+        "value": "1047"
       },
       {
         "label": "legacy",
@@ -1152,15 +1152,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Lineage → incident otomatik (tek senaryo)",
     "titleEn": "Lineage → auto incident (single scenario)",
-    "verdict": "INC-6a4a2d35-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
-    "verdictEn": "INC-6a4a2d35-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
+    "verdict": "INC-6a4ccdbe-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
+    "verdictEn": "INC-6a4ccdbe-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
     "group": "proof",
     "purpose": "LOG_SQLI + EBPF_EXECVE sinyallerinden INC-* korelasyonu; tek otomatik incident kanıtı.",
     "purposeEn": "INC-* correlation from LOG_SQLI + EBPF_EXECVE signals; single auto-incident proof.",
     "metrics": [
       {
         "label": "INC",
-        "value": "INC-6a4a2d35-2382"
+        "value": "INC-6a4ccdbe-2382"
       },
       {
         "label": "IP",
@@ -1172,7 +1172,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/lineage_incident_e2e.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "lineage-live",
@@ -1383,7 +1383,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/parser_fuzz_e2e.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "phase100-fast-gate",
@@ -1433,7 +1433,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/presentation_ship_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "prod-stack-e2e",
@@ -1509,7 +1509,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/release_ready_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "siem-export",
@@ -1609,19 +1609,19 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Telegram SOC — timeline + map + webhook",
     "titleEn": "Telegram SOC — timeline + map + webhook",
-    "verdict": "SOC 12 (ack 8); map 2; bans ack 1; webhook undo.",
-    "verdictEn": "SOC 12 (ack 8); map 2; bans ack 1; webhook undo.",
+    "verdict": "SOC 15 (ack 8); map 5; bans ack 1; webhook undo.",
+    "verdictEn": "SOC 15 (ack 8); map 5; bans ack 1; webhook undo.",
     "group": "proof",
     "purpose": "Uc operator yuzeyinin ayni anda canli kanit urettigini dogrular.",
     "purposeEn": "Proves three operator surfaces emit live evidence together.",
     "metrics": [
       {
         "label": "soc",
-        "value": "12"
+        "value": "15"
       },
       {
         "label": "map",
-        "value": "2"
+        "value": "5"
       },
       {
         "label": "bans",
@@ -1685,8 +1685,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "VM fleet keepalive — host + node-vm-02",
     "titleEn": "VM fleet keepalive — host + node-vm-02",
-    "verdict": "node-kurtulus-01=Online; node-vm-02=Online; online=2.",
-    "verdictEn": "node-kurtulus-01=Online; node-vm-02=Online; online=2.",
+    "verdict": "node-kurtulus-01=Online; node-vm-02=skip; online=2.",
+    "verdictEn": "node-kurtulus-01=Online; node-vm-02=skip; online=2.",
     "group": "proof",
     "purpose": "LAPTOP_OPS filo + VM keepalive — iki dugum Online.",
     "purposeEn": "LAPTOP_OPS fleet + VM keepalive — two nodes Online.",
@@ -1697,11 +1697,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "vm",
-        "value": "Online"
+        "value": "skip"
       }
     ],
     "script": "scripts/vm_fleet_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-07"
   },
   {
     "id": "vm-host-prep-gate",

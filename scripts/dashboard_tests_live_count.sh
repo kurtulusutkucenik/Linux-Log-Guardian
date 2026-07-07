@@ -7,9 +7,25 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 PROOF="${ROOT}/competitive-proof.json"
+REPORT="${DASHBOARD_TESTS_LIVE_REPORT:-dashboard-tests-live-report.json}"
 [[ -f "$PROOF" ]] || { echo "[dashboard_tests_live] FAIL: competitive-proof.json yok" >&2; exit 1; }
 
 EXPECTED=$(python3 -c "import json; print(len(json.load(open('$PROOF'))['validationTests']))")
+
+write_report() {
+  python3 - "$ROOT" "$REPORT" "$@" <<'PY'
+import datetime
+import json
+import sys
+from pathlib import Path
+
+root, report_path = Path(sys.argv[1]), Path(sys.argv[2])
+data = json.loads(sys.argv[3])
+data["date"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+data["script"] = "scripts/dashboard_tests_live_count.sh"
+report_path.write_text(json.dumps(data, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+PY
+}
 COOKIE_JAR="$(mktemp)"
 trap 'rm -f "$COOKIE_JAR"' EXIT
 
@@ -59,6 +75,13 @@ while IFS= read -r pass; do
 done < <(collect_pass_candidates)
 
 if [[ "$login_ok" != true ]]; then
+  write_report "$(python3 -c "import json; print(json.dumps({
+    'pass': None,
+    'login_ok': False,
+    'expected': int('$EXPECTED'),
+    'dash_url': '''$DASH''',
+    'warn': 'login_failed',
+  }))")"
   echo "[dashboard_tests_live] WARN: login — DASHBOARD_ADMIN_PASSWORD veya seed parolasi" >&2
   echo "  Kanit dosyasi OK: competitive-proof ${EXPECTED}/${EXPECTED}" >&2
   exit 0
@@ -77,6 +100,15 @@ print(len(tests), exp, '1' if d.get('parity_ok') else '0')
 )
 
 if [[ "$ACTUAL" != "$EXPECTED" ]] || [[ "${PROOF_EXP:-}" != "$EXPECTED" ]]; then
+  write_report "$(python3 -c "import json; print(json.dumps({
+    'pass': False,
+    'login_ok': True,
+    'expected': int('$EXPECTED'),
+    'actual': int('$ACTUAL'),
+    'proof_expected': int('${PROOF_EXP:-0}'),
+    'parity_ok': '${PARITY_OK:-0}' == '1',
+    'dash_url': '''$DASH''',
+  }))")"
   echo "[dashboard_tests_live] FAIL: /api/tests total=$ACTUAL proof_expected=${PROOF_EXP:-?} expected=$EXPECTED" >&2
   echo "  Cozum: bash scripts/dashboard_refresh.sh && tarayici Ctrl+Shift+R" >&2
   exit 1
@@ -85,5 +117,15 @@ fi
 if [[ "${PARITY_OK:-0}" != "1" ]]; then
   echo "[dashboard_tests_live] WARN: parity_ok=false (total=$ACTUAL)" >&2
 fi
+
+write_report "$(python3 -c "import json; print(json.dumps({
+  'pass': True,
+  'login_ok': True,
+  'expected': int('$EXPECTED'),
+  'actual': int('$ACTUAL'),
+  'proof_expected': int('${PROOF_EXP:-$EXPECTED}'),
+  'parity_ok': '${PARITY_OK:-0}' == '1',
+  'dash_url': '''$DASH''',
+}))")"
 
 echo "[OK] dashboard_tests_live — /api/tests $ACTUAL/$EXPECTED"

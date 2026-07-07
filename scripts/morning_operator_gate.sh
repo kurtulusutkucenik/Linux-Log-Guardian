@@ -91,6 +91,11 @@ fi
 if curl -skf --max-time 5 --resolve "localhost:8443:127.0.0.1" "https://localhost:8443/tests" -o /dev/null 2>/dev/null; then
   dash_ok=true
   echo "[OK] dashboard :8443/tests"
+  if bash "$ROOT/scripts/dashboard_tests_live_count.sh" 2>/dev/null; then
+    echo "[OK] dashboard_tests_live (/api/tests parity)"
+  else
+    echo "[WARN] dashboard_tests_live — bash scripts/dashboard_refresh.sh && Ctrl+Shift+R" >&2
+  fi
 else
   echo "[WARN] dashboard erisilemiyor"
 fi

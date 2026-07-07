@@ -1,6 +1,6 @@
 {
-  "date": "2026-07-07T09:51:27.285769+00:00",
-  "pass": true,
+  "date": "2026-07-07T10:45:33.043896+00:00",
+  "pass": false,
   "laptop_core_ok": true,
   "laptop_core_refreshed": false,
   "presentation_ship_ok": true,
@@ -8,7 +8,8 @@
   "attack_map_parity_ok": true,
   "telegram_soc_ok": true,
   "proof_tests": 80,
-  "proof_pass": 80,
+  "proof_pass": 77,
   "dash_url": "https://localhost:8443/tests",
-  "script": "scripts/morning_operator_gate.sh"
+  "script": "scripts/morning_operator_gate.sh",
+  "fail_reason": "competitive_proof"
 }

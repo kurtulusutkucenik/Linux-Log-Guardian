@@ -103,7 +103,7 @@ flowchart TB
 | P4 | L7 HTTP probe | `http_l7_probe.c`, `l7_telemetry.c` | ✅ | `l7-probe-prod-report.json`, `probe_active=true` | ipset-fallback laptop |
 | P5 | Incident korelasyon | `incident_engine.c` | ✅ | `bash scripts/incident_e2e.sh` | |
 | P6 | Falco host eşleme | `falco_host_rules.c` | ✅ | `bash scripts/falco_host_e2e.sh` | |
-| P7 | Dashboard (Next.js) | `dashboard/` | ✅ | `https://localhost:8443` + `/tests` **60 kart** | Prod: Caddy TLS + JWT |
+| P7 | Dashboard (Next.js) | `dashboard/` | ✅ | `https://localhost:8443` + `/tests` **80 kart** | Prod: Caddy TLS + JWT |
 | P8 | Fleet telemetry + komut | `agent_sync.c`, `/fleet` | ✅ | `fleet_multi_node_e2e.sh` + VM `node-vm-02` keepalive | Dashboard :8443; 2 node canlı demo |
 | P9 | Grafana panelleri | `grafana-dashboard.json`, `grafana-alerts.json` | ✅ | `bash scripts/grafana_provision.sh` | `$tenant` label |
 | P10 | Webhook + Telegram ops | `webhook.c` | ✅ | laptop: tunnel setWebhook + `grafana_alert_e2e.sh` | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |

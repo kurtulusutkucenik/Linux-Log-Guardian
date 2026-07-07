@@ -97,6 +97,19 @@ for i in $(seq 1 36); do
   sleep 5
 done
 
+# guestcontrol icin GuestAdd surumu + kisa bekleme (exec service)
+for i in $(seq 1 24); do
+  ga_ver="$(VBoxManage guestproperty get "$VM_NAME" "/VirtualBox/GuestAdd/Version" 2>/dev/null \
+    | sed -n 's/^Value: \(.*\)$/\1/p' | tr -d '"')"
+  if [[ -n "$ga_ver" && "$ga_ver" != "No value set!" ]]; then
+    ok "GuestAdd surumu: $ga_ver"
+    sleep "${LG_VM_GUEST_EXEC_DELAY_SEC:-12}"
+    break
+  fi
+  [[ $i -eq 24 ]] && info "GuestAdd surumu yok — guestcontrol denenecek"
+  sleep 5
+done
+
 run_guest_refresh() {
   local pass="${LG_VM_GUEST_PASSWORD:-}"
   local pass_file="${LG_VM_GUEST_PASSWORD_FILE:-$HOME/.config/log-guardian/vm-guest.pass}"
@@ -121,7 +134,7 @@ run_guest_refresh() {
     --exe /bin/bash \
     --username "${LG_VM_GUEST_USER:-kurtulus}" \
     "${pass_args[@]}" \
-    --wait-stdout --wait-stderr --timeout 3600000 \
+    --no-wait-stdout --no-wait-stderr --timeout 3600000 \
     -- -lc "$cmd"
 }
 
@@ -130,7 +143,9 @@ if [[ "$MODE" == "--exec" ]]; then
     ok "vm_host_refresh — VM guncellendi (guestcontrol)"
     exit 0
   fi
-  fail "--exec basarisiz — ~/.config/log-guardian/vm-guest.pass (VM sudo parolasi) + VM'de oturum acik mi?"
+  fail "--exec basarisiz — ~/.config/log-guardian/vm-guest.pass (VM sudo parolasi) + VM oturumu acik mi?"
+  echo "  Manuel (VM konsolunda):" >&2
+  echo "    sudo mount -t vboxsf lg /mnt/lg && sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh" >&2
 fi
 
 if run_guest_refresh 2>/dev/null; then

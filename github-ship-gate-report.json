@@ -1,15 +1,16 @@
 {
-  "date": "2026-07-07T09:58:22.933950+00:00",
-  "pass": true,
-  "presentation_ship_ok": true,
-  "security_closure_ok": true,
+  "date": "2026-07-07T10:47:37.421653+00:00",
+  "pass": false,
+  "presentation_ship_ok": false,
+  "security_closure_ok": false,
   "security_closure_skipped": false,
   "secret_scan_ok": true,
   "website_live_ok": null,
   "vm_fleet_ok": null,
   "proof_tests": 80,
-  "proof_pass": 80,
+  "proof_pass": 74,
   "dash_url": "https://localhost:8443/tests",
   "site_url": "https://ceniklinuxlogguardian.org/tests",
-  "script": "scripts/github_ship_gate.sh"
+  "script": "scripts/github_ship_gate.sh",
+  "fail_reason": "presentation_ship; security_closure"
 }

@@ -130,6 +130,8 @@ bash scripts/enterprise_e9_verify.sh       # E9 tek kapı (dok + zincir)
 
 Internet-facing strict (manuel): `POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh`
 
+Harici SOAR ban API (Enterprise backlog): [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) — mTLS edge + `API_MUTATION_TOKEN` ayrımı.
+
 Dashboard: `https://localhost:8443/tests` (**80 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
 
 ---

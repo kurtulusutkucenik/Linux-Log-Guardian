@@ -17,6 +17,7 @@
 | [HOSTING_RUNBOOK_TR.md](HOSTING_RUNBOOK_TR.md) | Hosting operatör |
 | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) | Enterprise SLA + checklist · `enterprise_e9_verify.sh` |
 | [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | P1–P4 operatör escalation |
+| [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) | Enterprise ban API mTLS + ikinci token tasarımı (spike) |
 | [INSTALL_STEP_BY_STEP.md](INSTALL_STEP_BY_STEP.md) | Adım adım kurulum |
 | [PERSONAL_TEST.md](PERSONAL_TEST.md) | Kişisel doğrulama |
 | [BRANDING.md](BRANDING.md) | İsimlendirme (`log-guardian` vs `loganalyzer_*`) |

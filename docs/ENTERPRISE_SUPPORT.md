@@ -18,6 +18,7 @@ Log Guardian **MIT Core** + opsiyonel **Pro/Enterprise** katmanları.
 4. `bash scripts/local_security_audit.sh` — FAIL:0
 5. Edge koruma: `bash scripts/edge_protection_gate.sh` — nginx + ipset/XDP ([EDGE_PROTECTION.md](EDGE_PROTECTION.md))
 6. Opsiyonel: CrowdSec ([CROWDSEC_INTEGRATION.md](CROWDSEC_INTEGRATION.md)), mesh ([MESH_ETCD_PROD.md](MESH_ETCD_PROD.md))
+7. Enterprise harici ban API: mTLS + mutation token — [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) (tasarım; kod backlog)
 
 ## SLA hedefleri (plan)
 

@@ -43,8 +43,13 @@ def build_summary(
     preview = _load(root, "website-preview-gate-report.json")
     if preview:
         sf = int(preview.get("site_fail") or 0)
+        pass_n = int(
+            preview.get("site_pass_all")
+            or (preview.get("site_tests") if sf == 0 else preview.get("site_pass"))
+            or 0
+        )
         summary["website_preview"] = {
-            "pass": int(preview.get("site_tests") or 0) if sf == 0 else int(preview.get("site_pass") or 0),
+            "pass": pass_n,
             "expected": int(preview.get("expected_tests") or 0),
         }
 
@@ -118,6 +123,25 @@ def build_summary(
             "competitive_proof": e9.get("competitive_proof"),
         }
 
+    dash_live = _load(root, "dashboard-tests-live-report.json")
+    if dash_live:
+        summary["dashboard_tests_live"] = {
+            "pass": dash_live.get("pass") is True,
+            "actual": dash_live.get("actual"),
+            "expected": dash_live.get("expected"),
+            "parity_ok": dash_live.get("parity_ok"),
+            "login_ok": dash_live.get("login_ok"),
+        }
+
+    fleet_prune = _load(root, "fleet-prune-cmds-report.json")
+    if fleet_prune:
+        summary["fleet_prune_cmds"] = {
+            "pass": fleet_prune.get("pass") is True,
+            "closed": fleet_prune.get("closed"),
+            "pending_total": fleet_prune.get("pending_total"),
+            "pending_young": fleet_prune.get("pending_young"),
+        }
+
     cp = summary.get("competitive_proof")
     mo = summary.get("morning_operator")
     all_ok = True
@@ -187,6 +211,26 @@ def print_lines(summary: dict[str, Any], title: str) -> None:
         lines.append(
             f"  enterprise_e9: {'pass' if e9.get('pass') else 'WARN'}"
             f" · proof={e9.get('competitive_proof', '—')}"
+        )
+    dtl = summary.get("dashboard_tests_live")
+    if dtl:
+        if dtl.get("pass"):
+            lines.append(
+                f"  dashboard_tests_live: {dtl.get('actual', '—')}/{dtl.get('expected', '—')} "
+                f"parity={'OK' if dtl.get('parity_ok') else '—'}"
+            )
+        elif dtl.get("login_ok") is False:
+            lines.append("  dashboard_tests_live: WARN · login")
+        else:
+            lines.append(
+                f"  dashboard_tests_live: WARN · "
+                f"{dtl.get('actual', '—')}/{dtl.get('expected', '—')}"
+            )
+    fpc = summary.get("fleet_prune_cmds")
+    if fpc:
+        lines.append(
+            f"  fleet_prune: pending={fpc.get('pending_total', 0)} "
+            f"(young={fpc.get('pending_young', 0)}) · closed={fpc.get('closed', 0)}"
         )
     wl = summary.get("warn_labels")
     if wl:

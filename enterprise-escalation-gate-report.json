@@ -1,10 +1,10 @@
 {
-  "date": "2026-07-07T09:50:51.776378+00:00",
+  "date": "2026-07-07T10:44:45.027209+00:00",
   "pass": true,
   "doc_sections": 14,
   "support_linked": true,
   "operator_scripts": 16,
   "script": "scripts/enterprise_escalation_gate.sh",
-  "live_gates_ok": 3,
+  "live_gates_ok": 2,
   "live_gates_total": 3
 }
