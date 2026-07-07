@@ -1,9 +1,10 @@
 # Linux Log Guardian — Release Evidence Pack
 
-Generated: 2026-07-05T07:55:00.260855+00:00
+Generated: 2026-07-07T10:00:00+00:00
 
 ## Measured metrics
-- Validation tests: 80/80 pass (dashboard /tests)
+- Validation tests: 80/80 pass (dashboard /tests · canlı site /testler)
+- E9 runbook: `enterprise_e9_verify.sh` (escalation + edge checklist + docs)
 - Real attack recall (1K): 100.0%
 - Real attack recall (10K): 100.2%
 - Distributed cluster recall: 100.0%

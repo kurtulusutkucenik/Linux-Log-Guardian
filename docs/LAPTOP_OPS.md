@@ -23,7 +23,7 @@ bash scripts/dashboard_refresh.sh
 | Sıklık | Komut | Süre | Ne yapar |
 |--------|--------|------|----------|
 | **Her sabah** | `bash scripts/morning_operator_gate.sh` | ~30 sn | laptop_core + :8443 + attack_map + **telegram_soc** parity |
-| **Haftalık / demo öncesi** | `bash scripts/core_proof_refresh.sh` | ~5–10 dk | Track A: nginx hybrid + ban profile + IPv6 + competitive-proof sync |
+| **Haftalık / demo öncesi** | `bash scripts/core_proof_refresh.sh` | ~5–10 dk | Track A + E9/edge checklist (son adım; `SKIP_E9=1` atla) |
 | **Vitrin plani (GIF/VPS haric)** | `bash scripts/finish_vitrin_plan.sh` | ~15–25 dk | cron + Track A + audit + landing + :8443; canli: `PUBLISH=1` |
 | **Opsiyonel katman** | `bash scripts/optional_track_refresh.sh` | ~10–15 dk | L7, Grafana alert e2e, demo_3min, landing export (canlı publish yok) |
 | **UI değiştiyse** | `bash scripts/dashboard_refresh.sh` | ~2–3 dk | Docker rebuild → `https://localhost:8443` |

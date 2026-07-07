@@ -4,7 +4,7 @@
 
 **İlgili belgeler:** [CUSTOMER_REQUIREMENTS.md](CUSTOMER_REQUIREMENTS.md) · [PROD_ROADMAP.md](PROD_ROADMAP.md) · [Log_Guardian_Enterprise_Roadmap.md](Log_Guardian_Enterprise_Roadmap.md) · [TEST_MATRIX.md](TEST_MATRIX.md)
 
-**Son güncelleme:** 2026-07-06 (laptop + canlı site `/tests` **80 kart**; GitHub CI `ci_core_gate` yeşil; VPS XDP bilinçli skip)
+**Son güncelleme:** 2026-07-07 (laptop + canlı site `/tests` **80 kart**; E9 runbook + edge checklist 17/17; GitHub `096eed7`)
 
 ---
 

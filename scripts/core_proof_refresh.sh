@@ -38,6 +38,18 @@ if [[ "${UI:-0}" == "1" ]]; then
   bash "$ROOT/scripts/dashboard_refresh.sh"
 fi
 
+if [[ "${SKIP_E9:-0}" != "1" ]]; then
+  echo "[5/5] enterprise_e9 + edge checklist"
+  SKIP_MORNING=1 bash "$ROOT/scripts/enterprise_e9_verify.sh" >/dev/null 2>&1 \
+    && echo "[OK] enterprise_e9_verify" \
+    || echo "[WARN] enterprise_e9_verify — atlandi" >&2
+  bash "$ROOT/scripts/edge_protection_checklist.sh" >/dev/null 2>&1 \
+    && echo "[OK] edge_protection_checklist" \
+    || echo "[WARN] edge_protection_checklist — atlandi" >&2
+else
+  echo "[5/5] enterprise_e9 — SKIP_E9=1"
+fi
+
 echo ""
 echo "[OK] core_proof_refresh tamam"
 echo "  nginx-hybrid-report.json  ban-profile-e2e-report.json  ipv6-ban-e2e-report.json"

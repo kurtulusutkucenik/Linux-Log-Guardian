@@ -349,6 +349,11 @@ if intel.is_file():
 if gate_rc != 0:
     reason = out.get("fail_reason") or "morning_operator_gate"
     notes.insert(0, f"morning_operator FAIL: {reason}")
+elif out.get("recovered_from") and os.environ.get("TELEGRAM_RECOVERY", "1") != "0":
+    notes.insert(
+        0,
+        f"morning_operator RECOVERED: {out['recovered_from']} ({proof_p}/{proof_n})",
+    )
 
 if not notes:
     sys.exit(0)

@@ -309,6 +309,15 @@ export function EdgeProtectionPanel() {
           {t("edgeGateLink")}
         </Link>
         {" · "}
+        <a
+          href="https://github.com/kurtulusutkucenik/Linux-Log-Guardian/blob/main/docs/ENTERPRISE_SUPPORT.md"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-orange-400/70 hover:text-orange-300 hover:underline"
+        >
+          {t("edgeE9Link")}
+        </a>
+        {" · "}
         <Link href="/tests?q=intel#test-intel-ban-db" className="text-orange-400/70 hover:text-orange-300 hover:underline">
           {t("edgeBanDbLink")}
         </Link>
