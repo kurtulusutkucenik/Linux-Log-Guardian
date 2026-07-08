@@ -31,6 +31,10 @@ INPUTS = {
     "caddyMtlsStatus": "caddy-mtls-status.json",
     "caddyApiMtls": "caddy-api-mtls-report.json",
     "enterpriseSoarGate": "enterprise-soar-gate-report.json",
+    "dashboardLoginRlE2e": "dashboard-login-rl-e2e-report.json",
+    "hardeningRollbackGate": "hardening-rollback-gate-report.json",
+    "dashboardJwtIdleGate": "dashboard-jwt-idle-gate-report.json",
+    "mtlsCertExpiry": "mtls-cert-expiry-report.json",
     "owaspCorpus": "owasp-corpus-report.json",
     "trHostingCorpus": "tr-hosting-corpus-report.json",
     "customerCorpus": "customer-corpus-report.json",
@@ -548,6 +552,115 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/enterprise_soar_gate.sh",
             date=str(soar_gate.get("date") or "")[:10],
+        )
+
+    dash_login_rl = data.get("dashboardLoginRlE2e") or {}
+    if dash_login_rl:
+        ok = dash_login_rl.get("pass") is True
+        max_a = dash_login_rl.get("max_attempts") or 10
+        probe = dash_login_rl.get("probe_ip") or "—"
+        row(
+            "dashboard-login-rl-e2e",
+            "pass" if ok else "fail",
+            "Dashboard login rate limit — brute-force koruması",
+            (
+                f"{max_a} deneme → 429 (probe {probe})."
+                if ok
+                else str(dash_login_rl.get("fail_reason") or "dashboard_login_rate_limit_e2e FAIL")
+            ),
+            "Dashboard login rate limit — brute-force protection",
+            (
+                f"{max_a} attempts → 429 (probe {probe})."
+                if ok
+                else str(dash_login_rl.get("fail_reason") or "dashboard_login_rate_limit_e2e FAIL")
+            ),
+            purpose="Prod: X-Forwarded-For ile 10 başarısız denemeden sonra HTTP 429.",
+            purpose_en="Prod: HTTP 429 after 10 failed attempts (X-Forwarded-For).",
+            metrics=[{"label": "max", "value": str(max_a)}],
+            script="scripts/dashboard_login_rate_limit_e2e.sh",
+            date=str(dash_login_rl.get("date") or "")[:10],
+        )
+
+    hardening_rb = data.get("hardeningRollbackGate") or {}
+    if hardening_rb:
+        ok = hardening_rb.get("pass") is True
+        checks = hardening_rb.get("checks") or []
+        n_ok = sum(1 for c in checks if c.get("ok"))
+        n_all = len(checks)
+        row(
+            "hardening-rollback-gate",
+            "pass" if ok else "fail",
+            "Hardening rollback — geri alma hazırlığı",
+            (
+                f"kontroller {n_ok}/{n_all} OK."
+                if ok
+                else str(hardening_rb.get("fail_reason") or "hardening_rollback_gate FAIL")
+            ),
+            "Hardening rollback — rollback readiness",
+            (
+                f"checks {n_ok}/{n_all} OK."
+                if ok
+                else str(hardening_rb.get("fail_reason") or "hardening_rollback_gate FAIL")
+            ),
+            purpose="Internet-facing sertleştirme öncesi yedek + demo parola algısı (salt okunur).",
+            purpose_en="Pre-hardening backup + demo password detection (read-only).",
+            metrics=[{"label": "checks", "value": f"{n_ok}/{n_all}"}],
+            script="scripts/hardening_rollback_gate.sh",
+            date=str(hardening_rb.get("date") or "")[:10],
+        )
+
+    jwt_idle = data.get("dashboardJwtIdleGate") or {}
+    if jwt_idle:
+        ok = jwt_idle.get("pass") is True
+        mode = str(jwt_idle.get("mode") or "?")
+        idle = jwt_idle.get("idle_min") or 0
+        row(
+            "dashboard-jwt-idle-gate",
+            "pass" if ok else "fail",
+            "Dashboard JWT idle — oturum zaman aşımı",
+            (
+                f"mode={mode}; idle={idle}dk."
+                if ok
+                else str(jwt_idle.get("fail_reason") or "dashboard_jwt_idle_gate FAIL")
+            ),
+            "Dashboard JWT idle — session timeout",
+            (
+                f"mode={mode}; idle={idle}m."
+                if ok
+                else str(jwt_idle.get("fail_reason") or "dashboard_jwt_idle_gate FAIL")
+            ),
+            purpose="middleware iat kontrolü; laptop 0dk, internet-facing 480dk önerilir.",
+            purpose_en="middleware iat check; laptop 0m, internet-facing 480m recommended.",
+            metrics=[{"label": "idle_min", "value": str(idle)}],
+            script="scripts/dashboard_jwt_idle_gate.sh",
+            date=str(jwt_idle.get("date") or "")[:10],
+        )
+
+    mtls_exp = data.get("mtlsCertExpiry") or {}
+    if mtls_exp and mtls_exp.get("skipped") is not True:
+        ok = mtls_exp.get("pass") is True
+        min_days = mtls_exp.get("min_days_left")
+        warn_d = mtls_exp.get("warn_days") or 14
+        row(
+            "mtls-cert-expiry",
+            "pass" if ok else "warn",
+            "mTLS sertifika süresi — SOAR lab",
+            (
+                f"min {min_days if min_days is not None else '—'} gün (warn<={warn_d})."
+                if ok
+                else f"yakın bitiş — min {min_days if min_days is not None else '?'} gün"
+            ),
+            "mTLS certificate expiry — SOAR lab",
+            (
+                f"min {min_days if min_days is not None else '—'} days (warn<={warn_d})."
+                if ok
+                else f"expiring soon — min {min_days if min_days is not None else '?'} days"
+            ),
+            purpose="client/server/ca.crt bitiş — rotasyon runbook uyarısı.",
+            purpose_en="client/server/ca.crt expiry — rotation runbook warning.",
+            metrics=[{"label": "min_days", "value": str(min_days if min_days is not None else "—")}],
+            script="scripts/mtls_cert_expiry_check.sh",
+            date=str(mtls_exp.get("date") or "")[:10],
         )
 
     ja3 = data.get("ja3Cluster") or {}

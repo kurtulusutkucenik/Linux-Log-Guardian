@@ -121,6 +121,11 @@ if [[ "${SKIP_DOCKER:-0}" != "1" ]] && command -v docker >/dev/null 2>&1; then
     else
       ok "ban-api-relay network=$net (internal)"
     fi
+    if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-host-api-bridge; then
+      ok "host-api-bridge ayakta (docker0 hop)"
+    else
+      warn "host-api-bridge yok — relay upstream kopuk olabilir"
+    fi
   else
     warn "dashboard stack kapali — relay internal dogrulama atlandi"
   fi

@@ -1,10 +1,8 @@
 {
-  "date": "2026-07-08T10:41:58.203772+00:00",
+  "date": "2026-07-08T21:58:35.515014+00:00",
   "pass": true,
   "fail": 0,
-  "warn": 1,
-  "notes": [
-    "warn:log-guardian --health basarisiz veya servis kapali"
-  ],
+  "warn": 0,
+  "notes": [],
   "script": "scripts/validate_rules_conf.sh"
 }

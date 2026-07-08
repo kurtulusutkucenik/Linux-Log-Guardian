@@ -25,7 +25,7 @@ write_snippets() {
 			trust_pool file /etc/caddy/mtls/ca.crt
 		}
 	}
-	reverse_proxy http://host.docker.internal:18090 {
+	reverse_proxy http://ban-api-relay:18090 {
 		header_up X-Guardian-Token {$GUARDIAN_API_MUTATION_TOKEN}
 		header_up Host {host}
 	}
@@ -76,7 +76,7 @@ enable() {
   export GUARDIAN_API_TOKEN="$read_tok"
 
   if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-caddy; then
-    docker compose -f docker-compose.prod.yml up -d ban-api-relay caddy
+    docker compose -f docker-compose.prod.yml up -d host-api-bridge ban-api-relay caddy
     docker compose -f docker-compose.prod.yml restart caddy
     sleep 2
     echo "[OK] caddy yeniden baslatildi (mTLS snippet + token env)"
@@ -120,7 +120,7 @@ sync_only() {
     export GUARDIAN_API_MUTATION_TOKEN="$mut_tok"
     export GUARDIAN_API_TOKEN="$(read_lg_api_token)"
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-caddy; then
-      docker compose -f docker-compose.prod.yml up -d ban-api-relay caddy
+      docker compose -f docker-compose.prod.yml up -d host-api-bridge ban-api-relay caddy
       docker compose -f docker-compose.prod.yml restart caddy
       sleep 2
       echo "[OK] caddy yeniden baslatildi (mtls cert sync)"

@@ -1,8 +1,8 @@
 {
-  "date": "2026-07-06T14:22:49.952830+00:00",
+  "date": "2026-07-08T21:51:33.752076+00:00",
   "pass": true,
   "dash_url": "https://localhost:8443",
-  "command_id": "30e47e42-0ff3-4c03-bc18-a7937ba8a69c",
+  "command_id": "f3068581-d727-4030-a4d6-e37944393a63",
   "signature_len": 64,
   "require_sig": true,
   "verify_ok": true,

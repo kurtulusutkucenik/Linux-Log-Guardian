@@ -1,10 +1,10 @@
 {
-  "date": "2026-07-08T17:52:54.088499+00:00",
+  "date": "2026-07-08T21:54:40.937976+00:00",
   "pass": true,
   "fail_count": 0,
   "laptop_mode": true,
   "vps_available": false,
-  "competitive_proof": "85/85",
+  "competitive_proof": "86/89",
   "xdp_report_mode": "skip",
   "vps_when_ready": [
     "sudo bash install.sh",

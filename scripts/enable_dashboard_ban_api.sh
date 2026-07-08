@@ -90,7 +90,7 @@ curl -s -X POST -H "Authorization: Bearer ${API_TOK}" \
   "http://127.0.0.1:8090/api/v1/unban?ip=203.0.113.55&reason=setup-cleanup" >/dev/null || true
 
 echo "[7] Ban API relay (18090) + smoke..."
-docker compose -f "$ROOT/docker-compose.prod.yml" up -d ban-api-relay 2>/dev/null || true
+docker compose -f "$ROOT/docker-compose.prod.yml" up -d host-api-bridge metrics-relay ban-api-relay 2>/dev/null || true
 sleep 1
 if bash "$ROOT/scripts/dashboard_ban_smoke.sh"; then
   bash "$ROOT/scripts/sync_dashboard_data.sh" 2>/dev/null || true
@@ -102,5 +102,5 @@ echo ""
 echo "[OK] Dashboard ban API hazir."
 echo "  Giriş: https://localhost:8443  admin / (.env DASHBOARD_ADMIN_PASSWORD veya ChangeMeOnFirstLogin!)"
 echo "  Docker: export GUARDIAN_API_TOKEN=\$(grep '^API_TOKEN=' $CONF | cut -d= -f2-)"
-echo "          cd \"$ROOT\" && docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard"
-echo "          (ban/unban relay: host:18090 -> 127.0.0.1:8090)"
+echo "          cd \"$ROOT\" && docker compose -f docker-compose.prod.yml up -d host-api-bridge ban-api-relay dashboard"
+echo "          (ban/unban relay: ban-api-relay:18090 -> host-api-bridge:18091 -> 127.0.0.1:8090)"

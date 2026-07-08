@@ -30,6 +30,21 @@ print(f'{pn}/{len(t)}')
 " 2>/dev/null || echo "?/?"
 }
 
+proof_all_pass() {
+  python3 -c "
+import json, sys
+from pathlib import Path
+p = Path('competitive-proof.json')
+if not p.is_file():
+    sys.exit(1)
+t = json.loads(p.read_text(encoding='utf-8')).get('validationTests') or []
+if not t:
+    sys.exit(1)
+fail = sum(1 for x in t if x.get('status') not in ('pass', 'warn'))
+sys.exit(0 if fail == 0 and all(x.get('status') in ('pass', 'warn') for x in t) else 1)
+" 2>/dev/null
+}
+
 echo "=== proof_gate_recovery (full_proof_pack yok, SKIP_IPV6=1) ==="
 
 if [[ -f /etc/log-guardian/webhook.env ]] && ! [[ -r /etc/log-guardian/webhook.env ]] \
@@ -78,14 +93,18 @@ bash "$ROOT/scripts/hardening_rollback_gate.sh" >/dev/null 2>&1 \
   && echo "[OK] hardening_rollback_gate" \
   || echo "[WARN] hardening_rollback_gate" >&2
 
-bash "$ROOT/scripts/dashboard_jwt_idle_gate.sh" >/dev/null 2>&1 \
-  && echo "[OK] dashboard_jwt_idle_gate" \
-  || echo "[WARN] dashboard_jwt_idle_gate" >&2
+bash "$ROOT/scripts/dashboard_security_gates.sh" >/dev/null 2>&1 \
+  && echo "[OK] dashboard_security_gates" \
+  || echo "[WARN] dashboard_security_gates — hardening/jwt/mtls/login RL" >&2
+
+bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
+  && echo "[OK] dashboard_tests_parity" \
+  || fail_step "dashboard_tests_parity — competitive_proof_build + validationTests.ts"
 
 bash "$ROOT/scripts/sync_dashboard_api_token.sh" >/dev/null 2>&1 \
   && bash "$ROOT/scripts/dashboard_ban_smoke.sh" >/dev/null 2>&1 \
   && echo "[OK] dashboard_ban_smoke" \
-  || echo "[WARN] dashboard_ban_smoke — relay 18090 veya token" >&2
+  || echo "[WARN] dashboard_ban_smoke — ban-api-relay docker internal veya token" >&2
 
 if bash "$ROOT/scripts/nginx_inline_consult_proof.sh" >/dev/null 2>&1; then
   echo "[OK] nginx_inline_consult"
@@ -108,8 +127,8 @@ SKIP_FLEET=1 SKIP_LIVE=1 bash "$ROOT/scripts/presentation_ship_gate.sh" \
   || fail_step "presentation_ship_gate"
 echo "[OK] presentation_ship_gate"
 
-SKIP_CLOSURE=1 bash "$ROOT/scripts/github_ship_gate.sh" \
-  || fail_step "github_ship_gate (SKIP_CLOSURE=1)"
+SKIP_SIEM_E2E=1 bash "$ROOT/scripts/github_ship_gate.sh" \
+  || fail_step "github_ship_gate (security_closure dahil)"
 echo "[OK] github_ship_gate"
 
 SKIP_EDGE=1 bash "$ROOT/scripts/laptop_core_gate.sh" \
@@ -126,11 +145,12 @@ REFRESH="${REFRESH:-1}" bash "$ROOT/scripts/morning_operator_gate.sh" \
   || fail_step "morning_operator_gate"
 
 bash "$ROOT/scripts/sync_dashboard_data.sh" 2>/dev/null || true
+bash "$ROOT/scripts/sync_evidence_pack.sh" 2>/dev/null || true
 
 final="$(proof_counts)"
 echo ""
 echo "[OK] proof_gate_recovery tamam — validationTests $final"
-if [[ "$final" != "82/82" ]]; then
-  echo "[WARN] Beklenen 82/82 degil — competitive-proof.json kontrol edin" >&2
+if ! proof_all_pass; then
+  echo "[WARN] competitive-proof tam pass degil — competitive-proof.json kontrol edin" >&2
   exit 1
 fi

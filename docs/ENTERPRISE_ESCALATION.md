@@ -139,7 +139,7 @@ Internet-facing strict (manuel): `POST_INSTALL_STRICT=1 bash scripts/post_instal
 
 Harici SOAR ban API (Enterprise backlog): [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) — mTLS edge + `API_MUTATION_TOKEN` ayrımı.
 
-Dashboard: `https://localhost:8443/tests` (**85 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
+Dashboard: `https://localhost:8443/tests` (**89 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
 
 ---
 

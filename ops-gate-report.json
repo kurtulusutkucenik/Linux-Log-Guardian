@@ -1,27 +1,27 @@
 {
-  "date": "2026-07-08T17:59:22Z",
-  "pass": true,
+  "date": "2026-07-08T22:17:25Z",
+  "pass": false,
   "gates": [
     {
       "id": "post-install-verify",
       "script": "scripts/post_install_verify.sh",
-      "pass": true,
-      "fail": 0,
-      "warn": 2,
+      "pass": false,
+      "fail": 3,
+      "warn": 0,
       "title": "Kurulum kapısı — servis, IPC, API fail-closed",
       "titleEn": "Install gate — services, IPC, API fail-closed",
       "purpose": "systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.",
       "purposeEn": "systemd, --health, metrics :9091, API_BIND and nginx format green matrix.",
-      "verdict": "FAIL: 0 · WARN: 2",
-      "verdictEn": "FAIL: 0 · WARN: 2",
+      "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+      "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
       "metrics": [
         {
           "label": "FAIL",
-          "value": "0"
+          "value": "3"
         },
         {
           "label": "WARN",
-          "value": "2"
+          "value": "0"
         }
       ],
       "group": "gate"
@@ -197,23 +197,23 @@
     {
       "id": "vm-demo-gate",
       "script": "scripts/vm_demo_gate.sh",
-      "pass": true,
-      "fail": 0,
-      "warn": 1,
+      "pass": false,
+      "fail": 3,
+      "warn": 0,
       "title": "VM demo kapısı — post_install 0 FAIL",
       "titleEn": "VM demo gate — post_install 0 FAIL",
       "purpose": "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate).",
       "purposeEn": "Final check before laptop/VM demo (repair: sudo vm_demo_gate).",
-      "verdict": "FAIL: 0 · WARN: 1",
-      "verdictEn": "FAIL: 0 · WARN: 1",
+      "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+      "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
       "metrics": [
         {
           "label": "FAIL",
-          "value": "0"
+          "value": "3"
         },
         {
           "label": "WARN",
-          "value": "1"
+          "value": "0"
         }
       ],
       "group": "gate"

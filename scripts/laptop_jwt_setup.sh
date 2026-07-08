@@ -47,7 +47,7 @@ set +a
 export JWT_SECRET
 
 echo "[laptop_jwt_setup] dashboard yeniden baslatiliyor..."
-docker compose -f docker-compose.prod.yml up -d --build dashboard caddy ban-api-relay metrics-relay 2>/dev/null \
+docker compose -f docker-compose.prod.yml up -d --build host-api-bridge dashboard caddy ban-api-relay metrics-relay 2>/dev/null \
   || bash "$REPO_ROOT/scripts/tls_proxy_up.sh"
 
 echo ""

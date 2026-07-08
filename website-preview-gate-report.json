@@ -1,13 +1,13 @@
 {
   "pass": true,
-  "expected_tests": 85,
-  "site_tests": 85,
-  "site_pass": 84,
-  "site_pass_all": 85,
+  "expected_tests": 89,
+  "site_tests": 89,
+  "site_pass": 88,
+  "site_pass_all": 89,
   "site_fail": 0,
   "has_grafana_parity": true,
   "has_edge_gate": true,
   "site_dir": "landing/lib",
-  "date": "2026-07-08T18:00:13.022330+00:00",
+  "date": "2026-07-08T22:18:11.929629+00:00",
   "script": "scripts/website_preview_gate.sh"
 }

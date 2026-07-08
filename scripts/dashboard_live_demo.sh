@@ -15,7 +15,7 @@ source "$ROOT/scripts/lib/dashboard_cache.sh"
 CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
 [[ -f "$CONF" ]] || CONF="$ROOT/rules.conf"
 HOST_API="${GUARDIAN_API_HOST:-http://127.0.0.1:8090}"
-RELAY_API="${GUARDIAN_RELAY_URL:-http://127.0.0.1:18090}"
+RELAY_INTERNAL="$(read_lg_relay_internal_url 2>/dev/null || echo 'http://ban-api-relay:18090')"
 REPORT="${ROOT}/dashboard-live-demo.json"
 CLEANUP="${CLEANUP:-0}"
 REASON="${DEMO_BAN_REASON:-dashboard-live-demo}"
@@ -61,6 +61,12 @@ api_post() {
     "${base}/api/v1/${action}?ip=${ip}&reason=${REASON}" 2>/dev/null
 }
 
+api_post_relay() {
+  local action="$1" ip="$2"
+  api_post "$HOST_API" "$action" "$ip" \
+    || lg_docker_relay_api_post "$action" "$ip" "$REASON" 2>/dev/null
+}
+
 echo "=== dashboard_live_demo ==="
 
 TOK=$(read_lg_api_token 2>/dev/null || grep -E '^API_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
@@ -83,8 +89,7 @@ if [[ "$CLEANUP" == "1" ]]; then
   for ip in "${IPS[@]}"; do
     curl -sf -X POST -H "Authorization: Bearer ${TOK}" \
       "${HOST_API}/api/v1/unban?ip=${ip}" >/dev/null 2>&1 \
-      || curl -sf -X POST -H "Authorization: Bearer ${TOK}" \
-        "${RELAY_API}/api/v1/unban?ip=${ip}" >/dev/null 2>&1 || true
+      || lg_docker_relay_api_post unban "$ip" cleanup >/dev/null 2>&1 || true
   done
   sleep 0.5
   if [[ -f /run/log-guardian/active_bans.json ]]; then
@@ -137,9 +142,9 @@ for ip in "${IPS[@]}"; do
   if api_post "$HOST_API" "ban" "$ip" | grep -q '"success":true'; then
     ban_ok=$((ban_ok + 1))
     echo "  ban $ip"
-  elif api_post "$RELAY_API" "ban" "$ip" | grep -q '"success":true'; then
+  elif api_post_relay ban "$ip" | grep -q '"success":true'; then
     ban_ok=$((ban_ok + 1))
-    used_api="$RELAY_API"
+    used_api="$RELAY_INTERNAL"
     echo "  ban $ip (relay)"
   else
     ban_fail=$((ban_fail + 1))

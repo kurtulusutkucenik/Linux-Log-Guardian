@@ -1,10 +1,12 @@
 {
-  "date": "2026-07-08T18:29:18.524246+00:00",
+  "date": "2026-07-08T22:25:40.571460+00:00",
   "enabled": true,
   "enabled_at": "2026-07-07T22:05:32Z",
   "soar_url": "https://localhost:9443",
   "dashboard_url": "https://localhost:8443",
-  "relay_url": "http://127.0.0.1:18090",
+  "relay_url": "http://ban-api-relay:18090",
+  "metrics_relay_url": "http://metrics-relay:19091/metrics",
+  "host_api_bridge": "host-api-bridge (docker0 :18091/:19092)",
   "host_api_url": "http://127.0.0.1:8090",
   "caddy_mtls_verify": true,
   "caddy_skipped": false,
@@ -13,6 +15,8 @@
   "relay_ok": true,
   "host_ok": true,
   "docker_ok": true,
+  "metrics_ok": true,
+  "host_api_bridge_ok": true,
   "dashboard_ban_pass": true,
   "script": "scripts/caddy_mtls_status_export.sh"
 }

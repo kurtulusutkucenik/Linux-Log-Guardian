@@ -4,7 +4,7 @@
 #   sudo systemctl restart log-guardian-daemon log-guardian
 #   bash scripts/full_proof_pack.sh
 #   STABILITY=1 bash scripts/full_proof_pack.sh  # + 5 dk soak
-# Laptop 80/80 (hizli): bash scripts/proof_gate_recovery.sh
+# Laptop 89/89 (hizli): bash scripts/proof_gate_recovery.sh
 # IPv6 ag kesintisi: SKIP_IPV6=1 (varsayilan laptop) — sudo bash scripts/ipv6_ban_e2e.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"

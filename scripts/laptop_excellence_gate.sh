@@ -110,10 +110,16 @@ if [[ -f "$ROOT/ops-gate-report.json" ]]; then
   [[ "$og" == "0" ]] && gate_ok "ops_gate 9/9" || gate_warn "ops_gate fail=$og — bash scripts/ops_gate_report.sh"
 fi
 
-if bash "$ROOT/scripts/vm_fleet_gate.sh" >/dev/null 2>&1; then
-  gate_ok "vm_fleet_gate (host+VM Online)"
+if bash "$ROOT/scripts/dashboard_tests_parity_check.sh" >/dev/null 2>&1; then
+  gate_ok "dashboard_tests_parity"
 else
-  gate_warn "vm_fleet_gate — VM keepalive veya /fleet"
+  gate_warn "dashboard_tests_parity — bash scripts/competitive_proof_build.py"
+fi
+
+if bash "$ROOT/scripts/dashboard_security_gates.sh" >/dev/null 2>&1; then
+  gate_ok "dashboard_security_gates"
+else
+  gate_warn "dashboard_security_gates — login RL / JWT idle / mTLS expiry"
 fi
 
 if bash "$ROOT/scripts/docs_consistency_gate.sh" >/dev/null 2>&1; then

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
+import { guardianMetricsUrl } from "@/lib/guardianMetricsUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,11 @@ export async function GET() {
       soar_url?: string;
       dashboard_url?: string;
       relay_url?: string;
+      metrics_relay_url?: string;
+      host_api_bridge?: string;
       host_api_url?: string;
+      metrics_ok?: boolean;
+      host_api_bridge_ok?: boolean;
       caddy_mtls_verify?: boolean;
       caddy_skipped?: boolean;
       mtls_verify?: boolean;
@@ -43,6 +48,8 @@ export async function GET() {
       host_api?: { ok?: boolean; url?: string };
       relay_api?: { ok?: boolean; url?: string };
       docker_api?: { ok?: boolean };
+      metrics_api?: { ok?: boolean; url?: string };
+      host_api_bridge?: { ok?: boolean; note?: string };
       ban_path?: string;
       test_ip?: string;
     }>("dashboard-ban-api-report.json"),
@@ -77,12 +84,29 @@ export async function GET() {
   const relayOk = dashBan?.relay_api?.ok ?? caddy?.relay_ok ?? false;
   const hostOk = dashBan?.host_api?.ok ?? caddy?.host_ok ?? false;
   const dockerOk = dashBan?.docker_api?.ok ?? caddy?.docker_ok ?? false;
+  const metricsReportOk = dashBan?.metrics_api?.ok ?? caddy?.metrics_ok ?? false;
+  const bridgeOk =
+    dashBan?.host_api_bridge?.ok ?? caddy?.host_api_bridge_ok ?? (relayOk && metricsReportOk);
+
+  let metricsLiveOk = false;
+  try {
+    const res = await fetch(guardianMetricsUrl(), {
+      cache: "no-store",
+      signal: AbortSignal.timeout(3500),
+    });
+    if (res.ok) {
+      const text = await res.text();
+      metricsLiveOk = text.includes("loganalyzer_");
+    }
+  } catch {
+    metricsLiveOk = false;
+  }
 
   return NextResponse.json({
     at: soarGate?.date ?? caddy?.date ?? dashBan?.date ?? banMtls?.date ?? null,
     relay: {
       ok: relayOk,
-      url: dashBan?.relay_api?.url ?? caddy?.relay_url ?? "http://127.0.0.1:18090",
+      url: dashBan?.relay_api?.url ?? caddy?.relay_url ?? "http://ban-api-relay:18090",
     },
     host: {
       ok: hostOk,
@@ -90,6 +114,15 @@ export async function GET() {
     },
     docker: {
       ok: dockerOk,
+    },
+    metrics: {
+      ok: metricsLiveOk || metricsReportOk,
+      live: metricsLiveOk,
+      url: dashBan?.metrics_api?.url ?? caddy?.metrics_relay_url ?? "http://metrics-relay:19091/metrics",
+    },
+    host_api_bridge: {
+      ok: bridgeOk,
+      note: dashBan?.host_api_bridge?.note ?? caddy?.host_api_bridge ?? "docker0 :18091/:19092",
     },
     ban_path: dashBan?.ban_path ?? null,
     dashboard_ban_pass: dashBan?.pass ?? caddy?.dashboard_ban_pass ?? false,

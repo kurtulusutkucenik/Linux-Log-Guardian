@@ -47,11 +47,44 @@ wait_lg_relay_ready() {
       if [[ "$code" == "200" || "$code" == "403" || "$code" == "502" ]]; then
         return 0
       fi
+    elif docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-dashboard \
+      && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-ban-api-relay; then
+      if docker exec log-guardian-dashboard node -e \
+        "fetch('http://ban-api-relay:18090/api/v1/metrics').then(r=>process.exit(r.status===200||r.status===403?0:1)).catch(()=>process.exit(1))" \
+        2>/dev/null; then
+        return 0
+      fi
     fi
     sleep 1
   done
   echo "[wait_lg_relay_ready] FAIL — relay :18090 hazir degil" >&2
   return 1
+}
+
+read_lg_relay_internal_url() {
+  echo "${GUARDIAN_RELAY_INTERNAL_URL:-http://ban-api-relay:18090}"
+}
+
+# Docker dashboard container uzerinden ban-api-relay (host :18090 yok)
+lg_docker_relay_api_post() {
+  local action="$1" ip="$2" reason="${3:-relay-demo}"
+  local relay container="${LG_DASHBOARD_CONTAINER:-log-guardian-dashboard}"
+  relay="$(read_lg_relay_internal_url)"
+  docker ps --format '{{.Names}}' 2>/dev/null | grep -qx "$container" || return 1
+  docker ps --format '{{.Names}}' 2>/dev/null | grep -qx log-guardian-ban-api-relay || return 1
+  docker exec "$container" node -e "
+const t=process.env.GUARDIAN_API_MUTATION_TOKEN||process.env.GUARDIAN_API_TOKEN;
+const b='${relay}';
+const ip='${ip}';
+const reason='${reason}';
+(async()=>{
+  const r=await fetch(b+'/api/v1/${action}?ip='+ip+'&reason='+encodeURIComponent(reason),{
+    method:'POST',headers:{Authorization:'Bearer '+t}});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||j.success===false) process.exit(1);
+  process.stdout.write(JSON.stringify(j));
+})().catch(()=>process.exit(1));
+" 2>/dev/null
 }
 
 # POST /ban gercekten calisana kadar bekle (metrics 403 erken done verir)

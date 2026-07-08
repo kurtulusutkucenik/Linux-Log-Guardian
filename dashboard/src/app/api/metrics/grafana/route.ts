@@ -17,19 +17,12 @@ import {
   promReachable,
 } from "@/lib/prometheusClient";
 import { parseGuardianMetrics } from "@/lib/prometheusParse";
+import { guardianMetricsUrl } from "@/lib/guardianMetricsUrl";
 
 export const dynamic = "force-dynamic";
 
 const CACHE_MS = 5000;
 let cache: { key: string; ts: number; body: unknown } | null = null;
-
-function guardianMetricsUrl(): string {
-  return (
-    process.env.GUARDIAN_METRICS_URL ||
-    process.env.PROMETHEUS_METRICS_URL ||
-    "http://host.docker.internal:9091/metrics"
-  );
-}
 
 async function liveGuardianStats(): Promise<{
   stats: Record<string, number>;

@@ -1,18 +1,28 @@
 {
-  "date": "2026-07-08T18:00:11Z",
+  "date": "2026-07-08T22:25:39Z",
   "pass": true,
   "test_ip": "203.0.113.248",
+  "relay_test_ip": "203.0.113.249",
+  "docker_test_ip": "203.0.113.250",
   "host_api": {
     "ok": true,
     "url": "http://127.0.0.1:8090"
   },
   "relay_api": {
     "ok": true,
-    "url": "http://127.0.0.1:18090"
+    "url": "http://ban-api-relay:18090"
   },
   "docker_api": {
     "ok": true,
     "container": "log-guardian-dashboard"
+  },
+  "metrics_api": {
+    "ok": true,
+    "url": "http://metrics-relay:19091/metrics"
+  },
+  "host_api_bridge": {
+    "ok": true,
+    "note": "docker0 :18091/:19092 hop"
   },
   "ban_path": "ipc-xdp",
   "fail_reason": ""

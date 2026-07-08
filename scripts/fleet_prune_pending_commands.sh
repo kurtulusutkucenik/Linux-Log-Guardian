@@ -28,11 +28,22 @@ const p = new PrismaClient();
     orderBy: { createdAt: 'asc' },
   });
   const stuck = allStuck.filter((c) => new Date(c.createdAt) < cutoff);
+  const young = allStuck.filter((c) => new Date(c.createdAt) >= cutoff);
   const groups = new Map();
   for (const c of stuck) {
     const key = c.commandType + ' ' + c.payload.slice(0, 48);
     groups.set(key, (groups.get(key) || 0) + 1);
   }
+  const youngItems = young.slice(0, 8).map((c) => {
+    const ageH = Math.max(0, (Date.now() - new Date(c.createdAt).getTime()) / 3600000);
+    return {
+      type: c.commandType,
+      status: c.status,
+      target: c.targetAgentId || '*',
+      age_h: Math.round(ageH * 10) / 10,
+      payload: c.payload.slice(0, 64),
+    };
+  });
   let n = 0;
   for (const c of stuck) {
     if (!dry) {
@@ -46,12 +57,19 @@ const p = new PrismaClient();
   for (const [k, cnt] of groups) {
     console.error('  ' + (dry ? 'dry-run' : 'iptal') + ': ' + k + (cnt > 1 ? ' x' + cnt : ''));
   }
+  for (const item of youngItems) {
+    console.error(
+      '  bekleyen: ' + item.type + ' -> ' + item.target +
+      ' (' + item.status + ', ' + item.age_h + 'h) ' + item.payload
+    );
+  }
   const out = {
     closed: n,
     dry_run: dry,
     stale_hours: hours,
-    pending_young: allStuck.length - stuck.length,
+    pending_young: young.length,
     pending_total: allStuck.length,
+    pending_young_items: youngItems,
     groups: Object.fromEntries(groups),
   };
   console.log(JSON.stringify(out));
@@ -78,6 +96,7 @@ out = {
     "stale_hours": stale_h,
     "pending_young": int(summary.get("pending_young") or 0),
     "pending_total": int(summary.get("pending_total") or 0),
+    "pending_young_items": summary.get("pending_young_items") or [],
     "groups": summary.get("groups") or {},
     "script": "scripts/fleet_prune_pending_commands.sh",
 }

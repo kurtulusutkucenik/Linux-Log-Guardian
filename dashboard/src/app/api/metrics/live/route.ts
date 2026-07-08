@@ -1,18 +1,11 @@
 import { NextResponse } from "next/server";
 import { parseGuardianMetrics } from "@/lib/prometheusParse";
+import { guardianMetricsUrl } from "@/lib/guardianMetricsUrl";
 
 export const dynamic = "force-dynamic";
 
 const CACHE_MS = 3000;
 let cache: { ts: number; body: ReturnType<typeof parseGuardianMetrics> } | null = null;
-
-function metricsUrl(): string {
-  return (
-    process.env.GUARDIAN_METRICS_URL ||
-    process.env.PROMETHEUS_METRICS_URL ||
-    "http://host.docker.internal:9091/metrics"
-  );
-}
 
 export async function GET() {
   const now = Date.now();
@@ -22,7 +15,7 @@ export async function GET() {
     });
   }
 
-  const url = metricsUrl();
+  const url = guardianMetricsUrl();
   try {
     const res = await fetch(url, {
       cache: "no-store",
@@ -54,7 +47,7 @@ export async function GET() {
         xdp_active: 0,
         ts: now,
         error: err instanceof Error ? err.message : "fetch failed",
-        hint: "GUARDIAN_METRICS_URL=http://127.0.0.1:9091/metrics",
+        hint: "GUARDIAN_METRICS_URL=http://metrics-relay:19091/metrics",
       },
       { status: 200 },
     );

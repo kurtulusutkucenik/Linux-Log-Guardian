@@ -50,10 +50,13 @@ t = json.load(p.open())['validationTests']
 pn = sum(1 for x in t if x.get('status') == 'pass')
 print(f'{pn}/{len(t)}')
 " 2>/dev/null || echo "0/0")
-if [[ "$proof" == "85/85" ]] || [[ "$proof" == "84/84" ]] || [[ "$proof" == "83/83" ]] || [[ "$proof" == */85 ]] || [[ "$proof" == */84 ]] || [[ "$proof" == */83 ]]; then
+if [[ "$proof" == "89/89" ]] || [[ "$proof" == */89 ]] \
+    || [[ "$proof" == "88/88" ]] || [[ "$proof" == "85/85" ]] \
+    || [[ "$proof" == "84/84" ]] || [[ "$proof" == "83/83" ]] \
+    || [[ "$proof" == */85 ]] || [[ "$proof" == */84 ]] || [[ "$proof" == */83 ]]; then
   ok "competitive-proof $proof"
 else
-  warn "competitive-proof $proof (beklenen 85/85 veya 84/84)"
+  warn "competitive-proof $proof (beklenen 89/89)"
 fi
 
 if [[ -f "$ROOT/website-live-gate-report.json" ]] \

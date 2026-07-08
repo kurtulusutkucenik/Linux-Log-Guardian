@@ -188,7 +188,7 @@ CLEANUP=1 bash scripts/dashboard_live_demo.sh
 
 ```bash
 bash scripts/taxii_feed_e2e.sh          # laptop — URL gerekmez
-bash scripts/security_closure_gate.sh   # SKIP_DOCKER=1 hizli
+bash scripts/security_closure_gate.sh   # SKIP_SIEM_E2E=1 hizli (~2 dk)
 ```
 
 ---
@@ -511,12 +511,13 @@ SKIP_EDGE=1 bash scripts/laptop_core_gate.sh   # edge raporu yeterli
 |---|--------|----------------|-------|
 | AS1 | Push öncesi tam zincir | `github_ship_gate.sh` → `github-ship-gate-report.json` | ✅ |
 | AS2 | ship + closure + secret | `presentation_ship` + `security_closure` + scan | ✅ |
-| AS3 | `/tests` 73. kart | `github-ship-gate` | ✅ |
+| AS3 | `/tests` github-ship kart | `github-ship-gate` (closure=docker relay dahil) | ✅ |
 
 ```bash
-bash scripts/github_ship_gate.sh
+bash scripts/github_ship_gate.sh                    # closure + relay internal (~3 dk)
 LIVE_PUBLISH=1 WITH_FLEET=1 bash scripts/github_ship_gate.sh
-SKIP_CLOSURE=1 bash scripts/github_ship_gate.sh   # hızlı
+SKIP_CLOSURE=1 bash scripts/github_ship_gate.sh     # hızlı — closure atla
+SKIP_SIEM_E2E=1 bash scripts/security_closure_gate.sh  # closure kismi hizli
 ```
 
 ---

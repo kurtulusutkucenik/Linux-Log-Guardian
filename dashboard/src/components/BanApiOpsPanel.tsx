@@ -9,6 +9,8 @@ type BanApiStatus = {
   relay?: { ok?: boolean; url?: string };
   host?: { ok?: boolean; url?: string };
   docker?: { ok?: boolean };
+  metrics?: { ok?: boolean; live?: boolean; url?: string };
+  host_api_bridge?: { ok?: boolean; note?: string };
   dashboard_ban_pass?: boolean;
   ban_path?: string | null;
   mtls_strict?: boolean;
@@ -120,7 +122,9 @@ export function BanApiOpsPanel() {
       <p className="text-xs text-white/45">{t("banApiOpsDesc")}</p>
       <div className="flex flex-wrap gap-2">
         {chip(data?.host?.ok, t("banApiHost"))}
+        {chip(data?.host_api_bridge?.ok, t("banApiBridge"))}
         {chip(data?.relay?.ok, t("banApiRelay"))}
+        {chip(data?.metrics?.ok, t("banApiMetrics"))}
         {chip(data?.docker?.ok, t("banApiDocker"))}
         <span
           className={`text-xs font-mono px-2 py-1 rounded-md border ${
@@ -209,10 +213,16 @@ export function BanApiOpsPanel() {
       <div className="grid gap-1 text-xs text-white/40 font-mono">
         <span className="flex items-center gap-1.5">
           <Server className="w-3.5 h-3.5 shrink-0" />
-          {data?.relay?.url ?? "http://127.0.0.1:18090"}
+          {data?.relay?.url ?? "http://ban-api-relay:18090"}
+          {data?.host_api_bridge?.note ? ` · ${data.host_api_bridge.note}` : ""}
         </span>
         <span className="flex items-center gap-1.5">
           <Network className="w-3.5 h-3.5 shrink-0" />
+          {data?.metrics?.url ?? "http://metrics-relay:19091/metrics"}
+          {data?.metrics?.live ? " · live" : ""}
+        </span>
+        <span className="flex items-center gap-1.5">
+          <ShieldCheck className="w-3.5 h-3.5 shrink-0" />
           {soar?.url ?? "https://localhost:9443"}
           {data?.ban_path ? ` · ${data.ban_path}` : ""}
         </span>

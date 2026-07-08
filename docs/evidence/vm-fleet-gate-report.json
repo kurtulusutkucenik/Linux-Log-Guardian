@@ -1,6 +1,8 @@
 {
-  "date": "2026-07-07T22:42:03.841086+00:00",
+  "date": "2026-07-08T21:40:08.157778+00:00",
   "pass": true,
+  "skipped": true,
+  "skip_reason": "SKIP_FLEET=1 \u2014 WITH_FLEET=1 ile tam filo provasi",
   "dash_url": "https://localhost:8443",
   "host_agent": "node-kurtulus-01",
   "vm_agent": "node-vm-02",
@@ -10,7 +12,5 @@
   "agent_count": 3,
   "host_keepalive_active": true,
   "laptop_ops_doc_ok": true,
-  "vm_skipped": false,
-  "laptop_host_only": false,
   "script": "scripts/vm_fleet_gate.sh"
 }

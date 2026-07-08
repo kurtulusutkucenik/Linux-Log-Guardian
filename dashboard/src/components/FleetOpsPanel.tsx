@@ -34,7 +34,25 @@ type FleetOfflineStatus = {
     refresh?: string;
     host_keepalive?: string;
     prune?: string;
+    prune_dry?: string;
     weekly?: string;
+  };
+  prune?: {
+    pass?: boolean;
+    at?: string | null;
+    closed_last?: number;
+    stale_hours?: number;
+    pending_total?: number;
+    pending_young?: number;
+    pending_stale?: number;
+    needs_prune?: boolean;
+    items?: Array<{
+      type: string;
+      status: string;
+      target: string;
+      age_h: number;
+      payload: string;
+    }>;
   };
 };
 
@@ -62,6 +80,7 @@ export function FleetOpsPanel() {
   const [copied, setCopied] = useState(false);
 
   const refreshCmd = data?.setup?.refresh ?? "FLEET_MODE=laptop-simulated bash scripts/fleet_multi_node_e2e.sh";
+  const pruneCmd = data?.setup?.prune ?? "bash scripts/fleet_prune_pending_commands.sh";
 
   const load = async () => {
     setLoading(true);
@@ -127,6 +146,21 @@ export function FleetOpsPanel() {
             max {gate.max_age_min}m
           </span>
         )}
+        {data?.prune && (
+          <span
+            className={`text-xs font-mono px-2 py-1 rounded-md border ${
+              (data.prune.pending_stale ?? 0) === 0
+                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
+                : "bg-amber-500/10 border-amber-500/30 text-amber-200"
+            }`}
+            title={t("fleetOpsPruneHint")}
+          >
+            {t("fleetOpsPrune")}: {data.prune.pending_total ?? 0}
+            {(data.prune.pending_stale ?? 0) > 0
+              ? ` (${data.prune.pending_stale} >${data.prune.stale_hours ?? 48}h)`
+              : ""}
+          </span>
+        )}
       </div>
       {gate?.reason && gate.pass === false && (
         <p className="text-xs text-amber-200/90">{gate.reason}</p>
@@ -138,6 +172,15 @@ export function FleetOpsPanel() {
             <span key={a.id} className={a.online ? "text-emerald-300/90" : "text-white/35"}>
               {a.id}
               {a.online ? "" : ` (${Math.round(a.age_sec / 60)}m)`}
+            </span>
+          ))}
+        </p>
+      )}
+      {data?.prune?.items && data.prune.items.length > 0 && (
+        <p className="text-xs text-white/40 font-mono space-y-0.5">
+          {data.prune.items.map((item, i) => (
+            <span key={`${item.type}-${item.target}-${i}`} className="block">
+              {item.type} → {item.target} ({item.status}, {item.age_h}h)
             </span>
           ))}
         </p>
@@ -163,6 +206,32 @@ export function FleetOpsPanel() {
           {copied ? t("fleetOpsCopied") : t("fleetOpsCopyRefresh")}
         </button>
       </div>
+      {data?.prune && (
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="text-[11px] text-white/50 font-mono bg-black/30 px-2 py-1 rounded border border-white/10">
+            {pruneCmd}
+          </code>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(pruneCmd);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              } catch {
+                /* ignore */
+              }
+            }}
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-violet-500/15 border border-violet-500/30 text-violet-200 hover:bg-violet-500/25"
+          >
+            <ClipboardCopy className="w-3.5 h-3.5" />
+            {copied ? t("fleetOpsCopied") : t("fleetOpsCopyPrune")}
+          </button>
+          {(data.prune.pending_stale ?? 0) > 0 && (
+            <span className="text-xs text-amber-200/90">{t("fleetOpsPruneStale")}</span>
+          )}
+        </div>
+      )}
     </div>
   );
 }

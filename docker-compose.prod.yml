@@ -5,15 +5,34 @@
 #   docker compose -f docker-compose.prod.yml up -d --build
 #
 # Dashboard portu DISARIDA acilmaz — yalnizca Caddy 80/443.
-# API/metrics relay yalnizca lg_internal bridge — host LAN'a acilmaz.
+# API/metrics relay lg_internal bridge; host loopback API icin host-api-bridge (docker0).
 
 services:
+  # Linux: API_BIND=127.0.0.1 — bridge container'dan erisim icin docker0 uzerinde hop
+  host-api-bridge:
+    image: alpine/socat
+    container_name: log-guardian-host-api-bridge
+    network_mode: host
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        BR=$$(ip -4 addr show docker0 2>/dev/null | awk '/inet / {split($$2,a,"/"); print a[1]; exit}')
+        [ -n "$$BR" ] || BR=172.17.0.1
+        echo "[host-api-bridge] docker0=$$BR :18091->127.0.0.1:8090 :19092->127.0.0.1:9091"
+        socat TCP-LISTEN:18091,bind=$$BR,fork,reuseaddr TCP:127.0.0.1:8090 &
+        socat TCP-LISTEN:19092,bind=$$BR,fork,reuseaddr TCP:127.0.0.1:9091 &
+        wait
+    restart: unless-stopped
+
   metrics-relay:
     image: alpine/socat
     container_name: log-guardian-metrics-relay
-    command: TCP-LISTEN:19091,fork,reuseaddr TCP:host.docker.internal:9091
+    command: TCP-LISTEN:19091,fork,reuseaddr TCP:host.docker.internal:19092
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    depends_on:
+      host-api-bridge:
+        condition: service_started
     networks:
       - lg_internal
     restart: unless-stopped
@@ -21,8 +40,14 @@ services:
   ban-api-relay:
     image: alpine/socat
     container_name: log-guardian-ban-api-relay
-    network_mode: host
-    command: TCP-LISTEN:18090,bind=0.0.0.0,fork,reuseaddr TCP:127.0.0.1:8090
+    command: TCP-LISTEN:18090,fork,reuseaddr TCP:host.docker.internal:18091
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      host-api-bridge:
+        condition: service_started
+    networks:
+      - lg_internal
     restart: unless-stopped
 
   dashboard:
@@ -58,8 +83,8 @@ services:
       - MARKETPLACE_REQUIRE_SIG=${MARKETPLACE_REQUIRE_SIG:-1}
       - FLEET_COMMAND_HMAC_KEY=${FLEET_COMMAND_HMAC_KEY:-log-guardian-fleet-command-dev-key}
       - FLEET_COMMAND_REQUIRE_SIG=${FLEET_COMMAND_REQUIRE_SIG:-1}
-      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://host.docker.internal:18090}
-      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://host.docker.internal:18090}
+      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://ban-api-relay:18090}
+      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://ban-api-relay:18090}
       - GUARDIAN_API_TOKEN=${GUARDIAN_API_TOKEN:-}
       - GUARDIAN_API_MUTATION_TOKEN=${GUARDIAN_API_MUTATION_TOKEN:-}
       - DASHBOARD_JWT_EXPIRY=${DASHBOARD_JWT_EXPIRY:-24h}
@@ -71,6 +96,8 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     depends_on:
+      host-api-bridge:
+        condition: service_started
       ban-api-relay:
         condition: service_started
       metrics-relay:

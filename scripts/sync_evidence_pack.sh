@@ -41,6 +41,12 @@ for f in \
   ipv6-ban-e2e-report.json \
   api-mutation-token-e2e-report.json \
   ban-api-mtls-report.json \
+  dashboard-login-rl-e2e-report.json \
+  hardening-rollback-gate-report.json \
+  dashboard-jwt-idle-gate-report.json \
+  mtls-cert-expiry-report.json \
+  website-live-gate-report.json \
+  enterprise-soar-gate-report.json \
   lineage-incident-report.json \
   fleet-multi-node-report.json \
   vm-fleet-gate-report.json \

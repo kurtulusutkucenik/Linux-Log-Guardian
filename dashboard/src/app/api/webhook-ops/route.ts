@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { readFile } from "fs/promises";
 import path from "path";
 import { parseGuardianMetrics } from "@/lib/prometheusParse";
+import { guardianMetricsUrl } from "@/lib/guardianMetricsUrl";
 
 export const dynamic = "force-dynamic";
 
@@ -35,10 +36,7 @@ async function readJson<T>(name: string): Promise<T | null> {
 }
 
 async function fetchLiveMetrics() {
-  const url =
-    process.env.GUARDIAN_METRICS_URL ||
-    process.env.PROMETHEUS_METRICS_URL ||
-    "http://host.docker.internal:9091/metrics";
+  const url = guardianMetricsUrl();
   try {
     const res = await fetch(url, { cache: "no-store", signal: AbortSignal.timeout(3000) });
     if (!res.ok) return null;

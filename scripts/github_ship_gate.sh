@@ -52,14 +52,14 @@ if [[ "${SKIP_CLOSURE:-0}" == "1" ]]; then
   echo "[SKIP] security_closure_gate (SKIP_CLOSURE=1)"
 else
   set +e
-  SKIP_DOCKER=1 SKIP_SIEM_E2E=1 bash "$ROOT/scripts/security_closure_gate.sh" >/dev/null 2>&1
+  SKIP_SIEM_E2E=1 bash "$ROOT/scripts/security_closure_gate.sh" >/dev/null 2>&1
   closure_rc=$?
   set -e
   if [[ "$closure_rc" -eq 0 ]]; then
     closure_ok=true
-    echo "[OK] security_closure_gate (SKIP_DOCKER=1)"
+    echo "[OK] security_closure_gate (SKIP_SIEM_E2E=1, docker relay dahil)"
   else
-    echo "[FAIL] security_closure_gate — SKIP_DOCKER=1 bash scripts/security_closure_gate.sh" >&2
+    echo "[FAIL] security_closure_gate — SKIP_SIEM_E2E=1 bash scripts/security_closure_gate.sh" >&2
   fi
 fi
 

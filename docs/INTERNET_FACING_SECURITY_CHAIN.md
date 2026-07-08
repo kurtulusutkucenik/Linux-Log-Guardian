@@ -51,6 +51,8 @@ bash scripts/local_security_audit.sh         # FAIL:0 hedef
 bash scripts/security_closure_gate.sh
 ```
 
+**Docker prod stack:** `host-api-bridge` (docker0 hop) + `ban-api-relay` / `metrics-relay` (`lg_internal`). Host `:18090` dinlenmez.
+
 ---
 
 ## Enterprise SOAR (opt-in)

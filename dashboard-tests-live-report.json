@@ -1,11 +1,11 @@
 {
   "pass": true,
   "login_ok": true,
-  "expected": 85,
-  "actual": 85,
-  "proof_expected": 85,
+  "expected": 89,
+  "actual": 89,
+  "proof_expected": 89,
   "parity_ok": true,
   "dash_url": "https://localhost:8443",
-  "date": "2026-07-08T17:54:37.625865+00:00",
+  "date": "2026-07-08T22:11:39.432484+00:00",
   "script": "scripts/dashboard_tests_live_count.sh"
 }

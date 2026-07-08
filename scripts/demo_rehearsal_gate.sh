@@ -110,9 +110,9 @@ fi
 
 if [[ "${FULL:-0}" == "1" ]]; then
   closure_skip=false
-  if SKIP_DOCKER=1 bash "$ROOT/scripts/security_closure_gate.sh" >/dev/null 2>&1; then
+  if SKIP_SIEM_E2E=1 bash "$ROOT/scripts/security_closure_gate.sh" >/dev/null 2>&1; then
     closure_ok=true
-    echo "[OK] security_closure_gate (SKIP_DOCKER=1)"
+    echo "[OK] security_closure_gate (SKIP_SIEM_E2E=1, docker relay dahil)"
   else
     echo "[WARN] security_closure_gate"
   fi

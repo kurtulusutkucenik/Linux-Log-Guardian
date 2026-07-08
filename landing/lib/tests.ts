@@ -206,24 +206,24 @@ export const TESTS: TestEntry[] = [
   },
   {
     "id": "post-install-verify",
-    "status": "pass",
-    "statusLabel": "GECTI",
-    "statusLabelEn": "PASS",
+    "status": "fail",
+    "statusLabel": "KALDI",
+    "statusLabelEn": "FAIL",
     "title": "Kurulum kapısı — servis, IPC, API fail-closed",
     "titleEn": "Install gate — services, IPC, API fail-closed",
-    "verdict": "FAIL: 0 · WARN: 2",
-    "verdictEn": "FAIL: 0 · WARN: 2",
+    "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+    "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
     "group": "gate",
     "purpose": "systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.",
     "purposeEn": "systemd, --health, metrics :9091, API_BIND and nginx format green matrix.",
     "metrics": [
       {
         "label": "FAIL",
-        "value": "0"
+        "value": "3"
       },
       {
         "label": "WARN",
-        "value": "2"
+        "value": "0"
       }
     ],
     "script": "scripts/post_install_verify.sh",
@@ -231,24 +231,24 @@ export const TESTS: TestEntry[] = [
   },
   {
     "id": "vm-demo-gate",
-    "status": "pass",
-    "statusLabel": "GECTI",
-    "statusLabelEn": "PASS",
+    "status": "fail",
+    "statusLabel": "KALDI",
+    "statusLabelEn": "FAIL",
     "title": "VM demo kapısı — post_install 0 FAIL",
     "titleEn": "VM demo gate — post_install 0 FAIL",
-    "verdict": "FAIL: 0 · WARN: 1",
-    "verdictEn": "FAIL: 0 · WARN: 1",
+    "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+    "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
     "group": "gate",
     "purpose": "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate).",
     "purposeEn": "Final check before laptop/VM demo (repair: sudo vm_demo_gate).",
     "metrics": [
       {
         "label": "FAIL",
-        "value": "0"
+        "value": "3"
       },
       {
         "label": "WARN",
-        "value": "1"
+        "value": "0"
       }
     ],
     "script": "scripts/vm_demo_gate.sh",
@@ -364,15 +364,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Attack map — geo marker + canli ban",
     "titleEn": "Attack map — geo markers + live bans",
-    "verdict": "5 marker, kaynak=live; ack=1 ban=4; nav=4 parity=OK.",
-    "verdictEn": "5 markers, source=live; ack=1 ban=4; nav=4 parity=OK.",
+    "verdict": "9 marker, kaynak=live; ack=1 ban=8; nav=8 parity=OK.",
+    "verdictEn": "9 markers, source=live; ack=1 ban=8; nav=8 parity=OK.",
     "group": "proof",
     "purpose": "Ana sayfa kure haritasinda /api/attack-geo ile ban IP konumlarini kanitlar.",
     "purposeEn": "Proves banned IP locations on the home globe via /api/attack-geo.",
     "metrics": [
       {
         "label": "markers",
-        "value": "5"
+        "value": "9"
       },
       {
         "label": "ack",
@@ -380,11 +380,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "ban",
-        "value": "4"
+        "value": "8"
       },
       {
         "label": "nav",
-        "value": "4"
+        "value": "8"
       },
       {
         "label": "bans",
@@ -465,7 +465,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/ban_policy_audit_e2e.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "ban-profile-e2e",
@@ -666,6 +666,27 @@ export const TESTS: TestEntry[] = [
     "date": "2026-07-08"
   },
   {
+    "id": "dashboard-jwt-idle-gate",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
+    "title": "Dashboard JWT idle — oturum zaman aşımı",
+    "titleEn": "Dashboard JWT idle — session timeout",
+    "verdict": "mode=off; idle=0dk.",
+    "verdictEn": "mode=off; idle=0m.",
+    "group": "proof",
+    "purpose": "middleware iat kontrolü; laptop 0dk, internet-facing 480dk önerilir.",
+    "purposeEn": "middleware iat check; laptop 0m, internet-facing 480m recommended.",
+    "metrics": [
+      {
+        "label": "idle_min",
+        "value": "0"
+      }
+    ],
+    "script": "scripts/dashboard_jwt_idle_gate.sh",
+    "date": "2026-07-08"
+  },
+  {
     "id": "dashboard-live-demo",
     "status": "pass",
     "statusLabel": "GECTI",
@@ -699,14 +720,35 @@ export const TESTS: TestEntry[] = [
     "date": "2026-06-29"
   },
   {
+    "id": "dashboard-login-rl-e2e",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
+    "title": "Dashboard login rate limit — brute-force koruması",
+    "titleEn": "Dashboard login rate limit — brute-force protection",
+    "verdict": "10 deneme → 429 (probe 203.0.113.88).",
+    "verdictEn": "10 attempts → 429 (probe 203.0.113.88).",
+    "group": "proof",
+    "purpose": "Prod: X-Forwarded-For ile 10 başarısız denemeden sonra HTTP 429.",
+    "purposeEn": "Prod: HTTP 429 after 10 failed attempts (X-Forwarded-For).",
+    "metrics": [
+      {
+        "label": "max",
+        "value": "10"
+      }
+    ],
+    "script": "scripts/dashboard_login_rate_limit_e2e.sh",
+    "date": "2026-07-08"
+  },
+  {
     "id": "demo-rehearsal-gate",
     "status": "pass",
     "statusLabel": "GECTI",
     "statusLabelEn": "PASS",
     "title": "Demo rehearsal — 08:00 sunum kapisi",
     "titleEn": "Demo rehearsal — presentation readiness gate",
-    "verdict": "demo_3min=yes; dash=yes; proof 84/85.",
-    "verdictEn": "demo_3min=yes; dash=yes; proof 84/85.",
+    "verdict": "demo_3min=yes; dash=yes; proof 85/89.",
+    "verdictEn": "demo_3min=yes; dash=yes; proof 85/89.",
     "group": "proof",
     "purpose": "demo_3min + :8443 + PDF + canli site sunum zinciri.",
     "purposeEn": "demo_3min + :8443 + PDF + live site presentation chain.",
@@ -717,11 +759,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/demo_rehearsal_gate.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "demo-video-gate",
@@ -730,8 +772,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Demo video — 04:00 kayit hazirlik kapisi",
     "titleEn": "Demo video — 04:00 recording readiness gate",
-    "verdict": "pdf=yes; ship=yes; siem=yes; proof 84/85.",
-    "verdictEn": "pdf=yes; ship=yes; siem=yes; proof 84/85.",
+    "verdict": "pdf=yes; ship=yes; siem=yes; proof 85/89.",
+    "verdictEn": "pdf=yes; ship=yes; siem=yes; proof 85/89.",
     "group": "proof",
     "purpose": "demo_video + SIEM + PDF + presentation_ship — kayit oncesi otomatik.",
     "purposeEn": "demo_video + SIEM + PDF + presentation_ship — pre-recording automation.",
@@ -742,7 +784,7 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/demo_video_gate.sh",
@@ -784,8 +826,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Docs consistency — 64 test + HOSTING §8b",
     "titleEn": "Docs consistency — 64 test + HOSTING §8b",
-    "verdict": "checks OK=53; proof 84/85; hosting §8b=yes.",
-    "verdictEn": "checks OK=53; proof 84/85; hosting §8b=yes.",
+    "verdict": "checks OK=53; proof 85/89; hosting §8b=yes.",
+    "verdictEn": "checks OK=53; proof 85/89; hosting §8b=yes.",
     "group": "proof",
     "purpose": "Dokuman vitrin tutarliligi — 64 test, Telegram cross-link.",
     "purposeEn": "Doc vitrine consistency — 64 tests, Telegram cross-link.",
@@ -796,7 +838,7 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/docs_consistency_gate.sh",
@@ -804,24 +846,24 @@ export const TESTS: TestEntry[] = [
   },
   {
     "id": "edge-protection-gate",
-    "status": "pass",
-    "statusLabel": "GECTI",
-    "statusLabelEn": "PASS",
+    "status": "fail",
+    "statusLabel": "KALDI",
+    "statusLabelEn": "FAIL",
     "title": "Edge koruma — nginx + XDP/ipset + threat intel",
     "titleEn": "Edge protection — nginx + XDP/ipset + threat intel",
-    "verdict": "IPC ok; ipset-fallback; nginx OK; ipset 0.",
-    "verdictEn": "IPC ok; ipset-fallback; nginx OK; ipset 0.",
+    "verdict": "ipc=fail; xdp_mode=unknown",
+    "verdictEn": "ipc=fail; xdp_mode=unknown",
     "group": "proof",
     "purpose": "Origin edge: nginx log format, ipset/XDP ban, threat-intel summary DB.",
     "purposeEn": "Origin edge: nginx log format, ipset/XDP ban, threat-intel summary DB.",
     "metrics": [
       {
         "label": "ipc",
-        "value": "ok"
+        "value": "fail"
       },
       {
         "label": "xdp",
-        "value": "ipset-fallback"
+        "value": "unknown"
       },
       {
         "label": "ipset",
@@ -988,23 +1030,23 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "GitHub ship — push oncesi tam kapı",
     "titleEn": "GitHub ship — full pre-push gate",
-    "verdict": "ship=yes; closure=skip; secret=yes; proof 84/85.",
-    "verdictEn": "ship=yes; closure=skip; secret=yes; proof 84/85.",
+    "verdict": "ship=yes; closure=yes; secret=yes; proof 85/89.",
+    "verdictEn": "ship=yes; closure=yes; secret=yes; proof 85/89.",
     "group": "proof",
     "purpose": "presentation_ship + security_closure + secret scan — git push hazirligi.",
     "purposeEn": "presentation_ship + security_closure + secret scan — git push readiness.",
     "metrics": [
       {
         "label": "closure",
-        "value": "skip"
+        "value": "yes"
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/github_ship_gate.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "grafana-alerts",
@@ -1061,6 +1103,27 @@ export const TESTS: TestEntry[] = [
     "date": "2026-07-08"
   },
   {
+    "id": "hardening-rollback-gate",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
+    "title": "Hardening rollback — geri alma hazırlığı",
+    "titleEn": "Hardening rollback — rollback readiness",
+    "verdict": "kontroller 7/7 OK.",
+    "verdictEn": "checks 7/7 OK.",
+    "group": "proof",
+    "purpose": "Internet-facing sertleştirme öncesi yedek + demo parola algısı (salt okunur).",
+    "purposeEn": "Pre-hardening backup + demo password detection (read-only).",
+    "metrics": [
+      {
+        "label": "checks",
+        "value": "7/7"
+      }
+    ],
+    "script": "scripts/hardening_rollback_gate.sh",
+    "date": "2026-07-08"
+  },
+  {
     "id": "honeypot-feed",
     "status": "pass",
     "statusLabel": "GECTI",
@@ -1100,15 +1163,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "INTEL_BAN_DB — ban_events boyut + TTL",
     "titleEn": "INTEL_BAN_DB — ban_events size + TTL",
-    "verdict": "ban_events 1240; legacy 0; stale 0; TTL 7g.",
-    "verdictEn": "ban_events 1240; legacy 0; stale 0; TTL 7d.",
+    "verdict": "ban_events 1292; legacy 0; stale 0; TTL 7g.",
+    "verdictEn": "ban_events 1292; legacy 0; stale 0; TTL 7d.",
     "group": "proof",
     "purpose": "SQLite ban_events sisme kontrolu — ban mantigina dokunmaz.",
     "purposeEn": "SQLite ban_events bloat check — does not change ban logic.",
     "metrics": [
       {
         "label": "rows",
-        "value": "1240"
+        "value": "1292"
       },
       {
         "label": "legacy",
@@ -1171,20 +1234,20 @@ export const TESTS: TestEntry[] = [
   },
   {
     "id": "k8s-admission",
-    "status": "pass",
-    "statusLabel": "GECTI",
-    "statusLabelEn": "PASS",
+    "status": "warn",
+    "statusLabel": "UYARI",
+    "statusLabelEn": "WARN",
     "title": "K8s admission webhook — deny label + allow",
     "titleEn": "K8s admission webhook — deny label + allow",
-    "verdict": "mode=docker-standalone; deny label=security.log-guardian.io/deny.",
-    "verdictEn": "mode=docker-standalone; deny label=security.log-guardian.io/deny.",
+    "verdict": "mode=skip; deny label=security.log-guardian.io/deny.",
+    "verdictEn": "mode=skip; deny label=security.log-guardian.io/deny.",
     "group": "proof",
     "purpose": "Operator admission: security.log-guardian.io/deny pod reddi.",
     "purposeEn": "Operator admission rejects pods with deny security label.",
     "metrics": [
       {
         "label": "mode",
-        "value": "docker-standalone"
+        "value": "skip"
       }
     ],
     "script": "scripts/k8s_admission_test.sh",
@@ -1255,8 +1318,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Laptop Core — edge + SOC + ban operatörü",
     "titleEn": "Laptop Core — edge + SOC + ban operator gate",
-    "verdict": "edge=skip; soc=yes; ban=yes; xdp=ipset-fallback; proof 84/85.",
-    "verdictEn": "edge=skip; soc=yes; ban=yes; xdp=ipset-fallback; proof 84/85.",
+    "verdict": "edge=skip; soc=yes; ban=yes; xdp=ipset-fallback; proof 85/89.",
+    "verdictEn": "edge=skip; soc=yes; ban=yes; xdp=ipset-fallback; proof 85/89.",
     "group": "proof",
     "purpose": "nginx→WAF→ban Core vaadi — edge, Telegram SOC, ban API.",
     "purposeEn": "nginx→WAF→ban Core promise — edge, Telegram SOC, ban API.",
@@ -1267,7 +1330,7 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/laptop_core_gate.sh",
@@ -1280,15 +1343,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Laptop excellence — demo hazirlik kapisi",
     "titleEn": "Laptop excellence — demo readiness gate",
-    "verdict": "OK=13 WARN=0 FAIL=0; proof 84/85.",
-    "verdictEn": "OK=13 WARN=0 FAIL=0; proof 84/85.",
+    "verdict": "OK=14 WARN=0 FAIL=0; proof 85/89.",
+    "verdictEn": "OK=14 WARN=0 FAIL=0; proof 85/89.",
     "group": "proof",
     "purpose": "Laptop demo zinciri — servis, :8443, filo, kanit.",
     "purposeEn": "Laptop demo chain — services, :8443, fleet, proof.",
     "metrics": [
       {
         "label": "OK",
-        "value": "13"
+        "value": "14"
       },
       {
         "label": "FAIL",
@@ -1296,7 +1359,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/laptop_excellence_gate.sh",
-    "date": "2026-07-05"
+    "date": "2026-07-08"
   },
   {
     "id": "lineage-incident",
@@ -1305,15 +1368,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Lineage → incident otomatik (tek senaryo)",
     "titleEn": "Lineage → auto incident (single scenario)",
-    "verdict": "INC-6a4d38e3-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
-    "verdictEn": "INC-6a4d38e3-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
+    "verdict": "INC-6a4ecb0c-2382; aktif=1; sinyal=LOG_SQLI+EBPF_EXECVE.",
+    "verdictEn": "INC-6a4ecb0c-2382; active=1; signals=LOG_SQLI+EBPF_EXECVE.",
     "group": "proof",
     "purpose": "LOG_SQLI + EBPF_EXECVE sinyallerinden INC-* korelasyonu; tek otomatik incident kanıtı.",
     "purposeEn": "INC-* correlation from LOG_SQLI + EBPF_EXECVE signals; single auto-incident proof.",
     "metrics": [
       {
         "label": "INC",
-        "value": "INC-6a4d38e3-2382"
+        "value": "INC-6a4ecb0c-2382"
       },
       {
         "label": "IP",
@@ -1325,7 +1388,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/lineage_incident_e2e.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "lineage-live",
@@ -1438,22 +1501,43 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Morning operator — sabah hazirlik (hizli)",
     "titleEn": "Morning operator — fast morning readiness",
-    "verdict": "core=yes(rapor); ship=yes; proof 84/85.",
-    "verdictEn": "core=yes(rapor); ship=yes; proof 84/85.",
+    "verdict": "core=yes(yes); ship=yes; proof 85/89.",
+    "verdictEn": "core=yes(yes); ship=yes; proof 85/89.",
     "group": "proof",
     "purpose": "Rapor-oncelikli sabah kapisi — demo_3min kosmaz, mevcut gate'leri bozmaz.",
     "purposeEn": "Report-first morning gate — no demo_3min, does not disturb other gates.",
     "metrics": [
       {
         "label": "core",
-        "value": "rapor"
+        "value": "yes"
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/morning_operator_gate.sh",
+    "date": "2026-07-08"
+  },
+  {
+    "id": "mtls-cert-expiry",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
+    "title": "mTLS sertifika süresi — SOAR lab",
+    "titleEn": "mTLS certificate expiry — SOAR lab",
+    "verdict": "min 823 gün (warn<=14).",
+    "verdictEn": "min 823 days (warn<=14).",
+    "group": "proof",
+    "purpose": "client/server/ca.crt bitiş — rotasyon runbook uyarısı.",
+    "purposeEn": "client/server/ca.crt expiry — rotation runbook warning.",
+    "metrics": [
+      {
+        "label": "min_days",
+        "value": "823"
+      }
+    ],
+    "script": "scripts/mtls_cert_expiry_check.sh",
     "date": "2026-07-08"
   },
   {
@@ -1536,7 +1620,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/parser_fuzz_e2e.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "phase100-fast-gate",
@@ -1570,8 +1654,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Presentation ship — sunum + GitHub zinciri",
     "titleEn": "Presentation ship — demo rehearsal + release chain",
-    "verdict": "demo=yes; release=yes; artefakt 3/3; proof 84/85.",
-    "verdictEn": "demo=yes; release=yes; artefakt 3/3; proof 84/85.",
+    "verdict": "demo=yes; release=yes; artefakt 3/3; proof 85/89.",
+    "verdictEn": "demo=yes; release=yes; artefakt 3/3; proof 85/89.",
     "group": "proof",
     "purpose": "demo_rehearsal + release_ready — tek komutta sunum ve ship.",
     "purposeEn": "demo_rehearsal + release_ready — one-command presentation and ship.",
@@ -1582,11 +1666,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/presentation_ship_gate.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "prod-stack-e2e",
@@ -1646,8 +1730,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Release ready — GitHub oncesi zincir kapisi",
     "titleEn": "Release ready — pre-GitHub release chain gate",
-    "verdict": "release=yes; docs=yes; artefakt 3/3; proof 84/85.",
-    "verdictEn": "release=yes; docs=yes; artefakt 3/3; proof 84/85.",
+    "verdict": "release=yes; docs=yes; artefakt 3/3; proof 85/89.",
+    "verdictEn": "release=yes; docs=yes; artefakt 3/3; proof 85/89.",
     "group": "proof",
     "purpose": "ZIP/PDF + docs + canli site + filo zinciri.",
     "purposeEn": "ZIP/PDF + docs + live site + fleet chain.",
@@ -1658,11 +1742,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       }
     ],
     "script": "scripts/release_ready_gate.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "siem-export",
@@ -1691,7 +1775,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/siem_export_e2e.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "taxii-feed",
@@ -1757,32 +1841,32 @@ export const TESTS: TestEntry[] = [
   },
   {
     "id": "telegram-soc-gate",
-    "status": "fail",
-    "statusLabel": "KALDI",
-    "statusLabelEn": "FAIL",
+    "status": "pass",
+    "statusLabel": "GECTI",
+    "statusLabelEn": "PASS",
     "title": "Telegram SOC — timeline + map + webhook",
     "titleEn": "Telegram SOC — timeline + map + webhook",
-    "verdict": "login HTTP 429",
-    "verdictEn": "login HTTP 429",
+    "verdict": "SOC 21 (ack 8); map 11; bans ack 1; webhook undo.",
+    "verdictEn": "SOC 21 (ack 8); map 11; bans ack 1; webhook undo.",
     "group": "proof",
     "purpose": "Uc operator yuzeyinin ayni anda canli kanit urettigini dogrular.",
     "purposeEn": "Proves three operator surfaces emit live evidence together.",
     "metrics": [
       {
         "label": "soc",
-        "value": "0"
+        "value": "21"
       },
       {
         "label": "map",
-        "value": "0"
+        "value": "11"
       },
       {
         "label": "bans",
-        "value": "0"
+        "value": "1"
       },
       {
         "label": "webhook",
-        "value": "—"
+        "value": "undo"
       }
     ],
     "script": "scripts/telegram_soc_gate.sh",
@@ -1838,8 +1922,8 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "VM fleet keepalive — host + node-vm-02",
     "titleEn": "VM fleet keepalive — host + node-vm-02",
-    "verdict": "node-kurtulus-01=Online; node-vm-02=Online; online=2.",
-    "verdictEn": "node-kurtulus-01=Online; node-vm-02=Online; online=2.",
+    "verdict": "node-kurtulus-01=Online; node-vm-02=skip; online=2.",
+    "verdictEn": "node-kurtulus-01=Online; node-vm-02=skip; online=2.",
     "group": "proof",
     "purpose": "LAPTOP_OPS filo + VM keepalive — iki dugum Online.",
     "purposeEn": "LAPTOP_OPS fleet + VM keepalive — two nodes Online.",
@@ -1850,11 +1934,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "vm",
-        "value": "Online"
+        "value": "skip"
       }
     ],
     "script": "scripts/vm_fleet_gate.sh",
-    "date": "2026-07-07"
+    "date": "2026-07-08"
   },
   {
     "id": "vm-host-prep-gate",
@@ -1863,15 +1947,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "VM host prep — pre-sync evidence",
     "titleEn": "VM host prep — pre-sync evidence",
-    "verdict": "ctx host-vbox; proof 84/85; post_install FAIL=0.",
-    "verdictEn": "ctx host-vbox; proof 84/85; post_install FAIL=0.",
+    "verdict": "ctx host-vbox; proof 85/89; post_install FAIL=0.",
+    "verdictEn": "ctx host-vbox; proof 85/89; post_install FAIL=0.",
     "group": "proof",
     "purpose": "Laptop HOST vm_sync oncesi kanit.",
     "purposeEn": "Laptop HOST proof before vm_sync.",
     "metrics": [
       {
         "label": "proof",
-        "value": "84/85"
+        "value": "85/89"
       },
       {
         "label": "ctx",
@@ -2036,15 +2120,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Website live — canli site /tests parity",
     "titleEn": "Website live — production /tests parity",
-    "verdict": "ceniklinuxlogguardian.org None/85; CSS=yes.",
-    "verdictEn": "ceniklinuxlogguardian.org None/85; CSS=yes.",
+    "verdict": "ceniklinuxlogguardian.org None/89; CSS=yes.",
+    "verdictEn": "ceniklinuxlogguardian.org None/89; CSS=yes.",
     "group": "proof",
     "purpose": "ceniklinuxlogguardian.org SRI + test kart parity.",
     "purposeEn": "Production domain SRI + test card parity.",
     "metrics": [
       {
         "label": "live",
-        "value": "None/85"
+        "value": "None/89"
       },
       {
         "label": "domain",
@@ -2061,19 +2145,19 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Site preview — landing test parity",
     "titleEn": "Site preview — landing test parity",
-    "verdict": "Site 85/85 parity; grafana yes; edge yes.",
-    "verdictEn": "Site 85/85 parity; grafana yes; edge yes.",
+    "verdict": "Site 89/89 parity; grafana yes; edge yes.",
+    "verdictEn": "Site 89/89 parity; grafana yes; edge yes.",
     "group": "proof",
     "purpose": "landing/lib/tests.ts ile competitive-proof parity (yerel test-kart).",
     "purposeEn": "landing/lib/tests.ts parity with competitive-proof (local test cards).",
     "metrics": [
       {
         "label": "site",
-        "value": "85"
+        "value": "89"
       },
       {
         "label": "proof",
-        "value": "85"
+        "value": "89"
       }
     ],
     "script": "scripts/website_preview_gate.sh",

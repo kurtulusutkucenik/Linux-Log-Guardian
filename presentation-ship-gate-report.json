@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-07T19:43:29.534635+00:00",
+  "date": "2026-07-08T22:10:58.738925+00:00",
   "pass": true,
   "demo_rehearsal_ok": true,
   "release_ready_ok": true,
@@ -9,8 +9,8 @@
   "docs_consistency_ok": true,
   "artifacts_ok": true,
   "artifacts_count": "3/3",
-  "proof_tests": 85,
-  "proof_pass": 85,
+  "proof_tests": 89,
+  "proof_pass": 89,
   "dash_url": "https://localhost:8443/tests",
   "site_url": "https://ceniklinuxlogguardian.org/tests",
   "script": "scripts/presentation_ship_gate.sh"

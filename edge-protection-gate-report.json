@@ -1,8 +1,8 @@
 {
-  "date": "2026-07-08T17:59:26.320079+00:00",
-  "pass": true,
-  "ipc": "ok",
-  "xdp_mode": "ipset-fallback",
+  "date": "2026-07-08T22:17:31.749296+00:00",
+  "pass": false,
+  "ipc": "fail",
+  "xdp_mode": "unknown",
   "xdp_active": false,
   "default_nic": "wlo1",
   "wifi_nic": true,
@@ -14,7 +14,8 @@
   "bans_active": 23,
   "bans_active_db": 23,
   "threat_intel_legacy_rows": 0,
-  "threat_intel_summary_rows": 1050,
+  "threat_intel_summary_rows": 1102,
   "ban_pipeline_ipset": 0,
-  "script": "scripts/edge_protection_gate.sh"
+  "script": "scripts/edge_protection_gate.sh",
+  "fail_reason": "ipc=fail; xdp_mode=unknown"
 }

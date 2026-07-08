@@ -1,14 +1,14 @@
 {
-  "date": "2026-07-08T17:59:22.965096+00:00",
-  "pass": true,
+  "date": "2026-07-08T22:17:29.915109+00:00",
+  "pass": false,
   "laptop_profile": true,
   "items": [
     {
       "id": "edge-protection-gate",
       "scope": "both",
       "label": "edge_protection_gate",
-      "status": "pass",
-      "note": "rapor pass"
+      "status": "fail",
+      "note": "bash scripts/edge_protection_gate.sh"
     },
     {
       "id": "dist-risk-proof",
@@ -42,8 +42,8 @@
       "id": "nginx-t",
       "scope": "both",
       "label": "nginx -t",
-      "status": "pass",
-      "note": "nginx aktif + snippet (root -t gerekmez)"
+      "status": "warn",
+      "note": "sudo nginx -t"
     },
     {
       "id": "nginx-rate-limit",
@@ -70,8 +70,8 @@
       "id": "intel-ban-prune-sudo",
       "scope": "laptop",
       "label": "ban-db-prune NOPASSWD cron",
-      "status": "pass",
-      "note": ""
+      "status": "warn",
+      "note": "sudoers-ban-db-prune.example"
     },
     {
       "id": "whitelist",
@@ -92,7 +92,7 @@
       "scope": "laptop",
       "label": "Cloudflare Pages /tests parity",
       "status": "pass",
-      "note": "85 kart"
+      "note": "89 kart"
     },
     {
       "id": "cdn-real-ip",
@@ -112,8 +112,8 @@
       "id": "enterprise-e9",
       "scope": "both",
       "label": "E9 runbook zinciri",
-      "status": "pass",
-      "note": "proof=85/85"
+      "status": "warn",
+      "note": "bash scripts/enterprise_e9_verify.sh"
     },
     {
       "id": "fleet-command-sign",
@@ -127,18 +127,24 @@
       "scope": "laptop",
       "label": "VPS kurulum hazirligi (sunucu yok)",
       "status": "pass",
-      "note": "proof=85/85"
+      "note": "proof=86/89"
     }
   ],
   "summary": {
-    "pass": 18,
-    "warn": 0,
-    "fail": 0,
+    "pass": 14,
+    "warn": 3,
+    "fail": 1,
     "skip": 0,
     "total": 18
   },
-  "laptop_fail_ids": [],
-  "laptop_warn_ids": [],
+  "laptop_fail_ids": [
+    "edge-protection-gate"
+  ],
+  "laptop_warn_ids": [
+    "nginx-t",
+    "intel-ban-prune-sudo",
+    "enterprise-e9"
+  ],
   "script": "scripts/edge_protection_checklist.sh",
   "doc": "docs/EDGE_PROTECTION.md"
 }

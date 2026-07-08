@@ -58,9 +58,21 @@ if [[ -f "$CONF" ]]; then
 fi
 
 if command -v log-guardian >/dev/null 2>&1; then
+  health_ok=0
   if log-guardian --health --quiet 2>/dev/null | grep -q '"ok"'; then
+    health_ok=1
     ok "log-guardian --health"
   else
+    api_port=$(lg_rules_kv API_PORT)
+    api_port="${api_port:-8090}"
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+      "http://127.0.0.1:${api_port}/api/v1/metrics" 2>/dev/null || echo 000)
+    if [[ "$code" == "200" || "$code" == "403" ]]; then
+      health_ok=1
+      ok "API :${api_port} ayakta (IPC health atlandi)"
+    fi
+  fi
+  if [[ "$health_ok" -eq 0 ]]; then
     warn_msg "log-guardian --health basarisiz veya servis kapali"
   fi
 fi

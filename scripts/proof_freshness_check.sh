@@ -33,6 +33,11 @@ checks = [
     ("competitive-proof", "competitive-proof.json", 72),
     ("fp-report", "fp-report.json", 168),
     ("fleet-multi", "fleet-multi-node-report.json", 24),
+    ("website-live", "website-live-gate-report.json", 48),
+    ("dashboard-login-rl", "dashboard-login-rl-e2e-report.json", 24),
+    ("hardening-rollback", "hardening-rollback-gate-report.json", 48),
+    ("dashboard-jwt-idle", "dashboard-jwt-idle-gate-report.json", 48),
+    ("mtls-cert-expiry", "mtls-cert-expiry-report.json", 168),
 ]
 
 now = datetime.datetime.now(datetime.timezone.utc)

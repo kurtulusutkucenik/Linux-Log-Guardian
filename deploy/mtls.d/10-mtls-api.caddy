@@ -6,7 +6,7 @@
 			trust_pool file /etc/caddy/mtls/ca.crt
 		}
 	}
-	reverse_proxy http://host.docker.internal:18090 {
+	reverse_proxy http://ban-api-relay:18090 {
 		header_up X-Guardian-Token {$GUARDIAN_API_MUTATION_TOKEN}
 		header_up Host {host}
 	}

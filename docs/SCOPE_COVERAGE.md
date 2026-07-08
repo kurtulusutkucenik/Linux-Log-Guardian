@@ -4,7 +4,7 @@
 
 **İlgili belgeler:** [CUSTOMER_REQUIREMENTS.md](CUSTOMER_REQUIREMENTS.md) · [PROD_ROADMAP.md](PROD_ROADMAP.md) · [Log_Guardian_Enterprise_Roadmap.md](Log_Guardian_Enterprise_Roadmap.md) · [TEST_MATRIX.md](TEST_MATRIX.md)
 
-**Son güncelleme:** 2026-07-08 (Sprint 8; laptop + canlı site `/tests` **85 kart**; P4 VPS bekliyor)
+**Son güncelleme:** 2026-07-08 (Sprint 8; laptop + canlı site `/tests` **89 kart**; P4 VPS bekliyor)
 
 ---
 
@@ -103,7 +103,7 @@ flowchart TB
 | P4 | L7 HTTP probe | `http_l7_probe.c`, `l7_telemetry.c` | ✅ | `l7-probe-prod-report.json`, `probe_active=true` | ipset-fallback laptop |
 | P5 | Incident korelasyon | `incident_engine.c` | ✅ | `bash scripts/incident_e2e.sh` | |
 | P6 | Falco host eşleme | `falco_host_rules.c` | ✅ | `bash scripts/falco_host_e2e.sh` | |
-| P7 | Dashboard (Next.js) | `dashboard/` | ✅ | `https://localhost:8443` + `/tests` **85 kart** | Prod: Caddy TLS + JWT |
+| P7 | Dashboard (Next.js) | `dashboard/` | ✅ | `https://localhost:8443` + `/tests` **89 kart** | Prod: Caddy TLS + JWT |
 | P8 | Fleet telemetry + komut | `agent_sync.c`, `/fleet` | ✅ | `fleet_multi_node_e2e.sh` + VM `node-vm-02` keepalive | Dashboard :8443; 2 node canlı demo |
 | P9 | Grafana panelleri | `grafana-dashboard.json`, `grafana-alerts.json` | ✅ | `bash scripts/grafana_provision.sh` | `$tenant` label |
 | P10 | Webhook + Telegram ops | `webhook.c` | ✅ | laptop: tunnel setWebhook + `grafana_alert_e2e.sh` | [WEBHOOK_SETUP.md](WEBHOOK_SETUP.md) |
@@ -123,7 +123,7 @@ flowchart TB
 | E6 | Mesh (etcd) | `etcd_mesh.c`, `mesh_intel.c` | ✅ | `mesh_etcd_e2e.sh` + `mesh_etcd_live_e2e.sh` | Laptop docker PUT/GET; VPS cluster opsiyonel |
 | E7 | Compliance PDF export | dashboard Pro tier | ✅ | `bash scripts/compliance_export_e2e.sh` | `/api/reports/export` Pro gate |
 | E8 | 72h soak / air-gap runbook | `scripts/soak_test.sh` | ✅ | `soak-report.json` 864 örnek, 0 fail (2026-06-16→19) | Laptop kanıt; VPS tekrar opsiyonel |
-| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 85 test vitrin |
+| E9 | Enterprise destek süreci | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | ✅ | Dokümantasyon + SLA + escalation | 89 test vitrin |
 
 ### 2.4 Kalite ve rekabet kapıları (tüm tier'lar)
 
@@ -302,7 +302,7 @@ export LOGANALYZER_PASSWORD='DegistirBeni!123'
 | Madde | Komut | Durum |
 |-------|--------|--------|
 | Enterprise SOAR operatör | `sudo bash scripts/enable_enterprise_soar_api.sh` | ✅ |
-| Vitrin 85/85 | laptop + `ceniklinuxlogguardian.org/tests` | ✅ |
+| Vitrin 89/89 | laptop + `ceniklinuxlogguardian.org/tests` | ✅ |
 | E9 runbook zinciri | `bash scripts/enterprise_e9_verify.sh` | ✅ |
 | Edge checklist | `bash scripts/edge_protection_checklist.sh` | ✅ |
 | VPS hazırlık paketi | `bash scripts/vps_prep_gate.sh` | ✅ (sunucu yok) |
@@ -420,7 +420,7 @@ bash scripts/weekly_operator_ritual.sh
 
 | # alan | Durum | Kanıt / komut |
 |--------|--------|----------------|
-| **A1** sabah ritmi | ✅ | `morning_operator_chain.sh` · 85/85 |
+| **A1** sabah ritmi | ✅ | `morning_operator_chain.sh` · 89/89 |
 | **A2** kanıt tazeliği | ✅ | `weekly_operator_ritual` + Cuma cron · `proof_freshness` |
 | **A3** fleet prune | ✅ | FLEET_ONLINE §5 + Pazar cron |
 | **A4** K8s | ✅ | kind rehber + helm smoke · P12 lab |
@@ -436,10 +436,10 @@ bash scripts/weekly_operator_ritual.sh
 | **P1** 8–15 | ✅ | split, SOAR, cronlar, prune |
 | **P2** 16–24 | ✅ | UX + validate_rules + healthcheck + corpus 31 kat. · `fleet_offline_gate` + **Grafana `lg-fleet-offline`** (agent gauge) |
 | **P3** 25–30 | ✅ | deb · kind · E9 hook · evidence 10:15 · events VACUUM · npm overrides postcss |
-| **Canlı site** | ✅ | `website_live_gate` 85 kart |
+| **Canlı site** | ✅ | `website_live_gate` 89 kart |
 | **Kapanış koşusu** | ✅ | `grafana_provision` 13/13 · `morning_operator_chain` OK · `pre_push` FAIL:0 · filo 2/3 simulated |
 
-**Laptop Sprint 7+ bitti.** Sprint 8–10: Caddy · FleetOps/VpsPrep · 85 test · filo AUTO_REFRESH · Grafana `lg-fleet-offline` · sabah cron → `morning_operator_chain`. **VPS alışa hazır** — [VPS_SETUP.md](VPS_SETUP.md) sipariş checklist. Kalan: **P4 VPS uygulama** + GitHub ship (onay).
+**Laptop Sprint 7+ bitti.** Sprint 8–10: Caddy · FleetOps/VpsPrep · 89 test · filo AUTO_REFRESH · Grafana `lg-fleet-offline` · sabah cron → `morning_operator_chain`. **VPS alışa hazır** — [VPS_SETUP.md](VPS_SETUP.md) sipariş checklist. Kalan: **P4 VPS uygulama** + GitHub ship (onay).
 
 ---
 

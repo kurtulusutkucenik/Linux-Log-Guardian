@@ -13,8 +13,8 @@ MUT=$(grep -E '^API_MUTATION_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2
 export GUARDIAN_API_TOKEN="$TOK"
 export GUARDIAN_API_MUTATION_TOKEN="$MUT"
 cd "$ROOT"
-docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard caddy
-echo "[OK] ban-api-relay (18090) + dashboard — GUARDIAN_API_TOKEN verildi"
+docker compose -f docker-compose.prod.yml up -d host-api-bridge metrics-relay ban-api-relay dashboard caddy
+echo "[OK] host-api-bridge + ban-api-relay (18090) + metrics-relay (19091) + dashboard — GUARDIAN_API_TOKEN verildi"
 if [[ "$MUT" != "$TOK" ]]; then
   echo "[OK] API split — GUARDIAN_API_MUTATION_TOKEN (ban/consult POST)"
 fi

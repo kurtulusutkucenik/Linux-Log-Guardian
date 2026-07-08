@@ -248,7 +248,7 @@ Laptop bu satırlara **hazır** — satın alınca sırayla:
 
 | # | Satın almadan | Komut / kanıt |
 |---|---------------|---------------|
-| 1 | Kanıt vitrin yeşil | `/tests` **85/85** · `bash scripts/vps_prep_gate.sh` |
+| 1 | Kanıt vitrin yeşil | `/tests` **89/89** · `bash scripts/vps_prep_gate.sh` |
 | 2 | Internet-facing runbook | [INTERNET_FACING_SECURITY_CHAIN.md](INTERNET_FACING_SECURITY_CHAIN.md) |
 | 3 | Edge checklist | [EDGE_PROTECTION.md](EDGE_PROTECTION.md) · `edge_protection_checklist.sh` |
 | 4 | mTLS / SOAR (opsiyonel) | [MTLS_ROTATION_RUNBOOK.md](MTLS_ROTATION_RUNBOOK.md) |

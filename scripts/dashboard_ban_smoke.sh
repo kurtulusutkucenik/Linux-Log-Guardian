@@ -6,14 +6,19 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 source "$ROOT/scripts/lib/guardian_api.sh"
 CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
 REPORT="${ROOT}/dashboard-ban-api-report.json"
-TEST_IP="${DASHBOARD_BAN_TEST_IP:-203.0.113.248}"
+TEST_IP_HOST="${DASHBOARD_BAN_TEST_IP:-203.0.113.248}"
+TEST_IP_RELAY="${DASHBOARD_BAN_RELAY_IP:-203.0.113.249}"
+TEST_IP_DOCKER="${DASHBOARD_BAN_DOCKER_IP:-203.0.113.250}"
+TEST_IP="$TEST_IP_HOST"
 HOST_API="${GUARDIAN_API_HOST:-http://127.0.0.1:8090}"
-RELAY_API="${GUARDIAN_RELAY_URL:-http://127.0.0.1:18090}"
+RELAY_INTERNAL="${GUARDIAN_RELAY_INTERNAL_URL:-http://ban-api-relay:18090}"
+RELAY_API="${GUARDIAN_RELAY_URL:-$RELAY_INTERNAL}"
 DATE_ISO="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
 
 host_ok=0
 relay_ok=0
 docker_ok=0
+metrics_ok=0
 ban_path=""
 fail_reason=""
 
@@ -30,13 +35,14 @@ POST_TOK="${MUT_TOK:-$TOK}"
 api_ban_unban() {
   local base="$1"
   local label="$2"
+  local ip="${3:-$TEST_IP}"
   local ban_out unban_out ban_code unban_code
   local tmp_ban tmp_unban
   tmp_ban="$(mktemp /tmp/lg-ban.XXXXXX)"
   tmp_unban="$(mktemp /tmp/lg-unban.XXXXXX)"
   ban_out=$(curl -s -o "$tmp_ban" -w "%{http_code}" --max-time 5 -X POST \
     -H "Authorization: Bearer ${POST_TOK}" \
-    "${base}/api/v1/ban?ip=${TEST_IP}&reason=dashboard-smoke" 2>/dev/null || echo "000")
+    "${base}/api/v1/ban?ip=${ip}&reason=dashboard-smoke" 2>/dev/null || echo "000")
   ban_code="${ban_out: -3}"
   if [[ "$ban_code" != "200" && "$ban_code" != "409" ]] || ! grep -q '"success":true' "$tmp_ban" 2>/dev/null; then
     fail_reason="${label} ban HTTP ${ban_code}"
@@ -46,7 +52,7 @@ api_ban_unban() {
   ban_path=$(grep -o '"path":"[^"]*"' "$tmp_ban" 2>/dev/null | head -1 | cut -d'"' -f4 || echo "")
   unban_out=$(curl -s -o "$tmp_unban" -w "%{http_code}" --max-time 5 -X POST \
     -H "Authorization: Bearer ${POST_TOK}" \
-    "${base}/api/v1/unban?ip=${TEST_IP}" 2>/dev/null || echo "000")
+    "${base}/api/v1/unban?ip=${ip}" 2>/dev/null || echo "000")
   unban_code="${unban_out: -3}"
   if [[ "$unban_code" != "200" ]] || ! grep -q '"success":true' "$tmp_unban" 2>/dev/null; then
     fail_reason="${label} unban HTTP ${unban_code}"
@@ -58,9 +64,9 @@ api_ban_unban() {
 }
 
 api_ban_unban_retry() {
-  local base="$1" label="$2" attempt
+  local base="$1" label="$2" ip="${3:-$TEST_IP}" attempt
   for attempt in 1 2 3 4 5; do
-    if api_ban_unban "$base" "$label"; then
+    if api_ban_unban "$base" "$label" "$ip"; then
       return 0
     fi
     [[ "$attempt" -lt 5 ]] && sleep 2
@@ -73,29 +79,51 @@ if ! wait_lg_ban_ready 45; then
 fi
 wait_lg_relay_ready 25 || true
 
-echo "[1] Host API ${HOST_API} ..."
-if api_ban_unban_retry "$HOST_API" "host"; then
+echo "[1] Host API ${HOST_API} (ip=${TEST_IP_HOST}) ..."
+if api_ban_unban_retry "$HOST_API" "host" "$TEST_IP_HOST"; then
   host_ok=1
   echo "[OK] host ban/unban"
 else
   echo "[FAIL] host — ${fail_reason}" >&2
 fi
 
-echo "[2] Relay ${RELAY_API} ..."
-if api_ban_unban_retry "$RELAY_API" "relay"; then
+echo "[2] Relay ${RELAY_INTERNAL} (docker internal, ip=${TEST_IP_RELAY}) ..."
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard' \
+  && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-ban-api-relay'; then
+  if docker exec log-guardian-dashboard node -e "
+const t=process.env.GUARDIAN_API_MUTATION_TOKEN||process.env.GUARDIAN_API_TOKEN;
+const b='${RELAY_INTERNAL}';
+const ip='${TEST_IP_RELAY}';
+(async()=>{
+  const ban=await fetch(b+'/api/v1/ban?ip='+ip+'&reason=relay-smoke',{method:'POST',headers:{Authorization:'Bearer '+t}});
+  const bj=await ban.json();
+  if(!ban.ok||bj.success===false) process.exit(2);
+  const un=await fetch(b+'/api/v1/unban?ip='+ip,{method:'POST',headers:{Authorization:'Bearer '+t}});
+  const uj=await un.json();
+  if(!un.ok||uj.success===false) process.exit(3);
+})().catch(()=>process.exit(1));
+" 2>/dev/null; then
+    relay_ok=1
+    RELAY_API="$RELAY_INTERNAL"
+    echo "[OK] relay ban/unban (docker internal)"
+  else
+    echo "[FAIL] relay — docker internal ${RELAY_INTERNAL}" >&2
+    echo "       ipucu: docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard" >&2
+  fi
+elif api_ban_unban_retry "$RELAY_API" "relay"; then
   relay_ok=1
-  echo "[OK] relay ban/unban"
+  echo "[OK] relay ban/unban (host legacy)"
 else
   echo "[FAIL] relay — ${fail_reason}" >&2
   echo "       ipucu: docker compose -f docker-compose.prod.yml up -d ban-api-relay" >&2
 fi
 
-echo "[3] Docker container ..."
+echo "[3] Docker container (GUARDIAN_BAN_URL, ip=${TEST_IP_DOCKER}) ..."
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard'; then
   if docker exec log-guardian-dashboard node -e "
 const t=process.env.GUARDIAN_API_MUTATION_TOKEN||process.env.GUARDIAN_API_TOKEN;
 const b=process.env.GUARDIAN_BAN_URL;
-const ip='${TEST_IP}';
+const ip='${TEST_IP_DOCKER}';
 (async()=>{
   const ban=await fetch(b+'/api/v1/ban?ip='+ip+'&reason=docker-smoke',{method:'POST',headers:{Authorization:'Bearer '+t}});
   const bj=await ban.json();
@@ -115,8 +143,34 @@ else
   echo "[SKIP] log-guardian-dashboard calismiyor"
 fi
 
+echo "[4] Metrics relay http://metrics-relay:19091/metrics ..."
+if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard' \
+  && docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-metrics-relay'; then
+  if docker exec log-guardian-dashboard node -e "
+fetch('http://metrics-relay:19091/metrics',{signal:AbortSignal.timeout(4000)})
+  .then(r=>r.text())
+  .then(t=>{ if(!t.includes('loganalyzer_')) process.exit(2); })
+  .catch(()=>process.exit(1));
+" 2>/dev/null; then
+    metrics_ok=1
+    echo "[OK] metrics relay (docker internal)"
+  else
+    echo "[WARN] metrics relay — docker compose up -d host-api-bridge metrics-relay dashboard" >&2
+  fi
+elif docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-host-api-bridge'; then
+  echo "[SKIP] metrics-relay yok — host-api-bridge ayakta"
+else
+  echo "[SKIP] relay stack calismiyor"
+fi
+
 pass=0
-[[ "$host_ok" -eq 1 && "$relay_ok" -eq 1 ]] && pass=1
+if [[ "$host_ok" -eq 1 && "$relay_ok" -eq 1 ]]; then
+  if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard'; then
+    [[ "$docker_ok" -eq 1 ]] && pass=1
+  else
+    pass=1
+  fi
+fi
 
 python3 - "$REPORT" <<PY
 import json, sys
@@ -124,10 +178,14 @@ from datetime import datetime, timezone
 data = {
     "date": "${DATE_ISO}",
     "pass": bool(${pass}),
-    "test_ip": "${TEST_IP}",
+    "test_ip": "${TEST_IP_HOST}",
+    "relay_test_ip": "${TEST_IP_RELAY}",
+    "docker_test_ip": "${TEST_IP_DOCKER}",
     "host_api": {"ok": bool(${host_ok}), "url": "${HOST_API}"},
     "relay_api": {"ok": bool(${relay_ok}), "url": "${RELAY_API}"},
     "docker_api": {"ok": bool(${docker_ok}), "container": "log-guardian-dashboard"},
+    "metrics_api": {"ok": bool(${metrics_ok}), "url": "http://metrics-relay:19091/metrics"},
+    "host_api_bridge": {"ok": bool(${relay_ok} and ${metrics_ok}), "note": "docker0 :18091/:19092 hop"},
     "ban_path": "${ban_path}",
     "fail_reason": "${fail_reason}" if not ${pass} else "",
 }

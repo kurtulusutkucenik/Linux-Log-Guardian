@@ -126,7 +126,7 @@ python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" \
 
 bash "$ROOT/scripts/dashboard_tests_parity_check.sh" \
   && echo "[OK] dashboard_tests_parity" \
-  || echo "[WARN] dashboard_tests_parity FAIL — dashboard validationTests.ts guncelle" >&2
+  || { echo "[FAIL] dashboard_tests_parity — competitive_proof_build + validationTests.ts" >&2; exit 1; }
 
 bash "$ROOT/scripts/sync_dashboard_data.sh"
 
@@ -158,7 +158,7 @@ if [[ -f /etc/log-guardian/rules.conf ]]; then
   TOK=$(grep -E '^API_TOKEN=' /etc/log-guardian/rules.conf 2>/dev/null | tail -1 | cut -d= -f2- || true)
   if [[ -n "$TOK" ]]; then
     export GUARDIAN_API_TOKEN="$TOK"
-    docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard
+    docker compose -f docker-compose.prod.yml up -d host-api-bridge metrics-relay ban-api-relay dashboard
     echo "[OK] GUARDIAN_API_TOKEN container'a verildi"
     if bash "$ROOT/scripts/sync_dashboard_api_token.sh" >/dev/null 2>&1 \
         && bash "$ROOT/scripts/dashboard_ban_smoke.sh" >/dev/null 2>&1; then

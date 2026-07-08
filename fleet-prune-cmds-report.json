@@ -1,11 +1,27 @@
 {
-  "date": "2026-07-08T17:59:25.929004+00:00",
+  "date": "2026-07-08T22:30:13.386198+00:00",
   "pass": true,
   "closed": 0,
-  "dry_run": false,
+  "dry_run": true,
   "stale_hours": 48.0,
-  "pending_young": 0,
-  "pending_total": 0,
+  "pending_young": 2,
+  "pending_total": 2,
+  "pending_young_items": [
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "node-vm-02",
+      "age_h": 0.6,
+      "payload": "203.0.113.250"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "fleet-sign-e2e-01",
+      "age_h": 0.6,
+      "payload": "203.0.113.248"
+    }
+  ],
   "groups": {},
   "script": "scripts/fleet_prune_pending_commands.sh"
 }

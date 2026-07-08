@@ -247,7 +247,7 @@ PY
   fi
 fi
 
-# Ikinci build sonrasi yalnizca competitive_proof nedeniyle dusen gate'i toparla (79/80 -> 80/80)
+# Ikinci build sonrasi yalnizca competitive_proof nedeniyle dusen gate'i toparla
 if [[ "$gate_ok_flag" == "GATE_FAIL" ]]; then
   gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$gate_ok_flag" <<'PY' | tail -1
 import json, os, sys
@@ -306,8 +306,9 @@ if not p.is_file():
 t = json.loads(p.read_text())['validationTests']
 raise SystemExit(0 if len(t) and all(x.get('status')=='pass' for x in t) else 1)
 " 2>/dev/null; then
+  proof_n="$(python3 -c "import json;from pathlib import Path;t=json.loads(Path('$ROOT/competitive-proof.json').read_text())['validationTests'];print(len(t))" 2>/dev/null || echo '?')"
   python3 "$ROOT/scripts/sync_landing_tests_from_proof.py" >/dev/null 2>&1 \
-    && echo "[OK] sync_landing_tests (80/80)" \
+    && echo "[OK] sync_landing_tests (${proof_n}/${proof_n})" \
     || echo "[WARN] sync_landing_tests — atlandi" >&2
 fi
 
@@ -365,7 +366,7 @@ for p in jwt_candidates:
 proof_n = int(out.get("proof_tests") or 0)
 proof_p = int(out.get("proof_pass") or 0)
 if proof_n and proof_p < proof_n:
-    notes.append(f"competitive_proof {proof_p}/{proof_n} — STABILITY=1 bash scripts/full_proof_pack.sh")
+    notes.append(f"competitive_proof {proof_p}/{proof_n} — bash scripts/proof_gate_recovery.sh")
 
 intel = root_s / "intel-ban-db-report.json"
 subprocess.run(
