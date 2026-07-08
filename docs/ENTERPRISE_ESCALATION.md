@@ -107,7 +107,9 @@ VM guest (tek komut): `sudo bash /mnt/lg/scripts/vm_refresh_from_host.sh`
 
 ```bash
 bash scripts/install_operator_cron.sh      # cron matrisi (asagida)
-bash scripts/morning_operator_gate.sh      # gunluk sabah (~30 sn)
+bash scripts/morning_operator_chain.sh     # gunluk tam zincir (~5–8 dk)
+# veya: bash scripts/morning_operator_gate.sh  # hizli gate (~30 sn)
+bash scripts/weekly_operator_ritual.sh     # haftalik kanit + evidence + mTLS sure
 bash scripts/core_proof_refresh.sh         # haftalik Track A
 bash scripts/finish_vitrin_plan.sh         # tam vitrin; PUBLISH=1 canli site
 bash scripts/competitive_proof_build.py
@@ -115,16 +117,21 @@ bash scripts/sync_dashboard_data.sh
 bash scripts/dashboard_refresh.sh
 bash scripts/website_preview_gate.sh
 bash scripts/enterprise_e9_verify.sh       # E9 tek kapı (dok + zincir)
+# Enterprise SOAR aciksa: ENTERPRISE_SOAR=1 bash scripts/enterprise_e9_verify.sh
 ```
 
-### Operatör cron (`install_operator_cron.sh`)
+**Filo pending temizligi:** Demo öncesi veya haftalık — `bash scripts/fleet_prune_pending_commands.sh` · cron: `bash scripts/install_fleet_prune_cron.sh` (Pazar 09:30). Detay: [FLEET_ONLINE.md](FLEET_ONLINE.md) §5.
+
+### Operatör cron (`install_operator_cron.sh` + Sprint 7+)
 
 | Zaman | Script | Log |
 |-------|--------|-----|
 | Her gün 08:00 | `morning_operator_gate.sh` | `~/lg-morning-operator-gate.log` |
+| Cuma 10:00 | `weekly_operator_ritual.sh` | `~/lg-weekly-operator.log` |
 | Pazar 03:00 | `core_proof_refresh.sh` | `~/lg-core-proof-refresh.log` |
-| Pazar 03:15 | `fleet_prune_pending_commands.sh` (48h+) | `~/lg-fleet-prune-cmds.log` |
+| Pazar 03:15 / 09:30 | `fleet_prune_pending_commands.sh` (48h+) | `~/lg-fleet-prune*.log` |
 | Pazar 04:30 | `intel_ban_db_prune_cron.sh` | `~/lg-intel-ban-db-prune.log` |
+| Pazar 08:00 | `webhook_metrics_reset.sh` | `~/lg-webhook-metrics-reset.log` |
 | Pazartesi 06:00 | `operator_security_weekly.sh` | `~/lg-operator-security-weekly.log` |
 | Ayın 1'i 05:00 | `operator_post_install_strict.sh` | `~/lg-post-install-strict.log` |
 
@@ -132,7 +139,7 @@ Internet-facing strict (manuel): `POST_INSTALL_STRICT=1 bash scripts/post_instal
 
 Harici SOAR ban API (Enterprise backlog): [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) — mTLS edge + `API_MUTATION_TOKEN` ayrımı.
 
-Dashboard: `https://localhost:8443/tests` (**80 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
+Dashboard: `https://localhost:8443/tests` (**85 kart**) · Site: `https://ceniklinuxlogguardian.org/tests`
 
 ---
 

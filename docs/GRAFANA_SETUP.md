@@ -16,6 +16,21 @@ scrape_configs:
   - job_name: log-guardian
     static_configs:
       - targets: ['127.0.0.1:9091']
+  # Filo heartbeat (P2 #22) — dashboard Prisma telemetry
+  - job_name: log-guardian-fleet
+    metrics_path: /api/metrics/fleet
+    static_configs:
+      - targets: ['127.0.0.1:3000']
+```
+
+Filo metrikleri (`loganalyzer_fleet_agent_online`, `loganalyzer_fleet_agent_total`, `loganalyzer_fleet_agent_last_seen_age_seconds`):
+heartbeat yaşı **15 dk** altında = online. Alert: `lg-fleet-offline` (total>0 ve online=0, for 15m).
+Gate script: `bash scripts/fleet_offline_gate.sh` · panel: dashboard ana sayfa `FleetOpsPanel`.
+
+```promql
+up{job="log-guardian-fleet"}
+loganalyzer_fleet_agent_online{tenant_id="default"}
+loganalyzer_fleet_agent_total{tenant_id="default"}
 ```
 
 ### Prometheus UI (`:9090` → Query)

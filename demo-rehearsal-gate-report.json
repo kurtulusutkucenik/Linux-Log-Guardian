@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-07T10:46:13.291239+00:00",
+  "date": "2026-07-07T19:42:55.863279+00:00",
   "pass": true,
   "demo_3min_ok": true,
   "dashboard_ok": true,
@@ -8,8 +8,8 @@
   "security_closure_ok": null,
   "webhook_ok": null,
   "full_mode": false,
-  "proof_tests": 80,
-  "proof_pass": 77,
+  "proof_tests": 85,
+  "proof_pass": 85,
   "pdf_ok": true,
   "dash_url": "https://localhost:8443/tests",
   "site_url": "https://ceniklinuxlogguardian.org/tests",

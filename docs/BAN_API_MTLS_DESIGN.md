@@ -1,6 +1,6 @@
 # Ban API — mTLS ve ikinci token tasarımı (Enterprise spike)
 
-**Durum:** Tasarım notu (2026-07-07) — **henüz kod yok**. Laptop demo: mevcut `API_TOKEN` + `API_BIND=127.0.0.1` yeterli.
+**Durum:** Phase 2 mutation token **uygulandı** (2026-07-07). Phase 1 mTLS lab **uygulandı** (`mtls_client_issue.sh`, `ban_api_mtls_e2e.sh`, `examples/nginx-api-mtls.conf`). `GUARDIAN_API_MTLS_STRICT` loopback guard `api_server.c` içinde.
 
 İlgili: [SECURITY_PROFILES.md](SECURITY_PROFILES.md) · [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) · `api_server.c` · `scripts/ensure_api_security.sh`
 
@@ -75,6 +75,7 @@ flowchart LR
 ```
 1. Method GET  → API_TOKEN veya API_MUTATION_TOKEN (ikisi de OK)
 2. Method POST → API_MUTATION_TOKEN zorunlu (API_TOKEN tek başına RED)
+3. GET /api/v1/consult → read auth (inline nginx auth_request)
 3. GUARDIAN_API_MTLS_STRICT=1 → X-Forwarded-For dış POST reddedilir (yalnızca 127.0.0.1 veya trusted proxy)
 4. Opsiyonel: client cert CN == env GUARDIAN_MTLS_CLIENT_CN_ALLOWLIST
 ```
@@ -125,10 +126,10 @@ location /api/v1/ {
 | Faz | İş | Dosyalar | Kapı |
 |-----|-----|----------|------|
 | **0** | Bu tasarım | `docs/BAN_API_MTLS_DESIGN.md` | — |
-| **1** | nginx mTLS örnek + `mtls_client_issue.sh` | `examples/nginx-api-mtls.conf` | Manuel curl mTLS |
+| **1** | nginx mTLS örnek + `mtls_client_issue.sh` | `examples/nginx-api-mtls.conf` | `ban_api_mtls_e2e.sh` |
 | **2** | `API_MUTATION_TOKEN` ayrımı | `api_server.c`, `ensure_api_security.sh` | `api_fail_closed_test.sh` genişlet |
-| **3** | Enterprise gate | `scripts/ban_api_mtls_e2e.sh` | `competitive-proof` +1 kart (opsiyonel) |
-| **4** | Caddy prod stack | `deploy/Caddyfile` | `prod_stack_e2e.sh` |
+| **3** | Enterprise gate | `scripts/ban_api_mtls_e2e.sh` | `ban-api-mtls-report.json` |
+| **4** | Caddy prod stack | `deploy/Caddyfile`, `caddy_mtls_setup.sh` | `caddy_api_mtls_e2e.sh` (`:9443` mTLS) |
 
 **Tahmini diff (Faz 2):** ~80 satır C (`api_check_mutation_auth` ayrımı), ~40 satır shell, doküman — **ban pipeline / firewall / WAF dokunulmaz**.
 

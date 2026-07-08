@@ -1,19 +1,18 @@
 {
-  "date": "2026-07-07T10:46:57.012009+00:00",
-  "pass": false,
-  "release_ready_ok": false,
-  "docs_consistency_ok": false,
-  "website_live_ok": null,
-  "website_live_skipped": true,
-  "vm_fleet_ok": null,
-  "vm_fleet_skipped": true,
-  "proof_tests": 80,
-  "proof_pass": 77,
+  "date": "2026-07-07T22:42:03.875632+00:00",
+  "pass": true,
+  "release_ready_ok": true,
+  "docs_consistency_ok": true,
+  "website_live_ok": true,
+  "website_live_skipped": false,
+  "vm_fleet_ok": true,
+  "vm_fleet_skipped": false,
+  "proof_tests": 85,
+  "proof_pass": 85,
   "artifacts": {
     "competitive_proof_pdf": true,
     "data_room_zip": true,
     "release_pack_zip": true
   },
-  "script": "scripts/release_ready_gate.sh",
-  "fail_reason": "release_ready_check; docs_consistency"
+  "script": "scripts/release_ready_gate.sh"
 }

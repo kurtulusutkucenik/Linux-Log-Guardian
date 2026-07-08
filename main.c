@@ -123,6 +123,7 @@ static int g_metrics_port   = 9091;  /* Prometheus endpoint portu (0=devre disi)
 static int g_api_port       = API_DEFAULT_PORT;
 static char g_api_bind[64]  = "127.0.0.1";
 static char g_api_token[128] = "";
+static char g_api_mutation_token[128] = "";
 static int g_xdp_map_v4_sz  = 0;     /* 0 = varsayilan (65536) */
 static int g_xdp_map_v6_sz  = 0;     /* 0 = varsayilan (16384) */
 
@@ -2016,6 +2017,12 @@ static void load_rules_file(const char *path) {
             memcpy(g_api_token, val, n);
             g_api_token[n] = '\0';
         }
+        else if (strcmp(key, "API_MUTATION_TOKEN") == 0 && val[0]) {
+            size_t n = strlen(val);
+            if (n >= sizeof(g_api_mutation_token)) n = sizeof(g_api_mutation_token) - 1;
+            memcpy(g_api_mutation_token, val, n);
+            g_api_mutation_token[n] = '\0';
+        }
         else if (strcmp(key, "XDP_MAP_V4_SIZE") == 0 && is_number && parsed > 0)
             g_xdp_map_v4_sz = (int)parsed;
         else if (strcmp(key, "XDP_MAP_V6_SIZE") == 0 && is_number && parsed > 0)
@@ -3760,6 +3767,10 @@ int main(int argc, char *argv[]) {
             setenv("GUARDIAN_API_TOKEN", g_api_token, 1);
         else
             unsetenv("GUARDIAN_API_TOKEN");
+        if (g_api_mutation_token[0])
+            setenv("GUARDIAN_API_MUTATION_TOKEN", g_api_mutation_token, 1);
+        else
+            unsetenv("GUARDIAN_API_MUTATION_TOKEN");
         api_server_start((uint16_t)g_api_port);
         if (telegram_bot_webhook_mode())
             (void)telegram_bot_register_webhook();
@@ -4233,7 +4244,13 @@ int main(int argc, char *argv[]) {
                 msnap.cnt_3xx      = g_stats.cnt_3xx;
                 msnap.cnt_4xx      = g_stats.cnt_4xx;
                 msnap.cnt_5xx      = g_stats.cnt_5xx;
-                msnap.xdp_active     = (long)xdp_loader_active();
+                {
+                    DaemonStatsSnapshot ds_xdp;
+                    if (daemon_stats_read(&ds_xdp) == 0)
+                        msnap.xdp_active = (long)ds_xdp.xdp_active;
+                    else
+                        msnap.xdp_active = (long)xdp_loader_active();
+                }
                 msnap.ringbuf_drops  = g_stats.ringbuf_drops;
                 /* Intelligence Engine metrikleri */
                 msnap.ja3_total      = (long)g_stats.ja3_total;

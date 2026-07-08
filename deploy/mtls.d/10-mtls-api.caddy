@@ -1,0 +1,13 @@
+# Enterprise SOAR — mTLS ban API (ayri port; dashboard :8443 degismez)
+:9443 {
+	tls /etc/caddy/mtls/server.crt /etc/caddy/mtls/server.key {
+		client_auth {
+			mode require_and_verify
+			trust_pool file /etc/caddy/mtls/ca.crt
+		}
+	}
+	reverse_proxy http://host.docker.internal:18090 {
+		header_up X-Guardian-Token {$GUARDIAN_API_MUTATION_TOKEN}
+		header_up Host {host}
+	}
+}

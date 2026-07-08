@@ -29,6 +29,11 @@ scrape_configs:
   - job_name: log-guardian
     static_configs:
       - targets: ['127.0.0.1:9091']
+  # Filo heartbeat — dashboard Prisma telemetry (P2 #22)
+  - job_name: log-guardian-fleet
+    metrics_path: /api/metrics/fleet
+    static_configs:
+      - targets: ['127.0.0.1:3000']
 EOF
 
 echo "[grafana_stack] eski container temizleniyor..."

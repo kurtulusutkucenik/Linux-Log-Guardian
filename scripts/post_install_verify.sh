@@ -29,9 +29,6 @@ ok()   { echo "[OK] $*"; }
 warn() { echo "[WARN] $*"; warn=$((warn + 1)); }
 bad()  { echo "[FAIL] $*"; fail=$((fail + 1)); fail_lines+=("$*"); }
 
-echo "=== post_install_verify ==="
-echo ""
-
 # Grup uyeligi var ama shell'de aktif degilse (VM'de sik) — vm_demo_gate ile ayni
 if [[ $EUID -ne 0 && -z "${LG_VERIFY_IN_SG:-}" ]] \
     && getent group log-guardian >/dev/null 2>&1 \
@@ -39,6 +36,44 @@ if [[ $EUID -ne 0 && -z "${LG_VERIFY_IN_SG:-}" ]] \
   export LG_VERIFY_IN_SG=1
   exec sg log-guardian -c "bash \"$ROOT/scripts/post_install_verify.sh\""
 fi
+
+INTERNET_FACING=0
+INTERNET_FACING_SIM=0
+_real_internet=0
+if LG_FORCE_INTERNET_FACING=0 bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
+  _real_internet=1
+fi
+if bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
+  INTERNET_FACING=1
+fi
+if [[ "$INTERNET_FACING" -eq 1 && "$_real_internet" -eq 0 ]]; then
+  INTERNET_FACING_SIM=1
+fi
+
+# Internet-facing veya POST_INSTALL_STRICT=1 → WARN yerine FAIL
+strict_or_warn() {
+  local msg="$1"
+  if [[ "$INTERNET_FACING" -eq 1 || "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
+    bad "$msg"
+  else
+    warn "$msg"
+  fi
+}
+
+harden_cmd() {
+  if [[ "$INTERNET_FACING_SIM" -eq 1 ]]; then
+    echo "LG_FORCE_INTERNET_FACING=1 sudo bash scripts/apply_internet_facing_hardening.sh"
+  else
+    echo "sudo bash scripts/apply_internet_facing_hardening.sh"
+  fi
+}
+
+echo "=== post_install_verify ==="
+if [[ "$INTERNET_FACING_SIM" -eq 1 ]]; then
+  echo "[SIM] LG_FORCE_INTERNET_FACING=1 — VPS dry-run (laptop gercekte saglikli; asagidaki FAIL beklenen kontrol listesi)"
+  echo "      Gercek laptop testi: bash scripts/post_install_verify.sh"
+fi
+echo ""
 
 metrics_reachable() {
   curl -sf --max-time 3 http://127.0.0.1:9091/metrics >/dev/null 2>&1
@@ -196,10 +231,8 @@ if command -v nginx >/dev/null 2>&1; then
   fi
   if bash "$SCRIPTS/check_nginx_rate_limit.sh" >/dev/null 2>&1; then
     ok "nginx rate limit (lg_general)"
-  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
-    bad "nginx rate limit eksik — sudo bash $SCRIPTS/fix_nginx_log_format.sh (docs/EDGE_PROTECTION.md)"
   else
-    warn "rate limit eksik — sudo bash $SCRIPTS/fix_nginx_log_format.sh (docs/EDGE_PROTECTION.md)"
+    strict_or_warn "nginx rate limit eksik — sudo bash $SCRIPTS/fix_nginx_log_format.sh (docs/EDGE_PROTECTION.md)"
   fi
 fi
 
@@ -221,7 +254,7 @@ fi
 if [[ "$fp_ok" -eq 1 ]]; then
   ok "FP trust store ($FP_STORE)"
 else
-  warn "FP trust store dogrulanamadi — bash scripts/laptop_fp_setup.sh"
+  strict_or_warn "FP trust store dogrulanamadi — sudo bash scripts/install_first_run.sh veya bash scripts/laptop_fp_setup.sh"
 fi
 
 # --- Soak hazirligi ---
@@ -241,9 +274,13 @@ else
 fi
 
 # --- Internet-facing ---
-if bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
+if [[ "$INTERNET_FACING" -eq 1 ]]; then
   echo ""
-  echo "[INFO] Internet-facing makine tespit edildi"
+  if [[ "$INTERNET_FACING_SIM" -eq 1 ]]; then
+    echo "[SIM] VPS profil kontrolleri (LG_FORCE — laptop kurulumuna dokunmaz)"
+  else
+    echo "[INFO] Internet-facing makine tespit edildi"
+  fi
   kdf=$(lg_rules_kv "ACCESS_PASSWORD_KDF")
   if [[ "$kdf" == "pbkdf2\$100000\$6560e0aa800d47957280cab9a1038847\$"* ]]; then
     bad "demo parolasi — sudo env LG_NEW_PASSWORD='...' bash scripts/laptop_harden.sh"
@@ -255,20 +292,34 @@ if bash "$SCRIPTS/detect_internet_facing.sh" 2>/dev/null; then
   else
     warn "dashboard JWT — bash scripts/laptop_jwt_setup.sh"
   fi
-  if grep -qE '^WASM_PROD_STRICT=1' "$CONF" 2>/dev/null \
-      || grep -q 'WASM_PROD_STRICT' /etc/log-guardian/env 2>/dev/null; then
-    ok "WASM_PROD_STRICT (internet-facing)"
-  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
-    bad "WASM_PROD_STRICT yok — rules.conf veya env (unsigned wasm riski)"
+  # Demo dashboard parola — Community OK; internet-facing FAIL
+  _dash_demo=0
+  for _envf in "$REPO/dashboard/.env" "$REPO/.env" /etc/log-guardian/env; do
+    [[ -f "$_envf" ]] || continue
+    if grep -qE '^DASHBOARD_ADMIN_PASSWORD=(ChangeMeOnFirstLogin!|DegistirBeni!123)?$' "$_envf" 2>/dev/null \
+      || grep -qE '^DASHBOARD_ADMIN_PASSWORD=ChangeMeOnFirstLogin!' "$_envf" 2>/dev/null; then
+      _dash_demo=1
+      break
+    fi
+  done
+  if [[ "${DASHBOARD_ADMIN_PASSWORD:-}" == "ChangeMeOnFirstLogin!" ]] \
+    || [[ "${DASHBOARD_ADMIN_PASSWORD:-}" == "DegistirBeni!123" ]]; then
+    _dash_demo=1
+  fi
+  if [[ "$_dash_demo" -eq 1 ]]; then
+    bad "dashboard demo parola — DASHBOARD_ADMIN_PASSWORD degistir (laptop_jwt_setup / .env)"
   else
-    warn "WASM_PROD_STRICT yok — rules.conf veya env (unsigned wasm riski)"
+    ok "dashboard admin parola (demo degil veya set)"
+  fi
+  if grep -qE '^WASM_PROD_STRICT=1' /etc/log-guardian/env 2>/dev/null; then
+    ok "WASM_PROD_STRICT (env)"
+  else
+    strict_or_warn "WASM_PROD_STRICT yok — $(harden_cmd)"
   fi
   if bash "$SCRIPTS/check_dashboard_tls_bind.sh" >/dev/null 2>&1; then
     ok "dashboard TLS bind (LAN kapali)"
-  elif [[ "${POST_INSTALL_STRICT:-0}" == "1" ]]; then
-    bad "dashboard :8443 LAN acik — sudo bash scripts/firewall_dashboard_bind.sh install"
   else
-    warn "dashboard :8443 LAN acik — sudo bash scripts/firewall_dashboard_bind.sh install"
+    strict_or_warn "dashboard :8443 LAN acik — sudo bash scripts/firewall_dashboard_bind.sh install"
   fi
 fi
 
@@ -314,6 +365,12 @@ echo "[FAIL] post_install_verify — $fail kritik madde" >&2
 for line in "${fail_lines[@]}"; do
   echo "  • $line" >&2
 done
+if [[ "$INTERNET_FACING_SIM" -eq 1 ]]; then
+  echo "" >&2
+  echo "  [SIM] Laptop kurulumu saglikli olabilir — FAIL yalnizca VPS kontrol listesi." >&2
+  echo "        WASM dry-run: LG_FORCE_INTERNET_FACING=1 sudo bash scripts/apply_internet_facing_hardening.sh" >&2
+  echo "        Normal laptop: bash scripts/post_install_verify.sh  (FAIL:0 beklenir)" >&2
+fi
 echo "" >&2
 echo "  Hizli onarim (cogu FAIL):" >&2
 echo "    sudo bash scripts/repair_no_xdp_stack.sh" >&2

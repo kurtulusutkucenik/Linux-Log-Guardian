@@ -56,7 +56,7 @@ collect_pass_candidates() {
     "${DASHBOARD_ADMIN_PASSWORD:-}" \
     "$(docker exec log-guardian-dashboard printenv DASHBOARD_ADMIN_PASSWORD 2>/dev/null || true)" \
     "ChangeMeOnFirstLogin!" \
-    "admin123"; do
+    "WrongPasswordProbe99"; do
     [[ -n "$p" ]] || continue
     printf '%s\n' "$p"
   done | awk '!seen[$0]++'

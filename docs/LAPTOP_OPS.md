@@ -10,6 +10,7 @@ Tüm `scripts/*.sh` komutları **repo kökünden** çalıştırılır (`Linux Lo
 ```bash
 cd ~/Masaüstü/Linux\ Log\ Guardian    # veya: cd "$(git rev-parse --show-toplevel)"
 bash scripts/quick_proof_refresh.sh
+bash scripts/proof_gate_recovery.sh   # meta-gate toparlama (full_proof_pack yok, ~3 dk, 81/81)
 bash scripts/local_proof_refresh.sh
 bash scripts/dashboard_refresh.sh
 ```
@@ -22,14 +23,23 @@ bash scripts/dashboard_refresh.sh
 
 | Sıklık | Komut | Süre | Ne yapar |
 |--------|--------|------|----------|
-| **Her sabah** | `bash scripts/morning_operator_gate.sh` | ~30 sn | laptop_core + :8443 + attack_map + **telegram_soc** parity |
-| **Haftalık / demo öncesi** | `bash scripts/core_proof_refresh.sh` | ~5–10 dk | Track A + E9/edge checklist (son adım; `SKIP_E9=1` atla) |
+| **Her sabah** | `bash scripts/morning_operator_chain.sh` | ~6–8 dk | proof freshness + morning gate + E9 + kanıt sync (tam zincir) |
+| **Hızlı sabah** | `SKIP_DASHBOARD_REFRESH=1 bash scripts/morning_operator_chain.sh` | ~5 dk | Docker rebuild atlanır |
+| **Tek gate** | `bash scripts/morning_operator_gate.sh` | ~30 sn | laptop_core + :8443 + attack_map + telegram_soc |
+| **Haftalık** | `bash scripts/weekly_operator_ritual.sh` | ~5 dk | quick_proof + evidence + proof_freshness + fleet prune |
+| **Cron kurulum** | `install_weekly_operator_cron.sh` · `install_fleet_prune_cron.sh` · `install_audit_cron.sh` | bir kez | Cuma/Pazar otomasyon |
 | **Vitrin plani (GIF/VPS haric)** | `bash scripts/finish_vitrin_plan.sh` | ~15–25 dk | cron + Track A + audit + landing + :8443; canli: `PUBLISH=1` |
 | **Opsiyonel katman** | `bash scripts/optional_track_refresh.sh` | ~10–15 dk | L7, Grafana alert e2e, demo_3min, landing export (canlı publish yok) |
 | **UI değiştiyse** | `bash scripts/dashboard_refresh.sh` | ~2–3 dk | Docker rebuild → `https://localhost:8443` |
 
 ```bash
-# Günlük
+# Günlük (tam zincir)
+bash scripts/morning_operator_chain.sh
+
+# Hızlı (docker rebuild yok)
+SKIP_DASHBOARD_REFRESH=1 bash scripts/morning_operator_chain.sh
+
+# Yalnızca sabah gate
 bash scripts/morning_operator_gate.sh
 
 # Haftalık core kanıt (IPv6 atlamak için SKIP_IPV6=1)
@@ -91,6 +101,9 @@ Haftalık güvenlik denetimi ayrı: `bash scripts/install_audit_cron.sh` (Pazart
 | `bash scripts/ban_profile_e2e.sh` | AUTO_BAN_PROFILE + consult cache + threat intel offline kanıt | Hayır |
 | `sudo bash scripts/repair_no_xdp_stack.sh` | `--no-xdp` sonrasi daemon unit + servisler + fleet log sustur | Hayır |
 | `bash scripts/post_install_verify.sh` | Tek komut yeşil/kırmızı kurulum matrisi | Hayır |
+| `LG_FORCE_INTERNET_FACING=1 bash scripts/post_install_verify.sh` | VPS dry-run simülasyonu (laptop FAIL beklenir) | Hayır |
+| `sudo bash scripts/apply_internet_facing_hardening.sh` | VPS: nginx limit + WASM + dashboard FW + API split | Hayır |
+| `sudo bash scripts/ensure_api_split_tokens.sh` | API read/mutate token ayrımı (Enterprise) | Hayır |
 | `sudo bash scripts/ensure_api_security.sh` | API `:8090` — bind + token + firewall | **Hayır** |
 | `bash scripts/api_fail_closed_test.sh` | Token yokken ban/consult 403 | Hayır |
 | `bash scripts/install_audit_cron.sh` | Haftalık `local_security_audit` cron | Hayır |
@@ -187,6 +200,22 @@ bash scripts/api_fail_closed_test.sh
 
 Token `/etc/log-guardian/rules.conf` içinde `API_TOKEN=...`. Manuel yazmayın.
 
+**Split mod (laptop):** `sudo bash scripts/ensure_api_split_tokens.sh` → `API_MUTATION_TOKEN` POST `/ban`/`/unban` ve nginx consult için; GET metrikler `API_TOKEN`. Doğrulama: `bash scripts/api_mutation_token_e2e.sh`.
+
+**mTLS lab (Enterprise):** `bash scripts/mtls_client_issue.sh` → CA + istemci cert; `bash scripts/ban_api_mtls_e2e.sh` → token + nginx `:18443` mTLS. **Caddy prod:** `bash scripts/caddy_mtls_setup.sh enable` → SOAR API `https://localhost:9443/api/v1/*` (mTLS zorunlu); dashboard `:8443` aynı kalır. Snippet: `examples/nginx/snippets/log-guardian-api-mtls.conf`. Strict loopback: `GUARDIAN_API_MTLS_STRICT=1`.
+
+**Enterprise SOAR (tek komut):**
+
+```bash
+sudo bash scripts/enable_enterprise_soar_api.sh   # ac
+bash scripts/enterprise_soar_gate.sh              # durum (sudo gerekmez)
+bash scripts/caddy_api_mtls_e2e.sh                # :9443 mTLS test
+sudo bash scripts/caddy_mtls_setup.sh sync        # PKI drift toparla
+sudo bash scripts/disable_enterprise_soar_api.sh  # kapat
+```
+
+Dashboard: `https://localhost:8443/bans` — Ban API ops paneli (host/relay/SOAR/strict).
+
 `API_TOKEN` boşsa servis uyarı verir; `POST /ban` ve `GET /consult` **403** (fail-closed). nginx inline consult `X-Guardian-Token` header kullanır (`fix_nginx_inline_consult.sh`).
 
 ## Dashboard JWT + giriş
@@ -241,8 +270,8 @@ bash scripts/laptop_reboot_ready.sh
 | Katman | Hedef | Komut |
 |--------|--------|--------|
 | Core | daemon + analyzer + IPC | `ensure_daemon_env.sh` · `repair_no_xdp_stack.sh` |
-| Dashboard | 80/80 `/tests` | `dashboard_refresh.sh` |
-| Vitrin | canlı site 80 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` |
+| Dashboard | 83/83 `/tests` | `dashboard_refresh.sh` |
+| Vitrin | canlı site 85 kart | `LG_WEBSITE_PUBLISH=1 bash scripts/website_publish.sh` · ardından `website_live_gate` |
 | Ban temizliği | ipset flush + kanıt modu | `FLUSH=1 bash scripts/laptop_ban_cleanup.sh` |
 | CF cache | SRI drift sonrası | `LG_CF_PURGE=1` veya `bash scripts/website_cf_purge.sh` |
 | Filo | host + VM Online | `host_fleet_agent_setup.sh` · `vm_fleet_agent_setup.sh` |
@@ -448,7 +477,7 @@ journalctl --user -u log-guardian-fleet-keepalive -f   # [fleet_push] OK agent=n
 
 **Not:** `vm_sync` binary taşımaz — C değişince **mutlaka** `vm_build_binary`. `prod_hosting_activate` tek basina sync sonrasi FAIL verebilir; once build veya `vm_prod_gate` kullan.
 
-**Test fixture:** `vm_sync` kök `*.log` dosyalarini tasimaz; `tests/fixtures/*.fixture` sync olur. `auth_log_e2e` / `journald_e2e` eksik logu otomatik kopyalar. Host→VM `rsync` SSH gerekmez (VirtualBox paylasim `/mnt/lg` yeterli).
+**Test fixture:** `vm_sync` kök `*.log` dosyalarini tasimaz; `tests/fixtures/*.fixture` sync olur. `auth_log_e2e` / `journald_e2e` eksik logu otomatik kopyalar. Host→VM `rsync` SSH gerekmez (VirtualBox paylasim `/mnt/lg` yeterli). **vboxsf:** host `deploy/mtls/*.key` (root:600) paylasimdan okunamaz — sync exclude; VM demo icin gerekmez (SOAR mTLS yalnizca host Caddy).
 
 **Dashboard /tests (VM):** `bash scripts/dashboard_refresh.sh` → `https://localhost:8443/tests` (Ctrl+Shift+R). `vm_refresh_from_host` ops_gate + sync_dashboard_data calistirir.
 

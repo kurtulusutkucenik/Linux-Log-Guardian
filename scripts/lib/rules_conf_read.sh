@@ -26,3 +26,15 @@ lg_rules_kv() {
   local key="$1"
   lg_rules_grep "^${key}=" | tail -1 | cut -d= -f2- || true
 }
+
+# POST /ban, /unban — split modda API_MUTATION_TOKEN; yoksa API_TOKEN
+lg_rules_ban_token() {
+  local mut read
+  mut=$(lg_rules_kv API_MUTATION_TOKEN)
+  if [[ -n "$mut" ]]; then
+    echo "$mut"
+    return 0
+  fi
+  read=$(lg_rules_kv API_TOKEN)
+  [[ -n "$read" ]] && echo "$read"
+}

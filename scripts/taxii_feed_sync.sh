@@ -53,8 +53,12 @@ if [[ -z "$TOKEN" && -f "$RULES" ]]; then
   TOKEN=$(lg_rules_kv API_TOKEN)
   [[ -z "$TOKEN" ]] && TOKEN=$(grep -E '^API_TOKEN=' "$RULES" | head -1 | cut -d= -f2- || true)
 fi
+BAN_TOKEN="${API_MUTATION_TOKEN:-}"
+[[ -z "$BAN_TOKEN" ]] && BAN_TOKEN=$(lg_rules_kv API_MUTATION_TOKEN)
+[[ -n "$BAN_TOKEN" ]] || BAN_TOKEN="$TOKEN"
 if [[ -z "$TOKEN" && "$DRY" == "1" ]]; then
   TOKEN="dry-run"
+  BAN_TOKEN="dry-run"
 elif [[ -z "$TOKEN" ]]; then
   fail "API_TOKEN yok — rules.conf veya env"
 fi
@@ -79,7 +83,7 @@ else
 fi
 export TAXII_STIX_SOURCE="$STIX_SOURCE"
 
-python3 - "$STIX_JSON" "$DRY" "$API_BASE" "$TOKEN" "$MAX" "$MIN_CONF" <<'PY'
+python3 - "$STIX_JSON" "$DRY" "$API_BASE" "$BAN_TOKEN" "$MAX" "$MIN_CONF" <<'PY'
 import json, re, sys, urllib.request, urllib.error, urllib.parse
 
 raw, dry, base, token, max_s, min_conf_s = sys.argv[1:7]

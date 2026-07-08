@@ -28,7 +28,11 @@ else
 fi
 
 for f in scripts/ensure_api_security.sh scripts/laptop_jwt_setup.sh scripts/install_fp_trust_prod.sh scripts/laptop_soak_72h.sh \
-        scripts/install_first_run.sh scripts/api_fail_closed_test.sh scripts/install_audit_cron.sh \
+        scripts/install_first_run.sh scripts/api_fail_closed_test.sh scripts/api_mutation_token_e2e.sh \
+        scripts/ban_api_mtls_e2e.sh scripts/mtls_client_issue.sh scripts/caddy_mtls_setup.sh scripts/caddy_api_mtls_e2e.sh \
+        scripts/enable_enterprise_soar_api.sh scripts/disable_enterprise_soar_api.sh scripts/enterprise_soar_gate.sh \
+        scripts/vps_prep_gate.sh scripts/ensure_api_split_tokens.sh scripts/apply_internet_facing_hardening.sh \
+        scripts/install_audit_cron.sh \
         scripts/rotate_api_token.sh scripts/install_fp_report_cron.sh scripts/publish_soak_report.sh \
         scripts/ipv6_ban_e2e.sh         scripts/post_install_verify.sh scripts/detect_internet_facing.sh \
         scripts/soak_active_lock.sh scripts/fix_ipc_perms.sh scripts/zip_for_vm.sh \

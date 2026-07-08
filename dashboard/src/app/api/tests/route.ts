@@ -41,7 +41,7 @@ export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, owaspCorpus, trHostingCorpus, customerCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, intelBanDb, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
+  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, apiMutationTokenE2e, apiMutationAuditE2e, dashboardLoginRlE2e, hardeningRollbackGate, dashboardJwtIdleGate, mtlsCertExpiry, banApiMtls, caddyMtlsStatus, enterpriseSoarGate, owaspCorpus, trHostingCorpus, customerCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, intelBanDb, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, fleetOfflineGate, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
     await Promise.all([
       readJson("ops-gate-report.json"),
       readJson("crs-parity-report.json"),
@@ -57,6 +57,15 @@ export async function GET(req: NextRequest) {
       readJson("nginx-hybrid-report.json"),
       readJson("ban-profile-e2e-report.json"),
       readJson("ipv6-ban-e2e-report.json"),
+      readJson("api-mutation-token-e2e-report.json"),
+      readJson("api-mutation-audit-e2e-report.json"),
+      readJson("dashboard-login-rl-e2e-report.json"),
+      readJson("hardening-rollback-gate-report.json"),
+      readJson("dashboard-jwt-idle-gate-report.json"),
+      readJson("mtls-cert-expiry-report.json"),
+      readJson("ban-api-mtls-report.json"),
+      readJson("caddy-mtls-status.json"),
+      readJson("enterprise-soar-gate-report.json"),
       readJson("owasp-corpus-report.json"),
       readJson("tr-hosting-corpus-report.json"),
       readJson("customer-corpus-report.json"),
@@ -105,6 +114,7 @@ export async function GET(req: NextRequest) {
       readJson("lineage-incident-report.json"),
       readJson("wasm-status.json"),
       readJson("fleet-multi-node-report.json"),
+      readJson("fleet-offline-gate-report.json"),
       readJson("grafana-provision-report.json"),
       readJson("copilot-ollama-report.json"),
       readJson("marketplace-signed-api-report.json"),
@@ -134,6 +144,15 @@ export async function GET(req: NextRequest) {
     nginxHybrid: nginxHybrid as TestReports["nginxHybrid"],
     banProfileE2e: banProfileE2e as TestReports["banProfileE2e"],
     ipv6BanE2e: ipv6BanE2e as TestReports["ipv6BanE2e"],
+    apiMutationTokenE2e: apiMutationTokenE2e as TestReports["apiMutationTokenE2e"],
+    apiMutationAuditE2e: apiMutationAuditE2e as TestReports["apiMutationAuditE2e"],
+    dashboardLoginRlE2e: dashboardLoginRlE2e as TestReports["dashboardLoginRlE2e"],
+    hardeningRollbackGate: hardeningRollbackGate as TestReports["hardeningRollbackGate"],
+    dashboardJwtIdleGate: dashboardJwtIdleGate as TestReports["dashboardJwtIdleGate"],
+    mtlsCertExpiry: mtlsCertExpiry as TestReports["mtlsCertExpiry"],
+    banApiMtls: banApiMtls as TestReports["banApiMtls"],
+    caddyMtlsStatus: caddyMtlsStatus as TestReports["caddyMtlsStatus"],
+    enterpriseSoarGate: enterpriseSoarGate as TestReports["enterpriseSoarGate"],
     owaspCorpus: owaspCorpus as TestReports["owaspCorpus"],
     trHostingCorpus: trHostingCorpus as TestReports["trHostingCorpus"],
     customerCorpus: customerCorpus as TestReports["customerCorpus"],
@@ -182,6 +201,7 @@ export async function GET(req: NextRequest) {
     lineageIncident: lineageIncident as TestReports["lineageIncident"],
     wasm: wasm as TestReports["wasm"],
     fleetMultiNode: fleetMultiNode as TestReports["fleetMultiNode"],
+    fleetOfflineGate: fleetOfflineGate as TestReports["fleetOfflineGate"],
     grafanaProvision: grafanaProvision as TestReports["grafanaProvision"],
     copilotOllama: copilotOllama as TestReports["copilotOllama"],
     marketplaceSignedApi: marketplaceSignedApi as TestReports["marketplaceSignedApi"],

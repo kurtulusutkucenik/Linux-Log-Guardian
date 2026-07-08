@@ -55,7 +55,7 @@ fi
 
 check_webhook_env_perms
 
-LINE_MORNING="0 8 * * * cd \"$ROOT\" && bash scripts/morning_operator_gate.sh >>\"$LOG_MORNING\" 2>&1 $MARK_MORNING"
+LINE_MORNING="0 8 * * * cd \"$ROOT\" && export LOGANALYZER_PASSWORD=\"\${LOGANALYZER_PASSWORD:-DegistirBeni!123}\" SKIP_DASHBOARD_REFRESH=1 && bash scripts/morning_operator_chain.sh >>\"$LOG_MORNING\" 2>&1 $MARK_MORNING"
 LINE_CORE="0 3 * * 0 cd \"$ROOT\" && bash scripts/core_proof_refresh.sh >>\"$LOG_CORE\" 2>&1 $MARK_CORE"
 LINE_PRUNE="30 4 * * 0 cd \"$ROOT\" && bash scripts/intel_ban_db_prune_cron.sh >>\"$LOG_PRUNE\" 2>&1 $MARK_PRUNE"
 LINE_SECURITY="0 6 * * 1 cd \"$ROOT\" && bash scripts/operator_security_weekly.sh >>\"$LOG_SECURITY\" 2>&1 $MARK_SECURITY"
@@ -72,7 +72,7 @@ LINE_FLEET_CMDS="15 3 * * 0 cd \"$ROOT\" && STALE_HOURS=48 bash scripts/fleet_pr
 ) | crontab_for_user -
 
 echo "[OK] install_operator_cron"
-echo "  Her gun 08:00 — morning_operator_gate -> $LOG_MORNING"
+echo "  Her gun 08:00 — morning_operator_chain (SKIP_DASHBOARD_REFRESH=1) -> $LOG_MORNING"
 echo "  Pazar 03:00 — core_proof_refresh -> $LOG_CORE"
 echo "  Pazar 03:15 — fleet_prune_pending_commands (STALE_HOURS=48) -> $LOG_FLEET_CMDS"
 echo "  Pazar 04:30 — intel_ban_db_prune (stale>=${INTEL_BAN_STALE_LAPTOP_PRUNE:-10} laptop / >=${INTEL_BAN_STALE_WARN_ROWS:-500}) -> $LOG_PRUNE"
@@ -80,5 +80,5 @@ echo "  Pazartesi 06:00 — operator_security_weekly -> $LOG_SECURITY"
 echo "  Ayin 1'i 05:00 — POST_INSTALL_STRICT verify (internet-facing) -> $LOG_STRICT"
 echo "  Manuel strict: POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh"
 echo "  Kaldir: bash scripts/install_operator_cron.sh --remove"
-echo "  Manuel: bash scripts/morning_operator_gate.sh"
+echo "  Manuel: SKIP_DASHBOARD_REFRESH=1 bash scripts/morning_operator_chain.sh"
 echo "          bash scripts/core_proof_refresh.sh"

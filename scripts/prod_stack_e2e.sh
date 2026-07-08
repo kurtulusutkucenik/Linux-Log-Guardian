@@ -40,8 +40,15 @@ fi
 echo "--- [2/3] Lineage canli (demo kapali) ---"
 bash scripts/lineage_live_e2e.sh
 
-echo "--- [3/3] L7 + guardian-status ---"
+echo "--- [3/4] L7 + guardian-status ---"
 bash scripts/l7_prod_e2e.sh
+
+echo "--- [4/4] Caddy ban API mTLS (opsiyonel) ---"
+if [[ -f deploy/mtls.d/.enabled ]]; then
+  bash scripts/caddy_api_mtls_e2e.sh || echo "[WARN] caddy_api_mtls_e2e — scripts/caddy_mtls_setup.sh status"
+else
+  echo "[SKIP] caddy mTLS kapali (enable: bash scripts/caddy_mtls_setup.sh enable)"
+fi
 
 if [[ -f guardian-status.json ]]; then
   python3 -c "

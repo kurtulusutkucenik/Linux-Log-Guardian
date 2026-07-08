@@ -870,9 +870,14 @@ echo -e "  3 Dashboard JWT: ${CYAN}bash scripts/laptop_jwt_setup.sh${NC}"
 echo -e "  4 Webhook env  : ${CYAN}/etc/log-guardian/webhook.env chmod 600${NC}"
 echo -e "  5 Telegram     : ${CYAN}docs/WEBHOOK_SETUP.md${NC}"
 echo -e "  6 IPC token    : ${CYAN}docs/TLS_PRODUCTION.md${NC}"
-echo -e "  7 FP trust     : ${CYAN}sudo bash scripts/install_fp_trust_prod.sh${NC}  (onerilir)"
+echo -e "  7 FP trust     : ${CYAN}sudo bash scripts/install_fp_trust_prod.sh${NC}  (install_first_run otomatik)"
 echo -e "  8 nginx limit  : ${CYAN}bash scripts/check_nginx_rate_limit.sh${NC}"
 echo -e "  9 JWT rotate   : ${CYAN}docs/JWT_ROTATION.md${NC}"
 echo -e "  Opsiyonel      : ${CYAN}WASM_PROD_STRICT=1${NC} internet-facing · ${CYAN}docs/WASM_PROD_CHECKLIST.md${NC}"
 echo -e "  Dogrula        : ${CYAN}bash scripts/laptop_harden_check.sh${NC}"
-echo -e "  Internet-facing: ${CYAN}POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh${NC}  (nginx limit + WASM_PROD_STRICT)"
+if bash scripts/detect_internet_facing.sh 2>/dev/null; then
+echo -e "  Internet-facing: ${CYAN}sudo bash scripts/apply_internet_facing_hardening.sh${NC}  (nginx+WASM+firewall)"
+echo -e "                  ${CYAN}POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh${NC}"
+else
+echo -e "  Internet-facing: ${CYAN}POST_INSTALL_STRICT=1 bash scripts/post_install_verify.sh${NC}  (VPS'te otomatik FAIL)"
+fi

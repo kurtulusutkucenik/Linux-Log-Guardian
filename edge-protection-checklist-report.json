@@ -1,14 +1,14 @@
 {
-  "date": "2026-07-07T10:48:19.283359+00:00",
-  "pass": false,
+  "date": "2026-07-08T17:59:22.965096+00:00",
+  "pass": true,
   "laptop_profile": true,
   "items": [
     {
       "id": "edge-protection-gate",
       "scope": "both",
       "label": "edge_protection_gate",
-      "status": "fail",
-      "note": "bash scripts/edge_protection_gate.sh"
+      "status": "pass",
+      "note": "rapor pass"
     },
     {
       "id": "dist-risk-proof",
@@ -42,8 +42,8 @@
       "id": "nginx-t",
       "scope": "both",
       "label": "nginx -t",
-      "status": "warn",
-      "note": "sudo nginx -t"
+      "status": "pass",
+      "note": "nginx aktif + snippet (root -t gerekmez)"
     },
     {
       "id": "nginx-rate-limit",
@@ -70,8 +70,8 @@
       "id": "intel-ban-prune-sudo",
       "scope": "laptop",
       "label": "ban-db-prune NOPASSWD cron",
-      "status": "warn",
-      "note": "sudoers-ban-db-prune.example"
+      "status": "pass",
+      "note": ""
     },
     {
       "id": "whitelist",
@@ -92,7 +92,7 @@
       "scope": "laptop",
       "label": "Cloudflare Pages /tests parity",
       "status": "pass",
-      "note": "80 kart"
+      "note": "85 kart"
     },
     {
       "id": "cdn-real-ip",
@@ -112,8 +112,8 @@
       "id": "enterprise-e9",
       "scope": "both",
       "label": "E9 runbook zinciri",
-      "status": "warn",
-      "note": "bash scripts/enterprise_e9_verify.sh"
+      "status": "pass",
+      "note": "proof=85/85"
     },
     {
       "id": "fleet-command-sign",
@@ -121,23 +121,24 @@
       "label": "fleet komut HMAC imzasi",
       "status": "pass",
       "note": ""
+    },
+    {
+      "id": "vps-prep",
+      "scope": "laptop",
+      "label": "VPS kurulum hazirligi (sunucu yok)",
+      "status": "pass",
+      "note": "proof=85/85"
     }
   ],
   "summary": {
-    "pass": 13,
-    "warn": 3,
-    "fail": 1,
+    "pass": 18,
+    "warn": 0,
+    "fail": 0,
     "skip": 0,
-    "total": 17
+    "total": 18
   },
-  "laptop_fail_ids": [
-    "edge-protection-gate"
-  ],
-  "laptop_warn_ids": [
-    "nginx-t",
-    "intel-ban-prune-sudo",
-    "enterprise-e9"
-  ],
+  "laptop_fail_ids": [],
+  "laptop_warn_ids": [],
   "script": "scripts/edge_protection_checklist.sh",
   "doc": "docs/EDGE_PROTECTION.md"
 }

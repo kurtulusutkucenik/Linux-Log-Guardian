@@ -194,6 +194,18 @@ else
   _add "fleet-command-sign" "both" "fleet komut HMAC imzasi" "warn" "bash scripts/fleet_command_sign_e2e.sh"
 fi
 
+if [[ -f "$ROOT/vps-prep-gate-report.json" ]] \
+    && python3 -c "import json,sys; sys.exit(0 if json.load(open('$ROOT/vps-prep-gate-report.json')).get('pass') else 1)"; then
+  proof_note=$(python3 -c "import json; print(json.load(open('$ROOT/vps-prep-gate-report.json')).get('competitive_proof','?'))" 2>/dev/null || echo "?")
+  _add "vps-prep" "laptop" "VPS kurulum hazirligi (sunucu yok)" "pass" "proof=${proof_note}"
+else
+  if bash "$ROOT/scripts/vps_prep_gate.sh" >/dev/null 2>&1; then
+    _add "vps-prep" "laptop" "VPS kurulum hazirligi (sunucu yok)" "pass" "canli kosum"
+  else
+    _add "vps-prep" "laptop" "VPS kurulum hazirligi (sunucu yok)" "warn" "bash scripts/vps_prep_gate.sh"
+  fi
+fi
+
 python3 - "$ROOT" "$REPORT" "$items_tsv" <<'PY'
 import datetime
 import json

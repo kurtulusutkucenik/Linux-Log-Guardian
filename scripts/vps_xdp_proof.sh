@@ -78,13 +78,28 @@ else
 fi
 
 xdp_active=""
+daemon_xdp=0
+DS_JSON="${LG_DAEMON_STATS:-/run/log-guardian/daemon_stats.json}"
+if [[ -f "$DS_JSON" ]] && python3 - "$DS_JSON" <<'PY' 2>/dev/null; then
+import json, sys
+d = json.load(open(sys.argv[1]))
+raise SystemExit(0 if d.get("xdp_active") else 1)
+PY
+  daemon_xdp=1
+fi
+
 if curl -sf --max-time 5 "http://127.0.0.1:${METRICS_PORT}/metrics" 2>/dev/null \
     | grep -E '^loganalyzer_xdp_active' | tail -1 | grep -q ' 1$'; then
   xdp_active=1
   ok "metrics loganalyzer_xdp_active=1"
+elif [[ "$daemon_xdp" -eq 1 ]]; then
+  xdp_active=1
+  ok "daemon_stats xdp_active=1 (split daemon — metrik gecikmesi olabilir)"
 elif curl -sf --max-time 5 "http://127.0.0.1:${METRICS_PORT}/metrics" 2>/dev/null \
     | grep -q 'loganalyzer_xdp_active'; then
   bad "loganalyzer_xdp_active=0 — XDP attach yok (IFACE=$IFACE rules.conf)"
+elif [[ -f "$DS_JSON" ]]; then
+  bad "daemon_stats xdp_active=0 — daemon XDP OFF (journalctl -u log-guardian-daemon | grep XDP)"
 else
   bad "metrics :${METRICS_PORT} yok veya xdp metrigi yok"
 fi

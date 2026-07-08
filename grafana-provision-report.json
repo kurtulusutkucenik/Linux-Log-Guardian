@@ -1,10 +1,10 @@
 {
-  "date": "2026-06-29T07:52:24.634797+00:00",
+  "date": "2026-07-08T11:39:26.330281+00:00",
   "pass": true,
   "grafana_url": "http://127.0.0.1:3002",
   "dashboard_uid": "log-guardian-01",
   "tenant_variable": true,
-  "alert_rules": 10,
-  "alert_rules_with_tenant": 10,
+  "alert_rules": 13,
+  "alert_rules_with_tenant": 13,
   "script": "scripts/grafana_alert_gate.sh"
 }

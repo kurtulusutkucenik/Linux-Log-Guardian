@@ -4,8 +4,9 @@
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
+# shellcheck source=scripts/lib/dashboard_gate_auth.sh
+source "$ROOT/scripts/lib/dashboard_gate_auth.sh"
 
-ADMIN_PASS="${DASHBOARD_ADMIN_PASSWORD:-DegistirBeni!123}"
 REPORT="${TELEGRAM_SOC_GATE_REPORT:-telegram-soc-gate-report.json}"
 COOKIE_JAR="$(mktemp)"
 trap 'rm -f "$COOKIE_JAR"' EXIT
@@ -26,47 +27,22 @@ Path('$REPORT').write_text(json.dumps({
 }
 
 resolve_dash_url() {
-  if [[ -n "${DASH_URL:-}" ]]; then
-    echo "$DASH_URL"
-    return
-  fi
-  if curl -sfk -o /dev/null --max-time 2 \
-      --resolve 'localhost:8443:127.0.0.1' "https://localhost:8443/api/tier" 2>/dev/null; then
-    echo "https://localhost:8443"
-  elif curl -sf -o /dev/null --max-time 2 "http://127.0.0.1:3000/api/tier" 2>/dev/null; then
-    echo "http://127.0.0.1:3000"
-  else
-    echo "http://127.0.0.1:3000"
-  fi
+  dashboard_gate_base_url
 }
 
 DASH_URL="$(resolve_dash_url)"
-CURL_TLS=()
-CURL_RESOLVE=()
-[[ "$DASH_URL" == https://* ]] && CURL_TLS=(-k)
-if [[ "$DASH_URL" == https://localhost:* ]]; then
-  port="${DASH_URL#https://localhost:}"
-  port="${port%%/*}"
-  CURL_RESOLVE=(--resolve "localhost:${port}:127.0.0.1")
-fi
-
 dash_curl() {
-  curl "${CURL_TLS[@]}" "${CURL_RESOLVE[@]}" "$@"
+  dashboard_gate_curl "$DASH_URL" "$@"
 }
 
 if [[ -f "$ROOT/.env" ]]; then
   # shellcheck disable=SC1090
   set -a && source "$ROOT/.env" && set +a
-  ADMIN_PASS="${DASHBOARD_ADMIN_PASSWORD:-$ADMIN_PASS}"
 fi
 
 echo "=== telegram_soc_gate (Sprint Y+AA) ==="
 
-login_code=$(dash_curl -s -o /dev/null -w '%{http_code}' -c "$COOKIE_JAR" \
-  -X POST "${DASH_URL}/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"admin\",\"password\":\"${ADMIN_PASS}\"}")
-[[ "$login_code" == "200" ]] || fail "login HTTP $login_code"
+dashboard_gate_login "$COOKIE_JAR" || fail "login HTTP 429 veya kimlik hatasi"
 
 soc_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/soc-timeline") \
   || fail "/api/soc-timeline erisilemedi"

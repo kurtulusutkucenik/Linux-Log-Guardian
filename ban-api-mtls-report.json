@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-08T17:46:13.463563+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "read_token_post_reject": true,
+  "mutation_ok": true,
+  "mtls_verify": true,
+  "mtls_no_cert_reject": true,
+  "skipped_nginx": false,
+  "caddy_mtls_verify": true,
+  "caddy_skipped": false,
+  "script": "scripts/ban_api_mtls_e2e.sh"
+}

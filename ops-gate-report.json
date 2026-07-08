@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-07T10:19:55Z",
+  "date": "2026-07-08T17:59:22Z",
   "pass": true,
   "gates": [
     {
@@ -7,13 +7,13 @@
       "script": "scripts/post_install_verify.sh",
       "pass": true,
       "fail": 0,
-      "warn": 0,
+      "warn": 2,
       "title": "Kurulum kapısı — servis, IPC, API fail-closed",
       "titleEn": "Install gate — services, IPC, API fail-closed",
       "purpose": "systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.",
       "purposeEn": "systemd, --health, metrics :9091, API_BIND and nginx format green matrix.",
-      "verdict": "FAIL: 0 · WARN: 0",
-      "verdictEn": "FAIL: 0 · WARN: 0",
+      "verdict": "FAIL: 0 · WARN: 2",
+      "verdictEn": "FAIL: 0 · WARN: 2",
       "metrics": [
         {
           "label": "FAIL",
@@ -21,7 +21,7 @@
         },
         {
           "label": "WARN",
-          "value": "0"
+          "value": "2"
         }
       ],
       "group": "gate"
@@ -199,13 +199,13 @@
       "script": "scripts/vm_demo_gate.sh",
       "pass": true,
       "fail": 0,
-      "warn": 0,
+      "warn": 1,
       "title": "VM demo kapısı — post_install 0 FAIL",
       "titleEn": "VM demo gate — post_install 0 FAIL",
       "purpose": "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate).",
       "purposeEn": "Final check before laptop/VM demo (repair: sudo vm_demo_gate).",
-      "verdict": "FAIL: 0 · WARN: 0",
-      "verdictEn": "FAIL: 0 · WARN: 0",
+      "verdict": "FAIL: 0 · WARN: 1",
+      "verdictEn": "FAIL: 0 · WARN: 1",
       "metrics": [
         {
           "label": "FAIL",
@@ -213,7 +213,7 @@
         },
         {
           "label": "WARN",
-          "value": "0"
+          "value": "1"
         }
       ],
       "group": "gate"

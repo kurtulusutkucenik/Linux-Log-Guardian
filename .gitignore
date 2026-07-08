@@ -120,3 +120,6 @@ test_write.tmp*
 
 # Yerel yedekler (commit edilmez)
 backups/
+
+# mTLS lab private keys — asla commit etme (crt lab icin mtls_client_issue.sh)
+deploy/mtls/*.key

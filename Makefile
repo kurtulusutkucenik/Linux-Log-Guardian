@@ -228,9 +228,15 @@ $(VMLINUX_H):
 	fi
 
 # ── XDP/eBPF kernel nesnesi (CO-RE) ──────────────────────────
-# vmlinux.h varsa kullan; yoksa geleneksel linux/*.h ile derle.
+# VPS strict verifier: XDP_MINIMAL=1 make xdp_filter.o  (xdp_filter_min.c)
+ifeq ($(XDP_MINIMAL),1)
+$(XDP_OBJ): xdp_filter_min.c bpf_compat.h
+	@echo "[CORE] XDP_MINIMAL=1 — blacklist-only (VPS verifier-safe)"
+	$(BPF_CLANG) $(BPF_CFLAGS_FALLBACK) -DBPF_NO_VMLINUX -c xdp_filter_min.c -o $@
+else
 $(XDP_OBJ): xdp_filter.c bpf_compat.h $(VMLINUX_H)
 	$(BPF_CLANG) $(shell if [ -f vmlinux.h ] && [ $$(wc -c < vmlinux.h) -gt 4096 ]; then echo '$(BPF_CFLAGS)'; else echo '$(BPF_CFLAGS_FALLBACK)'; fi) -c xdp_filter.c -o $@
+endif
 
 # ── eBPF uprobe nesnesi (TLS In-Memory Sensor) ────────────────────
 # tls_uprobe.c yalnizca __BPF_TRACING__ kapsaminda derlenir.

@@ -1,12 +1,11 @@
 # Linux Log Guardian — Release Evidence Pack
 
-Generated: 2026-07-07T10:00:00+00:00
+Generated: 2026-07-07T22:41:27.534464+00:00
 
 ## Measured metrics
-- Validation tests: 80/80 pass (dashboard /tests · canlı site /testler)
-- E9 runbook: `enterprise_e9_verify.sh` (escalation + edge checklist + docs)
-- Real attack recall (1K): 100.0%
-- Real attack recall (10K): 100.2%
+- Validation tests: 83/83 pass (dashboard /tests)
+- Real attack recall (1K): 101.0%
+- Real attack recall (10K): 100.1%
 - Distributed cluster recall: 100.0%
 - JA3 TLS live: — (JA3_LIVE=1 + nginx_tls_local_setup)
 - JA3 cluster ban live: PASS
@@ -15,10 +14,10 @@ Generated: 2026-07-07T10:00:00+00:00
 - Live harness refused: 525
 - nginx consult: PASS
 - False positive: 0.2%
-- Ban latency: 20.23 ms
+- Ban latency: 28.71 ms
 - CRS parity: 100.0%
 - Short soak (5m): PASS
-- OWASP corpus recall: 100.0%
+- OWASP corpus recall: 112.1%
 - TR hosting recall: 100.0%
 - Threat intel sync: PASS
 

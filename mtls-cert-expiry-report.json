@@ -1,0 +1,32 @@
+{
+  "date": "2026-07-08T18:29:18.650948+00:00",
+  "pass": true,
+  "skipped": false,
+  "warn_days": 14,
+  "min_days_left": 824,
+  "certs": [
+    {
+      "id": "client",
+      "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/client.crt",
+      "days_left": 824,
+      "ok": true,
+      "warn_days": 14
+    },
+    {
+      "id": "server",
+      "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/server.crt",
+      "days_left": 824,
+      "ok": true,
+      "warn_days": 14
+    },
+    {
+      "id": "ca",
+      "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/ca.crt",
+      "days_left": 824,
+      "ok": true,
+      "warn_days": 14
+    }
+  ],
+  "script": "scripts/mtls_cert_expiry_check.sh",
+  "doc": "docs/MTLS_ROTATION_RUNBOOK.md"
+}

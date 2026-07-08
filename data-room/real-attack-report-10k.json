@@ -1,10 +1,10 @@
 {
-  "date": "2026-07-05T20:33:15.250967+00:00",
+  "date": "2026-07-07T17:41:03.556402+00:00",
   "corpus": "corpus/customer_10k.access",
   "manifest": "corpus/customer_10k_manifest.json",
   "lines_total": 10000,
-  "alerts_total": 10017,
-  "attack_recall_pct": 100.2,
+  "alerts_total": 10012,
+  "attack_recall_pct": 100.1,
   "category_avg_recall_pct": 0.0,
   "target_recall_pct": 85.0,
   "categories": {},

@@ -1,0 +1,17 @@
+{
+  "date": "2026-07-08T17:46:27.140333+00:00",
+  "pass": true,
+  "mode": "enterprise",
+  "soar_enabled": true,
+  "mtls_strict": true,
+  "dashboard_ban_ok": true,
+  "caddy_mtls_ok": true,
+  "mtls_lab_ok": true,
+  "mutation_ok": true,
+  "audit_ok": true,
+  "soar_url": "https://localhost:9443",
+  "relay_url": "http://127.0.0.1:18090",
+  "enable_cmd": "sudo bash scripts/enable_enterprise_soar_api.sh",
+  "disable_cmd": "sudo bash scripts/disable_enterprise_soar_api.sh",
+  "script": "scripts/enterprise_soar_gate.sh"
+}

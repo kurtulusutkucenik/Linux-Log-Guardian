@@ -1,7 +1,7 @@
 // Canlı siteden (ceniklinuxlogguardian.org) taşınan gerçek içerik — tek kaynak.
 
 /** competitive-proof validationTests count — sync_landing_tests_from_proof.py ile guncellenir */
-export const PROOF_TEST_COUNT = 80;
+export const PROOF_TEST_COUNT = 85;
 
 const T = PROOF_TEST_COUNT;
 const T_TEST = `${T} test`;

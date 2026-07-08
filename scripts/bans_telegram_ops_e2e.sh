@@ -68,6 +68,25 @@ fi
 
 echo "=== bans_telegram_ops_e2e ==="
 
+login_code=""
+login_try=1
+while [[ "$login_try" -le 5 ]]; do
+  login_code=$(dash_curl -s -o /dev/null -w '%{http_code}' -c "$COOKIE_JAR" \
+    -X POST "${DASH_URL}/api/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"username\":\"admin\",\"password\":\"${ADMIN_PASS}\"}")
+  [[ "$login_code" == "200" ]] && break
+  if [[ "$login_code" == "429" && "$login_try" -lt 5 ]]; then
+    wait_s=$((login_try * 3))
+    echo "[WARN] login 429 — ${wait_s}s bekleniyor (deneme $login_try/5)" >&2
+    sleep "$wait_s"
+    login_try=$((login_try + 1))
+    continue
+  fi
+  break
+done
+[[ "$login_code" == "200" ]] || fail "login HTTP $login_code"
+
 refresh_ban_feed() {
   local dest="${LG_DASHBOARD_DATA:-$ROOT/.cache/dashboard-live}"
   mkdir -p "$dest"
@@ -89,12 +108,6 @@ refresh_ban_feed() {
     sudo -n cp -f /run/log-guardian/active_bans.json "$dest/active_bans.json" 2>/dev/null || true
   fi
 }
-
-login_code=$(dash_curl -s -o /dev/null -w '%{http_code}' -c "$COOKIE_JAR" \
-  -X POST "${DASH_URL}/api/auth/login" \
-  -H "Content-Type: application/json" \
-  -d "{\"username\":\"admin\",\"password\":\"${ADMIN_PASS}\"}")
-[[ "$login_code" == "200" ]] || fail "login HTTP $login_code"
 
 acks_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/telegram-acks") \
   || fail "/api/telegram-acks erisilemedi"

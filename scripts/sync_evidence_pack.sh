@@ -39,6 +39,8 @@ for f in \
   dist-risk-proof-report.json \
   nginx-hybrid-report.json \
   ipv6-ban-e2e-report.json \
+  api-mutation-token-e2e-report.json \
+  ban-api-mtls-report.json \
   lineage-incident-report.json \
   fleet-multi-node-report.json \
   vm-fleet-gate-report.json \

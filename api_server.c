@@ -27,6 +27,7 @@
 #include <liburing.h>
 #include <stdatomic.h>
 #include <time.h>
+#include <sys/stat.h>
 
 #define ACTIVE_BANS_JSON "/run/log-guardian/active_bans.json"
 
@@ -306,6 +307,43 @@ static const char *api_token_expected(void)
     return (t && t[0]) ? t : NULL;
 }
 
+static const char *api_mutation_token_expected(void)
+{
+    const char *t = getenv("GUARDIAN_API_MUTATION_TOKEN");
+    return (t && t[0]) ? t : NULL;
+}
+
+static int api_split_tokens_enabled(void)
+{
+    return api_mutation_token_expected() != NULL;
+}
+
+static int api_mtls_strict_enabled(void)
+{
+    const char *v = getenv("GUARDIAN_API_MTLS_STRICT");
+    return v && (strcmp(v, "1") == 0 || strcmp(v, "true") == 0 ||
+                 strcmp(v, "yes") == 0);
+}
+
+static int api_peer_is_loopback(const char *ip)
+{
+    if (!ip || !ip[0])
+        return 0;
+    if (strcmp(ip, "127.0.0.1") == 0 || strcmp(ip, "::1") == 0)
+        return 1;
+    if (strncmp(ip, "127.", 4) == 0)
+        return 1;
+    return 0;
+}
+
+/* Enterprise: harici POST yalnizca mTLS edge (127.0.0.1 proxy) uzerinden */
+static int api_check_mutation_peer_strict(conn_info_t *conn)
+{
+    if (!api_mtls_strict_enabled())
+        return 0;
+    return api_peer_is_loopback(conn->peer_ip) ? 0 : -1;
+}
+
 static int api_token_matches(const char *expected, conn_info_t *conn)
 {
     char hdr[256] = "";
@@ -321,23 +359,38 @@ static int api_token_matches(const char *expected, conn_info_t *conn)
     return 0;
 }
 
-/* fail-closed: API_TOKEN yoksa veya eslesmezse reddet */
+/* fail-closed: token yoksa veya eslesmezse reddet */
 static int api_check_mutation_auth(conn_info_t *conn)
 {
-    const char *expected = api_token_expected();
-    if (!expected)
+    const char *mut = api_mutation_token_expected();
+    const char *read = api_token_expected();
+    if (mut) {
+        if (!api_token_matches(mut, conn))
+            return -1;
+        return 0;
+    }
+    if (!read)
         return -1;
-    return api_token_matches(expected, conn) ? 0 : -1;
-}
-
-static int api_check_consult_auth(conn_info_t *conn)
-{
-    return api_check_mutation_auth(conn);
+    return api_token_matches(read, conn) ? 0 : -1;
 }
 
 static int api_check_read_auth(conn_info_t *conn)
 {
-    return api_check_mutation_auth(conn);
+    const char *mut = api_mutation_token_expected();
+    const char *read = api_token_expected();
+    if (!read && !mut)
+        return -1;
+    if (mut && api_token_matches(mut, conn))
+        return 0;
+    if (read && api_token_matches(read, conn))
+        return 0;
+    return -1;
+}
+
+static int api_check_consult_auth(conn_info_t *conn)
+{
+    /* GET /api/v1/consult — read veya mutation token (nginx inline auth_request) */
+    return api_check_read_auth(conn);
 }
 
 static int consult_global_rate_ok(void)
@@ -442,9 +495,42 @@ static int parse_query_param(const char *req, const char *key,
 
 static void decode_query_field(const char *raw, char *out, size_t outsz);
 
+static void api_mutation_audit_log(const char *ip, int unban, int rc,
+                                   const char *reason, const char *path_label)
+{
+    const char *path = getenv("GUARDIAN_API_MUTATION_AUDIT");
+    static const char default_path[] = "/var/lib/log-guardian/api-mutation-audit.jsonl";
+    if (!path || !path[0]) path = default_path;
+    mkdir("/var/lib/log-guardian", 0750);
+    FILE *f = fopen(path, "a");
+    if (!f) return;
+    time_t now = time(NULL);
+    char reason_esc[256] = {0};
+    if (reason) {
+        size_t j = 0;
+        for (size_t i = 0; reason[i] && j + 2 < sizeof(reason_esc); i++) {
+            char c = reason[i];
+            if (c == '"' || c == '\\') reason_esc[j++] = '\\';
+            if (c == '\n' || c == '\r') c = ' ';
+            reason_esc[j++] = c;
+        }
+    }
+    fprintf(f,
+            "{\"ts\":%ld,\"ip\":\"%s\",\"action\":\"%s\",\"ok\":%s,"
+            "\"path\":\"%s\",\"reason\":\"%s\",\"source\":\"api\"}\n",
+            (long)now, ip ? ip : "", unban ? "unban" : "ban",
+            rc == 0 ? "true" : "false", path_label ? path_label : "failed",
+            reason_esc);
+    fclose(f);
+}
+
 static void handle_post_ban(conn_info_t *conn, int unban)
 {
     if (api_check_mutation_auth(conn) != 0) {
+        api_send_unauthorized(conn);
+        return;
+    }
+    if (api_check_mutation_peer_strict(conn) != 0) {
         api_send_unauthorized(conn);
         return;
     }
@@ -491,6 +577,8 @@ static void handle_post_ban(conn_info_t *conn, int unban)
         default: break;
         }
     }
+
+    api_mutation_audit_log(ip, unban, rc, reason, path_label);
 
     if (rc == 0) {
         conn->tx_len = snprintf(conn->tx_buf, sizeof(conn->tx_buf),
@@ -861,11 +949,14 @@ static void *api_worker(void *arg) {
         return NULL;
     }
 
-    if (!api_token_expected()) {
+    if (!api_token_expected() && !api_mutation_token_expected()) {
         fprintf(stderr,
             "[API] UYARI: API_TOKEN bos — tum /api/v1 kapali (fail-closed)\n");
         fprintf(stderr,
             "[API]        sudo bash scripts/ensure_api_security.sh\n");
+    } else if (api_split_tokens_enabled()) {
+        fprintf(stderr,
+            "[API] API split tokens — GET: API_TOKEN | POST: API_MUTATION_TOKEN\n");
     } else {
         fprintf(stderr,
             "[API] API_TOKEN aktif — tum /api/v1 (Bearer veya X-Guardian-Token)\n");

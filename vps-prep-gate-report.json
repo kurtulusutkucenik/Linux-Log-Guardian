@@ -1,0 +1,21 @@
+{
+  "date": "2026-07-08T17:52:54.088499+00:00",
+  "pass": true,
+  "fail_count": 0,
+  "laptop_mode": true,
+  "vps_available": false,
+  "competitive_proof": "85/85",
+  "xdp_report_mode": "skip",
+  "vps_when_ready": [
+    "sudo bash install.sh",
+    "sudo bash scripts/install_first_run.sh",
+    "sudo bash scripts/prod_edge_setup.sh",
+    "sudo bash scripts/fix_nginx_inline_consult.sh",
+    "sudo bash scripts/enable_enterprise_soar_api.sh  # opsiyonel Enterprise SOAR",
+    "sudo bash scripts/vps_xdp_proof.sh  # eth0 kernel-XDP (skip YOK)",
+    "sudo bash scripts/install_soak_systemd.sh  # 72h soak",
+    "bash scripts/post_install_verify.sh"
+  ],
+  "doc": "docs/VPS_SETUP.md",
+  "script": "scripts/vps_prep_gate.sh"
+}

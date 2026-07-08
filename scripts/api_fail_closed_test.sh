@@ -65,6 +65,7 @@ else
 fi
 
 tok=$(grep -E '^API_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+mut=$(grep -E '^API_MUTATION_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
 if [[ -n "$tok" ]]; then
   auth=(-H "Authorization: Bearer $tok")
   mcode=$(code "${auth[@]}" "${BASE}/api/v1/metrics")
@@ -73,6 +74,15 @@ if [[ -n "$tok" ]]; then
   bcode=$(code "${auth[@]}" "${BASE}/api/v1/bans")
   [[ "$bcode" == "200" ]] && echo "[OK] GET /bans token ile 200" \
     || { echo "[FAIL] bans token code=$bcode" >&2; fail=1; }
+  if [[ -n "$mut" && "$mut" != "$tok" ]]; then
+    pcode=$(code -X POST "${auth[@]}" "${BASE}/api/v1/ban?ip=203.0.113.253")
+    [[ "$pcode" == "403" ]] && echo "[OK] POST /ban read-only token 403 (split)" \
+      || { echo "[FAIL] split POST read code=$pcode (403 beklenir)" >&2; fail=1; }
+    mauth=(-H "Authorization: Bearer $mut")
+    pgcode=$(code "${mauth[@]}" "${BASE}/api/v1/metrics")
+    [[ "$pgcode" == "200" ]] && echo "[OK] GET /metrics mutation token 200 (split)" \
+      || { echo "[FAIL] split GET mutation code=$pgcode" >&2; fail=1; }
+  fi
 fi
 
 [[ "$fail" -eq 0 ]] && {

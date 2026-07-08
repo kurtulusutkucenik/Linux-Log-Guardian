@@ -56,6 +56,8 @@ bash scripts/local_security_audit.sh
 3. nginx inline consult token enjekte (`fix_nginx_inline_consult.sh`)
 4. Dashboard JWT güçlü (32+ byte hex)
 5. `webhook.env` / `threat-feed.env` → chmod 600, repoda gerçek secret yok
+6. `sudo bash scripts/apply_internet_facing_hardening.sh` — nginx rate limit, `WASM_PROD_STRICT`, dashboard firewall (Caddy varsa)
+7. `bash scripts/post_install_verify.sh` — internet-facing makinede kısmi maddeler otomatik **FAIL**
 
 ---
 

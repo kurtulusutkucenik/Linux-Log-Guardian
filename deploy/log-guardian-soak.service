@@ -17,9 +17,12 @@ Environment=SOAK_INTERVAL=300
 Environment=SOAK_REPORT=soak-report.json
 Environment=LOGANALYZER_PASSWORD=DegistirBeni!123
 EnvironmentFile=-/etc/log-guardian/env
+# VPS systemd: laptop env SOAK_1H=1 override etmesin
+Environment=SOAK_1H=0
+Environment=SOAK_BACKGROUND=1
 ExecStart=/bin/bash @LG_SOAK_WORKDIR@/scripts/soak_test.sh
-StandardOutput=append:@LG_SOAK_WORKDIR@/soak.log
-StandardError=append:@LG_SOAK_WORKDIR@/soak.log
+StandardOutput=append:@LG_SOAK_WORKDIR@/soak-72h.log
+StandardError=append:@LG_SOAK_WORKDIR@/soak-72h.log
 TimeoutStartSec=0
 # Reboot sonrasi otomatik devam ETMEZ — 72h tek parca; VPS acik kalsin
 Restart=no

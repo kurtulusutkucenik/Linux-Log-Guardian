@@ -39,6 +39,15 @@ up=$(q 'up{job="log-guardian"}')
 [[ "$up" == "1" ]] || fail "scrape yok — log-guardian ayakta mi? bash scripts/grafana_stack.sh"
 echo "[OK] scrape up{job=\"log-guardian\"} = 1"
 
+fleet_up=$(q 'up{job="log-guardian-fleet"}')
+if [[ "$fleet_up" == "1" ]]; then
+  fleet_on=$(q 'sum(loganalyzer_fleet_agent_online)')
+  fleet_tot=$(q 'sum(loganalyzer_fleet_agent_total)')
+  echo "[OK] scrape up{job=\"log-guardian-fleet\"} = 1 (online=${fleet_on} total=${fleet_tot})"
+else
+  echo "[WARN] fleet scrape yok — dashboard :3000 + grafana_stack yenile (P2 #22)" >&2
+fi
+
 applied=$(q "loganalyzer_threat_last_applied{tenant_id=\"${TENANT}\"}")
 eps=$(q "loganalyzer_eps{tenant_id=\"${TENANT}\"}")
 lines=$(q "loganalyzer_lines_total{tenant_id=\"${TENANT}\"}")
@@ -49,6 +58,8 @@ echo "Prometheus UI → Query kutusuna BUNLARI yapistir (PromQL kelimesi DEGIL):
 echo ""
 cat <<EOF
   up{job="log-guardian"}
+  up{job="log-guardian-fleet"}
+  loganalyzer_fleet_agent_online{tenant_id="${TENANT}"}
   loganalyzer_threat_last_applied{tenant_id="${TENANT}"}
   loganalyzer_threat_last_failed{tenant_id="${TENANT}"}
   loganalyzer_eps{tenant_id="${TENANT}"}

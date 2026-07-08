@@ -11,6 +11,8 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { SocKindFilterProvider } from "@/components/SocKindFilterContext";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
+import { FleetOpsPanel } from "@/components/FleetOpsPanel";
+import { VpsPrepPanel } from "@/components/VpsPrepPanel";
 
 const FleetCharts = dynamic(
   () => import("@/components/FleetCharts").then((m) => m.FleetCharts),
@@ -387,6 +389,9 @@ export default function FleetDashboard() {
           {offlineCount} {t("fleetOfflineBanner")}
         </p>
       )}
+
+      <FleetOpsPanel />
+      <VpsPrepPanel />
 
       {/* ── Tenant Segmentation Bar ─────────────────────────────────── */}
       {selectedTenant === "*" && tenants.length > 0 && (

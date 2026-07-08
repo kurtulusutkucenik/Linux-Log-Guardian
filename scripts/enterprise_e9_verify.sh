@@ -40,6 +40,20 @@ else
   warn "docs_consistency_gate"
 fi
 
+if bash "$ROOT/scripts/vps_prep_gate.sh" >/dev/null 2>&1; then
+  note "vps_prep_gate (laptop hazirlik — VPS yok)"
+else
+  warn "vps_prep_gate"
+fi
+
+if [[ "${ENTERPRISE_SOAR:-0}" == "1" ]]; then
+  if bash "$ROOT/scripts/enterprise_soar_gate.sh" >/dev/null 2>&1; then
+    note "enterprise_soar_gate"
+  else
+    warn "enterprise_soar_gate"
+  fi
+fi
+
 python3 - "$ROOT" "$REPORT" "$fail" <<'PY'
 import datetime
 import json
@@ -73,6 +87,7 @@ out = {
     "edge_checklist": load_json("edge-protection-checklist-report.json").get("pass"),
     "morning_operator": load_json("morning-operator-gate-report.json").get("pass"),
     "docs_consistency": load_json("docs-consistency-gate-report.json").get("pass"),
+    "vps_prep": load_json("vps-prep-gate-report.json").get("pass"),
     "script": "scripts/enterprise_e9_verify.sh",
     "doc": "docs/ENTERPRISE_SUPPORT.md",
 }

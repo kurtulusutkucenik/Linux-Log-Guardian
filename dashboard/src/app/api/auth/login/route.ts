@@ -4,7 +4,7 @@ import {
   authCookieSecure,
   signAuthToken,
 } from '@/lib/loginAuth';
-import { checkLoginRateLimit, loginRateLimitKey } from '@/lib/loginRateLimit';
+import { checkLoginRateLimit, loginRateLimitKey, recordLoginFailure } from '@/lib/loginRateLimit';
 import { requestUrl } from '@/lib/requestOrigin';
 
 async function readCredentials(request: Request): Promise<{
@@ -57,6 +57,7 @@ export async function POST(request: Request) {
     const user = await authenticateUser(username, password);
 
     if (!user) {
+      recordLoginFailure(rlKey);
       if (browserForm) {
         return NextResponse.redirect(requestUrl(request, '/login?error=invalid'));
       }

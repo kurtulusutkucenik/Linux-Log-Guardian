@@ -28,6 +28,7 @@ fi
 mkdir -p "$DEST"
 
 # Hassas / root / runtime dosyalar haric — rsync code 23 onlenir
+# vboxsf: host root:600 deploy/mtls/*.key okunamaz (Operation not permitted)
 rsync -a \
   --exclude='.git/' \
   --exclude='.cache/' \
@@ -42,10 +43,12 @@ rsync -a \
   --exclude='dist/*.zip' \
   --exclude='graphify-out/' \
   --exclude='dist/' \
+  --exclude='deploy/mtls/*.key' \
   --exclude='__pycache__/' \
   --exclude='.env' \
   --exclude='.env.*' \
-  --exclude='rules.conf' \
+  --exclude='rules/fp-bench.conf' \
+  --exclude='rules/*.local' \
   --exclude='test_rules.conf' \
   --include='tests/fixtures/***' \
   --include='test_*.log' \

@@ -145,6 +145,10 @@ if bash "$ROOT/scripts/detect_internet_facing.sh" 2>/dev/null; then
   if ! grep -qE '^OPENAPI_STRICT=1' "${LG_RULES:-/etc/log-guardian/rules.conf}" 2>/dev/null; then
     echo "[INFO] Internet-facing — API host icin: sudo bash scripts/install_openapi_strict_prod.sh"
   fi
+  echo ""
+  echo "[install_first_run] Internet-facing sertlestirme..."
+  bash "$ROOT/scripts/apply_internet_facing_hardening.sh" || \
+    echo "[WARN] apply_internet_facing_hardening — sudo bash scripts/apply_internet_facing_hardening.sh" >&2
 fi
 
 bash "$ROOT/scripts/install_fp_report_cron.sh" 2>/dev/null || true

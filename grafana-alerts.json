@@ -190,7 +190,7 @@
           ],
           "for": "2m",
           "annotations": {
-            "summary": "Telegram/webhook HTTP hatasi — token, chat_id ve ag erisimini kontrol edin."
+            "summary": "Webhook fail — bash scripts/webhook_metrics_reset.sh (stale) + token/chat_id kontrol"
           },
           "labels": { "severity": "warning", "product": "log-guardian" }
         },
@@ -254,6 +254,27 @@
           "for": "15m",
           "annotations": {
             "summary": "threat-intel legacy ban_events satiri var (beklenen 0) — sudo bash scripts/enable_threat_intel_prod.sh"
+          },
+          "labels": { "severity": "warning", "product": "log-guardian" }
+        },
+        {
+          "uid": "lg-fleet-offline",
+          "title": "Log Guardian fleet tum agentlar offline",
+          "condition": "C",
+          "data": [
+            {
+              "refId": "A",
+              "relativeTimeRange": { "from": 900, "to": 0 },
+              "datasourceUid": "prometheus",
+              "model": {
+                "expr": "(loganalyzer_fleet_agent_total{tenant_id=~\".+\"} > bool 0) * (loganalyzer_fleet_agent_online{tenant_id=~\".+\"} < bool 1)",
+                "intervalMs": 1000
+              }
+            }
+          ],
+          "for": "15m",
+          "annotations": {
+            "summary": "Filo agent >15 dk sessiz (online=0, total>0) — bash scripts/fleet_offline_gate.sh · FLEET_MODE=laptop-simulated bash scripts/fleet_multi_node_e2e.sh · VM keepalive"
           },
           "labels": { "severity": "warning", "product": "log-guardian" }
         }

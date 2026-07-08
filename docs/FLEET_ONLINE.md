@@ -48,3 +48,16 @@ bash scripts/fleet_e2e.sh
 | Curl FAIL | `DASH_URL=http://127.0.0.1:3000` |
 
 Tam E2E paketi: `bash scripts/run-all-e2e.sh` (dashboard yoksa fleet atlanir).
+
+## 5. Pending komut temizligi (Plan A3)
+
+Filo dispatch kuyrugu zamanla eski `pending` satirlari biriktirebilir; demo oncesi temizleyin:
+
+```bash
+bash scripts/fleet_prune_pending_commands.sh          # manuel
+bash scripts/install_fleet_prune_cron.sh              # Pazar 09:30 cron
+```
+
+Varsayilan: **48 saatten eski** pending komutlar kapatilir (`STALE_HOURS=48`). Dry-run: `DRY_RUN=1 bash scripts/fleet_prune_pending_commands.sh`
+
+Rapor: `fleet-prune-cmds-report.json` · Escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md)

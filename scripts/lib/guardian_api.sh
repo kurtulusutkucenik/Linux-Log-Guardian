@@ -22,6 +22,64 @@ read_lg_api_port() {
   echo "${GUARDIAN_API_PORT:-8090}"
 }
 
+# log-guardian restart sonrasi API hazir olana kadar bekle (403 = ayakta, token yok)
+wait_lg_api_ready() {
+  local tries="${1:-45}" port code i
+  port="$(read_lg_api_port)"
+  for ((i = 1; i <= tries; i++)); do
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+      "http://127.0.0.1:${port}/api/v1/metrics" 2>/dev/null || echo 000)
+    if [[ "$code" == "200" || "$code" == "403" ]]; then
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[wait_lg_api_ready] FAIL — :${port} hazir degil (son code=${code:-000})" >&2
+  return 1
+}
+
+wait_lg_relay_ready() {
+  local tries="${1:-20}" relay="${GUARDIAN_RELAY_URL:-http://127.0.0.1:18090}" code i
+  for ((i = 1; i <= tries; i++)); do
+    if ss -tln 2>/dev/null | grep -q ':18090 '; then
+      code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 2 \
+        "${relay}/api/v1/metrics" 2>/dev/null || echo 000)
+      if [[ "$code" == "200" || "$code" == "403" || "$code" == "502" ]]; then
+        return 0
+      fi
+    fi
+    sleep 1
+  done
+  echo "[wait_lg_relay_ready] FAIL — relay :18090 hazir degil" >&2
+  return 1
+}
+
+# POST /ban gercekten calisana kadar bekle (metrics 403 erken done verir)
+wait_lg_ban_ready() {
+  local tries="${1:-60}" port mut ip code i
+  port="$(read_lg_api_port)"
+  mut="$(read_lg_api_mutation_token 2>/dev/null || read_lg_api_token 2>/dev/null || true)"
+  [[ -n "$mut" ]] || {
+    echo "[wait_lg_ban_ready] FAIL — mutation token yok" >&2
+    return 1
+  }
+  ip="${LG_BAN_PROBE_IP:-203.0.113.247}"
+  for ((i = 1; i <= tries; i++)); do
+    code=$(curl -s -o /dev/null -w '%{http_code}' --max-time 3 -X POST \
+      -H "Authorization: Bearer ${mut}" \
+      "http://127.0.0.1:${port}/api/v1/ban?ip=${ip}&reason=ban-ready-probe" 2>/dev/null || echo 000)
+    if [[ "$code" == "200" || "$code" == "409" ]]; then
+      curl -s -o /dev/null --max-time 3 -X POST \
+        -H "Authorization: Bearer ${mut}" \
+        "http://127.0.0.1:${port}/api/v1/unban?ip=${ip}" 2>/dev/null || true
+      return 0
+    fi
+    sleep 1
+  done
+  echo "[wait_lg_ban_ready] FAIL — POST /ban hazir degil (son code=${code:-000})" >&2
+  return 1
+}
+
 read_lg_api_token() {
   local f tok
   for f in "${LG_RULES:-/etc/log-guardian/rules.conf}" "$_lg_root/rules.conf"; do
@@ -35,10 +93,43 @@ read_lg_api_token() {
   return 1
 }
 
+read_lg_api_mutation_token() {
+  local f tok
+  for f in "${LG_RULES:-/etc/log-guardian/rules.conf}" "$_lg_root/rules.conf"; do
+    [[ -f "$f" ]] || continue
+    tok=$(grep -E '^API_MUTATION_TOKEN=' "$f" 2>/dev/null | tail -1 | cut -d= -f2- | tr -d '\r')
+    if [[ -n "$tok" ]]; then
+      echo "$tok"
+      return 0
+    fi
+  done
+  return 1
+}
+
+# nginx inline consult (auth_request) — split modda mutation token
+lg_api_consult_token() {
+  local mut
+  mut="$(read_lg_api_mutation_token 2>/dev/null || true)"
+  if [[ -n "$mut" ]]; then
+    echo "$mut"
+    return 0
+  fi
+  read_lg_api_token
+}
+
 # curl -H "Authorization: Bearer ..." icin dizi: API_AUTH=(-H "Authorization: Bearer $tok")
 lg_api_auth_curl() {
   local tok
   tok=$(read_lg_api_token 2>/dev/null || true)
+  if [[ -n "$tok" ]]; then
+    printf '%s\n' "-H" "Authorization: Bearer $tok"
+  fi
+}
+
+# POST /ban /unban — split modda mutation token
+lg_api_post_auth_curl() {
+  local tok
+  tok=$(lg_api_consult_token 2>/dev/null || true)
   if [[ -n "$tok" ]]; then
     printf '%s\n' "-H" "Authorization: Bearer $tok"
   fi

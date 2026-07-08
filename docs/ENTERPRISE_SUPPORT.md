@@ -18,7 +18,7 @@ Log Guardian **MIT Core** + opsiyonel **Pro/Enterprise** katmanları.
 4. `bash scripts/local_security_audit.sh` — FAIL:0
 5. Edge koruma: `bash scripts/edge_protection_gate.sh` — nginx + ipset/XDP ([EDGE_PROTECTION.md](EDGE_PROTECTION.md))
 6. Opsiyonel: CrowdSec ([CROWDSEC_INTEGRATION.md](CROWDSEC_INTEGRATION.md)), mesh ([MESH_ETCD_PROD.md](MESH_ETCD_PROD.md))
-7. Enterprise harici ban API: mTLS + mutation token — [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) (tasarım; kod backlog)
+7. Enterprise harici ban API: mTLS + mutation token — [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) · `bash scripts/ban_api_mtls_e2e.sh`
 
 ## SLA hedefleri (plan)
 
@@ -32,7 +32,7 @@ Log Guardian **MIT Core** + opsiyonel **Pro/Enterprise** katmanları.
 | Edge kapısı | nginx + ban yolu | `edge-protection-gate-report.json` |
 | Edge checklist | laptop/prod 15 madde | `edge-protection-checklist-report.json` |
 | Telegram operatör | ack + undo | `telegram-soc-gate-report.json` |
-| Sabah operatör | 80/80 + core zincir | `morning-operator-gate-report.json` |
+| Sabah operatör | 85/85 + core zincir | `morning-operator-gate-report.json` |
 
 ## E9 doğrulama (tek komut)
 
@@ -55,7 +55,7 @@ bash scripts/release_ready_check.sh    # artefakt kapısı
 bash scripts/release_ready_gate.sh     # ZIP + docs + live + filo zinciri
 ```
 
-Dashboard vitrin: `https://localhost:8443/tests` (**80 kart**) · site: `https://ceniklinuxlogguardian.org/tests`
+Dashboard vitrin: `https://localhost:8443/tests` (**85 kart**) · site: `https://ceniklinuxlogguardian.org/tests`
 
 Operatör escalation: [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) · E9 tek kapı: `bash scripts/enterprise_e9_verify.sh` · sabah: `bash scripts/morning_operator_gate.sh` · kapı: `bash scripts/enterprise_escalation_gate.sh`
 

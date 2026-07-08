@@ -1,0 +1,44 @@
+{
+  "date": "2026-07-08T18:29:18.439885+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "checks": [
+    {
+      "id": "doc",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "id": "backup_script",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "id": "apply_script",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "id": "soar_disable",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "id": "apply_auto_backup",
+      "ok": true,
+      "note": ""
+    },
+    {
+      "id": "operator_backup_exists",
+      "ok": true,
+      "note": "operator/env yedek mevcut"
+    },
+    {
+      "id": "demo_password_detect",
+      "ok": true,
+      "note": "LG_FORCE ile demo parola FAIL"
+    }
+  ],
+  "doc": "docs/HARDENING_ROLLBACK.md",
+  "script": "scripts/hardening_rollback_gate.sh"
+}

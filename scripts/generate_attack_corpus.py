@@ -846,6 +846,27 @@ def main() -> None:
     for i, p in enumerate(crlf_paths):
         add("crlf", f"198.51.103.{v4_last(10 + i)}", "GET", p)
 
+    # Host header / cache poisoning probe (Sprint 7+ corpus +1)
+    host_hdr_paths = [
+        "/api/login",
+        "/admin",
+        "/panel",
+        "/api/v1/users",
+        "/cdn/asset",
+        "/api/health",
+        "/internal/status",
+        "/api/config",
+        "/metrics",
+        "/api/debug",
+        "/api/v2/session",
+        "/static/app.js",
+        "/api/oauth/callback",
+        "/api/graphql",
+        "/api/upload",
+    ]
+    for i, p in enumerate(host_hdr_paths):
+        add("host_header_injection", f"203.0.126.{v4_last(10 + i)}", "GET", p, 400 if i % 3 else 403)
+
     upload_paths = [
         "/upload?file=shell.php",
         "/api/upload?name=cmd.jsp",

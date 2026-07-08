@@ -22,7 +22,7 @@
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <ctype.h>
-#include <liburing.h>
+#include <sys/time.h>
 
 static pthread_t        g_metrics_thread;
 static int              g_metrics_fd    = -1;
@@ -319,13 +319,16 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
 }
 
 static void handle_client(int cfd) {
-    /* İsteği oku (basit HTTP/1.1 GET — tam parse gerekmez) */
+    /* Stuck client / half-open: accept thread'ini kilitlemesin */
+    struct timeval tv = { .tv_sec = 2, .tv_usec = 0 };
+    setsockopt(cfd, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv));
+    setsockopt(cfd, SOL_SOCKET, SO_SNDTIMEO, &tv, sizeof(tv));
+
     char req[512];
     ssize_t n = read(cfd, req, sizeof(req) - 1);
     if (n <= 0) { close(cfd); return; }
     req[n] = '\0';
 
-    /* Sadece GET /metrics desteklenir */
     int is_metrics = (strncmp(req, "GET /metrics", 12) == 0);
 
     char body[METRICS_BODY_MAX];
@@ -362,150 +365,37 @@ static void handle_client(int cfd) {
     close(cfd);
 }
 
-/* ── io_uring sunucu döngüsü ─────────────────────────────────────── */
-
-#define METRICS_URING_DEPTH  32
-
-/* Her bağlantı için taşınan bağlam */
-typedef struct {
-    int     fd;
-    int     phase;      /* 0=read, 1=write_header, 2=write_body */
-    char    req[512];
-    char    body[METRICS_BODY_MAX];
-    char    header[256];
-    int     blen;
-    int     hlen;
-} MetricsCtx;
-
-static void metrics_build_response(MetricsCtx *ctx) {
-    ctx->req[511] = '\0';
-    int is_metrics = (strncmp(ctx->req, "GET /metrics", 12) == 0);
-
-    if (is_metrics) {
-        MetricsSnapshot s;
-        pthread_mutex_lock(&g_snap_lock);
-        s = g_snap;
-        pthread_mutex_unlock(&g_snap_lock);
-        webhook_metrics_snapshot(&s.webhook_sent, &s.webhook_fail,
-                                 &s.webhook_queue_drops, &s.webhook_queue_depth);
-        webhook_config_metrics(&s.webhook_telegram_route, &s.webhook_telegram_batch_sec);
-        s.webhook_quiet_enabled = webhook_quiet_hours_enabled() ? 1L : 0L;
-        s.webhook_quiet_active  = webhook_quiet_hours_active() ? 1L : 0L;
-
-        ctx->blen = metrics_format_prometheus(ctx->body, sizeof(ctx->body), &s);
-    } else {
-        ctx->blen = snprintf(ctx->body, sizeof(ctx->body),
-            "404 Not Found\nEndpoint: /metrics\n");
-    }
-
-    ctx->hlen = snprintf(ctx->header, sizeof(ctx->header),
-        "HTTP/1.1 %s\r\n"
-        "Content-Type: text/plain; version=0.0.4; charset=utf-8\r\n"
-        "Content-Length: %d\r\n"
-        "Connection: close\r\n\r\n",
-        is_metrics ? "200 OK" : "404 Not Found", ctx->blen);
-}
-
+/*
+ * Klasik blocking accept. (Eski io_uring yolu Contabo/VPS'te 9091 LISTEN
+ * ama curl timeout hang üretti — kaldırıldı.)
+ */
 static void *metrics_thread_fn(void *arg) {
     (void)arg;
 
-    struct io_uring ring;
-    if (io_uring_queue_init(METRICS_URING_DEPTH, &ring, 0) < 0) {
-        /* io_uring yok: klasik accept döngüsüne düş */
-        while (g_metrics_run) {
-            struct sockaddr_in ca;
-            socklen_t clen = sizeof(ca);
-            int cfd = accept(g_metrics_fd, (struct sockaddr *)&ca, &clen);
-            if (cfd < 0) {
-                if (errno == EINTR || errno == EAGAIN) continue;
-                break;
-            }
-            handle_client(cfd);
-        }
-        return NULL;
-    }
+    fprintf(stderr, "[METRICS] classic accept loop (port %d)\n", g_metrics_port);
 
-    /* İlk ACCEPT SQE */
-    {
-        struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-        struct sockaddr_in ca;
-        socklen_t clen = sizeof(ca);
-        io_uring_prep_accept(sqe, g_metrics_fd,
-                             (struct sockaddr *)&ca, &clen, 0);
-        io_uring_sqe_set_data(sqe, NULL);   /* NULL → accept token */
-        io_uring_submit(&ring);
+    if (g_metrics_fd >= 0) {
+        int fl = fcntl(g_metrics_fd, F_GETFL, 0);
+        if (fl >= 0)
+            fcntl(g_metrics_fd, F_SETFL, fl & ~O_NONBLOCK);
     }
 
     while (g_metrics_run) {
-        struct io_uring_cqe *cqe;
-        struct __kernel_timespec ts = { .tv_sec = 1, .tv_nsec = 0 };
-        int ret = io_uring_wait_cqe_timeout(&ring, &cqe, &ts);
-        if (ret == -ETIME) continue;
-        if (ret < 0)  break;
-
-        MetricsCtx *ctx = (MetricsCtx *)io_uring_cqe_get_data(cqe);
-        int res         = cqe->res;
-        io_uring_cqe_seen(&ring, cqe);
-
-        if (ctx == NULL) {
-            /* ACCEPT tamamlandi */
-            if (res < 0) {
-                if (res != -EINTR) break;
-            } else {
-                /* Yeni bağlantı: READ SQE */
-                MetricsCtx *nc = malloc(sizeof(*nc));
-                if (nc) {
-                    memset(nc, 0, sizeof(*nc));
-                    nc->fd    = res;
-                    nc->phase = 0;
-                    struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-                    io_uring_prep_read(sqe, nc->fd, nc->req,
-                                       sizeof(nc->req) - 1, 0);
-                    io_uring_sqe_set_data(sqe, nc);
-                    io_uring_submit(&ring);
-                } else {
-                    close(res);
-                }
-            }
-
-            if (!g_metrics_run) break;
-
-            /* Yeni ACCEPT SQE */
-            struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-            struct sockaddr_in ca;
-            socklen_t clen = sizeof(ca);
-            io_uring_prep_accept(sqe, g_metrics_fd,
-                                 (struct sockaddr *)&ca, &clen, 0);
-            io_uring_sqe_set_data(sqe, NULL);
-            io_uring_submit(&ring);
-
-        } else if (ctx->phase == 0) {
-            /* READ tamamlandi */
-            if (res > 0) metrics_build_response(ctx);
-            ctx->phase = 1;
-            struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-            io_uring_prep_write(sqe, ctx->fd, ctx->header,
-                                (unsigned)ctx->hlen, 0);
-            io_uring_sqe_set_data(sqe, ctx);
-            io_uring_submit(&ring);
-
-        } else if (ctx->phase == 1) {
-            /* Header yazıldı: body yaz */
-            ctx->phase = 2;
-            struct io_uring_sqe *sqe = io_uring_get_sqe(&ring);
-            io_uring_prep_write(sqe, ctx->fd, ctx->body,
-                                (unsigned)ctx->blen, 0);
-            io_uring_sqe_set_data(sqe, ctx);
-            io_uring_submit(&ring);
-
-        } else {
-            /* Body yazıldı: bağlantıyı kapat */
-            close(ctx->fd);
-            free(ctx);
+        struct sockaddr_in ca;
+        socklen_t clen = sizeof(ca);
+        int cfd = accept(g_metrics_fd, (struct sockaddr *)&ca, &clen);
+        if (cfd < 0) {
+            if (errno == EINTR || errno == EAGAIN || errno == EWOULDBLOCK)
+                continue;
+            if (!g_metrics_run)
+                break;
+            fprintf(stderr, "[METRICS] accept: %s\n", strerror(errno));
+            usleep(50 * 1000);
+            continue;
         }
+        handle_client(cfd);
     }
-
-    io_uring_queue_exit(&ring);
+    fprintf(stderr, "[METRICS] accept loop exit\n");
     return NULL;
 }
 

@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-06T15:19:35.550456+00:00",
+  "date": "2026-07-08T09:18:55.554886+00:00",
   "corpus": "corpus/real_attack_corpus.access",
   "manifest": "corpus/real_attack_manifest.json",
   "lines_total": 999,
@@ -9,8 +9,8 @@
   "target_recall_pct": 85.0,
   "categories": {
     "api_abuse": {
-      "lines": 49,
-      "alerts": 49,
+      "lines": 34,
+      "alerts": 34,
       "recall_pct": 100.0,
       "pass": true
     },
@@ -48,6 +48,12 @@
       "lines": 8,
       "alerts": 7,
       "recall_pct": 87.5,
+      "pass": true
+    },
+    "host_header_injection": {
+      "lines": 15,
+      "alerts": 15,
+      "recall_pct": 100.0,
       "pass": true
     },
     "java_rce": {
@@ -198,8 +204,8 @@
     "pass": true,
     "nginx_up": false,
     "summary": {
-      "sent_total": 520,
-      "refused_total": 520,
+      "sent_total": 525,
+      "refused_total": 525,
       "replay_alerts": 0,
       "ban_evidence": true,
       "ban_evidence_waf": true,
@@ -248,9 +254,9 @@
         "duration_sec": 5,
         "threads": 2,
         "rps_per_thread": 12,
-        "sent": 132,
-        "refused": 132,
-        "timeout": 132,
+        "sent": 134,
+        "refused": 134,
+        "timeout": 134,
         "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
@@ -260,9 +266,9 @@
         "duration_sec": 4,
         "threads": 3,
         "rps_per_thread": 50,
-        "sent": 297,
-        "refused": 297,
-        "timeout": 297,
+        "sent": 300,
+        "refused": 300,
+        "timeout": 300,
         "nginx_up": false,
         "replay_alerts": 0,
         "pass": true
@@ -280,7 +286,7 @@
         "pass": true
       }
     ],
-    "date": "2026-07-05T20:44:31.408621+00:00"
+    "date": "2026-07-07T17:50:10.840003+00:00"
   },
-  "updated": "2026-07-06T15:19:35.588590+00:00"
+  "updated": "2026-07-08T09:18:55.594058+00:00"
 }

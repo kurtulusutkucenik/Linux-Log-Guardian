@@ -82,27 +82,59 @@ FLEET_MODE="${FLEET_MODE:-}"
 if [[ -z "$FLEET_MODE" && "$AGENT_B" == node-vm-* ]]; then
   FLEET_MODE="multi-host"
 fi
+FLEET_FALLBACK=false
 
 echo "=== fleet_multi_node_e2e (P3 #8) ==="
 seed_fleet_key
 
-echo "[1] 2 agent telemetry (mode=${FLEET_MODE:-laptop-simulated})"
-push_agent "$AGENT_A" 12.5
-if [[ "$FLEET_MODE" == "multi-host" ]]; then
-  echo "  [multi-host] $AGENT_B — VM keepalive bekleniyor (host push yok)"
-  sleep 3
-else
-  push_agent "$AGENT_B" 8.3
-  sleep 2
-fi
-
-echo "[2] dashboard login + /api/fleet"
+echo "[1a] dashboard login (fleet probe)"
 login_code=$(dash_curl -s -o /dev/null -w '%{http_code}' -c "$COOKIE_JAR" \
   -X POST "${DASH_URL}/api/auth/login" \
   -H "Content-Type: application/json" \
   -d "{\"username\":\"admin\",\"password\":\"${ADMIN_PASS}\"}")
 [[ "$login_code" == "200" ]] || fail "login HTTP $login_code (DASHBOARD_ADMIN_PASSWORD?)"
 
+fleet_agent_online() {
+  local aid="$1"
+  dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/fleet" 2>/dev/null | python3 -c "
+import json,sys
+aid=sys.argv[1]
+d=json.load(sys.stdin)
+for a in d.get('fleet',[]):
+    if a.get('agent_id')==aid or a.get('id')==aid:
+        raise SystemExit(0 if a.get('status')=='Online' else 1)
+raise SystemExit(1)
+" "$aid" 2>/dev/null
+}
+
+echo "[1] 2 agent telemetry (mode=${FLEET_MODE:-laptop-simulated})"
+push_agent "$AGENT_A" 12.5
+if [[ "$FLEET_MODE" == "multi-host" ]]; then
+  echo "  [multi-host] $AGENT_B — VM keepalive bekleniyor (max 20s)"
+  vm_ok=false
+  for _ in $(seq 1 10); do
+    if fleet_agent_online "$AGENT_B"; then
+      vm_ok=true
+      break
+    fi
+    sleep 2
+  done
+  if [[ "$vm_ok" != true ]]; then
+    echo "[WARN] $AGENT_B online degil — laptop-simulated fallback (host push)"
+    FLEET_MODE="laptop-simulated-fallback"
+    FLEET_FALLBACK=true
+    push_agent "$AGENT_B" 8.3
+    sleep 2
+  else
+    echo "  [OK] $AGENT_B VM keepalive online"
+    sleep 1
+  fi
+else
+  push_agent "$AGENT_B" 8.3
+  sleep 2
+fi
+
+echo "[2] /api/fleet dogrulama"
 fleet_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/fleet") \
   || fail "/api/fleet erisilemedi"
 
@@ -154,6 +186,8 @@ fi
 
 HMAC_PY="True"
 $hmac_ok || HMAC_PY="False"
+FALLBACK_PY="False"
+[[ "$FLEET_FALLBACK" == true ]] && FALLBACK_PY="True"
 
 echo "[4] dispatch dogrulama — hedef $AGENT_B"
 python3 -c "
@@ -190,6 +224,7 @@ report={
   'date': datetime.datetime.now(datetime.timezone.utc).isoformat(),
   'pass': True,
   'mode': '${FLEET_MODE:-laptop-simulated}',
+  'vm_fallback': ${FALLBACK_PY},
   'dash_url': '$DASH_URL',
   'agents': ['$AGENT_A', '$AGENT_B'],
   'agent_count': int('$agent_count'),

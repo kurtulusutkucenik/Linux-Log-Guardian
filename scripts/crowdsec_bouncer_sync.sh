@@ -24,6 +24,11 @@ ok() { echo "[OK] $*"; }
 if [[ -z "$TOKEN" && -f "$RULES" ]]; then
   TOKEN=$(grep -E '^API_TOKEN=' "$RULES" | head -1 | cut -d= -f2- || true)
 fi
+BAN_TOKEN="${API_MUTATION_TOKEN:-}"
+if [[ -z "$BAN_TOKEN" && -f "$RULES" ]]; then
+  BAN_TOKEN=$(grep -E '^API_MUTATION_TOKEN=' "$RULES" | head -1 | cut -d= -f2- || true)
+fi
+[[ -n "$BAN_TOKEN" ]] || BAN_TOKEN="$TOKEN"
 if [[ -z "$TOKEN" ]]; then
   fail "API_TOKEN yok — rules.conf veya env"
 fi
@@ -46,7 +51,7 @@ else
   fi
 fi
 
-python3 - "$DECISIONS_JSON" "$DRY" "$API_BASE" "$TOKEN" <<'PY'
+python3 - "$DECISIONS_JSON" "$DRY" "$API_BASE" "$BAN_TOKEN" <<'PY'
 import json, sys, urllib.request, urllib.error
 
 raw, dry, base, token = sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]

@@ -49,6 +49,10 @@ export function BanIpButton({
 
   const run = async () => {
     if (busy || !ip) return;
+    if (!showUnban) {
+      const prompt = t("banConfirm").replace("{ip}", ip);
+      if (typeof window !== "undefined" && !window.confirm(prompt)) return;
+    }
     setBusy(true);
     setFlashErr(false);
     setErrMsg("");

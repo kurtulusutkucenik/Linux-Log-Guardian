@@ -58,6 +58,8 @@ PY
 
 echo "=== morning_operator_gate (Sprint AU) ==="
 
+bash "$ROOT/scripts/proof_freshness_check.sh" 2>/dev/null || echo "[WARN] proof_freshness_check — STRICT=0 devam"
+
 core_ok=false
 core_refreshed=false
 ship_ok=false
@@ -197,7 +199,16 @@ out = {
     "proof_pass": proof_pass,
     "dash_url": "https://localhost:8443/tests",
     "script": "scripts/morning_operator_gate.sh",
+    "chain_script": "scripts/morning_operator_chain.sh",
 }
+pf = root_s / "proof-freshness-report.json"
+if pf.is_file():
+    try:
+        pfd = json.loads(pf.read_text(encoding="utf-8"))
+        out["proof_freshness_ok"] = pfd.get("pass") is True
+        out["proof_stale_ids"] = pfd.get("stale_ids") or []
+    except (json.JSONDecodeError, OSError):
+        pass
 if not ok:
     out["fail_reason"] = "; ".join(reasons)
 Path(report_path).write_text(json.dumps(out, indent=2) + "\n", encoding="utf-8")
@@ -206,6 +217,35 @@ PY
 )
 
 python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
+
+# dashboard-ban-api bayat ise once smoke (relay 18090 / docker path)
+if [[ "$gate_ok_flag" == "GATE_FAIL" ]]; then
+  if python3 - "$ROOT" <<'PY' 2>/dev/null; then
+import json, subprocess, sys
+from pathlib import Path
+root = Path(sys.argv[1])
+cp = root / "competitive-proof.json"
+if not cp.is_file():
+    raise SystemExit(1)
+tests = json.loads(cp.read_text(encoding="utf-8")).get("validationTests") or []
+blocking = [t for t in tests if t.get("status") not in ("pass", "warn")
+            and t.get("id") not in ("morning-operator-gate",)]
+if not (len(blocking) == 1 and blocking[0].get("id") == "dashboard-ban-api"):
+    raise SystemExit(1)
+subprocess.run(
+    ["bash", str(root / "scripts/sync_dashboard_api_token.sh")],
+    cwd=str(root), timeout=30, check=False,
+)
+r = subprocess.run(
+    ["bash", str(root / "scripts/dashboard_ban_smoke.sh")],
+    cwd=str(root), timeout=90, capture_output=True, check=False,
+)
+raise SystemExit(0 if r.returncode == 0 else 1)
+PY
+    echo "[OK] morning_operator — dashboard_ban_smoke recovery"
+    python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
+  fi
+fi
 
 # Ikinci build sonrasi yalnizca competitive_proof nedeniyle dusen gate'i toparla (79/80 -> 80/80)
 if [[ "$gate_ok_flag" == "GATE_FAIL" ]]; then

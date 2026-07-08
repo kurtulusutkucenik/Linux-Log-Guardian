@@ -191,6 +191,93 @@ type Ipv6BanE2eReport = {
   ipset_v6?: string;
 };
 
+type ApiMutationTokenE2eReport = {
+  date?: string;
+  pass?: boolean;
+  skipped?: boolean;
+  split_enabled?: boolean;
+  fail_reason?: string | null;
+  reason?: string;
+};
+
+type ApiMutationAuditE2eReport = {
+  date?: string;
+  pass?: boolean;
+  fail_reason?: string | null;
+  audit_path?: string;
+};
+
+type DashboardLoginRlE2eReport = {
+  date?: string;
+  pass?: boolean;
+  fail_reason?: string | null;
+  probe_ip?: string;
+  max_attempts?: number;
+};
+
+type HardeningRollbackGateReport = {
+  date?: string;
+  pass?: boolean;
+  fail_reason?: string | null;
+  checks?: Array<{ id?: string; ok?: boolean; note?: string }>;
+  doc?: string;
+};
+
+type DashboardJwtIdleGateReport = {
+  date?: string;
+  pass?: boolean;
+  fail_reason?: string | null;
+  idle_min?: number | string;
+  mode?: string;
+  hint?: string;
+};
+
+type MtlsCertExpiryReport = {
+  date?: string;
+  pass?: boolean;
+  skipped?: boolean;
+  min_days_left?: number | null;
+  warn_days?: number;
+  certs?: Array<{ id?: string; days_left?: number; ok?: boolean }>;
+};
+
+type BanApiMtlsReport = {
+  date?: string;
+  pass?: boolean;
+  skipped?: boolean;
+  fail_reason?: string | null;
+  reason?: string;
+  read_token_post_reject?: boolean;
+  mutation_ok?: boolean;
+  mtls_verify?: boolean;
+  mtls_no_cert_reject?: boolean;
+  skipped_nginx?: boolean;
+  caddy_mtls_verify?: boolean;
+  caddy_skipped?: boolean;
+};
+
+type CaddyMtlsStatusReport = {
+  enabled?: boolean;
+  mtls_strict?: boolean;
+  soar_url?: string;
+  relay_url?: string;
+};
+
+type EnterpriseSoarGateReport = {
+  date?: string;
+  pass?: boolean;
+  mode?: string;
+  soar_enabled?: boolean;
+  mtls_strict?: boolean;
+  dashboard_ban_ok?: boolean;
+  caddy_mtls_ok?: boolean | null;
+  mtls_lab_ok?: boolean;
+  mutation_ok?: boolean;
+  fail_reason?: string | null;
+  soar_url?: string;
+  relay_url?: string;
+};
+
 type CorpusReport = {
   date?: string;
   pass?: boolean;
@@ -744,6 +831,16 @@ type FleetMultiNodeReport = {
   fail_reason?: string;
 };
 
+type FleetOfflineGateReport = {
+  date?: string;
+  pass?: boolean;
+  reason?: string;
+  online?: number;
+  total?: number;
+  mode?: string;
+  max_age_min?: number;
+};
+
 type GrafanaProvisionReport = {
   date?: string;
   pass?: boolean;
@@ -888,6 +985,15 @@ export type TestReports = {
   nginxHybrid?: NginxHybridReport | null;
   banProfileE2e?: BanProfileE2eReport | null;
   ipv6BanE2e?: Ipv6BanE2eReport | null;
+  apiMutationTokenE2e?: ApiMutationTokenE2eReport | null;
+  apiMutationAuditE2e?: ApiMutationAuditE2eReport | null;
+  dashboardLoginRlE2e?: DashboardLoginRlE2eReport | null;
+  hardeningRollbackGate?: HardeningRollbackGateReport | null;
+  dashboardJwtIdleGate?: DashboardJwtIdleGateReport | null;
+  mtlsCertExpiry?: MtlsCertExpiryReport | null;
+  banApiMtls?: BanApiMtlsReport | null;
+  caddyMtlsStatus?: CaddyMtlsStatusReport | null;
+  enterpriseSoarGate?: EnterpriseSoarGateReport | null;
   owaspCorpus?: CorpusReport | null;
   trHostingCorpus?: CorpusReport | null;
   customerCorpus?: CorpusReport | null;
@@ -936,6 +1042,7 @@ export type TestReports = {
   l7ProbeProd?: L7ProbeProdReport | null;
   wasm?: WasmStatusReport | null;
   fleetMultiNode?: FleetMultiNodeReport | null;
+  fleetOfflineGate?: FleetOfflineGateReport | null;
   grafanaProvision?: GrafanaProvisionReport | null;
   copilotOllama?: CopilotOllamaReport | null;
   marketplaceSignedApi?: MarketplaceSignedApiReport | null;
@@ -1376,6 +1483,309 @@ export function evaluateValidationTests(
       ],
       date: fmtDate(ipv6.date),
       script: "scripts/ipv6_ban_e2e.sh",
+    });
+  }
+
+  const apiMut = reports.apiMutationTokenE2e;
+  if (apiMut) {
+    const pass = apiMut.pass === true;
+    const skipped = apiMut.skipped === true;
+    const splitOn = apiMut.split_enabled === true && !skipped;
+    out.push({
+      id: "api-mutation-token-e2e",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "API mutation token — read/mutate POST ayrımı",
+        "API mutation token — read/mutate POST split",
+      ),
+      purpose: L(
+        locale,
+        "Enterprise: API_TOKEN (GET) + API_MUTATION_TOKEN (POST ban/unban/consult).",
+        "Enterprise: API_TOKEN (GET) + API_MUTATION_TOKEN (POST ban/unban/consult).",
+      ),
+      verdict: pass
+        ? splitOn
+          ? L(
+              locale,
+              "split=ON; read POST 403; mutation POST 200.",
+              "split=ON; read POST 403; mutation POST 200.",
+            )
+          : L(
+              locale,
+              apiMut.reason ?? "tek token modu (Community)",
+              apiMut.reason ?? "single token (Community)",
+            )
+        : L(
+            locale,
+            apiMut.fail_reason ?? "api_mutation_token_e2e FAIL",
+            apiMut.fail_reason ?? "api_mutation_token_e2e FAIL",
+          ),
+      metrics: [{ label: "split", value: splitOn ? "on" : skipped ? "skip" : "off" }],
+      date: fmtDate(apiMut.date),
+      script: "scripts/api_mutation_token_e2e.sh",
+    });
+  }
+
+  const apiMutAudit = reports.apiMutationAuditE2e;
+  if (apiMutAudit) {
+    const pass = apiMutAudit.pass === true;
+    out.push({
+      id: "api-mutation-audit-e2e",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "API mutation audit — ban/unban jsonl izi",
+        "API mutation audit — ban/unban jsonl trail",
+      ),
+      purpose: L(
+        locale,
+        "POST /ban sonrası /var/lib/log-guardian/api-mutation-audit.jsonl append-only satır.",
+        "Append-only line in /var/lib/log-guardian/api-mutation-audit.jsonl after POST /ban.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `audit trail OK — ${apiMutAudit.audit_path ?? "jsonl"}.`,
+            `audit trail OK — ${apiMutAudit.audit_path ?? "jsonl"}.`,
+          )
+        : L(
+            locale,
+            apiMutAudit.fail_reason ?? "api_mutation_audit_e2e FAIL",
+            apiMutAudit.fail_reason ?? "api_mutation_audit_e2e FAIL",
+          ),
+      metrics: [{ label: "audit", value: pass ? "OK" : "FAIL" }],
+      date: fmtDate(apiMutAudit.date),
+      script: "scripts/api_mutation_audit_e2e.sh",
+    });
+  }
+
+  const dashLoginRl = reports.dashboardLoginRlE2e;
+  if (dashLoginRl) {
+    const pass = dashLoginRl.pass === true;
+    out.push({
+      id: "dashboard-login-rl-e2e",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Dashboard login rate limit — brute-force koruması",
+        "Dashboard login rate limit — brute-force protection",
+      ),
+      purpose: L(
+        locale,
+        "Prod: X-Forwarded-For ile 10 başarısız denemeden sonra HTTP 429.",
+        "Prod: HTTP 429 after 10 failed attempts (X-Forwarded-For).",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `${dashLoginRl.max_attempts ?? 10} deneme → 429 (probe ${dashLoginRl.probe_ip ?? "—"}).`,
+            `${dashLoginRl.max_attempts ?? 10} attempts → 429 (probe ${dashLoginRl.probe_ip ?? "—"}).`,
+          )
+        : L(
+            locale,
+            dashLoginRl.fail_reason ?? "dashboard_login_rate_limit_e2e FAIL",
+            dashLoginRl.fail_reason ?? "dashboard_login_rate_limit_e2e FAIL",
+          ),
+      metrics: [{ label: "max", value: String(dashLoginRl.max_attempts ?? 10) }],
+      date: fmtDate(dashLoginRl.date),
+      script: "scripts/dashboard_login_rate_limit_e2e.sh",
+    });
+  }
+
+  const hardeningRb = reports.hardeningRollbackGate;
+  if (hardeningRb) {
+    const pass = hardeningRb.pass === true;
+    const nOk = (hardeningRb.checks ?? []).filter((c) => c.ok).length;
+    const nAll = hardeningRb.checks?.length ?? 0;
+    out.push({
+      id: "hardening-rollback-gate",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Hardening rollback — geri alma hazırlığı",
+        "Hardening rollback — rollback readiness",
+      ),
+      purpose: L(
+        locale,
+        "Internet-facing sertleştirme öncesi yedek + demo parola algısı (salt okunur).",
+        "Pre-hardening backup + demo password detection (read-only).",
+      ),
+      verdict: pass
+        ? L(locale, `kontroller ${nOk}/${nAll} OK.`, `checks ${nOk}/${nAll} OK.`)
+        : L(
+            locale,
+            hardeningRb.fail_reason ?? "hardening_rollback_gate FAIL",
+            hardeningRb.fail_reason ?? "hardening_rollback_gate FAIL",
+          ),
+      metrics: [{ label: "checks", value: `${nOk}/${nAll}` }],
+      date: fmtDate(hardeningRb.date),
+      script: "scripts/hardening_rollback_gate.sh",
+    });
+  }
+
+  const jwtIdle = reports.dashboardJwtIdleGate;
+  if (jwtIdle) {
+    const pass = jwtIdle.pass === true;
+    const mode = jwtIdle.mode ?? "?";
+    out.push({
+      id: "dashboard-jwt-idle-gate",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Dashboard JWT idle — oturum zaman aşımı",
+        "Dashboard JWT idle — session timeout",
+      ),
+      purpose: L(
+        locale,
+        "middleware iat kontrolü; laptop 0dk, internet-facing 480dk önerilir.",
+        "middleware iat check; laptop 0m, internet-facing 480m recommended.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `mode=${mode}; idle=${jwtIdle.idle_min ?? 0}dk.`,
+            `mode=${mode}; idle=${jwtIdle.idle_min ?? 0}m.`,
+          )
+        : L(
+            locale,
+            jwtIdle.fail_reason ?? "dashboard_jwt_idle_gate FAIL",
+            jwtIdle.fail_reason ?? "dashboard_jwt_idle_gate FAIL",
+          ),
+      metrics: [{ label: "idle_min", value: String(jwtIdle.idle_min ?? 0) }],
+      date: fmtDate(jwtIdle.date),
+      script: "scripts/dashboard_jwt_idle_gate.sh",
+    });
+  }
+
+  const mtlsExp = reports.mtlsCertExpiry;
+  if (mtlsExp && mtlsExp.skipped !== true) {
+    const pass = mtlsExp.pass === true;
+    out.push({
+      id: "mtls-cert-expiry",
+      status: pass ? "pass" : "warn",
+      title: L(
+        locale,
+        "mTLS sertifika süresi — SOAR lab",
+        "mTLS certificate expiry — SOAR lab",
+      ),
+      purpose: L(
+        locale,
+        "client/server/ca.crt bitiş — rotasyon runbook uyarısı.",
+        "client/server/ca.crt expiry — rotation runbook warning.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `min ${mtlsExp.min_days_left ?? "—"} gün (warn<=${mtlsExp.warn_days ?? 14}).`,
+            `min ${mtlsExp.min_days_left ?? "—"} days (warn<=${mtlsExp.warn_days ?? 14}).`,
+          )
+        : L(
+            locale,
+            `yakın bitiş — min ${mtlsExp.min_days_left ?? "?"} gün`,
+            `expiring soon — min ${mtlsExp.min_days_left ?? "?"} days`,
+          ),
+      metrics: [{ label: "min_days", value: String(mtlsExp.min_days_left ?? "—") }],
+      date: fmtDate(mtlsExp.date),
+      script: "scripts/mtls_cert_expiry_check.sh",
+    });
+  }
+
+  const banMtls = reports.banApiMtls;
+  const caddySt = reports.caddyMtlsStatus;
+  if (banMtls) {
+    const pass = banMtls.pass === true;
+    const skipped = banMtls.skipped === true;
+    const mtlsOn = banMtls.mtls_verify === true && !skipped;
+    const strictOn = caddySt?.mtls_strict === true;
+    out.push({
+      id: "ban-api-mtls",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Ban API mTLS — edge client cert + mutation token",
+        "Ban API mTLS — edge client cert + mutation token",
+      ),
+      purpose: L(
+        locale,
+        "Enterprise: nginx mTLS terminate + internal mutation token inject.",
+        "Enterprise: nginx mTLS terminate + internal mutation token inject.",
+      ),
+      verdict: pass
+        ? mtlsOn
+          ? L(
+              locale,
+              "read POST 403; mutation OK; mTLS edge verify.",
+              "read POST 403; mutation OK; mTLS edge verify.",
+            )
+          : L(
+              locale,
+              banMtls.reason ?? "mutation token only (nginx skip)",
+              banMtls.reason ?? "mutation token only (nginx skip)",
+            )
+        : L(
+            locale,
+            banMtls.fail_reason ?? "ban_api_mtls_e2e FAIL",
+            banMtls.fail_reason ?? "ban_api_mtls_e2e FAIL",
+          ),
+      metrics: [
+        { label: "mtls", value: mtlsOn ? "on" : skipped ? "skip" : "off" },
+        { label: "read_post", value: banMtls.read_token_post_reject ? "403" : "—" },
+        {
+          label: "caddy",
+          value: banMtls.caddy_mtls_verify ? "on" : banMtls.caddy_skipped === false ? "off" : "skip",
+        },
+        { label: "strict", value: strictOn ? "on" : "off" },
+      ],
+      date: fmtDate(banMtls.date),
+      script: "scripts/ban_api_mtls_e2e.sh",
+    });
+  }
+
+  const soarGate = reports.enterpriseSoarGate;
+  if (soarGate) {
+    const pass = soarGate.pass === true;
+    const mode = soarGate.mode ?? "community";
+    const soarOn = soarGate.soar_enabled === true;
+    out.push({
+      id: "enterprise-soar-gate",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Enterprise SOAR gate — Caddy :9443 mTLS + strict",
+        "Enterprise SOAR gate — Caddy :9443 mTLS + strict",
+      ),
+      purpose: L(
+        locale,
+        "Operatör: enable/disable SOAR API — split token, Caddy mTLS, loopback strict.",
+        "Operator gate: enable/disable SOAR API — split token, Caddy mTLS, loopback strict.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `mode=${mode}; SOAR ${soarOn ? "on" : "off"}; strict=${soarGate.mtls_strict ? "on" : "off"}.`,
+            `mode=${mode}; SOAR ${soarOn ? "on" : "off"}; strict=${soarGate.mtls_strict ? "on" : "off"}.`,
+          )
+        : L(
+            locale,
+            soarGate.fail_reason ?? "enterprise_soar_gate FAIL",
+            soarGate.fail_reason ?? "enterprise_soar_gate FAIL",
+          ),
+      metrics: [
+        { label: "mode", value: mode },
+        { label: "soar", value: soarOn ? "on" : "off" },
+        { label: "strict", value: soarGate.mtls_strict ? "on" : "off" },
+        {
+          label: "caddy",
+          value: soarGate.caddy_mtls_ok ? "OK" : soarOn ? "FAIL" : "—",
+        },
+        {
+          label: "ban_smoke",
+          value: soarGate.dashboard_ban_ok ? "OK" : "FAIL",
+        },
+      ],
+      date: fmtDate(soarGate.date),
+      script: "scripts/enterprise_soar_gate.sh",
     });
   }
 
@@ -2810,6 +3220,7 @@ export function evaluateValidationTests(
   }
 
   const dashBan = reports.dashboardBanApi;
+  const caddyStDash = reports.caddyMtlsStatus;
   if (dashBan) {
     const pass = dashBan.pass === true;
     out.push({
@@ -2844,6 +3255,8 @@ export function evaluateValidationTests(
           value: dashBan.docker_api?.ok ? "OK" : dashBan.docker_api?.ok === false ? "FAIL" : "—",
         },
         { label: "path", value: dashBan.ban_path || "—" },
+        { label: "soar", value: caddyStDash?.enabled ? "on" : "off" },
+        { label: "strict", value: caddyStDash?.mtls_strict ? "on" : "off" },
       ],
       date: fmtDate(dashBan.date),
       script: "scripts/dashboard_ban_smoke.sh",
@@ -3052,6 +3465,44 @@ export function evaluateValidationTests(
       ],
       date: fmtDate(fleetMulti.date),
       script: "scripts/fleet_multi_node_e2e.sh",
+    });
+  }
+
+  const fleetOffline = reports.fleetOfflineGate;
+  if (fleetOffline) {
+    const pass = fleetOffline.pass === true;
+    out.push({
+      id: "fleet-offline-gate",
+      status: pass ? "pass" : "fail",
+      title: L(
+        locale,
+        "Fleet offline gate — heartbeat rapor tazeliği",
+        "Fleet offline gate — heartbeat report freshness",
+      ),
+      purpose: L(
+        locale,
+        "Filo agent raporunun bayat olmadığını ve en az bir agent online olduğunu doğrular.",
+        "Verifies fleet agent report freshness and at least one agent online.",
+      ),
+      verdict: pass
+        ? L(
+            locale,
+            `${fleetOffline.online ?? 0}/${fleetOffline.total ?? 0} online; mode=${fleetOffline.mode ?? "—"}; max ${fleetOffline.max_age_min ?? 15}m.`,
+            `${fleetOffline.online ?? 0}/${fleetOffline.total ?? 0} online; mode=${fleetOffline.mode ?? "—"}; max ${fleetOffline.max_age_min ?? 15}m.`,
+          )
+        : L(
+            locale,
+            fleetOffline.reason ?? "bash scripts/fleet_offline_gate.sh",
+            fleetOffline.reason ?? "bash scripts/fleet_offline_gate.sh",
+          ),
+      metrics: [
+        { label: "online", value: String(fleetOffline.online ?? 0) },
+        { label: "total", value: String(fleetOffline.total ?? 0) },
+        { label: "mode", value: fleetOffline.mode ?? "—" },
+        { label: "max_age_m", value: String(fleetOffline.max_age_min ?? 15) },
+      ],
+      date: fmtDate(fleetOffline.date),
+      script: "scripts/fleet_offline_gate.sh",
     });
   }
 
@@ -3802,6 +4253,7 @@ export function evaluateValidationTests(
     "wasm-native": 8,
     "attack-map": 8,
     "fleet-multi-node": 9,
+    "fleet-offline-gate": 9.2,
     "grafana-alerts": 10,
     "copilot-ollama": 11,
     "marketplace-signed-api": 12,

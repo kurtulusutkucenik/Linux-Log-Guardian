@@ -25,6 +25,12 @@ INPUTS = {
     "nginxHybrid": "nginx-hybrid-report.json",
     "banProfileE2e": "ban-profile-e2e-report.json",
     "ipv6BanE2e": "ipv6-ban-e2e-report.json",
+    "apiMutationTokenE2e": "api-mutation-token-e2e-report.json",
+    "apiMutationAuditE2e": "api-mutation-audit-e2e-report.json",
+    "banApiMtls": "ban-api-mtls-report.json",
+    "caddyMtlsStatus": "caddy-mtls-status.json",
+    "caddyApiMtls": "caddy-api-mtls-report.json",
+    "enterpriseSoarGate": "enterprise-soar-gate-report.json",
     "owaspCorpus": "owasp-corpus-report.json",
     "trHostingCorpus": "tr-hosting-corpus-report.json",
     "customerCorpus": "customer-corpus-report.json",
@@ -68,6 +74,7 @@ INPUTS = {
     "marketplaceSignedApi": "marketplace-signed-api-report.json",
     "complianceExport": "compliance-export-report.json",
     "fleetMultiNode": "fleet-multi-node-report.json",
+    "fleetOfflineGate": "fleet-offline-gate-report.json",
     "grafanaProvision": "grafana-provision-report.json",
     "authLog": "auth-log-report.json",
     "journaldIngest": "journald-ingest-report.json",
@@ -386,6 +393,161 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/ipv6_ban_e2e.sh",
             date=str(ipv6.get("date") or "")[:10],
+        )
+
+    api_mut = data.get("apiMutationTokenE2e") or {}
+    if api_mut:
+        skipped = api_mut.get("skipped") is True
+        ok = api_mut.get("pass") is True
+        split_on = api_mut.get("split_enabled") is True and not skipped
+        row(
+            "api-mutation-token-e2e",
+            "pass" if ok else "fail",
+            "API mutation token — read/mutate POST ayrimi",
+            (
+                "split=ON; read POST 403; mutation POST 200."
+                if ok and split_on
+                else (
+                    str(api_mut.get("reason") or "tek token modu (Community)")
+                    if ok and skipped
+                    else str(api_mut.get("fail_reason") or "api_mutation_token_e2e FAIL")
+                )
+            ),
+            "API mutation token — read/mutate POST split",
+            (
+                "split=ON; read POST 403; mutation POST 200."
+                if ok and split_on
+                else (
+                    str(api_mut.get("reason") or "single token (Community)")
+                    if ok and skipped
+                    else str(api_mut.get("fail_reason") or "api_mutation_token_e2e FAIL")
+                )
+            ),
+            purpose="Enterprise: API_TOKEN (GET) + API_MUTATION_TOKEN (POST ban/unban/consult).",
+            purpose_en="Enterprise: API_TOKEN (GET) + API_MUTATION_TOKEN (POST ban/unban/consult).",
+            metrics=[
+                {"label": "split", "value": "on" if split_on else ("skip" if skipped else "off")},
+            ],
+            script="scripts/api_mutation_token_e2e.sh",
+            date=str(api_mut.get("date") or "")[:10],
+        )
+
+    api_audit = data.get("apiMutationAuditE2e") or {}
+    if api_audit:
+        ok = api_audit.get("pass") is True
+        row(
+            "api-mutation-audit-e2e",
+            "pass" if ok else "fail",
+            "API mutation audit — ban/unban jsonl izi",
+            (
+                f"audit trail OK — {api_audit.get('audit_path', 'jsonl')}."
+                if ok
+                else str(api_audit.get("fail_reason") or "api_mutation_audit_e2e FAIL")
+            ),
+            "API mutation audit — ban/unban jsonl trail",
+            (
+                f"audit trail OK — {api_audit.get('audit_path', 'jsonl')}."
+                if ok
+                else str(api_audit.get("fail_reason") or "api_mutation_audit_e2e FAIL")
+            ),
+            purpose="POST /ban sonrasi append-only jsonl (/var/lib/log-guardian/).",
+            purpose_en="Append-only jsonl after POST /ban (/var/lib/log-guardian/).",
+            metrics=[{"label": "audit", "value": "OK" if ok else "FAIL"}],
+            script="scripts/api_mutation_audit_e2e.sh",
+            date=str(api_audit.get("date") or "")[:10],
+        )
+
+    ban_mtls = data.get("banApiMtls") or {}
+    caddy_st = data.get("caddyMtlsStatus") or {}
+    if ban_mtls:
+        skipped = ban_mtls.get("skipped") is True
+        ok = ban_mtls.get("pass") is True
+        mtls_on = ban_mtls.get("mtls_verify") is True and not skipped
+        strict_on = caddy_st.get("mtls_strict") is True
+        row(
+            "ban-api-mtls",
+            "pass" if ok else "fail",
+            "Ban API mTLS — edge client cert + mutation token",
+            (
+                "read POST 403; mutation OK; mTLS edge verify."
+                if ok and mtls_on
+                else (
+                    str(ban_mtls.get("reason") or "mutation token only (nginx skip)")
+                    if ok and skipped
+                    else str(ban_mtls.get("fail_reason") or "ban_api_mtls_e2e FAIL")
+                )
+            ),
+            "Ban API mTLS — edge client cert + mutation token",
+            (
+                "read POST 403; mutation OK; mTLS edge verify."
+                if ok and mtls_on
+                else (
+                    str(ban_mtls.get("reason") or "mutation token only (nginx skip)")
+                    if ok and skipped
+                    else str(ban_mtls.get("fail_reason") or "ban_api_mtls_e2e FAIL")
+                )
+            ),
+            purpose="Enterprise: nginx mTLS terminate + internal mutation token inject.",
+            purpose_en="Enterprise: nginx mTLS terminate + internal mutation token inject.",
+            metrics=[
+                {"label": "mtls", "value": "on" if mtls_on else ("skip" if skipped else "off")},
+                {
+                    "label": "read_post",
+                    "value": "403" if ban_mtls.get("read_token_post_reject") else "—",
+                },
+                {
+                    "label": "caddy",
+                    "value": "on" if ban_mtls.get("caddy_mtls_verify") else (
+                        "skip" if ban_mtls.get("caddy_skipped") is not False else "off"
+                    ),
+                },
+                {"label": "strict", "value": "on" if strict_on else "off"},
+            ],
+            script="scripts/ban_api_mtls_e2e.sh",
+            date=str(ban_mtls.get("date") or "")[:10],
+        )
+
+    soar_gate = data.get("enterpriseSoarGate") or {}
+    if soar_gate:
+        ok = soar_gate.get("pass") is True
+        mode = str(soar_gate.get("mode") or "community")
+        enabled = soar_gate.get("soar_enabled") is True
+        row(
+            "enterprise-soar-gate",
+            "pass" if ok else "fail",
+            "Enterprise SOAR gate — Caddy :9443 mTLS + strict",
+            (
+                f"mode={mode}; SOAR {'on' if enabled else 'off'}; "
+                f"strict={'on' if soar_gate.get('mtls_strict') else 'off'}."
+                if ok
+                else str(soar_gate.get("fail_reason") or "enterprise_soar_gate FAIL")
+            ),
+            "Enterprise SOAR gate — Caddy :9443 mTLS + strict",
+            (
+                f"mode={mode}; SOAR {'on' if enabled else 'off'}; "
+                f"strict={'on' if soar_gate.get('mtls_strict') else 'off'}."
+                if ok
+                else str(soar_gate.get("fail_reason") or "enterprise_soar_gate FAIL")
+            ),
+            purpose="Operatör: enable/disable SOAR API — split token, Caddy mTLS, loopback strict.",
+            purpose_en="Operator gate: enable/disable SOAR API — split token, Caddy mTLS, loopback strict.",
+            metrics=[
+                {"label": "mode", "value": mode},
+                {"label": "soar", "value": "on" if enabled else "off"},
+                {"label": "strict", "value": "on" if soar_gate.get("mtls_strict") else "off"},
+                {
+                    "label": "caddy",
+                    "value": "OK" if soar_gate.get("caddy_mtls_ok") else (
+                        "—" if not enabled else "FAIL"
+                    ),
+                },
+                {
+                    "label": "ban_smoke",
+                    "value": "OK" if soar_gate.get("dashboard_ban_ok") else "FAIL",
+                },
+            ],
+            script="scripts/enterprise_soar_gate.sh",
+            date=str(soar_gate.get("date") or "")[:10],
         )
 
     ja3 = data.get("ja3Cluster") or {}
@@ -1576,6 +1738,7 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
         )
 
     dash_ban = data.get("dashboardBanApi") or {}
+    caddy_st_dash = data.get("caddyMtlsStatus") or {}
     if dash_ban:
         ok = dash_ban.get("pass") is True
         docker = dash_ban.get("docker_api") or {}
@@ -1606,6 +1769,14 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
                 {"label": "relay", "value": "OK" if (dash_ban.get("relay_api") or {}).get("ok") else "FAIL"},
                 {"label": "docker", "value": docker_val},
                 {"label": "path", "value": str(dash_ban.get("ban_path") or "—")},
+                {
+                    "label": "soar",
+                    "value": "on" if caddy_st_dash.get("enabled") else "off",
+                },
+                {
+                    "label": "strict",
+                    "value": "on" if caddy_st_dash.get("mtls_strict") else "off",
+                },
             ],
             script="scripts/dashboard_ban_smoke.sh",
             date=str(dash_ban.get("date") or "")[:10],
@@ -2000,6 +2171,40 @@ def validation_tests(data: dict[str, Any]) -> list[dict[str, Any]]:
             ],
             script="scripts/fleet_multi_node_e2e.sh",
             date=str(fleet_multi.get("date") or "")[:10],
+        )
+
+    fleet_offline = data.get("fleetOfflineGate") or {}
+    if fleet_offline:
+        ok = fleet_offline.get("pass") is True
+        row(
+            "fleet-offline-gate",
+            "pass" if ok else "fail",
+            "Fleet offline gate — heartbeat rapor tazeligi",
+            (
+                f"{fleet_offline.get('online', 0)}/{fleet_offline.get('total', 0)} online; "
+                f"mode={fleet_offline.get('mode') or '—'}; "
+                f"max_age={fleet_offline.get('max_age_min', 15)}m."
+                if ok
+                else str(fleet_offline.get("reason") or "bash scripts/fleet_offline_gate.sh")
+            ),
+            "Fleet offline gate — heartbeat report freshness",
+            (
+                f"{fleet_offline.get('online', 0)}/{fleet_offline.get('total', 0)} online; "
+                f"mode={fleet_offline.get('mode') or '—'}; "
+                f"max_age={fleet_offline.get('max_age_min', 15)}m."
+                if ok
+                else str(fleet_offline.get("reason") or "bash scripts/fleet_offline_gate.sh")
+            ),
+            purpose="Filo agent raporunun bayat olmadigini ve en az bir agent online oldugunu dogrular.",
+            purpose_en="Verifies fleet agent report freshness and at least one agent online.",
+            metrics=[
+                {"label": "online", "value": str(fleet_offline.get("online") or 0)},
+                {"label": "total", "value": str(fleet_offline.get("total") or 0)},
+                {"label": "mode", "value": str(fleet_offline.get("mode") or "—")},
+                {"label": "max_age_m", "value": str(fleet_offline.get("max_age_min") or 15)},
+            ],
+            script="scripts/fleet_offline_gate.sh",
+            date=str(fleet_offline.get("date") or "")[:10],
         )
 
     grafana = data.get("grafanaProvision") or {}

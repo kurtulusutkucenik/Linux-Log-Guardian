@@ -1,0 +1,13 @@
+{
+  "date": "2026-07-08T17:46:13.438746+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "mtls_enabled": true,
+  "caddy_ok": true,
+  "mtls_verify": true,
+  "mtls_no_cert_reject": true,
+  "dashboard_ok": true,
+  "mtls_port": 9443,
+  "dash_url": "https://localhost:8443",
+  "script": "scripts/caddy_api_mtls_e2e.sh"
+}

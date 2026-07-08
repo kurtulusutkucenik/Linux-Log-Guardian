@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-07T09:43:27.905629+00:00",
+  "date": "2026-07-08T10:40:43.750213+00:00",
   "script": "scripts/ban_profile_e2e.sh",
   "pass": true,
   "checks": [

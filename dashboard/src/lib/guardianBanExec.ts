@@ -2,6 +2,7 @@ import { execFile } from "child_process";
 import { promisify } from "util";
 import { IPV4_RE } from "./banUtils";
 import { guardianApiBase } from "./guardianApiBase";
+import { guardianApiMutationToken } from "./guardianApiAuth";
 
 const execFileAsync = promisify(execFile);
 
@@ -38,7 +39,7 @@ export async function executeGuardianBan(opts: {
 
   const apiBase = guardianApiBase();
   if (apiBase) {
-    const apiToken = process.env.GUARDIAN_API_TOKEN?.trim();
+    const apiToken = guardianApiMutationToken();
     if (!apiToken) {
       return {
         ok: false,
@@ -46,7 +47,7 @@ export async function executeGuardianBan(opts: {
         ip,
         action,
         message:
-          "GUARDIAN_API_TOKEN eksik — bash scripts/sync_dashboard_api_token.sh",
+          "GUARDIAN_API_MUTATION_TOKEN eksik — bash scripts/sync_dashboard_api_token.sh",
       };
     }
     try {

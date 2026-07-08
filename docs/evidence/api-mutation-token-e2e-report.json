@@ -1,0 +1,7 @@
+{
+  "date": "2026-07-08T17:46:03.496780+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "split_enabled": true,
+  "script": "scripts/api_mutation_token_e2e.sh"
+}

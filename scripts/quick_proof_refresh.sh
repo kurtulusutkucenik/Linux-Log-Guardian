@@ -8,6 +8,7 @@ cd "$ROOT"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
 
 echo "=== quick_proof_refresh (E2E suite atlandi) ==="
+export SKIP_IPV6="${SKIP_IPV6:-1}"
 
 if [[ -f /etc/log-guardian/webhook.env ]] && ! [[ -r /etc/log-guardian/webhook.env ]] \
     && command -v sudo >/dev/null 2>&1; then
@@ -32,11 +33,20 @@ if not p.is_file():
     print('?')
 else:
     t = json.loads(p.read_text(encoding='utf-8')).get('validationTests') or []
-    p = sum(1 for x in t if x.get('status') == 'pass')
-    print(f'{p}/{len(t)} pass')
+    ok = sum(1 for x in t if x.get('status') == 'pass')
+    print(f'{ok}/{len(t)} pass')
 " 2>/dev/null || echo "?")"
+
+# Tam skor (N/N) ise recovery önerme; eksik/bozuk ise WARN
+_ok="${n%%/*}"
+_rest="${n#*/}"
+_tot="${_rest%% *}"
+if [[ "$n" == "?" || ! "$_ok" =~ ^[0-9]+$ || "$_ok" != "$_tot" ]]; then
+  echo "[WARN] $n — meta-gate toparlama: bash scripts/proof_gate_recovery.sh" >&2
+fi
 
 echo ""
 echo "[OK] quick_proof_refresh tamam — validationTests $n"
 echo "  competitive-proof.pdf  competitive-proof.json"
+echo "  Eksik kart toparlama: bash scripts/proof_gate_recovery.sh (~3 dk)"
 echo "  Tam suite: bash scripts/local_proof_refresh.sh (~15 dk)"

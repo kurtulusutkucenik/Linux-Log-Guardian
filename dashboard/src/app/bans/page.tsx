@@ -8,6 +8,7 @@ import axios from "axios";
 import { useLanguage } from "@/components/LanguageProvider";
 import { BanIpButton } from "@/components/BanIpButton";
 import { BanTelegramOpsPanel } from "@/components/BanTelegramOpsPanel";
+import { BanApiOpsPanel } from "@/components/BanApiOpsPanel";
 import { useBannedIps, type BanRow } from "@/context/BannedIpsContext";
 
 const PAGE_SIZE = 50;
@@ -194,6 +195,7 @@ function BansPageContent() {
       </header>
 
       <div className="glass-panel border border-red-500/20 p-5 space-y-4">
+        <BanApiOpsPanel />
         {preview && (
           <p className="text-xs text-amber-400/75 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
             {t("bannedIpsProofDesc")}

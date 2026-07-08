@@ -7,6 +7,9 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
+
 CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
 PORT="${GUARDIAN_API_PORT:-8090}"
 BASE="http://127.0.0.1:${PORT}"
@@ -16,6 +19,7 @@ IPSET_V6="${IPSET_V6_NAME:-log_analyzer_block_v6}"
 REPORT="${IPV6_E2E_REPORT:-ipv6-ban-e2e-report.json}"
 AUTO_SETUP="${IPV6_AUTO_SETUP:-1}"
 export LOGANALYZER_PASSWORD="${LOGANALYZER_PASSWORD:-DegistirBeni!123}"
+API_POST_AUTH=()
 
 BENCH_RULES="$ROOT/.cache/ipv6_ban_e2e_rules.conf"
 LG="$ROOT/log-guardian"
@@ -69,12 +73,20 @@ if [[ "$AUTO_SETUP" == "1" ]] && command -v systemctl >/dev/null 2>&1; then
 fi
 
 api_token() {
+  lg_api_consult_token 2>/dev/null || api_token_read
+}
+
+api_token_read() {
   grep -E '^API_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true
+}
+
+api_post_auth() {
+  mapfile -t API_POST_AUTH < <(lg_api_post_auth_curl)
 }
 
 api_ready() {
   local tok i
-  tok=$(api_token)
+  tok=$(api_token_read)
   [[ -n "$tok" ]] || return 1
   for i in 1 2 3 4 5; do
     systemctl is-active log-guardian >/dev/null 2>&1 || return 1
@@ -88,10 +100,11 @@ api_ready() {
 
 ban_via_api() {
   local tok code body path
+  api_post_auth
   tok=$(api_token)
-  [[ -n "$tok" ]] || return 1
+  [[ -n "$tok" && ${#API_POST_AUTH[@]} -gt 0 ]] || return 1
   code=$(curl -s -o /tmp/lg_ipv6_ban_body.json -w '%{http_code}' --max-time 8 \
-    -H "Authorization: Bearer $tok" \
+    "${API_POST_AUTH[@]}" \
     -X POST \
     --get \
     --data-urlencode "ip=${TEST_IP}" \
@@ -118,11 +131,10 @@ ban_via_cli() {
 }
 
 unban_cleanup() {
-  local tok
-  tok=$(api_token)
-  if [[ -n "$tok" ]] && api_ready; then
+  api_post_auth
+  if [[ ${#API_POST_AUTH[@]} -gt 0 ]] && api_ready; then
     curl -s -o /dev/null --max-time 5 \
-      -H "Authorization: Bearer $tok" \
+      "${API_POST_AUTH[@]}" \
       -X POST \
       --get \
       --data-urlencode "ip=${TEST_IP}" \

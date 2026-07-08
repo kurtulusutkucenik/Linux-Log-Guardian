@@ -2,6 +2,8 @@
 # Dashboard ban/unban — host API (8090), relay (18090), Docker container kanıtı
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+# shellcheck source=scripts/lib/guardian_api.sh
+source "$ROOT/scripts/lib/guardian_api.sh"
 CONF="${LG_RULES:-/etc/log-guardian/rules.conf}"
 REPORT="${ROOT}/dashboard-ban-api-report.json"
 TEST_IP="${DASHBOARD_BAN_TEST_IP:-203.0.113.248}"
@@ -20,34 +22,59 @@ if [[ ! -f "$CONF" ]]; then
   exit 1
 fi
 TOK=$(grep -E '^API_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2-)
+MUT_TOK=$(grep -E '^API_MUTATION_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+POST_TOK="${MUT_TOK:-$TOK}"
 [[ -n "$TOK" ]] || { echo "[dashboard_ban_smoke] FAIL: API_TOKEN yok" >&2; exit 1; }
+[[ -n "$POST_TOK" ]] || { echo "[dashboard_ban_smoke] FAIL: ban token yok" >&2; exit 1; }
 
 api_ban_unban() {
   local base="$1"
   local label="$2"
   local ban_out unban_out ban_code unban_code
-  ban_out=$(curl -sf -o /tmp/lg-ban.json -w "%{http_code}" -X POST \
-    -H "Authorization: Bearer ${TOK}" \
+  local tmp_ban tmp_unban
+  tmp_ban="$(mktemp /tmp/lg-ban.XXXXXX)"
+  tmp_unban="$(mktemp /tmp/lg-unban.XXXXXX)"
+  ban_out=$(curl -s -o "$tmp_ban" -w "%{http_code}" --max-time 5 -X POST \
+    -H "Authorization: Bearer ${POST_TOK}" \
     "${base}/api/v1/ban?ip=${TEST_IP}&reason=dashboard-smoke" 2>/dev/null || echo "000")
   ban_code="${ban_out: -3}"
-  if [[ "$ban_code" != "200" ]] || ! grep -q '"success":true' /tmp/lg-ban.json 2>/dev/null; then
+  if [[ "$ban_code" != "200" && "$ban_code" != "409" ]] || ! grep -q '"success":true' "$tmp_ban" 2>/dev/null; then
     fail_reason="${label} ban HTTP ${ban_code}"
+    rm -f "$tmp_ban" "$tmp_unban"
     return 1
   fi
-  ban_path=$(grep -o '"path":"[^"]*"' /tmp/lg-ban.json 2>/dev/null | head -1 | cut -d'"' -f4 || echo "")
-  unban_out=$(curl -sf -o /tmp/lg-unban.json -w "%{http_code}" -X POST \
-    -H "Authorization: Bearer ${TOK}" \
+  ban_path=$(grep -o '"path":"[^"]*"' "$tmp_ban" 2>/dev/null | head -1 | cut -d'"' -f4 || echo "")
+  unban_out=$(curl -s -o "$tmp_unban" -w "%{http_code}" --max-time 5 -X POST \
+    -H "Authorization: Bearer ${POST_TOK}" \
     "${base}/api/v1/unban?ip=${TEST_IP}" 2>/dev/null || echo "000")
   unban_code="${unban_out: -3}"
-  if [[ "$unban_code" != "200" ]] || ! grep -q '"success":true' /tmp/lg-unban.json 2>/dev/null; then
+  if [[ "$unban_code" != "200" ]] || ! grep -q '"success":true' "$tmp_unban" 2>/dev/null; then
     fail_reason="${label} unban HTTP ${unban_code}"
+    rm -f "$tmp_ban" "$tmp_unban"
     return 1
   fi
+  rm -f "$tmp_ban" "$tmp_unban"
   return 0
 }
 
+api_ban_unban_retry() {
+  local base="$1" label="$2" attempt
+  for attempt in 1 2 3 4 5; do
+    if api_ban_unban "$base" "$label"; then
+      return 0
+    fi
+    [[ "$attempt" -lt 5 ]] && sleep 2
+  done
+  return 1
+}
+
+if ! wait_lg_ban_ready 45; then
+  echo "[dashboard_ban_smoke] WARN: POST /ban henuz hazir — retry ile devam" >&2
+fi
+wait_lg_relay_ready 25 || true
+
 echo "[1] Host API ${HOST_API} ..."
-if api_ban_unban "$HOST_API" "host"; then
+if api_ban_unban_retry "$HOST_API" "host"; then
   host_ok=1
   echo "[OK] host ban/unban"
 else
@@ -55,7 +82,7 @@ else
 fi
 
 echo "[2] Relay ${RELAY_API} ..."
-if api_ban_unban "$RELAY_API" "relay"; then
+if api_ban_unban_retry "$RELAY_API" "relay"; then
   relay_ok=1
   echo "[OK] relay ban/unban"
 else
@@ -66,7 +93,7 @@ fi
 echo "[3] Docker container ..."
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard'; then
   if docker exec log-guardian-dashboard node -e "
-const t=process.env.GUARDIAN_API_TOKEN;
+const t=process.env.GUARDIAN_API_MUTATION_TOKEN||process.env.GUARDIAN_API_TOKEN;
 const b=process.env.GUARDIAN_BAN_URL;
 const ip='${TEST_IP}';
 (async()=>{
@@ -111,6 +138,7 @@ PY
 
 echo "[report] $REPORT"
 if [[ "$pass" -eq 1 ]]; then
+  bash "$ROOT/scripts/caddy_mtls_status_export.sh" 2>/dev/null || true
   echo "[PASS] dashboard ban API smoke"
   exit 0
 fi

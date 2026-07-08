@@ -5,6 +5,15 @@ Laptop’ta test edilemeyen adımlar; VPS gelince bu sırayı izleyin.
 
 > Bu dosya repo içinde hazır; gerçek VPS doğrulaması operatörde.
 
+**VPS yokken (laptop):** paket hazırlığını doğrula — sunucu gerekmez:
+
+```bash
+bash scripts/vps_prep_gate.sh    # -> vps-prep-gate-report.json
+bash scripts/enterprise_e9_verify.sh
+```
+
+`vps-xdp-kernel` test kartı laptop'ta **skip** (bilinçli); VPS gelince aşağıdaki §2 ile gerçek kernel-XDP kanıtlanır.
+
 ---
 
 ## Önkoşullar
@@ -230,3 +239,37 @@ bash scripts/bola_idor_e2e.sh
 - Dashboard + `/tests` demosu
 
 VPS = üretim kanıtı (XDP + 72h + gerçek trafik FP).
+
+---
+
+## VPS sipariş / alış öncesi kontrol listesi
+
+Laptop bu satırlara **hazır** — satın alınca sırayla:
+
+| # | Satın almadan | Komut / kanıt |
+|---|---------------|---------------|
+| 1 | Kanıt vitrin yeşil | `/tests` **85/85** · `bash scripts/vps_prep_gate.sh` |
+| 2 | Internet-facing runbook | [INTERNET_FACING_SECURITY_CHAIN.md](INTERNET_FACING_SECURITY_CHAIN.md) |
+| 3 | Edge checklist | [EDGE_PROTECTION.md](EDGE_PROTECTION.md) · `edge_protection_checklist.sh` |
+| 4 | mTLS / SOAR (opsiyonel) | [MTLS_ROTATION_RUNBOOK.md](MTLS_ROTATION_RUNBOOK.md) |
+| 5 | Filo demo (opsiyonel) | host keepalive + VM · `fleet_offline_gate` |
+
+**Sipariş önerisi:** Ubuntu 22.04+ · ≥2 vCPU · 2–4 GB RAM · public IPv4 · NIC adı `eth0` veya `ens*` (XDP).
+
+**Satın alınca ilk gece (kısa):**
+
+```bash
+sudo bash install.sh
+sudo bash scripts/install_first_run.sh
+bash scripts/detect_internet_facing.sh && echo PUBLIC || echo LAB
+# PUBLIC ise:
+bash scripts/backup_operator_secrets.sh
+sudo env LG_NEW_PASSWORD='GucluParola!' bash scripts/laptop_harden.sh
+sudo bash scripts/apply_internet_facing_hardening.sh
+bash scripts/post_install_verify.sh   # demo parola = FAIL beklenir
+sudo bash scripts/vps_xdp_proof.sh    # eth0 — skip YOK
+```
+
+Detaylı sıra: yukarıdaki §1–§8 + [INTERNET_FACING_SECURITY_CHAIN.md](INTERNET_FACING_SECURITY_CHAIN.md).
+
+**Bilinçli sonraya:** GitHub ship / release (ayrı onay) · laptop 72h soak tekrarı yok.

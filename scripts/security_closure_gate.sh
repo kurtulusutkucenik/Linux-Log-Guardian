@@ -126,6 +126,8 @@ if [[ "${SKIP_DOCKER:-0}" != "1" ]] && command -v docker >/dev/null 2>&1; then
   fi
 fi
 
+run "dashboard_security_gates" bash scripts/dashboard_security_gates.sh
+
 echo ""
 if [[ "$fail" -eq 0 ]]; then
   echo "[OK] security_closure_gate — $fail FAIL"

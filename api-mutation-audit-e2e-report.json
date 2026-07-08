@@ -1,0 +1,7 @@
+{
+  "date": "2026-07-08T17:46:11.488218+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "audit_path": "/var/lib/log-guardian/api-mutation-audit.jsonl",
+  "script": "scripts/api_mutation_audit_e2e.sh"
+}

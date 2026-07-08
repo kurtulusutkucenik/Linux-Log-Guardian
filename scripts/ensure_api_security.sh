@@ -68,8 +68,10 @@ echo "  Bearer: $tok"
 echo ""
 echo "  Dashboard senkron:"
 echo "    bash scripts/sync_dashboard_api_token.sh"
-echo "  curl ornegi:"
-echo "    curl -H \"Authorization: Bearer $tok\" -X POST \"http://127.0.0.1:8090/api/v1/ban?ip=203.0.113.254\""
+echo "  curl ornegi (POST ban — mutation token):"
+mut=$(grep -E '^API_MUTATION_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+post_tok="${mut:-$tok}"
+echo "    curl -H \"Authorization: Bearer $post_tok\" -X POST \"http://127.0.0.1:8090/api/v1/ban?ip=203.0.113.254\""
 
 if docker ps --format '{{.Names}}' 2>/dev/null | grep -q log-guardian-dashboard; then
   bash "$ROOT/scripts/sync_dashboard_api_token.sh" 2>/dev/null || true
@@ -77,8 +79,10 @@ fi
 
 if command -v nginx >/dev/null 2>&1; then
   tok=$(grep -E '^API_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
-  if [[ -n "$tok" ]]; then
-    bash "$ROOT/scripts/lib/sync_nginx_consult_token.sh" "$tok"
+  consult_tok=$(grep -E '^API_MUTATION_TOKEN=' "$CONF" 2>/dev/null | tail -1 | cut -d= -f2- || true)
+  [[ -n "$consult_tok" ]] || consult_tok="$tok"
+  if [[ -n "$consult_tok" ]]; then
+    bash "$ROOT/scripts/lib/sync_nginx_consult_token.sh" "$consult_tok"
     nginx -t 2>/dev/null && systemctl reload nginx 2>/dev/null || true
   fi
 fi

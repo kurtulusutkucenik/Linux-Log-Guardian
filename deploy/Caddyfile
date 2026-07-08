@@ -6,10 +6,14 @@
 # Lokal self-signed:
 #   DOMAIN=localhost docker compose -f docker-compose.prod.yml up -d
 #   curl -k https://localhost/api/tier
+#
+# Enterprise mTLS ban API (:9443): bash scripts/caddy_mtls_setup.sh enable
 
 {
 	email {$ACME_EMAIL:ops@localhost}
 }
+
+import /etc/caddy/mtls.d/*.caddy
 
 {$DOMAIN:localhost} {
 	encode gzip zstd

@@ -21,11 +21,8 @@ services:
   ban-api-relay:
     image: alpine/socat
     container_name: log-guardian-ban-api-relay
-    command: TCP-LISTEN:18090,fork,reuseaddr TCP:host.docker.internal:8090
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    networks:
-      - lg_internal
+    network_mode: host
+    command: TCP-LISTEN:18090,bind=0.0.0.0,fork,reuseaddr TCP:127.0.0.1:8090
     restart: unless-stopped
 
   dashboard:
@@ -61,9 +58,13 @@ services:
       - MARKETPLACE_REQUIRE_SIG=${MARKETPLACE_REQUIRE_SIG:-1}
       - FLEET_COMMAND_HMAC_KEY=${FLEET_COMMAND_HMAC_KEY:-log-guardian-fleet-command-dev-key}
       - FLEET_COMMAND_REQUIRE_SIG=${FLEET_COMMAND_REQUIRE_SIG:-1}
-      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://ban-api-relay:18090}
-      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://ban-api-relay:18090}
+      - GUARDIAN_API_URL=${GUARDIAN_API_URL:-http://host.docker.internal:18090}
+      - GUARDIAN_BAN_URL=${GUARDIAN_BAN_URL:-http://host.docker.internal:18090}
       - GUARDIAN_API_TOKEN=${GUARDIAN_API_TOKEN:-}
+      - GUARDIAN_API_MUTATION_TOKEN=${GUARDIAN_API_MUTATION_TOKEN:-}
+      - DASHBOARD_JWT_EXPIRY=${DASHBOARD_JWT_EXPIRY:-24h}
+      - DASHBOARD_JWT_IDLE_MIN=${DASHBOARD_JWT_IDLE_MIN:-0}
+      - DASHBOARD_LOGIN_RL_LAB=${DASHBOARD_LOGIN_RL_LAB:-1}
       - GUARDIAN_METRICS_URL=${GUARDIAN_METRICS_URL:-http://metrics-relay:19091/metrics}
       - PROMETHEUS_URL=${PROMETHEUS_URL:-http://host.docker.internal:9090}
       - NEXT_PUBLIC_GRAFANA_EMBED_URL=${NEXT_PUBLIC_GRAFANA_EMBED_URL:-http://127.0.0.1:3002/d/log-guardian-01/linux-log-guardian?orgId=1&refresh=15s&kiosk&theme=dark&var-tenant=default}
@@ -96,23 +97,41 @@ services:
     ports:
       - "${HTTP_PORT:-8080}:80"
       - "${HTTPS_PORT:-8443}:443"
+      - "${MTLS_API_PORT:-9443}:9443"
     environment:
       - DOMAIN=${DOMAIN:-localhost}
       - ACME_EMAIL=${ACME_EMAIL:-ops@localhost}
+      - GUARDIAN_API_MUTATION_TOKEN=${GUARDIAN_API_MUTATION_TOKEN:-}
     volumes:
       - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./deploy/mtls.d:/etc/caddy/mtls.d:ro
+      - ./deploy/mtls:/etc/caddy/mtls:ro
       - caddy_data:/data
       - caddy_config:/config
     depends_on:
-      ban-api-relay:
-        condition: service_started
-      metrics-relay:
-        condition: service_started
       dashboard:
         condition: service_healthy
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     restart: unless-stopped
     networks:
       - lg_internal
+    healthcheck:
+      # Self-signed cert localhost için; 127.0.0.1 SNI uyumsuzluğu yapar
+      test:
+        [
+          "CMD",
+          "wget",
+          "-q",
+          "-O",
+          "/dev/null",
+          "--no-check-certificate",
+          "https://localhost/api/tier",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
 
 networks:
   lg_internal:

@@ -1,0 +1,82 @@
+{
+  "date": "2026-07-08T17:53:28.029876+00:00",
+  "pass": true,
+  "max_age_h_default": 24.0,
+  "stale_ids": [],
+  "missing_ids": [],
+  "checks": [
+    {
+      "id": "morning-operator",
+      "file": "morning-operator-gate-report.json",
+      "max_age_h": 12,
+      "ok": true,
+      "age_h": 6.09,
+      "status": "fresh"
+    },
+    {
+      "id": "laptop-core",
+      "file": "laptop-core-gate-report.json",
+      "max_age_h": 24,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "attack-map",
+      "file": "attack-map-report.json",
+      "max_age_h": 12,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "telegram-soc",
+      "file": "telegram-soc-gate-report.json",
+      "max_age_h": 12,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "edge-checklist",
+      "file": "edge-protection-checklist-report.json",
+      "max_age_h": 48,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "enterprise-e9",
+      "file": "enterprise-e9-verify-report.json",
+      "max_age_h": 48,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "competitive-proof",
+      "file": "competitive-proof.json",
+      "max_age_h": 72,
+      "ok": true,
+      "age_h": 0.01,
+      "status": "fresh"
+    },
+    {
+      "id": "fp-report",
+      "file": "fp-report.json",
+      "max_age_h": 168,
+      "ok": true,
+      "age_h": 98.8,
+      "status": "fresh"
+    },
+    {
+      "id": "fleet-multi",
+      "file": "fleet-multi-node-report.json",
+      "max_age_h": 24,
+      "ok": true,
+      "age_h": 6.18,
+      "status": "fresh"
+    }
+  ],
+  "script": "scripts/proof_freshness_check.sh"
+}

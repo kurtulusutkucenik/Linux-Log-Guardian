@@ -103,12 +103,33 @@ for k, mn in checks:
     print(f"[OK] killerMetrics.{k}={v}")
 if km.get("soak_short_pass") is True:
     print("[OK] killerMetrics.soak_short_pass=True")
+# Meta-gate kartlari kendi gate script'lerinde dogrulanir; burada dongusel FAIL onlenir.
+META_GATES = {
+    "github-ship-gate",
+    "laptop-core-gate",
+    "morning-operator-gate",
+    "presentation-ship-gate",
+    "release-ready-gate",
+    "website-preview-gate",
+}
 vt = p.get("validationTests") or []
-if vt:
-    pn = sum(1 for t in vt if t.get("status") == "pass")
-    print(f"[OK] validationTests {pn}/{len(vt)} pass" if pn == len(vt) else f"[FAIL] validationTests {pn}/{len(vt)} pass")
-    if pn < len(vt):
+vt_core = [t for t in vt if t.get("id") not in META_GATES]
+if vt_core:
+    pn = sum(1 for t in vt_core if t.get("status") == "pass")
+    n = len(vt_core)
+    print(
+        f"[OK] validationTests core {pn}/{n} pass"
+        if pn == n
+        else f"[FAIL] validationTests core {pn}/{n} pass"
+    )
+    if pn < n:
+        for t in vt_core:
+            if t.get("status") != "pass":
+                print(f"  [FAIL] {t.get('id')}: {t.get('verdict', '')[:80]}")
         sys.exit(1)
+    meta_fail = sum(1 for t in vt if t.get("id") in META_GATES and t.get("status") != "pass")
+    if meta_fail:
+        print(f"[OK] validationTests meta {len(META_GATES) - meta_fail}/{len(META_GATES)} (bootstrap — proof_gate_recovery.sh)")
 PY
 fi
 

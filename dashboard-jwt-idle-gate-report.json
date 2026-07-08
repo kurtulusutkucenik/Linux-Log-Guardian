@@ -1,0 +1,9 @@
+{
+  "date": "2026-07-08T18:29:18.495652+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "idle_min": 0,
+  "mode": "off",
+  "hint": "internet-facing: DASHBOARD_JWT_IDLE_MIN=480 docker compose up -d dashboard",
+  "script": "scripts/dashboard_jwt_idle_gate.sh"
+}

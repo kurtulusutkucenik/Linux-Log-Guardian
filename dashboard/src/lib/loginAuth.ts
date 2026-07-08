@@ -28,6 +28,7 @@ export async function authenticateUser(
 }
 
 export async function signAuthToken(user: AuthUser): Promise<string> {
+  const ttl = process.env.DASHBOARD_JWT_EXPIRY?.trim() || '24h';
   return new SignJWT({
     userId: user.id,
     username: user.username,
@@ -35,7 +36,7 @@ export async function signAuthToken(user: AuthUser): Promise<string> {
     isAdmin: user.isAdmin,
   })
     .setProtectedHeader({ alg: 'HS256' })
-    .setExpirationTime('24h')
+    .setExpirationTime(ttl)
     .sign(getJwtSecret());
 }
 

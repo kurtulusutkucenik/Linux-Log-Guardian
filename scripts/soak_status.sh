@@ -5,9 +5,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 PIDFILE="${SOAK_PIDFILE:-$ROOT/.cache/soak-72h.pid}"
-SOAK_LOG="${SOAK_LOG:-$ROOT/soak-72h.log}"
 LOCK="${SOAK_LOCK_FILE:-$ROOT/.cache/soak-active.lock}"
-[[ -f "$ROOT/soak.log" && ! -f "$SOAK_LOG" ]] && SOAK_LOG="$ROOT/soak.log"
 
 soak_pid() {
   if [[ -f "$PIDFILE" ]]; then
@@ -21,13 +19,92 @@ soak_pid() {
   pgrep -f '[/]scripts/soak_test\.sh' 2>/dev/null | head -1 || true
 }
 
-current_label() {
-  local label=""
-  if [[ -f "$LOCK" ]]; then
-    label=$(grep '^label=' "$LOCK" 2>/dev/null | cut -d= -f2 || true)
+# systemd soak.log; laptop nohup soak-72h.log — en guncel kosuyu sec
+pick_soak_log() {
+  local pid="${1:-}"
+  if [[ -n "$pid" ]] && systemctl is-active log-guardian-soak >/dev/null 2>&1 \
+      && [[ -f "$ROOT/soak.log" ]]; then
+    echo "$ROOT/soak.log"
+    return 0
   fi
-  if [[ -z "$label" && -f "$SOAK_LOG" ]]; then
-    label=$(awk '/^Mod: /{print $2; exit}' "$SOAK_LOG" 2>/dev/null || true)
+  local best="" best_ts=0 f ts epoch
+  for f in "$ROOT/soak.log" "$ROOT/soak-72h.log"; do
+    [[ -f "$f" ]] || continue
+    ts=$(grep '^Baslangic:' "$f" 2>/dev/null | tail -1 | awk '{print $2}' || true)
+    [[ -z "$ts" ]] && continue
+    epoch=$(date -d "$ts" +%s 2>/dev/null || echo 0)
+    if [[ "$epoch" -ge "$best_ts" ]]; then
+      best_ts=$epoch
+      best=$f
+    fi
+  done
+  if [[ -n "$best" ]]; then
+    echo "$best"
+  elif [[ -f "$ROOT/soak-72h.log" ]]; then
+    echo "$ROOT/soak-72h.log"
+  elif [[ -f "$ROOT/soak.log" ]]; then
+    echo "$ROOT/soak.log"
+  else
+    echo "$ROOT/soak-72h.log"
+  fi
+}
+
+last_run_field() {
+  local file="$1" pattern="$2"
+  [[ -f "$file" ]] || return 0
+  awk -v pat="$pattern" '
+    /^=== soak_test ===/ { buf = "" }
+    { buf = buf $0 "\n" }
+    END {
+      n = split(buf, lines, "\n")
+      for (i = n; i >= 1; i--) {
+        if (lines[i] ~ pat) {
+          sub(/^[^:]*: /, "", lines[i])
+          print lines[i]
+          exit
+        }
+      }
+    }
+  ' "$file" 2>/dev/null || true
+}
+
+label_from_pid_env() {
+  local pid="$1"
+  [[ -n "$pid" && -r "/proc/$pid/environ" ]] || return 0
+  local env
+  env=$(tr '\0' '\n' <"/proc/$pid/environ" 2>/dev/null || true)
+  if grep -q '^SOAK_SHORT=1' <<<"$env"; then
+    echo "5m"
+  elif grep -q '^SOAK_1H=1' <<<"$env"; then
+    echo "1h"
+  elif grep -q '^SOAK_DURATION=259200' <<<"$env"; then
+    echo "72h"
+  elif grep -q '^SOAK_DURATION=3600' <<<"$env"; then
+    echo "1h"
+  fi
+}
+
+current_label() {
+  local pid="$1" label="" lock_pid=""
+  label=$(label_from_pid_env "$pid")
+  [[ -n "$label" ]] && { echo "$label"; return 0; }
+  if [[ -f "$LOCK" ]]; then
+    lock_pid=$(grep '^pid=' "$LOCK" 2>/dev/null | cut -d= -f2 || true)
+    if [[ -n "$pid" && "$lock_pid" == "$pid" ]]; then
+      label=$(grep '^label=' "$LOCK" 2>/dev/null | cut -d= -f2 || true)
+    fi
+  fi
+  if [[ -z "$label" && -n "${SOAK_LOG:-}" && -f "$SOAK_LOG" ]]; then
+    label=$(last_run_field "$SOAK_LOG" '^Mod: ')
+    if [[ -z "$label" ]]; then
+      local d
+      d=$(last_run_field "$SOAK_LOG" '^Sure: ' | awk '{print $1}' | tr -d 's')
+      case "$d" in
+        3600)   label="1h" ;;
+        259200) label="72h" ;;
+        300)    label="5m" ;;
+      esac
+    fi
   fi
   echo "${label:-?}"
 }
@@ -35,19 +112,11 @@ current_label() {
 echo "=== soak_status ==="
 
 SOAK_PID=$(soak_pid)
-RUN_LABEL=$(current_label)
+SOAK_LOG="${SOAK_LOG:-$(pick_soak_log "$SOAK_PID")}"
+RUN_LABEL=$(current_label "$SOAK_PID")
 
 if [[ -n "$SOAK_PID" ]]; then
   ELAPSED=$(ps -p "$SOAK_PID" -o etime= 2>/dev/null | tr -d ' ' || echo "?")
-  # mod: lock > log Mod: > Sure: suresi
-  if [[ "$RUN_LABEL" == "?" && -f "$SOAK_LOG" ]]; then
-    d=$(grep '^Sure:' "$SOAK_LOG" 2>/dev/null | tail -1 | awk '{print $2}' | tr -d 's' || true)
-    case "$d" in
-      3600)   RUN_LABEL="1h" ;;
-      259200) RUN_LABEL="72h" ;;
-      300)    RUN_LABEL="5m" ;;
-    esac
-  fi
   echo "running: PID=$SOAK_PID (elapsed $ELAPSED)  mod=$RUN_LABEL"
   case "$RUN_LABEL" in
     1h)  echo "  -> laptop 1 saatlik kosu (SOAK_1H=1); 72h VPS/VM icin ayri" ;;
@@ -56,7 +125,12 @@ if [[ -n "$SOAK_PID" ]]; then
   esac
   echo "log: $SOAK_LOG"
   if [[ -f "$LOCK" ]]; then
-    grep -E '^label=|^started=' "$LOCK" 2>/dev/null | sed 's/^/  /' || true
+    lock_pid=$(grep '^pid=' "$LOCK" 2>/dev/null | cut -d= -f2 || true)
+    if [[ -n "$SOAK_PID" && "$lock_pid" == "$SOAK_PID" ]]; then
+      grep -E '^label=|^started=' "$LOCK" 2>/dev/null | sed 's/^/  /' || true
+    elif [[ -n "$lock_pid" && "$lock_pid" != "$SOAK_PID" ]]; then
+      echo "  (eski lock pid=$lock_pid — yoksayiliyor)"
+    fi
   fi
 else
   echo "stopped"
@@ -70,10 +144,11 @@ if [[ -f soak-report.jsonl ]]; then
   RUN_START=""
   LOG_MOD=""
   if [[ -f "$SOAK_LOG" ]]; then
-    DUR=$(grep '^Sure:' "$SOAK_LOG" 2>/dev/null | tail -1 | awk '{print $2}' | tr -d 's' || true)
-    INT=$(grep '^Sure:' "$SOAK_LOG" 2>/dev/null | tail -1 | sed 's/.*aralik: //;s/s$//' || true)
-    RUN_START=$(grep '^Baslangic:' "$SOAK_LOG" 2>/dev/null | tail -1 | awk '{print $2}' || true)
-    LOG_MOD=$(awk '/^Mod: /{print $2; exit}' "$SOAK_LOG" 2>/dev/null || true)
+    sure_line=$(last_run_field "$SOAK_LOG" '^Sure: ')
+    DUR=$(awk '{print $1}' <<<"$sure_line" | tr -d 's')
+    INT=$(awk '{print $3}' <<<"$sure_line" | tr -d 's')
+    RUN_START=$(last_run_field "$SOAK_LOG" '^Baslangic: ')
+    LOG_MOD=$(last_run_field "$SOAK_LOG" '^Mod: ')
     if [[ -z "$LOG_MOD" && -n "$DUR" ]]; then
       case "$DUR" in
         3600)   LOG_MOD="1h" ;;

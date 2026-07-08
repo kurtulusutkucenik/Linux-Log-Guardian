@@ -141,7 +141,20 @@ static __always_inline void bump_stat(__u32 idx) {
     if (val) __sync_fetch_and_add(val, 1);
 }
 
-static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *eth, struct iphdr *iph, struct tcphdr *th, void *data_end) {
+static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *eth,
+                                            struct iphdr *iph, struct tcphdr *th,
+                                            void *data_end) {
+    __u16 ip_hlen = iph->ihl * 4;
+    if (ip_hlen < sizeof(struct iphdr))
+        return XDP_DROP;
+    __u16 tcp_hlen = th->doff * 4;
+    if (tcp_hlen < sizeof(struct tcphdr) || tcp_hlen > 60)
+        return XDP_DROP;
+    if ((void *)((unsigned char *)iph + ip_hlen) > data_end)
+        return XDP_DROP;
+    if ((void *)((unsigned char *)th + tcp_hlen) > data_end)
+        return XDP_DROP;
+
     /* Ethernet MAC Swap */
     unsigned char tmp_mac[ETH_ALEN];
     __builtin_memcpy(tmp_mac, eth->h_source, ETH_ALEN);
@@ -161,15 +174,11 @@ static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *e
     /* Set TCP Seq & Ack */
     __u32 old_seq = bpf_ntohl(th->seq);
     __u32 old_ack = bpf_ntohl(th->ack_seq);
-    
+
     th->seq = bpf_htonl(old_ack);
-    /* Acknowledge at least 1 byte if SYN or data packet */
     th->ack_seq = bpf_htonl(old_seq + 1);
 
-    /* Rewrite TCP Window to 0 (Clamp) */
     th->window = bpf_htons(0);
-
-    /* Set TCP flags to ACK (and ACK only to force a window update) */
     th->ack = 1;
     th->syn = 0;
     th->psh = 0;
@@ -177,17 +186,24 @@ static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *e
     th->rst = 0;
     th->urg = 0;
 
-    /* Adjust packet length to exclude any payload (Tarpit Window Update has no payload) */
-    __u16 ip_hlen = iph->ihl * 4;
-    __u16 tcp_hlen = th->doff * 4;
     __u16 current_tot_len = bpf_ntohs(iph->tot_len);
     __u16 new_tot_len = ip_hlen + tcp_hlen;
-    
-    int shrink_len = current_tot_len - new_tot_len;
+    int shrink_len = (int)current_tot_len - (int)new_tot_len;
     if (shrink_len > 0) {
-        if (bpf_xdp_adjust_tail(ctx, -shrink_len) < 0) {
-            /* If we can't shrink, we still proceed */
-        }
+        if (bpf_xdp_adjust_tail(ctx, -shrink_len) < 0)
+            return XDP_DROP;
+        /* adjust_tail sonrasi pointerlari yenile (verifier zorunlu) */
+        void *data = (void *)(long)ctx->data;
+        data_end = (void *)(long)ctx->data_end;
+        eth = data;
+        if ((void *)(eth + 1) > data_end)
+            return XDP_DROP;
+        iph = (void *)(eth + 1);
+        if ((void *)((unsigned char *)iph + ip_hlen) > data_end)
+            return XDP_DROP;
+        th = (void *)((unsigned char *)iph + ip_hlen);
+        if ((void *)((unsigned char *)th + tcp_hlen) > data_end)
+            return XDP_DROP;
     }
 
     iph->tot_len = bpf_htons(new_tot_len);
@@ -198,20 +214,17 @@ static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *e
     __u16 *ip_u16 = (__u16 *)iph;
     #pragma clang loop unroll(full)
     for (int i = 0; i < 10; i++) {
-        if ((void *)&ip_u16[i + 1] > data_end)
+        if ((void *)&ip_u16[i + 1] > (void *)((unsigned char *)iph + ip_hlen))
             break;
         ip_csum += bpf_ntohs(ip_u16[i]);
     }
-    while (ip_csum >> 16) {
+    while (ip_csum >> 16)
         ip_csum = (ip_csum & 0xffff) + (ip_csum >> 16);
-    }
     iph->check = bpf_htons(~ip_csum);
 
-    /* Recalculate TCP Checksum over Pseudo-header + TCP header (no payload) */
+    /* Recalculate TCP Checksum (header only) */
     th->check = 0;
     __u32 tcp_csum = 0;
-
-    /* Pseudo-Header */
     tcp_csum += bpf_ntohs(iph->saddr & 0xffff);
     tcp_csum += bpf_ntohs(iph->saddr >> 16);
     tcp_csum += bpf_ntohs(iph->daddr & 0xffff);
@@ -219,20 +232,18 @@ static __always_inline int clamp_tcp_window(struct xdp_md *ctx, struct ethhdr *e
     tcp_csum += IPPROTO_TCP;
     tcp_csum += tcp_hlen;
 
-    /* TCP Header */
     __u16 *tcp_u16 = (__u16 *)th;
+    int tcp_words = (int)(tcp_hlen / 2);
     #pragma clang loop unroll(full)
     for (int i = 0; i < 30; i++) {
-        if ((void *)&tcp_u16[i + 1] > data_end)
+        if (i >= tcp_words)
             break;
-        if (i * 2 >= tcp_hlen)
+        if ((void *)&tcp_u16[i + 1] > (void *)((unsigned char *)th + tcp_hlen))
             break;
         tcp_csum += bpf_ntohs(tcp_u16[i]);
     }
-
-    while (tcp_csum >> 16) {
+    while (tcp_csum >> 16)
         tcp_csum = (tcp_csum & 0xffff) + (tcp_csum >> 16);
-    }
     th->check = bpf_htons(~tcp_csum);
 
     return XDP_TX;
@@ -369,9 +380,15 @@ int xdp_waf_filter(struct xdp_md *ctx) {
                                 evt->payload_len = (len > PKT_PAYLOAD_SIZE) ? PKT_PAYLOAD_SIZE : len;
                                 evt->is_tls_hello = is_tls;
                                 evt->dst_port = (dest_port == 443) ? 443 : 80;
-                                /* Veriyi kernel boslugundan xdp ringbuf uzerine kopyala */
-                                bpf_probe_read_kernel(evt->payload, evt->payload_len, payload);
-                                bpf_ringbuf_submit(evt, 0);
+                                /* XDP frame: bpf_xdp_load_bytes (probe_read_kernel degil) */
+                                __u64 poff = (__u64)((unsigned char *)payload - (unsigned char *)data);
+                                if (bpf_xdp_load_bytes(ctx, poff, evt->payload,
+                                                         evt->payload_len) < 0) {
+                                    bpf_ringbuf_discard(evt, 0);
+                                    bump_stat(STAT_RINGBUF_DROP);
+                                } else {
+                                    bpf_ringbuf_submit(evt, 0);
+                                }
                             } else {
                                 bump_stat(STAT_RINGBUF_DROP);
                             }

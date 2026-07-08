@@ -77,6 +77,23 @@ ensure_observability_stack() {
 ensure_observability_stack
 refresh_grafana_ops_gates
 
+# Stale nginx-consult / scorecard onlenir (73/80 dongusu)
+if bash "$ROOT/scripts/nginx_inline_consult_proof.sh" >/dev/null 2>&1; then
+  echo "[OK] nginx_inline_consult (pre-proof)"
+else
+  echo "[WARN] nginx_inline_consult — sudo systemctl restart log-guardian" >&2
+fi
+
+# Relay (18090) + docker ban path — dashboard-ban-api karti bayat kalmasin
+if bash "$ROOT/scripts/sync_dashboard_api_token.sh" >/dev/null 2>&1 \
+    && bash "$ROOT/scripts/dashboard_ban_smoke.sh" >/dev/null 2>&1; then
+  echo "[OK] dashboard_ban_smoke (relay 18090)"
+else
+  echo "[WARN] dashboard_ban_smoke — bash scripts/sync_dashboard_api_token.sh && bash scripts/dashboard_ban_smoke.sh" >&2
+fi
+
+python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
+
 run_preview_gate() {
   bash "$ROOT/scripts/website_preview_gate.sh"
 }
@@ -131,8 +148,9 @@ fi
 docker compose -f docker-compose.prod.yml build "${BUILD_OPTS[@]}" dashboard
 
 echo "[dashboard_refresh] Container yeniden baslatiliyor..."
+docker compose -f docker-compose.prod.yml stop dashboard 2>/dev/null || true
 docker compose -f docker-compose.prod.yml rm -sf dashboard 2>/dev/null || true
-docker rm -f log-guardian-dashboard 2>/dev/null || true
+docker ps -aq --filter name=log-guardian-dashboard 2>/dev/null | xargs -r docker rm -f 2>/dev/null || true
 docker compose -f docker-compose.prod.yml up -d --force-recreate --no-deps dashboard
 echo "[OK] dashboard build rev: ${DASHBOARD_BUILD_REV}"
 
@@ -142,6 +160,14 @@ if [[ -f /etc/log-guardian/rules.conf ]]; then
     export GUARDIAN_API_TOKEN="$TOK"
     docker compose -f docker-compose.prod.yml up -d ban-api-relay dashboard
     echo "[OK] GUARDIAN_API_TOKEN container'a verildi"
+    if bash "$ROOT/scripts/sync_dashboard_api_token.sh" >/dev/null 2>&1 \
+        && bash "$ROOT/scripts/dashboard_ban_smoke.sh" >/dev/null 2>&1; then
+      echo "[OK] dashboard_ban_smoke (post-docker relay 18090)"
+    else
+      echo "[WARN] dashboard_ban_smoke post-docker — bash scripts/dashboard_ban_smoke.sh" >&2
+    fi
+    bash "$ROOT/scripts/caddy_mtls_status_export.sh" 2>/dev/null || true
+    python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
   fi
 fi
 
@@ -225,7 +251,7 @@ if [[ "${SKIP_ATTACK_MAP:-0}" != "1" ]]; then
     SKIP_EDGE=1 bash "$ROOT/scripts/laptop_core_gate.sh" >/dev/null 2>&1 \
       && echo "[OK] laptop_core_gate" \
       || echo "[WARN] laptop_core_gate — :8443 veya telegram_soc" >&2
-    bash "$ROOT/scripts/morning_operator_gate.sh" >/dev/null 2>&1 \
+    TELEGRAM_NOTIFY=0 bash "$ROOT/scripts/morning_operator_gate.sh" >/dev/null 2>&1 \
       && echo "[OK] morning_operator_gate" \
       || echo "[WARN] morning_operator_gate" >&2
     refresh_grafana_ops_gates

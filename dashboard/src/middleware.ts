@@ -41,6 +41,7 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname === '/api/auth/login' ||
     request.nextUrl.pathname === '/api/telemetry' ||
     request.nextUrl.pathname === '/api/tier' ||
+    request.nextUrl.pathname === '/api/metrics/fleet' ||
     request.nextUrl.pathname === '/api/internal/bans-invalidate' ||
     isPublicDataRoomFile ||
     isAgentBearerApi;
@@ -97,6 +98,19 @@ export async function middleware(request: NextRequest) {
 
   try {
     const { payload } = await jwtVerify(token, getJwtSecret());
+
+    const idleMin = parseInt(process.env.DASHBOARD_JWT_IDLE_MIN || '0', 10);
+    if (idleMin > 0 && typeof payload.iat === 'number') {
+      const idleSec = idleMin * 60;
+      const nowSec = Math.floor(Date.now() / 1000);
+      if (nowSec - payload.iat > idleSec) {
+        const loginUrl = new URL('/login', request.nextUrl);
+        loginUrl.searchParams.set('session', 'expired');
+        const res = NextResponse.redirect(loginUrl);
+        res.cookies.delete('auth_token');
+        return res;
+      }
+    }
     
     // Zaten login sayfasındaysa ve token geçerliyse, ana sayfaya yönlendir.
     if (isLoginPage) {

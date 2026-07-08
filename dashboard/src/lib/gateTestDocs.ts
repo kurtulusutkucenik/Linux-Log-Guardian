@@ -66,6 +66,41 @@ const GATE_TEST_DOCS: Record<string, GateDoc> = {
     labelTr: "VPS_SETUP — IPv6 ban",
     labelEn: "VPS_SETUP — IPv6 ban",
   },
+  "api-mutation-token-e2e": {
+    href: `${REPO_DOCS}/BAN_API_MTLS_DESIGN.md`,
+    labelTr: "BAN_API — mutation token split",
+    labelEn: "BAN_API — mutation token split",
+  },
+  "dashboard-login-rl-e2e": {
+    href: `${REPO_DOCS}/SECURITY_PROFILES.md`,
+    labelTr: "SECURITY_PROFILES — login rate limit",
+    labelEn: "SECURITY_PROFILES — login rate limit",
+  },
+  "hardening-rollback-gate": {
+    href: `${REPO_DOCS}/HARDENING_ROLLBACK.md`,
+    labelTr: "HARDENING_ROLLBACK — geri alma",
+    labelEn: "HARDENING_ROLLBACK — rollback",
+  },
+  "dashboard-jwt-idle-gate": {
+    href: `${REPO_DOCS}/INTERNET_FACING_SECURITY_CHAIN.md`,
+    labelTr: "JWT idle — oturum zaman aşımı",
+    labelEn: "JWT idle — session timeout",
+  },
+  "mtls-cert-expiry": {
+    href: `${REPO_DOCS}/MTLS_ROTATION_RUNBOOK.md`,
+    labelTr: "MTLS_ROTATION — sertifika süresi",
+    labelEn: "MTLS_ROTATION — cert expiry",
+  },
+  "ban-api-mtls": {
+    href: `${REPO_DOCS}/BAN_API_MTLS_DESIGN.md`,
+    labelTr: "BAN_API — mTLS edge lab",
+    labelEn: "BAN_API — mTLS edge lab",
+  },
+  "enterprise-soar-gate": {
+    href: `${REPO_DOCS}/BAN_API_MTLS_DESIGN.md`,
+    labelTr: "BAN_API — Enterprise SOAR operatör",
+    labelEn: "BAN_API — Enterprise SOAR operator",
+  },
   "crowdsec-bouncer": {
     href: `${REPO_DOCS}/CROWDSEC_INTEGRATION.md`,
     labelTr: "CROWDSEC_INTEGRATION",
@@ -100,6 +135,11 @@ const GATE_TEST_DOCS: Record<string, GateDoc> = {
     href: `${REPO_DOCS}/ENTERPRISE_SUPPORT.md`,
     labelTr: "ENTERPRISE_SUPPORT — filo e2e",
     labelEn: "ENTERPRISE_SUPPORT — fleet e2e",
+  },
+  "fleet-offline-gate": {
+    href: `${REPO_DOCS}/FLEET_ONLINE.md`,
+    labelTr: "FLEET_ONLINE — offline gate",
+    labelEn: "FLEET_ONLINE — offline gate",
   },
   "laptop-excellence-gate": {
     href: `${REPO_DOCS}/LAPTOP_OPS.md`,

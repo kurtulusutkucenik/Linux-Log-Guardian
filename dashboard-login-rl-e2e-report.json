@@ -1,0 +1,8 @@
+{
+  "date": "2026-07-08T18:29:18.807061+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "probe_ip": "203.0.113.88",
+  "max_attempts": 10,
+  "script": "scripts/dashboard_login_rate_limit_e2e.sh"
+}

@@ -17,7 +17,11 @@
 | [HOSTING_RUNBOOK_TR.md](HOSTING_RUNBOOK_TR.md) | Hosting operatör |
 | [ENTERPRISE_SUPPORT.md](ENTERPRISE_SUPPORT.md) | Enterprise SLA + checklist · `enterprise_e9_verify.sh` |
 | [ENTERPRISE_ESCALATION.md](ENTERPRISE_ESCALATION.md) | P1–P4 operatör escalation |
-| [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) | Enterprise ban API mTLS + ikinci token tasarımı (spike) |
+| [BAN_API_MTLS_DESIGN.md](BAN_API_MTLS_DESIGN.md) | Enterprise ban API mTLS + ikinci token tasarımı |
+| [MTLS_ROTATION_RUNBOOK.md](MTLS_ROTATION_RUNBOOK.md) | mTLS sertifika rotasyonu (SOAR) |
+| [INTERNET_FACING_SECURITY_CHAIN.md](INTERNET_FACING_SECURITY_CHAIN.md) | VPS/public IP güvenlik zinciri |
+| [HARDENING_ROLLBACK.md](HARDENING_ROLLBACK.md) | Internet-facing sertleştirme geri alma |
+| [K8S_KIND_QUICKSTART.md](K8S_KIND_QUICKSTART.md) | K8s kind smoke (opsiyonel) |
 | [INSTALL_STEP_BY_STEP.md](INSTALL_STEP_BY_STEP.md) | Adım adım kurulum |
 | [PERSONAL_TEST.md](PERSONAL_TEST.md) | Kişisel doğrulama |
 | [BRANDING.md](BRANDING.md) | İsimlendirme (`log-guardian` vs `loganalyzer_*`) |

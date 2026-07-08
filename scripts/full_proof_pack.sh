@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Tam kanit paketi — 1K + 10K + TLS + consult + live + release ZIP
+# Tam kanit paketi — 1K + 10K + TLS + consult + live + release ZIP (~30-60 dk)
 #   sudo bash scripts/nginx_tls_local_setup.sh   # ilk sefer
 #   sudo systemctl restart log-guardian-daemon log-guardian
 #   bash scripts/full_proof_pack.sh
 #   STABILITY=1 bash scripts/full_proof_pack.sh  # + 5 dk soak
+# Laptop 80/80 (hizli): bash scripts/proof_gate_recovery.sh
+# IPv6 ag kesintisi: SKIP_IPV6=1 (varsayilan laptop) — sudo bash scripts/ipv6_ban_e2e.sh
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
