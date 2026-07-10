@@ -22,6 +22,7 @@ export function parsePrometheusGauge(
 
 export type LiveMetricsSnapshot = {
   eps: number;
+  eps_peak: number;
   lines_total: number;
   alerts_total: number;
   bans_success: number;
@@ -75,13 +76,15 @@ export function parseGuardianMetrics(body: string): LiveMetricsSnapshot {
     0;
   return {
     eps: num("loganalyzer_eps"),
+    eps_peak: num("loganalyzer_eps_peak"),
     lines_total: num("loganalyzer_lines_total"),
     alerts_total: num("loganalyzer_alerts_total"),
     bans_success: num("loganalyzer_bans_success"),
     bans_failed: num("loganalyzer_bans_fail"),
     unique_ips: num("loganalyzer_unique_ips"),
     parse_errors: num("loganalyzer_parse_errors_total"),
-    xdp_active: num("loganalyzer_xdp_active"),
+    /* xdp_active 0/1 olmali — bozuk gauge (or. 255) OFF say */
+    xdp_active: num("loganalyzer_xdp_active") === 1 ? 1 : 0,
     ja3_clusters_active: num("loganalyzer_ja3_clusters_active"),
     ja3_cluster_bans_total: num("loganalyzer_ja3_cluster_bans_total"),
     dist_risk_buckets_active: num("loganalyzer_dist_risk_buckets_active"),

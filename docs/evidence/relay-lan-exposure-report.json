@@ -1,11 +1,11 @@
 {
-  "date": "2026-07-10T07:07:20.660796+00:00",
+  "date": "2026-07-10T08:33:01.047004+00:00",
   "pass": true,
   "fail_count": 0,
   "warn_count": 0,
   "lan_ip": "192.168.1.87",
   "docker0_ip": "172.17.0.1",
-  "host_api_bridge_up": false,
+  "host_api_bridge_up": true,
   "checks": [
     {
       "level": "ok",

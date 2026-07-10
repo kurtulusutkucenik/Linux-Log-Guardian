@@ -50,6 +50,7 @@ for f in \
   lineage-incident-report.json \
   fleet-multi-node-report.json \
   relay-lan-exposure-report.json \
+  webhook-eps-smoke-report.json \
   vps-remote-status-report.json \
   vps-soak-report.json \
   vm-fleet-gate-report.json \

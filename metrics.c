@@ -114,6 +114,9 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         "# HELP loganalyzer_eps Saniyedeki olay isleme hizi\n"
         "# TYPE loganalyzer_eps gauge\n"
         "loganalyzer_eps{tenant_id=\"%s\"} %.2f\n"
+        "# HELP loganalyzer_eps_peak Bu oturumdaki tepe EPS (restart sifirlar)\n"
+        "# TYPE loganalyzer_eps_peak gauge\n"
+        "loganalyzer_eps_peak{tenant_id=\"%s\"} %.2f\n"
         "# HELP loganalyzer_http_requests_total HTTP metod sayilari\n"
         "# TYPE loganalyzer_http_requests_total counter\n"
         "loganalyzer_http_requests_total{tenant_id=\"%s\",method=\"GET\"} %ld\n"
@@ -264,6 +267,7 @@ static int metrics_format_prometheus(char *body, size_t cap, const MetricsSnapsh
         g_tenant_label, s->ban_fail,
         g_tenant_label, s->unique_ips,
         g_tenant_label, s->eps,
+        g_tenant_label, s->eps_peak,
         g_tenant_label, s->cnt_get,
         g_tenant_label, s->cnt_post,
         g_tenant_label, s->cnt_put,

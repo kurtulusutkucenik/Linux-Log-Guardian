@@ -54,7 +54,8 @@ async function liveGuardianStats(): Promise<{
         ban_fail: snap.bans_failed,
         parse_err: snap.parse_errors,
         eps: snap.eps,
-        xdp: snap.xdp_active,
+        eps_peak: snap.eps_peak,
+        xdp: snap.xdp_active === 1 ? 1 : 0,
         unique_ips: snap.unique_ips,
         ringbuf: 0,
         alerts: snap.alerts_total,
@@ -298,6 +299,9 @@ export async function GET(req: NextRequest) {
     }
     if ((live.stats.eps ?? 0) > (stats.eps ?? 0)) {
       stats.eps = live.stats.eps ?? 0;
+    }
+    if ((live.stats.eps_peak ?? 0) > (stats.eps_peak ?? 0)) {
+      stats.eps_peak = live.stats.eps_peak ?? 0;
     }
   }
 

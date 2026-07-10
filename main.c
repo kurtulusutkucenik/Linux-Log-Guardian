@@ -14,6 +14,7 @@
 #include <signal.h>
 #include <termios.h>
 #include <time.h>
+#include <math.h>
 #include <ctype.h>
 #include <errno.h>
 #include <stdint.h>
@@ -4115,8 +4116,24 @@ int main(int argc, char *argv[]) {
         if (draw_elapsed >= 0.1) {
             double batch_elapsed = elapsed_sec(&t_batch_start, &t_now);
             long blines = atomic_exchange(&g_batch_lines, 0);
-            if (batch_elapsed > 0)
-                g_stats.eps = (double)blines / batch_elapsed;
+            double inst_eps = 0.0;
+            if (batch_elapsed > 0.001)
+                inst_eps = (double)blines / batch_elapsed;
+            /* Anlik pencere cok kisa — Prometheus/dashboard okumasi icin EWMA */
+            if (inst_eps > 0.0) {
+                if (g_stats.eps <= 0.0)
+                    g_stats.eps = inst_eps;
+                else
+                    g_stats.eps = 0.55 * g_stats.eps + 0.45 * inst_eps;
+            } else if (g_stats.eps > 0.0) {
+                /* ~60s yarim omur — idle iken 0'a aninda dusmesin */
+                double decay = exp(-0.6931471805599453 * draw_elapsed / 60.0);
+                g_stats.eps *= decay;
+                if (g_stats.eps < 0.02)
+                    g_stats.eps = 0.0;
+            }
+            if (g_stats.eps > g_stats.eps_peak)
+                g_stats.eps_peak = g_stats.eps;
 
             if (g_stats.eps_hist_idx < EPS_HISTORY_LEN) {
                 g_stats.eps_history[g_stats.eps_hist_idx++] = g_stats.eps;
@@ -4235,6 +4252,7 @@ int main(int argc, char *argv[]) {
                 msnap.ban_fail     = g_stats.ban_fail;
                 msnap.unique_ips   = (long)g_stats.unique_ips;
                 msnap.eps          = g_stats.eps;
+                msnap.eps_peak     = g_stats.eps_peak;
                 msnap.cnt_get      = g_stats.cnt_get;
                 msnap.cnt_post     = g_stats.cnt_post;
                 msnap.cnt_put      = g_stats.cnt_put;

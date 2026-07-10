@@ -33,6 +33,34 @@ if [[ -x "$ROOT/scripts/taxii_feed_e2e.sh" ]]; then
   LIVE_API=0 bash "$ROOT/scripts/taxii_feed_e2e.sh" 2>/dev/null || true
 fi
 
+# Attack map parity — smoke/sync sonrasi nav=timeline=harita hizasi
+if [[ -x "$ROOT/scripts/attack_map_e2e.sh" ]]; then
+  stale_attack=1
+  if [[ -f "$ROOT/attack-map-report.json" ]]; then
+    stale_attack=$(python3 - "$ROOT/attack-map-report.json" <<'PY' 2>/dev/null || echo 1
+import datetime, json, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+d = json.loads(p.read_text(encoding="utf-8"))
+if d.get("pass") is not True or d.get("nav_parity_ok") is not True:
+    raise SystemExit(1)
+raw = d.get("date") or ""
+if not raw:
+    raise SystemExit(0)
+dt = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+if dt.tzinfo is None:
+    dt = dt.replace(tzinfo=datetime.timezone.utc)
+age_h = (datetime.datetime.now(datetime.timezone.utc) - dt).total_seconds() / 3600.0
+raise SystemExit(1 if age_h > 12 else 0)
+PY
+)
+  fi
+  if [[ "$stale_attack" -ne 0 ]]; then
+    echo "[sync] attack_map bayat/parity — tazeleniyor..."
+    bash "$ROOT/scripts/attack_map_e2e.sh" >/dev/null 2>&1 || true
+  fi
+fi
+
 # Fleet offline gate — bayat JSON 88/89 vitrin kirar (live 3/3 olsa bile)
 if [[ -x "$ROOT/scripts/fleet_offline_gate.sh" ]]; then
   stale_fleet=1
@@ -86,7 +114,7 @@ for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-sta
   threat-intel-sync-report.json threat-intel-prod-report.json taxii-feed-report.json \
   parser-fuzz-report.json ban-policy-audit-report.json ban-profile-e2e-report.json \
   dist-risk-proof-report.json lineage-incident-report.json intel-ban-db-report.json \
-  eps-architecture-report.json \
+  eps-architecture-report.json webhook-eps-smoke-report.json \
   prod-stack-e2e-report.json phase100-fast-gate-report.json vm-sprint-proof.json; do
   copy_if "$f"
 done

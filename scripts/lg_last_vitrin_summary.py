@@ -169,6 +169,15 @@ def build_summary(
             "bridge_up": relay_lan.get("host_api_bridge_up"),
         }
 
+    eps_smoke = _load(root, "webhook-eps-smoke-report.json")
+    if eps_smoke:
+        summary["eps_smoke"] = {
+            "pass": eps_smoke.get("pass") is True,
+            "peak_eps": eps_smoke.get("peak_eps"),
+            "derived_eps": eps_smoke.get("derived_eps"),
+            "lines_delta": eps_smoke.get("lines_delta"),
+        }
+
     cp = summary.get("competitive_proof")
     mo = summary.get("morning_operator")
     all_ok = True
@@ -276,6 +285,14 @@ def print_lines(summary: dict[str, Any], title: str) -> None:
         status = "OK" if relay.get("pass") else "WARN"
         bridge = "on" if relay.get("bridge_up") else "off"
         lines.append(f"  relay_lan: {status} · bridge={bridge} fail={relay.get('fail_count', 0)}")
+    eps = summary.get("eps_smoke")
+    if eps:
+        status = "OK" if eps.get("pass") else "WARN"
+        peak = eps.get("peak_eps")
+        derived = eps.get("derived_eps")
+        ld = eps.get("lines_delta")
+        eps_s = f"peak={peak}" if peak else f"derived={derived}"
+        lines.append(f"  eps_smoke: {status} · lines+{ld} · {eps_s}")
     wl = summary.get("warn_labels")
     if wl:
         lines.append(f"  uyarilar: {', '.join(str(x) for x in wl)}")

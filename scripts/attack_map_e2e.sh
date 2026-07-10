@@ -117,7 +117,8 @@ try:
     soc = json.loads(sys.argv[2])
 except Exception:
     pass
-soc_ban = sum(1 for e in (soc.get('entries') or []) if e.get('kind') == 'ban')
+soc_ban_ips = {e.get('ip') for e in (soc.get('entries') or []) if e.get('kind') == 'ban' and e.get('ip')}
+soc_ban = len(soc_ban_ips)
 print(nav_count, nav_preview, nav_mode, soc_ban)
 " "$bans_count_json" "$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/soc-timeline" 2>/dev/null || echo '{}')")"
 
@@ -127,7 +128,7 @@ if [[ "$data_source" == "live" && "$bans_src" == "ipset" && "$nav_preview" != "T
     fail "nav/ipset parity: nav badge=$nav_count map_ban=$ban_count (demo cache? bash scripts/dashboard_refresh.sh)"
   fi
   if [[ "$soc_ban_count" -gt 0 && "$soc_ban_count" -ne "$nav_count" ]]; then
-    fail "soc/ipset parity: timeline_ban=$soc_ban_count nav=$nav_count"
+    fail "soc/ipset parity: timeline_ban_ips=$soc_ban_count nav=$nav_count (aynı IP çift ban? sync veya Unban)"
   fi
 fi
 

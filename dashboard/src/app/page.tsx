@@ -11,9 +11,8 @@ import { useLanguage } from "@/components/LanguageProvider";
 import { SocKindFilterProvider } from "@/components/SocKindFilterContext";
 import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
-import { FleetOpsPanel } from "@/components/FleetOpsPanel";
-import { VpsPrepPanel } from "@/components/VpsPrepPanel";
-import { E9RunbookPanel } from "@/components/E9RunbookPanel";
+import { OperatorGatesTabs } from "@/components/OperatorGatesTabs";
+import { OpsGatesStrip } from "@/components/OpsGatesStrip";
 
 const FleetCharts = dynamic(
   () => import("@/components/FleetCharts").then((m) => m.FleetCharts),
@@ -307,6 +306,7 @@ export default function FleetDashboard() {
             {t("fleetTitle")}
           </h1>
           <p className="text-sm text-foreground/60 mt-1">{t("fleetSubtitle")}</p>
+          <OpsGatesStrip />
         </div>
 
         <div className="flex items-center gap-3">
@@ -411,9 +411,7 @@ export default function FleetDashboard() {
         </p>
       )}
 
-      <FleetOpsPanel />
-      <VpsPrepPanel />
-      <E9RunbookPanel />
+      <OperatorGatesTabs />
 
       {/* ── Tenant Segmentation Bar ─────────────────────────────────── */}
       {selectedTenant === "*" && tenants.length > 0 && (

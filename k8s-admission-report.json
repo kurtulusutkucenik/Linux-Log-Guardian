@@ -1,8 +1,8 @@
 {
-  "date": "2026-07-10T07:07:20.796501+00:00",
+  "date": "2026-07-10T08:31:13.261593+00:00",
   "pass": true,
-  "mode": "skip",
+  "mode": "docker-standalone",
   "deny_label": "security.log-guardian.io/deny",
-  "reason": "go/kind/docker operator erisilemedi",
+  "reason": null,
   "script": "scripts/k8s_admission_test.sh"
 }

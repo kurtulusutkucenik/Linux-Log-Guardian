@@ -136,11 +136,33 @@ else
   echo "[WARN] telegram_soc raporu bayat/eksik (≤12h) — dashboard_refresh" >&2
 fi
 
+eps_smoke_ok=false
+eps_smoke_peak="0"
+eps_smoke_lines="0"
+if report_fresh_pass "$ROOT/webhook-eps-smoke-report.json" 24; then
+  read -r eps_smoke_ok eps_smoke_peak eps_smoke_lines <<<"$(python3 -c "
+import json
+d=json.load(open('$ROOT/webhook-eps-smoke-report.json'))
+peak=float(d.get('peak_eps') or 0)
+lines=int(d.get('lines_delta') or 0)
+derived=float(d.get('derived_eps') or 0)
+ok=d.get('pass') is True and lines >= 1 and (peak > 0 or derived > 0.5)
+print('true' if ok else 'false', peak, lines)
+")"
+  if [[ "$eps_smoke_ok" == "true" ]]; then
+    echo "[OK] eps_smoke (peak=${eps_smoke_peak}, lines+${eps_smoke_lines}, ≤24h)"
+  else
+    echo "[WARN] eps_smoke raporu gecersiz — sudo bash scripts/webhook_nginx_eps_smoke.sh" >&2
+  fi
+else
+  echo "[WARN] eps_smoke raporu bayat/eksik (≤24h) — sudo bash scripts/webhook_nginx_eps_smoke.sh" >&2
+fi
+
 # Gate raporlari + proof meta hizala — competitive_proof okumadan once
 bash "$ROOT/scripts/proof_meta_gates_refresh.sh" >/dev/null 2>&1 || true
 python3 "$ROOT/scripts/competitive_proof_build.py" >/dev/null 2>&1 || true
 
-gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$core_ok" "$core_refreshed" "$ship_ok" "$dash_ok" "$attack_ok" "$soc_ok" <<'PY' | tail -1
+gate_ok_flag=$(python3 - "$REPORT" "$ROOT" "$core_ok" "$core_refreshed" "$ship_ok" "$dash_ok" "$attack_ok" "$soc_ok" "$eps_smoke_ok" "$eps_smoke_peak" "$eps_smoke_lines" <<'PY' | tail -1
 import json, datetime, os, sys
 from pathlib import Path
 
@@ -151,6 +173,9 @@ ship_ok = sys.argv[5] == "true"
 dash_ok = sys.argv[6] == "true"
 attack_ok = sys.argv[7] == "true"
 soc_ok = sys.argv[8] == "true"
+eps_smoke_ok = sys.argv[9] == "true"
+eps_smoke_peak = float(sys.argv[10] or 0)
+eps_smoke_lines = int(sys.argv[11] or 0)
 
 proof_n = proof_pass = 0
 cp_pass = False
@@ -195,6 +220,9 @@ out = {
     "dashboard_ok": dash_ok,
     "attack_map_parity_ok": attack_ok,
     "telegram_soc_ok": soc_ok,
+    "eps_smoke_ok": eps_smoke_ok,
+    "eps_smoke_peak": eps_smoke_peak if eps_smoke_peak > 0 else None,
+    "eps_smoke_lines_delta": eps_smoke_lines if eps_smoke_lines > 0 else None,
     "proof_tests": proof_n,
     "proof_pass": proof_pass,
     "dash_url": "https://localhost:8443/tests",

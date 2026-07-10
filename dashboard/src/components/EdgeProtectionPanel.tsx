@@ -56,6 +56,8 @@ type EdgeStatus = {
     edge_checklist?: boolean;
     morning_operator?: boolean;
     docs_consistency?: boolean;
+    eps_smoke?: boolean;
+    eps_smoke_peak?: number | null;
   } | null;
   relay_lan?: {
     pass?: boolean;
@@ -64,6 +66,13 @@ type EdgeStatus = {
     docker0_ip?: string | null;
     at?: string | null;
     check_cmd?: string;
+  } | null;
+  eps_smoke?: {
+    pass?: boolean;
+    peak_eps?: number | null;
+    lines_delta?: number | null;
+    at?: string | null;
+    run_cmd?: string;
   } | null;
 };
 
@@ -188,7 +197,7 @@ export function EdgeProtectionPanel() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
         <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatIpc")}</p>
           <p className={`text-sm font-semibold ${statClass(data?.ipc === "ok")}`}>
@@ -221,6 +230,21 @@ export function EdgeProtectionPanel() {
             {data?.relay_lan?.pass ? "OK" : data?.relay_lan?.pass === false ? "FAIL" : "—"}
           </p>
         </div>
+        <a
+          href="#live-ops-metrics"
+          className="rounded-lg border border-white/10 bg-black/20 px-3 py-2 hover:border-cyan-500/30 transition-colors"
+        >
+          <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatEpsSmoke")}</p>
+          <p className={`text-sm font-semibold ${statClass(data?.eps_smoke?.pass)}`}>
+            {data?.eps_smoke?.pass
+              ? (data.eps_smoke.peak_eps ?? 0) > 0
+                ? data.eps_smoke.peak_eps?.toFixed(1)
+                : "OK"
+              : data?.eps_smoke
+                ? "—"
+                : "—"}
+          </p>
+        </a>
       </div>
 
       {(data?.edge_checklist || data?.enterprise_e9) && (

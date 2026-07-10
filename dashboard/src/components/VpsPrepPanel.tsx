@@ -92,6 +92,12 @@ export function VpsPrepPanel() {
           {t(handsOff ? "vpsPrepTitleLive" : "vpsPrepTitle")}
         </h3>
         <Link
+          href="/tests#test-vps-xdp-kernel"
+          className="text-xs text-sky-300/80 hover:text-sky-200 underline-offset-2 hover:underline"
+        >
+          {t("vpsPrepTestsLink")}
+        </Link>
+        <Link
           href="https://github.com/ceniklinux/log-guardian/blob/main/docs/VPS_SETUP.md"
           className="text-xs text-sky-300/80 hover:text-sky-200 underline-offset-2 hover:underline"
           target="_blank"

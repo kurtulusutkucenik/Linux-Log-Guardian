@@ -262,6 +262,41 @@ export async function GET(req: NextRequest) {
         }
       : null;
 
+  const morningOp = reports.morningOperatorGate as {
+    pass?: boolean;
+    proof_pass?: number;
+    proof_tests?: number;
+    proof_freshness_ok?: boolean;
+    dash_url?: string;
+  } | null;
+  const morningOperatorBanner =
+    morningOp?.pass === true
+      ? {
+          pass: true,
+          proof_pass: morningOp.proof_pass ?? null,
+          proof_tests: morningOp.proof_tests ?? null,
+          proof_freshness_ok: morningOp.proof_freshness_ok === true,
+        }
+      : null;
+
+  const epsSmokeRaw = (await readJson("webhook-eps-smoke-report.json")) as {
+    pass?: boolean;
+    lines_delta?: number;
+    peak_eps?: number;
+    derived_eps?: number;
+  } | null;
+  const epsSmokeBanner =
+    epsSmokeRaw?.pass === true &&
+    (epsSmokeRaw.lines_delta ?? 0) >= 1 &&
+    ((epsSmokeRaw.peak_eps ?? 0) > 0 || (epsSmokeRaw.derived_eps ?? 0) > 0.5)
+      ? {
+          pass: true,
+          lines_delta: epsSmokeRaw.lines_delta ?? null,
+          peak_eps: epsSmokeRaw.peak_eps ?? null,
+          derived_eps: epsSmokeRaw.derived_eps ?? null,
+        }
+      : null;
+
   return NextResponse.json({
     available: tests.length > 0,
     tests,
@@ -270,6 +305,8 @@ export async function GET(req: NextRequest) {
     proof_test_ids: proofTestIds,
     parity_ok: proofExpected == null || tests.length === proofExpected,
     vps_soak_remote: vpsSoakRemote,
+    morning_operator_banner: morningOperatorBanner,
+    eps_smoke_banner: epsSmokeBanner,
     hint:
       tests.length === 0
         ? "Run: STABILITY=1 bash scripts/full_proof_pack.sh"

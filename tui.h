@@ -93,6 +93,7 @@ typedef struct {
     long   cnt_2xx, cnt_3xx, cnt_4xx, cnt_5xx;
 
     double eps;
+    double eps_peak;   /* Bu oturumdaki tepe anlik EPS (restart sifirlar) */
     size_t unique_ips;
 
     Alert    last_alerts[8];

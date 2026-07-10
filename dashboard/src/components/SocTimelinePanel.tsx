@@ -163,7 +163,12 @@ export function SocTimelinePanel() {
       waf: 0,
       ack: 0,
     };
-    for (const entry of entries) counts[entry.kind]++;
+    const banIps = new Set<string>();
+    for (const entry of entries) {
+      if (entry.kind === "ban" && entry.ip) banIps.add(entry.ip);
+      else counts[entry.kind]++;
+    }
+    counts.ban += banIps.size;
     return counts;
   }, [entries]);
 

@@ -21,12 +21,23 @@ type E9Status = {
   doc?: string;
 };
 
-const CHECK_LABEL_KEYS: Record<string, "e9CheckCompetitiveProof" | "e9CheckEnterpriseEscalation" | "e9CheckEdgeChecklist" | "e9CheckRelayLan" | "e9CheckMorningOperator" | "e9CheckDocsConsistency" | "e9CheckVpsPrep" | "e9CheckVpsRemote"> = {
+const CHECK_TEST_HASH: Partial<Record<string, string>> = {
+  competitive_proof: "",
+  enterprise_escalation: "test-enterprise-escalation-gate",
+  edge_checklist: "test-edge-protection-gate",
+  morning_operator: "test-morning-operator-gate",
+  eps_smoke: "#live-ops-metrics",
+  vps_prep: "test-vps-xdp-kernel",
+  vps_remote: "test-vps-xdp-kernel",
+};
+
+const CHECK_LABEL_KEYS: Record<string, "e9CheckCompetitiveProof" | "e9CheckEnterpriseEscalation" | "e9CheckEdgeChecklist" | "e9CheckRelayLan" | "e9CheckMorningOperator" | "e9CheckEpsSmoke" | "e9CheckDocsConsistency" | "e9CheckVpsPrep" | "e9CheckVpsRemote"> = {
   competitive_proof: "e9CheckCompetitiveProof",
   enterprise_escalation: "e9CheckEnterpriseEscalation",
   edge_checklist: "e9CheckEdgeChecklist",
   relay_lan_exposure: "e9CheckRelayLan",
   morning_operator: "e9CheckMorningOperator",
+  eps_smoke: "e9CheckEpsSmoke",
   docs_consistency: "e9CheckDocsConsistency",
   vps_prep: "e9CheckVpsPrep",
   vps_remote: "e9CheckVpsRemote",
@@ -108,11 +119,9 @@ export function E9RunbookPanel() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 mb-3">
           {checks.map((check) => {
             const labelKey = CHECK_LABEL_KEYS[check.id];
-            return (
-              <div
-                key={check.id}
-                className="flex items-center justify-between gap-2 rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-xs"
-              >
+            const testHash = CHECK_TEST_HASH[check.id];
+            const row = (
+              <div className="flex items-center justify-between gap-2 rounded-lg border border-white/8 bg-black/20 px-2.5 py-1.5 text-xs">
                 <span className="text-white/60 truncate">
                   {labelKey ? t(labelKey) : check.id}
                 </span>
@@ -127,6 +136,19 @@ export function E9RunbookPanel() {
                   )}
                 </span>
               </div>
+            );
+            if (testHash === undefined) {
+              return <div key={check.id}>{row}</div>;
+            }
+            const href = testHash.startsWith("#")
+              ? testHash
+              : testHash
+                ? `/tests#${testHash}`
+                : "/tests";
+            return (
+              <Link key={check.id} href={href} className="block hover:opacity-90 transition-opacity">
+                {row}
+              </Link>
             );
           })}
         </div>

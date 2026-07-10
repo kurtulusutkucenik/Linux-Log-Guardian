@@ -1,9 +1,9 @@
 {
-  "date": "2026-07-10T07:01:34.407177+00:00",
+  "date": "2026-07-10T09:30:21.467864+00:00",
   "pass": true,
   "reason": "",
-  "online": 3,
-  "total": 3,
+  "online": 4,
+  "total": 4,
   "mode": "laptop-simulated",
   "max_age_min": 15.0,
   "script": "scripts/fleet_offline_gate.sh"

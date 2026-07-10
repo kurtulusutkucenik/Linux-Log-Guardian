@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-10T06:48:15.914625+00:00",
+  "date": "2026-07-10T09:30:21.416231+00:00",
   "pass": true,
   "mode": "laptop-simulated",
   "vm_fallback": false,
@@ -7,10 +7,11 @@
   "agents": [
     "node-kurtulus-01",
     "node-vm-02",
-    "fleet-sign-e2e-01"
+    "fleet-sign-e2e-01",
+    "node-vps-01"
   ],
-  "agent_count": 3,
-  "online_count": 3,
+  "agent_count": 4,
+  "online_count": 4,
   "dispatch_target": "node-vm-02",
   "test_ip": "203.0.113.250",
   "command_hmac": true,

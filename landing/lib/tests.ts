@@ -364,15 +364,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Attack map — geo marker + canli ban",
     "titleEn": "Attack map — geo markers + live bans",
-    "verdict": "1 marker, kaynak=live; ack=1 ban=0; nav=4 parity=OK.",
-    "verdictEn": "1 markers, source=live; ack=1 ban=0; nav=4 parity=OK.",
+    "verdict": "2 marker, kaynak=live; ack=1 ban=1; nav=1 parity=OK.",
+    "verdictEn": "2 markers, source=live; ack=1 ban=1; nav=1 parity=OK.",
     "group": "proof",
     "purpose": "Ana sayfa kure haritasinda /api/attack-geo ile ban IP konumlarini kanitlar.",
     "purposeEn": "Proves banned IP locations on the home globe via /api/attack-geo.",
     "metrics": [
       {
         "label": "markers",
-        "value": "1"
+        "value": "2"
       },
       {
         "label": "ack",
@@ -380,11 +380,11 @@ export const TESTS: TestEntry[] = [
       },
       {
         "label": "ban",
-        "value": "0"
+        "value": "1"
       },
       {
         "label": "nav",
-        "value": "4"
+        "value": "1"
       },
       {
         "label": "bans",
@@ -942,19 +942,19 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Fleet multi-node — 2+ agent + dispatch",
     "titleEn": "Fleet multi-node — 2+ agents + targeted dispatch",
-    "verdict": "3 agent, 3 online; dispatch→node-vm-02; HMAC=OK.",
-    "verdictEn": "3 agents, 3 online; dispatch→node-vm-02; HMAC=OK.",
+    "verdict": "4 agent, 4 online; dispatch→node-vm-02; HMAC=OK.",
+    "verdictEn": "4 agents, 4 online; dispatch→node-vm-02; HMAC=OK.",
     "group": "proof",
     "purpose": "2+ telemetry agent ve /fleet/dispatch hedefli komut yolunu kanıtlar.",
     "purposeEn": "Proves 2+ telemetry agents and targeted /fleet/dispatch routing.",
     "metrics": [
       {
         "label": "agents",
-        "value": "3"
+        "value": "4"
       },
       {
         "label": "online",
-        "value": "3"
+        "value": "4"
       },
       {
         "label": "target",
@@ -975,19 +975,19 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Fleet offline gate — heartbeat rapor tazeligi",
     "titleEn": "Fleet offline gate — heartbeat report freshness",
-    "verdict": "3/3 online; mode=laptop-simulated; max_age=15.0m.",
-    "verdictEn": "3/3 online; mode=laptop-simulated; max_age=15.0m.",
+    "verdict": "4/4 online; mode=laptop-simulated; max_age=15.0m.",
+    "verdictEn": "4/4 online; mode=laptop-simulated; max_age=15.0m.",
     "group": "proof",
     "purpose": "Filo agent raporunun bayat olmadigini ve en az bir agent online oldugunu dogrular.",
     "purposeEn": "Verifies fleet agent report freshness and at least one agent online.",
     "metrics": [
       {
         "label": "online",
-        "value": "3"
+        "value": "4"
       },
       {
         "label": "total",
-        "value": "3"
+        "value": "4"
       },
       {
         "label": "mode",
@@ -1163,15 +1163,15 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "INTEL_BAN_DB — ban_events boyut + TTL",
     "titleEn": "INTEL_BAN_DB — ban_events size + TTL",
-    "verdict": "ban_events 1290; legacy 0; stale 0; TTL 7g.",
-    "verdictEn": "ban_events 1290; legacy 0; stale 0; TTL 7d.",
+    "verdict": "ban_events 1377; legacy 0; stale 0; TTL 7g.",
+    "verdictEn": "ban_events 1377; legacy 0; stale 0; TTL 7d.",
     "group": "proof",
     "purpose": "SQLite ban_events sisme kontrolu — ban mantigina dokunmaz.",
     "purposeEn": "SQLite ban_events bloat check — does not change ban logic.",
     "metrics": [
       {
         "label": "rows",
-        "value": "1290"
+        "value": "1377"
       },
       {
         "label": "legacy",
@@ -1538,7 +1538,7 @@ export const TESTS: TestEntry[] = [
       }
     ],
     "script": "scripts/mtls_cert_expiry_check.sh",
-    "date": "2026-07-09"
+    "date": "2026-07-10"
   },
   {
     "id": "nginx-consult",
@@ -1846,19 +1846,19 @@ export const TESTS: TestEntry[] = [
     "statusLabelEn": "PASS",
     "title": "Telegram SOC — timeline + map + webhook",
     "titleEn": "Telegram SOC — timeline + map + webhook",
-    "verdict": "SOC 11 (ack 8); map 1; bans ack 1; webhook undo.",
-    "verdictEn": "SOC 11 (ack 8); map 1; bans ack 1; webhook undo.",
+    "verdict": "SOC 19 (ack 8); map 2; bans ack 1; webhook undo.",
+    "verdictEn": "SOC 19 (ack 8); map 2; bans ack 1; webhook undo.",
     "group": "proof",
     "purpose": "Uc operator yuzeyinin ayni anda canli kanit urettigini dogrular.",
     "purposeEn": "Proves three operator surfaces emit live evidence together.",
     "metrics": [
       {
         "label": "soc",
-        "value": "11"
+        "value": "19"
       },
       {
         "label": "map",
-        "value": "1"
+        "value": "2"
       },
       {
         "label": "bans",

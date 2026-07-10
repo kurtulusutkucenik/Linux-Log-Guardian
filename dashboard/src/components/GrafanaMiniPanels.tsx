@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type MutableRefObject } from "react";
 import {
   Area,
   AreaChart,
@@ -234,6 +234,7 @@ function MiniStat({
   color,
   alert,
   valueClassName,
+  subtitle,
 }: {
   title: string;
   value: string;
@@ -241,6 +242,7 @@ function MiniStat({
   color: string;
   alert?: boolean;
   valueClassName?: string;
+  subtitle?: string;
 }) {
   return (
     <div
@@ -256,6 +258,9 @@ function MiniStat({
       >
         {value}
       </p>
+      {subtitle && (
+        <p className="text-[9px] text-cyan-300/55 font-mono truncate">{subtitle}</p>
+      )}
       {spark.length > 1 && (
         <div className="h-9 mt-auto -mx-1 min-w-0 w-full">
           <ResponsiveContainer width="100%" minWidth={0} height="100%">
@@ -329,6 +334,45 @@ function MiniTs({
   );
 }
 
+type EpsSmokeInfo = {
+  pass?: boolean;
+  peak_eps?: number | null;
+  derived_eps?: number | null;
+  lines_delta?: number | null;
+};
+
+function mergeEpsDisplay(
+  stats: Record<string, number>,
+  smoke: EpsSmokeInfo | null | undefined,
+  prevLines: { lines: number; at: number } | null,
+  now: number,
+  peakEpsRef: MutableRefObject<number>,
+): Record<string, number> {
+  const lines = stats.lines ?? 0;
+  let derivedEps = 0;
+  if (prevLines) {
+    const dt = (now - prevLines.at) / 1000;
+    const dl = lines - prevLines.lines;
+    if (dt >= 2 && dl > 0) derivedEps = dl / dt;
+  }
+  const gaugeEps = stats.eps ?? 0;
+  const metricPeak = Number(stats.eps_peak) || 0;
+  const smokePeak = smoke?.peak_eps ?? 0;
+  const smokeDerived = smoke?.derived_eps ?? 0;
+  const sessionPeak = Math.max(
+    peakEpsRef.current,
+    metricPeak,
+    smokePeak,
+    smokeDerived,
+    gaugeEps,
+    derivedEps,
+  );
+  peakEpsRef.current = sessionPeak;
+  const displayEps =
+    gaugeEps >= 0.05 ? Math.max(gaugeEps, derivedEps) : sessionPeak;
+  return { ...stats, eps_live: gaugeEps, eps: displayEps };
+}
+
 function fmtStat(id: string, v: number): string {
   if (id === "eps") return v.toFixed(1);
   if (id === "xdp" || id === "tg_route") return v >= 1 ? "ON" : "OFF";
@@ -359,20 +403,34 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
   const { t } = useLanguage();
   const { totalCount: navBanCount } = useBannedIps();
   const [data, setData] = useState<Payload | null>(null);
+  const [epsSmoke, setEpsSmoke] = useState<EpsSmokeInfo | null>(null);
   const [rangeSec, setRangeSec] = useState(3600);
   const [loading, setLoading] = useState(false);
   const reqGen = useRef(0);
   const liveHistRef = useRef<LiveHist>(emptyLiveHist());
+  const prevLinesRef = useRef<{ lines: number; at: number } | null>(null);
+  const peakEpsRef = useRef(0);
+  const epsSmokeRef = useRef(epsSmoke);
+  epsSmokeRef.current = epsSmoke;
 
   const fetchMetrics = useCallback(
     async (range: number) => {
       const gen = ++reqGen.current;
       setLoading(true);
       try {
-        const res = await fetch(
-          `/api/metrics/grafana?tenant=${encodeURIComponent(tenant)}&range=${range}&_t=${Date.now()}`,
-          { credentials: "same-origin", cache: "no-store" },
-        );
+        const [res, smokeRes] = await Promise.all([
+          fetch(
+            `/api/metrics/grafana?tenant=${encodeURIComponent(tenant)}&range=${range}&_t=${Date.now()}`,
+            { credentials: "same-origin", cache: "no-store" },
+          ),
+          fetch("/api/eps-smoke-status", { cache: "no-store" }),
+        ]);
+        let smokeData: EpsSmokeInfo | null = epsSmokeRef.current;
+        if (smokeRes.ok) {
+          smokeData = (await smokeRes.json()) as EpsSmokeInfo;
+          epsSmokeRef.current = smokeData;
+          setEpsSmoke(smokeData);
+        }
         const body = (await res.json()) as Payload;
         if (gen !== reqGen.current) return;
         if (!res.ok) {
@@ -387,6 +445,19 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
           return;
         }
         const merged = { ...body, rangeSec: body.rangeSec ?? range };
+        if (merged.stats) {
+          const lines = merged.stats.lines ?? 0;
+          const now = merged.ts ?? Date.now();
+          const prevLines = prevLinesRef.current;
+          merged.stats = mergeEpsDisplay(
+            merged.stats,
+            smokeData,
+            prevLines,
+            now,
+            peakEpsRef,
+          );
+          prevLinesRef.current = { lines, at: now };
+        }
         if (needsLiveHistory(merged) && merged.stats) {
           const soc = merged.socStats ?? {};
           liveHistRef.current = appendLiveHist(liveHistRef.current, {
@@ -416,6 +487,8 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
 
   useEffect(() => {
     liveHistRef.current = emptyLiveHist();
+    prevLinesRef.current = null;
+    peakEpsRef.current = 0;
     void fetchMetrics(rangeSec);
   }, [rangeSec, tenant, fetchMetrics]);
 
@@ -445,7 +518,10 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
     : null;
 
   return (
-    <section className="glass-panel p-5 md:p-6 border border-primary/10 bg-gradient-to-br from-primary/5 via-transparent to-transparent flex flex-col gap-4">
+    <section
+      id="live-ops-metrics"
+      className="glass-panel p-5 md:p-6 border border-primary/10 bg-gradient-to-br from-primary/5 via-transparent to-transparent flex flex-col gap-4 scroll-mt-24"
+    >
       <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-4">
         <div>
           <h2 className="text-lg font-semibold flex items-center gap-2 text-white">
@@ -502,6 +578,17 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
         </div>
       </div>
 
+      {epsSmoke?.pass && (
+        <p className="text-xs text-cyan-200/90 bg-cyan-500/10 border border-cyan-500/25 rounded-lg px-3 py-2 font-mono">
+          {t("grafanaEpsSmokeBanner")}
+          {(epsSmoke.peak_eps ?? 0) > 0
+            ? ` · peak=${epsSmoke.peak_eps?.toFixed(2)}`
+            : epsSmoke.derived_eps != null
+              ? ` · derived=${epsSmoke.derived_eps?.toFixed(2)}`
+              : ""}
+          {epsSmoke.lines_delta != null ? ` · lines+${epsSmoke.lines_delta}` : ""}
+        </p>
+      )}
       {!data?.reachable && !loading && (
         <p className="text-xs text-amber-300/80 bg-amber-500/10 border border-amber-500/20 rounded-lg px-3 py-2">
           {data?.hint || t("grafanaMiniOffline")}
@@ -517,24 +604,52 @@ export function GrafanaMiniPanels({ tenant = "default" }: { tenant?: string }) {
         (stats.lines ?? 0) === 0 &&
         (stats.ban_ok ?? 0) === 0 &&
         (stats.alerts ?? 0) === 0 && (
-          <p className="text-xs text-amber-300/85 bg-amber-500/10 border border-amber-500/25 rounded-lg px-3 py-2 font-mono">
-            {navBanCount > 0
-              ? t("grafanaMiniZeroHintWithBans").replace("{n}", String(navBanCount))
-              : t("grafanaMiniZeroHint")}
+          <p
+            className={`text-xs font-mono rounded-lg px-3 py-2 border ${
+              epsSmoke?.pass
+                ? "text-cyan-200/85 bg-cyan-500/10 border-cyan-500/25"
+                : "text-amber-300/85 bg-amber-500/10 border-amber-500/25"
+            }`}
+          >
+            {epsSmoke?.pass
+              ? t("grafanaMiniZeroHintWithSmoke")
+                  .replace("{n}", String(navBanCount))
+                  .replace("{peak}", (epsSmoke.peak_eps ?? 0).toFixed(2))
+              : navBanCount > 0
+                ? t("grafanaMiniZeroHintWithBans").replace("{n}", String(navBanCount))
+                : t("grafanaMiniZeroHint")}
           </p>
         )}
 
       {/* Core stats — Grafana row 1 */}
       <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-2">
-        {CORE_STATS.map(({ id, labelKey }) => (
-          <MiniStat
-            key={id}
-            title={t(labelKey)}
-            value={fmtStat(id, stats[id] ?? 0)}
-            spark={sparks[id] ?? []}
-            color={STAT_COLORS[id] ?? "#0891b2"}
-          />
-        ))}
+        {CORE_STATS.map(({ id, labelKey }) => {
+          const epsLive = Number(stats.eps_live ?? 0);
+          const epsDisplay = Number(stats.eps ?? 0);
+          const epsValue = id === "eps" && epsLive >= 0.05 ? epsLive : stats[id] ?? 0;
+          const epsTitle =
+            id === "eps"
+              ? epsLive >= 0.05
+                ? t("grafanaStatEps")
+                : epsDisplay >= 0.05
+                  ? t("grafanaStatEpsPeak")
+                  : t(labelKey)
+              : t(labelKey);
+          const epsSubtitle =
+            id === "eps" && epsLive >= 0.05 && epsDisplay > epsLive + 0.5
+              ? t("grafanaStatEpsPeakHint").replace("{peak}", epsDisplay.toFixed(1))
+              : undefined;
+          return (
+            <MiniStat
+              key={id}
+              title={epsTitle}
+              value={fmtStat(id, epsValue)}
+              subtitle={epsSubtitle}
+              spark={sparks[id] ?? []}
+              color={STAT_COLORS[id] ?? "#0891b2"}
+            />
+          );
+        })}
       </div>
 
       {/* Time series — EPS + HTTP */}

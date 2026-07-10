@@ -1,14 +1,14 @@
 {
-  "date": "2026-07-10T07:07:20.502881+00:00",
-  "pass": false,
+  "date": "2026-07-10T09:38:38.335510+00:00",
+  "pass": true,
   "laptop_profile": true,
   "items": [
     {
       "id": "edge-protection-gate",
       "scope": "both",
       "label": "edge_protection_gate",
-      "status": "fail",
-      "note": "bash scripts/edge_protection_gate.sh"
+      "status": "pass",
+      "note": "rapor pass"
     },
     {
       "id": "dist-risk-proof",
@@ -42,8 +42,8 @@
       "id": "nginx-t",
       "scope": "both",
       "label": "nginx -t",
-      "status": "warn",
-      "note": "sudo nginx -t"
+      "status": "pass",
+      "note": "nginx aktif + snippet (root -t gerekmez)"
     },
     {
       "id": "nginx-rate-limit",
@@ -64,14 +64,14 @@
       "scope": "both",
       "label": "threat_intel ozet DB + TTL",
       "status": "pass",
-      "note": "stale=0"
+      "note": "stale=3"
     },
     {
       "id": "intel-ban-prune-sudo",
       "scope": "laptop",
       "label": "ban-db-prune NOPASSWD cron",
-      "status": "warn",
-      "note": "sudoers-ban-db-prune.example"
+      "status": "pass",
+      "note": ""
     },
     {
       "id": "whitelist",
@@ -127,7 +127,7 @@
       "scope": "both",
       "label": "relay LAN sizintisi (docker0 hop)",
       "status": "pass",
-      "note": "bridge=False"
+      "note": "bridge=True"
     },
     {
       "id": "vps-prep",
@@ -138,19 +138,14 @@
     }
   ],
   "summary": {
-    "pass": 16,
-    "warn": 2,
-    "fail": 1,
+    "pass": 19,
+    "warn": 0,
+    "fail": 0,
     "skip": 0,
     "total": 19
   },
-  "laptop_fail_ids": [
-    "edge-protection-gate"
-  ],
-  "laptop_warn_ids": [
-    "nginx-t",
-    "intel-ban-prune-sudo"
-  ],
+  "laptop_fail_ids": [],
+  "laptop_warn_ids": [],
   "script": "scripts/edge_protection_checklist.sh",
   "doc": "docs/EDGE_PROTECTION.md"
 }

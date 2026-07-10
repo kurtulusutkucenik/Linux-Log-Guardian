@@ -33,7 +33,7 @@ async function fetchLiveMetrics() {
 }
 
 export async function GET() {
-  const [gate, checklist, e9, status, intelReport, live, relayLan] = await Promise.all([
+  const [gate, checklist, e9, status, intelReport, live, relayLan, epsSmoke] = await Promise.all([
     readJson<{
       pass?: boolean;
       ipc?: string;
@@ -68,6 +68,8 @@ export async function GET() {
       edge_checklist?: boolean;
       morning_operator?: boolean;
       docs_consistency?: boolean;
+      eps_smoke?: boolean;
+      eps_smoke_peak?: number | null;
     }>("enterprise-e9-verify-report.json"),
     readJson<{
       ipc?: string;
@@ -93,6 +95,13 @@ export async function GET() {
       docker0_ip?: string;
       date?: string;
     }>("relay-lan-exposure-report.json"),
+    readJson<{
+      pass?: boolean;
+      peak_eps?: number;
+      derived_eps?: number;
+      lines_delta?: number;
+      date?: string;
+    }>("webhook-eps-smoke-report.json"),
   ]);
 
   const ipc = gate?.ipc ?? status?.ipc ?? "?";
@@ -181,6 +190,8 @@ export async function GET() {
           edge_checklist: e9.edge_checklist === true,
           morning_operator: e9.morning_operator === true,
           docs_consistency: e9.docs_consistency === true,
+          eps_smoke: e9.eps_smoke === true,
+          eps_smoke_peak: e9.eps_smoke_peak ?? null,
         }
       : null,
     relay_lan: relayLan
@@ -193,5 +204,22 @@ export async function GET() {
           check_cmd: "bash scripts/relay_lan_exposure_check.sh",
         }
       : null,
+    eps_smoke: (() => {
+      if (!epsSmoke) return null;
+      const peak = epsSmoke.peak_eps ?? 0;
+      const derived = epsSmoke.derived_eps ?? 0;
+      const lines = epsSmoke.lines_delta ?? 0;
+      const pass =
+        epsSmoke.pass === true &&
+        lines >= 1 &&
+        (peak > 0 || derived > 0.5);
+      return {
+        pass,
+        peak_eps: peak > 0 ? peak : null,
+        lines_delta: lines > 0 ? lines : null,
+        at: epsSmoke.date ?? null,
+        run_cmd: "sudo bash scripts/webhook_nginx_eps_smoke.sh",
+      };
+    })(),
   });
 }

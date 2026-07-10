@@ -40,6 +40,35 @@ else
   warn "morning_operator_gate"
 fi
 
+# EPS smoke — bilgilendirici (E9 fail saymaz; operatör kanıtı)
+if [[ -f "$ROOT/webhook-eps-smoke-report.json" ]]; then
+  if python3 -c "
+import json, datetime
+from pathlib import Path
+p = Path('$ROOT/webhook-eps-smoke-report.json')
+d = json.loads(p.read_text(encoding='utf-8'))
+peak = float(d.get('peak_eps') or 0)
+lines = int(d.get('lines_delta') or 0)
+derived = float(d.get('derived_eps') or 0)
+ok = d.get('pass') is True and lines >= 1 and (peak > 0 or derived > 0.5)
+raw = d.get('date') or ''
+age_ok = True
+if raw:
+    dt = datetime.datetime.fromisoformat(raw.replace('Z', '+00:00'))
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=datetime.timezone.utc)
+    age_ok = (datetime.datetime.now(datetime.timezone.utc) - dt).total_seconds() / 3600.0 <= 24
+raise SystemExit(0 if ok and age_ok else 1)
+" 2>/dev/null; then
+    peak=$(python3 -c "import json; print(json.load(open('$ROOT/webhook-eps-smoke-report.json')).get('peak_eps',0))")
+    note "eps_smoke (peak=${peak}, ≤24h) — bilgilendirici"
+  else
+    echo "[INFO] eps_smoke — bayat/eksik (opsiyonel): sudo bash scripts/webhook_nginx_eps_smoke.sh"
+  fi
+else
+  echo "[INFO] eps_smoke — rapor yok (opsiyonel): sudo bash scripts/webhook_nginx_eps_smoke.sh"
+fi
+
 if bash "$ROOT/scripts/docs_consistency_gate.sh" >/dev/null 2>&1; then
   note "docs_consistency_gate"
 else
@@ -93,6 +122,16 @@ tests = proof.get("validationTests") or []
 pn = sum(1 for t in tests if t.get("status") == "pass")
 n = len(tests)
 
+eps = load_json("webhook-eps-smoke-report.json")
+eps_peak = float(eps.get("peak_eps") or 0)
+eps_lines = int(eps.get("lines_delta") or 0)
+eps_derived = float(eps.get("derived_eps") or 0)
+eps_ok = (
+    eps.get("pass") is True
+    and eps_lines >= 1
+    and (eps_peak > 0 or eps_derived > 0.5)
+)
+
 out = {
     "date": datetime.datetime.now(datetime.timezone.utc).isoformat(),
     "pass": fail_n == 0,
@@ -102,6 +141,8 @@ out = {
     "edge_checklist": load_json("edge-protection-checklist-report.json").get("pass"),
     "relay_lan_exposure": load_json("relay-lan-exposure-report.json").get("pass"),
     "morning_operator": load_json("morning-operator-gate-report.json").get("pass"),
+    "eps_smoke": eps_ok,
+    "eps_smoke_peak": eps_peak if eps_peak > 0 else None,
     "docs_consistency": load_json("docs-consistency-gate-report.json").get("pass"),
     "vps_prep": load_json("vps-prep-gate-report.json").get("pass"),
     "vps_remote": load_json("vps-remote-status-report.json").get("reachable"),

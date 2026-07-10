@@ -15,6 +15,8 @@ type E9Report = {
   edge_checklist?: boolean;
   relay_lan_exposure?: boolean;
   morning_operator?: boolean;
+  eps_smoke?: boolean;
+  eps_smoke_peak?: number | null;
   docs_consistency?: boolean;
   vps_prep?: boolean;
   vps_remote?: boolean;
@@ -59,6 +61,16 @@ export async function GET() {
     { id: "edge_checklist", ok: report.edge_checklist === true },
     { id: "relay_lan_exposure", ok: report.relay_lan_exposure === true },
     { id: "morning_operator", ok: report.morning_operator === true },
+    {
+      id: "eps_smoke",
+      ok: report.eps_smoke === true,
+      detail:
+        report.eps_smoke_peak != null
+          ? `pk${Number(report.eps_smoke_peak).toFixed(1)}`
+          : report.eps_smoke === true
+            ? "ok"
+            : null,
+    },
     { id: "docs_consistency", ok: report.docs_consistency === true },
     { id: "vps_prep", ok: report.vps_prep === true },
     { id: "vps_remote", ok: report.vps_remote === true },

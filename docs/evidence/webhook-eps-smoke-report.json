@@ -1,0 +1,16 @@
+{
+  "date": "2026-07-10T08:22:58.083211+00:00",
+  "pass": true,
+  "fail_reason": null,
+  "lines_before": 5,
+  "lines_after": 13,
+  "lines_delta": 8,
+  "eps_after": 0.12,
+  "peak_eps": 6.55,
+  "derived_eps": 2.74,
+  "alerts_delta": 8,
+  "inject_lines": 8,
+  "inject_interval_sec": 0.4,
+  "test_ip": "203.0.113.77",
+  "script": "scripts/webhook_nginx_eps_smoke.sh"
+}

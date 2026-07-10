@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-10T06:58:54.117774+00:00",
+  "date": "2026-07-10T09:38:52.856637+00:00",
   "pass": true,
   "fail_count": 0,
   "competitive_proof": "89/89",
@@ -7,6 +7,8 @@
   "edge_checklist": true,
   "relay_lan_exposure": true,
   "morning_operator": true,
+  "eps_smoke": true,
+  "eps_smoke_peak": 8.96,
   "docs_consistency": true,
   "vps_prep": true,
   "vps_remote": true,

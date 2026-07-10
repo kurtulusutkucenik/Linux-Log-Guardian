@@ -1,23 +1,23 @@
 {
-  "date": "2026-07-10T07:07:16Z",
-  "pass": false,
+  "date": "2026-07-10T08:31:10Z",
+  "pass": true,
   "gates": [
     {
       "id": "post-install-verify",
       "script": "scripts/post_install_verify.sh",
-      "pass": false,
-      "fail": 3,
+      "pass": true,
+      "fail": 0,
       "warn": 0,
       "title": "Kurulum kapısı — servis, IPC, API fail-closed",
       "titleEn": "Install gate — services, IPC, API fail-closed",
       "purpose": "systemd, --health, metrics :9091, API_BIND ve nginx formatının yeşil matrisi.",
       "purposeEn": "systemd, --health, metrics :9091, API_BIND and nginx format green matrix.",
-      "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
-      "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
       "metrics": [
         {
           "label": "FAIL",
-          "value": "3"
+          "value": "0"
         },
         {
           "label": "WARN",
@@ -197,19 +197,19 @@
     {
       "id": "vm-demo-gate",
       "script": "scripts/vm_demo_gate.sh",
-      "pass": false,
-      "fail": 3,
+      "pass": true,
+      "fail": 0,
       "warn": 0,
       "title": "VM demo kapısı — post_install 0 FAIL",
       "titleEn": "VM demo gate — post_install 0 FAIL",
       "purpose": "Laptop/VM sunum öncesi son kontrol (onarim: sudo vm_demo_gate).",
       "purposeEn": "Final check before laptop/VM demo (repair: sudo vm_demo_gate).",
-      "verdict": "Kapı kırmızı — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
-      "verdictEn": "Gate failed — FAIL: 3 · WARN: 0 · [FAIL] post_install_verify — 3 kritik madde",
+      "verdict": "FAIL: 0 · WARN: 0",
+      "verdictEn": "FAIL: 0 · WARN: 0",
       "metrics": [
         {
           "label": "FAIL",
-          "value": "3"
+          "value": "0"
         },
         {
           "label": "WARN",

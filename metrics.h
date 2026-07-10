@@ -34,6 +34,7 @@ typedef struct {
     long cnt_5xx;
     long unique_ips;
     double eps;
+    double eps_peak;
     long xdp_active;
     long ringbuf_drops;
     /* ── Intelligence Engine Metrikleri ── */

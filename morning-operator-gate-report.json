@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-10T06:58:58.356397+00:00",
+  "date": "2026-07-10T09:00:18.406456+00:00",
   "pass": true,
   "laptop_core_ok": true,
   "laptop_core_refreshed": false,
@@ -7,6 +7,9 @@
   "dashboard_ok": true,
   "attack_map_parity_ok": true,
   "telegram_soc_ok": true,
+  "eps_smoke_ok": true,
+  "eps_smoke_peak": 8.96,
+  "eps_smoke_lines_delta": 8,
   "proof_tests": 89,
   "proof_pass": 89,
   "dash_url": "https://localhost:8443/tests",

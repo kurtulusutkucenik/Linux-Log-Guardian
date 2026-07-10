@@ -257,6 +257,20 @@ function lineageEntries(trees: AttackTree[]): SocTimelineEntry[] {
   return out;
 }
 
+function dedupeTimelineBansByIp(entries: SocTimelineEntry[]): SocTimelineEntry[] {
+  const bestBan = new Map<string, SocTimelineEntry>();
+  const rest: SocTimelineEntry[] = [];
+  for (const e of entries) {
+    if (e.kind === "ban" && e.ip) {
+      const prev = bestBan.get(e.ip);
+      if (!prev || e.ts >= prev.ts) bestBan.set(e.ip, e);
+    } else {
+      rest.push(e);
+    }
+  }
+  return [...rest, ...bestBan.values()];
+}
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const previewEnv = process.env.SOC_TIMELINE_PREVIEW !== "0";
@@ -274,14 +288,14 @@ export async function GET(request: Request) {
   const statusBans = status.data?.recent_bans ?? [];
   const statusAcks = status.data?.recent_telegram_acks ?? [];
 
-  const entries = [
+  const entries = dedupeTimelineBansByIp([
     ...incidentEntries(inc.rows),
     ...banEntries(banRes.bans),
     ...lineageEntries(lineage.trees),
     ...wafAlertEntries(statusAlerts),
     ...statusBanEntries(statusBans),
     ...telegramAckEntries(statusAcks),
-  ]
+  ])
     .filter((e) => e.ts > 0 || e.kind === "ban")
     .sort((a, b) => b.ts - a.ts)
     .slice(0, MAX);

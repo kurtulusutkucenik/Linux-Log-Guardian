@@ -8,6 +8,6 @@
   "has_grafana_parity": true,
   "has_edge_gate": true,
   "site_dir": "landing/lib",
-  "date": "2026-07-10T06:57:28.957641+00:00",
+  "date": "2026-07-10T08:31:39.133541+00:00",
   "script": "scripts/website_preview_gate.sh"
 }

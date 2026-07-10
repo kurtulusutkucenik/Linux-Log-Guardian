@@ -1,13 +1,70 @@
 {
-  "date": "2026-07-10T07:01:34.204344+00:00",
+  "date": "2026-07-10T09:30:21.632471+00:00",
   "pass": true,
   "closed": 0,
-  "dry_run": false,
+  "dry_run": true,
   "stale_hours": 48.0,
-  "pending_young": 0,
-  "pending_total": 0,
-  "pending_before": 0,
-  "pending_young_items": [],
+  "pending_young": 8,
+  "pending_total": 8,
+  "pending_before": 8,
+  "pending_young_items": [
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "node-vm-02",
+      "age_h": 0.7,
+      "payload": "203.0.113.250"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "fleet-sign-e2e-01",
+      "age_h": 0.7,
+      "payload": "203.0.113.248"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "node-vm-02",
+      "age_h": 0.7,
+      "payload": "203.0.113.250"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "fleet-sign-e2e-01",
+      "age_h": 0.7,
+      "payload": "203.0.113.248"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "node-vm-02",
+      "age_h": 0.3,
+      "payload": "203.0.113.250"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "fleet-sign-e2e-01",
+      "age_h": 0.3,
+      "payload": "203.0.113.248"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "node-vm-02",
+      "age_h": 0,
+      "payload": "203.0.113.250"
+    },
+    {
+      "type": "BAN_IP",
+      "status": "delivered",
+      "target": "fleet-sign-e2e-01",
+      "age_h": 0,
+      "payload": "203.0.113.248"
+    }
+  ],
   "groups": {},
   "script": "scripts/fleet_prune_pending_commands.sh"
 }

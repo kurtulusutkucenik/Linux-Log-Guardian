@@ -36,6 +36,18 @@ type Payload = {
     hostname?: string | null;
     xdp_mode?: string | null;
   } | null;
+  morning_operator_banner?: {
+    pass?: boolean;
+    proof_pass?: number | null;
+    proof_tests?: number | null;
+    proof_freshness_ok?: boolean;
+  } | null;
+  eps_smoke_banner?: {
+    pass?: boolean;
+    lines_delta?: number | null;
+    peak_eps?: number | null;
+    derived_eps?: number | null;
+  } | null;
 };
 
 function proofAlignedTests(
@@ -394,15 +406,71 @@ export function ValidationTestsPanel({
         <SummaryHero passed={displayStats.passed} total={displayStats.total} />
       )}
 
+      {!compact && data?.eps_smoke_banner?.pass && (
+        <div className="rounded-lg border border-cyan-500/25 bg-cyan-500/5 px-4 py-3 text-sm text-cyan-200/90">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="font-medium text-cyan-200">{t("testsEpsSmokeBannerTitle")}</p>
+              <p className="text-xs text-white/50 mt-1 font-mono">
+                lines+{data.eps_smoke_banner.lines_delta ?? 0}
+                {(data.eps_smoke_banner.peak_eps ?? 0) > 0
+                  ? ` · peak=${data.eps_smoke_banner.peak_eps?.toFixed(2)}`
+                  : ""}
+                {(data.eps_smoke_banner.derived_eps ?? 0) > 0
+                  ? ` · derived=${data.eps_smoke_banner.derived_eps?.toFixed(2)}`
+                  : ""}
+              </p>
+            </div>
+            <a
+              href="#live-ops-metrics"
+              className="text-xs text-cyan-300/80 hover:text-cyan-200 hover:underline shrink-0"
+            >
+              {t("testsEpsSmokeBannerJump")} ↓
+            </a>
+          </div>
+        </div>
+      )}
+
+      {!compact && data?.morning_operator_banner?.pass && (
+        <div className="rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-sm text-amber-200/90">
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="font-medium text-amber-200">{t("testsMorningBannerTitle")}</p>
+              <p className="text-xs text-white/50 mt-1 font-mono">
+                proof {data.morning_operator_banner.proof_pass ?? "—"}/
+                {data.morning_operator_banner.proof_tests ?? "—"}
+                {data.morning_operator_banner.proof_freshness_ok ? " · freshness OK" : ""}
+              </p>
+            </div>
+            <a
+              href="#test-morning-operator-gate"
+              className="text-xs text-amber-300/80 hover:text-amber-200 hover:underline shrink-0"
+            >
+              {t("testsMorningBannerJump")} ↓
+            </a>
+          </div>
+        </div>
+      )}
+
       {!compact && data?.vps_soak_remote?.pass && (
         <div className="rounded-lg border border-sky-500/25 bg-sky-500/5 px-4 py-3 text-sm text-sky-200/90">
-          <p className="font-medium text-sky-200">{t("testsVpsSoakBannerTitle")}</p>
-          <p className="text-xs text-white/50 mt-1 font-mono">
-            {data.vps_soak_remote.hours ?? 72}h · {data.vps_soak_remote.samples ?? 0}{" "}
-            {t("testsVpsSoakSamples")} · fail={data.vps_soak_remote.failures ?? 0}
-            {data.vps_soak_remote.xdp_mode ? ` · xdp=${data.vps_soak_remote.xdp_mode}` : ""}
-            {data.vps_soak_remote.host ? ` · ${data.vps_soak_remote.host}` : ""}
-          </p>
+          <div className="flex flex-wrap items-start justify-between gap-2">
+            <div>
+              <p className="font-medium text-sky-200">{t("testsVpsSoakBannerTitle")}</p>
+              <p className="text-xs text-white/50 mt-1 font-mono">
+                {data.vps_soak_remote.hours ?? 72}h · {data.vps_soak_remote.samples ?? 0}{" "}
+                {t("testsVpsSoakSamples")} · fail={data.vps_soak_remote.failures ?? 0}
+                {data.vps_soak_remote.xdp_mode ? ` · xdp=${data.vps_soak_remote.xdp_mode}` : ""}
+                {data.vps_soak_remote.host ? ` · ${data.vps_soak_remote.host}` : ""}
+              </p>
+            </div>
+            <a
+              href="#test-soak-stability"
+              className="text-xs text-sky-300/80 hover:text-sky-200 hover:underline shrink-0"
+            >
+              {t("testsVpsSoakJump")} ↓
+            </a>
+          </div>
         </div>
       )}
 
