@@ -34,6 +34,14 @@ type BanApiStatus = {
     certs?: Array<{ id?: string; days_left?: number; ok?: boolean }>;
     check_cmd?: string;
   } | null;
+  relay_lan?: {
+    pass?: boolean;
+    fail_count?: number;
+    bridge_up?: boolean;
+    docker0_ip?: string | null;
+    at?: string | null;
+    check_cmd?: string;
+  } | null;
 };
 
 function chip(ok: boolean | undefined, label: string) {
@@ -124,6 +132,7 @@ export function BanApiOpsPanel() {
         {chip(data?.host?.ok, t("banApiHost"))}
         {chip(data?.host_api_bridge?.ok, t("banApiBridge"))}
         {chip(data?.relay?.ok, t("banApiRelay"))}
+        {chip(data?.relay_lan?.pass, t("banApiRelayLan"))}
         {chip(data?.metrics?.ok, t("banApiMetrics"))}
         {chip(data?.docker?.ok, t("banApiDocker"))}
         <span
@@ -226,6 +235,14 @@ export function BanApiOpsPanel() {
           {soar?.url ?? "https://localhost:9443"}
           {data?.ban_path ? ` · ${data.ban_path}` : ""}
         </span>
+        {data?.relay_lan && (
+          <span className="flex items-center gap-1.5">
+            <Network className="w-3.5 h-3.5 shrink-0" />
+            {t("banApiRelayLan")}: {data.relay_lan.pass ? "OK" : "FAIL"}
+            {data.relay_lan.bridge_up ? " · docker0" : ""}
+            {data.relay_lan.docker0_ip ? ` ${data.relay_lan.docker0_ip}` : ""}
+          </span>
+        )}
       </div>
       {data?.dashboard_ban_pass && (
         <p className="text-xs text-emerald-300/90 flex items-center gap-1.5">

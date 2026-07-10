@@ -1,0 +1,52 @@
+{
+  "date": "2026-07-10T07:07:20.660796+00:00",
+  "pass": true,
+  "fail_count": 0,
+  "warn_count": 0,
+  "lan_ip": "192.168.1.87",
+  "docker0_ip": "172.17.0.1",
+  "host_api_bridge_up": false,
+  "checks": [
+    {
+      "level": "ok",
+      "msg": "host :18090 dinlenmiyor (docker internal relay OK)"
+    },
+    {
+      "level": "ok",
+      "msg": "host :19091 dinlenmiyor (docker internal relay OK)"
+    },
+    {
+      "level": "ok",
+      "msg": "host :18091 yalnizca docker0 172.17.0.1 (local=172.17.0.1:18091)"
+    },
+    {
+      "level": "ok",
+      "msg": "host :19092 yalnizca docker0 172.17.0.1 (local=172.17.0.1:19092)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:8090 erisilemiyor (code=000000)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:9091 erisilemiyor (code=000000)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:18090 erisilemiyor (code=000000)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:19091 erisilemiyor (code=000000)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:18091 erisilemiyor (code=000000)"
+    },
+    {
+      "level": "ok",
+      "msg": "LAN 192.168.1.87:19092 erisilemiyor (code=000000)"
+    }
+  ],
+  "script": "scripts/relay_lan_exposure_check.sh"
+}

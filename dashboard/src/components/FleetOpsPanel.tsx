@@ -18,7 +18,7 @@ type FleetOfflineStatus = {
   live?: {
     online?: number;
     total?: number;
-    agents?: { id: string; online: boolean; age_sec: number }[];
+    agents?: { id: string; online: boolean; age_sec: number; remote_shadow?: boolean }[];
     heartbeat_sec?: number;
   };
   multi?: {
@@ -34,6 +34,7 @@ type FleetOfflineStatus = {
     refresh?: string;
     host_keepalive?: string;
     prune?: string;
+    prune_demo?: string;
     prune_dry?: string;
     weekly?: string;
   };
@@ -54,6 +55,14 @@ type FleetOfflineStatus = {
       payload: string;
     }>;
   };
+  report_stale?: boolean;
+  remote_shadow?: {
+    agent_id?: string;
+    host?: string | null;
+    hostname?: string | null;
+    xdp_mode?: string | null;
+    soak_proof_72h?: number | null;
+  } | null;
 };
 
 function chip(ok: boolean | undefined, label: string) {
@@ -81,6 +90,8 @@ export function FleetOpsPanel() {
 
   const refreshCmd = data?.setup?.refresh ?? "FLEET_MODE=laptop-simulated bash scripts/fleet_multi_node_e2e.sh";
   const pruneCmd = data?.setup?.prune ?? "bash scripts/fleet_prune_pending_commands.sh";
+  const pruneDemoCmd =
+    data?.setup?.prune_demo ?? "STALE_MINUTES=30 bash scripts/fleet_prune_pending_commands.sh";
 
   const load = async () => {
     setLoading(true);
@@ -132,8 +143,14 @@ export function FleetOpsPanel() {
           {t("fleetOpsLive")}: {liveOnline}/{liveTotal}
         </span>
         {gate && (
-          <span className="text-xs font-mono px-2 py-1 rounded-md border bg-white/5 border-white/10 text-white/50">
+          <span
+            className={`text-xs font-mono px-2 py-1 rounded-md border bg-white/5 border-white/10 ${
+              data?.report_stale ? "text-amber-200/90 border-amber-500/25" : "text-white/50"
+            }`}
+            title={data?.report_stale ? t("fleetOpsReportStale") : undefined}
+          >
             {t("fleetOpsReport")}: {gate.online ?? 0}/{gate.total ?? 0}
+            {data?.report_stale ? " · " + t("fleetOpsReportStaleShort") : ""}
           </span>
         )}
         {gate?.mode && (
@@ -161,6 +178,14 @@ export function FleetOpsPanel() {
               : ""}
           </span>
         )}
+        {data?.remote_shadow && (
+          <span
+            className="text-xs font-mono px-2 py-1 rounded-md border bg-sky-500/10 border-sky-500/30 text-sky-300"
+            title={data.remote_shadow.host ?? undefined}
+          >
+            {t("fleetRemoteMonitor")}: {data.remote_shadow.agent_id}
+          </span>
+        )}
       </div>
       {gate?.reason && gate.pass === false && (
         <p className="text-xs text-amber-200/90">{gate.reason}</p>
@@ -169,9 +194,18 @@ export function FleetOpsPanel() {
         <p className="text-xs text-white/40 font-mono flex flex-wrap items-center gap-x-2 gap-y-1">
           <Server className="w-3.5 h-3.5 shrink-0" />
           {live.agents.map((a) => (
-            <span key={a.id} className={a.online ? "text-emerald-300/90" : "text-white/35"}>
+            <span
+              key={a.id}
+              className={
+                a.remote_shadow
+                  ? "text-sky-300/90"
+                  : a.online
+                    ? "text-emerald-300/90"
+                    : "text-white/35"
+              }
+            >
               {a.id}
-              {a.online ? "" : ` (${Math.round(a.age_sec / 60)}m)`}
+              {a.remote_shadow ? ` (${t("fleetRemoteMonitor")})` : a.online ? "" : ` (${Math.round(a.age_sec / 60)}m)`}
             </span>
           ))}
         </p>
@@ -230,6 +264,30 @@ export function FleetOpsPanel() {
           {(data.prune.pending_stale ?? 0) > 0 && (
             <span className="text-xs text-amber-200/90">{t("fleetOpsPruneStale")}</span>
           )}
+        </div>
+      )}
+      {data?.prune && (data.prune.pending_young ?? data.prune.pending_total ?? 0) > 0 && (
+        <div className="flex flex-wrap items-center gap-2">
+          <code className="text-[11px] text-white/45 font-mono bg-black/20 px-2 py-1 rounded border border-white/10">
+            {pruneDemoCmd}
+          </code>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(pruneDemoCmd);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              } catch {
+                /* ignore */
+              }
+            }}
+            className="inline-flex items-center gap-1 text-xs px-2 py-1 rounded-md bg-white/5 border border-white/10 text-white/50 hover:text-white/80"
+          >
+            <ClipboardCopy className="w-3.5 h-3.5" />
+            {copied ? t("fleetOpsCopied") : t("fleetOpsCopyPruneDemo")}
+          </button>
+          <span className="text-xs text-white/35">{t("fleetOpsPruneDemoHint")}</span>
         </div>
       )}
     </div>

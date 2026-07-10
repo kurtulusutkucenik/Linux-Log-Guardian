@@ -26,6 +26,9 @@ bash "$ROOT/scripts/edge_protection_gate.sh" >/dev/null 2>&1 \
 bash "$ROOT/scripts/edge_protection_checklist.sh" >/dev/null 2>&1 \
   && echo "[OK] edge_protection_checklist" \
   || echo "[WARN] edge_protection_checklist" >&2
+bash "$ROOT/scripts/relay_lan_exposure_check.sh" >/dev/null 2>&1 \
+  && echo "[OK] relay_lan_exposure_check" \
+  || echo "[WARN] relay_lan_exposure_check — bash scripts/relay_lan_exposure_check.sh" >&2
 
 refresh_grafana_ops_gates() {
   bash "$ROOT/scripts/grafana_parity_gate.sh" >/dev/null 2>&1 \
@@ -49,6 +52,19 @@ if [[ "${SKIP_FLEET_PRUNE:-0}" != "1" ]]; then
   bash "$ROOT/scripts/fleet_prune_pending_commands.sh" \
     && echo "[OK] fleet_prune_pending_commands" \
     || echo "[WARN] fleet_prune_pending_commands — atlandi" >&2
+  FLEET_MODE=laptop-simulated bash "$ROOT/scripts/fleet_offline_gate.sh" >/dev/null 2>&1 \
+    && echo "[OK] fleet_offline_gate" \
+    || echo "[WARN] fleet_offline_gate — FLEET_MODE=laptop-simulated bash scripts/fleet_multi_node_e2e.sh" >&2
+fi
+
+if [[ -f "$ROOT/.cache/vps-production.env" ]] && [[ -x "$ROOT/scripts/vps_remote_status.sh" ]]; then
+  # shellcheck disable=SC1090
+  set -a && source "$ROOT/.cache/vps-production.env" && set +a
+  if [[ -n "${VPS_HOST:-}" || -n "${VPS_IP:-}" ]]; then
+    QUIET=1 bash "$ROOT/scripts/vps_remote_status.sh" >/dev/null 2>&1 \
+      && echo "[OK] vps_remote_status" \
+      || echo "[WARN] vps_remote_status — source .cache/vps-production.env && bash scripts/vps_remote_status.sh" >&2
+  fi
 fi
 
 # ban_events DB raporu (ban mantigina dokunmaz)

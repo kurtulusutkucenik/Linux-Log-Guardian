@@ -33,7 +33,7 @@ async function fetchLiveMetrics() {
 }
 
 export async function GET() {
-  const [gate, checklist, e9, status, intelReport, live] = await Promise.all([
+  const [gate, checklist, e9, status, intelReport, live, relayLan] = await Promise.all([
     readJson<{
       pass?: boolean;
       ipc?: string;
@@ -86,6 +86,13 @@ export async function GET() {
       date?: string;
     }>("intel-ban-db-report.json"),
     fetchLiveMetrics(),
+    readJson<{
+      pass?: boolean;
+      fail_count?: number;
+      host_api_bridge_up?: boolean;
+      docker0_ip?: string;
+      date?: string;
+    }>("relay-lan-exposure-report.json"),
   ]);
 
   const ipc = gate?.ipc ?? status?.ipc ?? "?";
@@ -174,6 +181,16 @@ export async function GET() {
           edge_checklist: e9.edge_checklist === true,
           morning_operator: e9.morning_operator === true,
           docs_consistency: e9.docs_consistency === true,
+        }
+      : null,
+    relay_lan: relayLan
+      ? {
+          pass: relayLan.pass === true,
+          fail_count: relayLan.fail_count ?? 0,
+          bridge_up: relayLan.host_api_bridge_up === true,
+          docker0_ip: relayLan.docker0_ip ?? null,
+          at: relayLan.date ?? null,
+          check_cmd: "bash scripts/relay_lan_exposure_check.sh",
         }
       : null,
   });

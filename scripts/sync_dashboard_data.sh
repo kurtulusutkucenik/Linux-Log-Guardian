@@ -33,6 +33,33 @@ if [[ -x "$ROOT/scripts/taxii_feed_e2e.sh" ]]; then
   LIVE_API=0 bash "$ROOT/scripts/taxii_feed_e2e.sh" 2>/dev/null || true
 fi
 
+# Fleet offline gate — bayat JSON 88/89 vitrin kirar (live 3/3 olsa bile)
+if [[ -x "$ROOT/scripts/fleet_offline_gate.sh" ]]; then
+  stale_fleet=1
+  if [[ -f "$ROOT/fleet-offline-gate-report.json" ]]; then
+    stale_fleet=$(python3 - "$ROOT/fleet-offline-gate-report.json" <<'PY' 2>/dev/null || echo 1
+import datetime, json, sys
+from pathlib import Path
+p = Path(sys.argv[1])
+d = json.loads(p.read_text(encoding="utf-8"))
+raw = d.get("date") or ""
+if not raw:
+    raise SystemExit(1)
+dt = datetime.datetime.fromisoformat(raw.replace("Z", "+00:00"))
+if dt.tzinfo is None:
+    dt = dt.replace(tzinfo=datetime.timezone.utc)
+age = (datetime.datetime.now(datetime.timezone.utc) - dt).total_seconds() / 60.0
+max_m = float(d.get("max_age_min") or 15)
+raise SystemExit(1 if age > max_m else 0)
+PY
+)
+  fi
+  if [[ "$stale_fleet" -ne 0 ]]; then
+    echo "[sync] fleet_offline_gate bayat — tazeleniyor..."
+    FLEET_MODE=laptop-simulated bash "$ROOT/scripts/fleet_offline_gate.sh" >/dev/null 2>&1 || true
+  fi
+fi
+
 copy_if() {
   local f="$1"
   if [[ -f "$ROOT/$f" ]]; then
@@ -45,12 +72,12 @@ for f in bench-vs-modsec.json fp-report.json bench-ban-latency.json guardian-sta
   crs-parity-report.json tenant-isolation-report.json competitive-proof.json compliance-report.json \
   soak-report.json soak-report.short.json ops-gate-report.json competitive-proof.pdf real-attack-report.json live-attack-report.json ja3-cluster-report.json \
   ja3-cluster-ban-live.json dashboard-ban-api-report.json dashboard-login-rl-e2e-report.json api-mutation-token-e2e-report.json api-mutation-audit-e2e-report.json ban-api-mtls-report.json caddy-mtls-status.json caddy-api-mtls-report.json enterprise-soar-gate-report.json hardening-rollback-gate-report.json dashboard-jwt-idle-gate-report.json mtls-cert-expiry-report.json webhook-route-proof-report.json webhook-telegram-live-report.json webhook-telegram-ack-live-report.json telegram-operator-undo-e2e-report.json telegram-soc-gate-report.json bans-telegram-ops-report.json edge-protection-gate-report.json edge-protection-checklist-report.json grafana-parity-gate-report.json website-preview-gate-report.json enterprise-escalation-gate-report.json enterprise-e9-verify-report.json vm-host-prep-gate-report.json docs-consistency-gate-report.json vm-fleet-gate-report.json laptop-excellence-gate-report.json website-live-gate-report.json release-ready-gate-report.json demo-rehearsal-gate-report.json presentation-ship-gate-report.json demo-video-gate-report.json github-ship-gate-report.json laptop-core-gate-report.json morning-operator-gate-report.json \
-  fleet-multi-node-report.json fleet-offline-gate-report.json fleet-command-sign-report.json fleet-prune-cmds-report.json dashboard-tests-live-report.json grafana-provision-report.json attack-map-report.json \
+  fleet-multi-node-report.json fleet-offline-gate-report.json fleet-command-sign-report.json fleet-prune-cmds-report.json relay-lan-exposure-report.json dashboard-tests-live-report.json grafana-provision-report.json attack-map-report.json \
   proof-replay-webhook-ban.json dashboard-live-demo.json wasm-status.json \
   auth-log-report.json journald-ingest-report.json siem-export-report.json crowdsec-bouncer-report.json \
   honeypot-feed-report.json l7-probe-prod-report.json \
   helm-install-smoke-report.json k8s-admission-report.json k8s-kind-e2e-report.json mesh-etcd-docker-report.json mesh-etcd-live-report.json \
-  vps-xdp-report.json vps-prep-gate-report.json marketplace-sig-report.json marketplace-signed-api-report.json compliance-export-report.json \
+  vps-xdp-report.json vps-prep-gate-report.json vps-remote-status-report.json vps-soak-report.json vps-soak-report.short.json vps-xdp-remote-report.json marketplace-sig-report.json marketplace-signed-api-report.json compliance-export-report.json \
   mesh-etcd-report.json copilot-ollama-report.json arm64-build-report.json \
   fp-cluster-trust-report.json \
   lineage-live-report.json \

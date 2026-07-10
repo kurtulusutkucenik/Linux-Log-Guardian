@@ -1000,6 +1000,15 @@ export type TestReports = {
   threatIntelSync?: ThreatIntelSyncReport | null;
   soak?: SoakReport | null;
   soakShort?: SoakReport | null;
+  soakSource?: string | null;
+  vpsRemote?: {
+    host?: string | null;
+    hostname?: string | null;
+    xdp_mode?: string | null;
+    soak_proof_72h?: number | null;
+    ssh_ok?: boolean;
+    eps?: number | null;
+  } | null;
   isolation?: IsolationReport | null;
   bench?: BenchReport | null;
   ban?: BanReport | null;
@@ -2132,6 +2141,19 @@ export function evaluateValidationTests(
         ...(fpPct != null
           ? [{ label: L(locale, "Benign FP", "Benign FP"), value: `${fpPct}%` }]
           : []),
+        ...(reports.soakSource === "vps-remote"
+          ? [
+              {
+                label: L(locale, "Kaynak", "Source"),
+                value: reports.vpsRemote?.host ?? "VPS SSH",
+              },
+              ...(reports.vpsRemote?.xdp_mode
+                ? [{ label: "XDP", value: reports.vpsRemote.xdp_mode }]
+                : []),
+            ]
+          : reports.soakSource === "laptop"
+            ? [{ label: L(locale, "Kaynak", "Source"), value: L(locale, "laptop", "laptop") }]
+            : []),
       ],
       date: fmtDate(soak.ended ?? soak.started),
       script: "scripts/soak_recompute_report.sh",

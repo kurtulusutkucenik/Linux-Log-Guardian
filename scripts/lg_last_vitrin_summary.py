@@ -142,6 +142,33 @@ def build_summary(
             "pending_young": fleet_prune.get("pending_young"),
         }
 
+    vps_remote = _load(root, "vps-remote-status-report.json")
+    if vps_remote:
+        summary["vps_remote"] = {
+            "pass": vps_remote.get("pass") is True,
+            "host": vps_remote.get("host"),
+            "xdp_mode": vps_remote.get("xdp_mode"),
+            "soak_proof_72h": vps_remote.get("soak_proof_72h"),
+            "eps": vps_remote.get("eps"),
+        }
+
+    vps_soak = _load(root, "vps-soak-report.json")
+    if vps_soak:
+        summary["vps_soak"] = {
+            "pass": vps_soak.get("pass") is True,
+            "hours": vps_soak.get("duration_hours"),
+            "failures": vps_soak.get("failures"),
+            "samples": vps_soak.get("samples"),
+        }
+
+    relay_lan = _load(root, "relay-lan-exposure-report.json")
+    if relay_lan:
+        summary["relay_lan"] = {
+            "pass": relay_lan.get("pass") is True,
+            "fail_count": relay_lan.get("fail_count"),
+            "bridge_up": relay_lan.get("host_api_bridge_up"),
+        }
+
     cp = summary.get("competitive_proof")
     mo = summary.get("morning_operator")
     all_ok = True
@@ -232,6 +259,23 @@ def print_lines(summary: dict[str, Any], title: str) -> None:
             f"  fleet_prune: pending={fpc.get('pending_total', 0)} "
             f"(young={fpc.get('pending_young', 0)}) · closed={fpc.get('closed', 0)}"
         )
+    vps = summary.get("vps_soak") or summary.get("vps_remote")
+    if vps or summary.get("vps_soak"):
+        soak = summary.get("vps_soak") or {}
+        remote = summary.get("vps_remote") or {}
+        hours = soak.get("hours") or remote.get("soak_proof_72h")
+        fail = soak.get("failures")
+        xdp = remote.get("xdp_mode", "?")
+        if hours and float(hours) >= 72:
+            fail_s = f" fail={fail}" if fail is not None else ""
+            lines.append(f"  vps: hands-off · {hours}h soak ✓{fail_s} · xdp={xdp}")
+        elif remote.get("pass"):
+            lines.append(f"  vps: remote OK · xdp={xdp}")
+    relay = summary.get("relay_lan")
+    if relay:
+        status = "OK" if relay.get("pass") else "WARN"
+        bridge = "on" if relay.get("bridge_up") else "off"
+        lines.append(f"  relay_lan: {status} · bridge={bridge} fail={relay.get('fail_count', 0)}")
     wl = summary.get("warn_labels")
     if wl:
         lines.append(f"  uyarilar: {', '.join(str(x) for x in wl)}")

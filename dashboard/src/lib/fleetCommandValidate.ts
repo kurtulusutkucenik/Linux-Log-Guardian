@@ -1,5 +1,7 @@
 /** Fleet komut POST dogrulama — ban hattina dokunmaz, kuyruk guvenligi. */
 
+import { isVpsFleetShadowAgent } from "./vpsFleetShadow";
+
 const ALLOWED_TYPES = new Set([
   "BAN_IP",
   "UNBAN_IP",
@@ -42,6 +44,9 @@ export function validateFleetCommand(body: FleetCommandInput): string | null {
 
   if (body.targetAgentId != null && body.targetAgentId !== "") {
     const aid = String(body.targetAgentId);
+    if (isVpsFleetShadowAgent(aid)) {
+      return "targetAgentId is SSH watch-only (no fleet dispatch)";
+    }
     if (aid.length > MAX_AGENT_ID_LEN || !/^[\w.-]+$/.test(aid)) {
       return "invalid targetAgentId";
     }

@@ -8,8 +8,9 @@ PIDFILE="${ROOT}/.cache/fleet-keepalive.pid"
 INTERVAL="${INTERVAL:-8}"
 ENV_FILE="${ROOT}/.cache/fleet-vm.env"
 HOST_ENV="${ROOT}/.cache/fleet-host.env"
+SIM_ENV="${ROOT}/.cache/fleet-simulated.env"
 
-# systemd veya onceki oturum — fleet env yukle (VM oncelikli, sonra host)
+# systemd veya onceki oturum — fleet env yukle (VM oncelikli, sonra host, simulated)
 if [[ -f "$ENV_FILE" ]]; then
   # shellcheck disable=SC1090
   set -a && source "$ENV_FILE" && set +a
@@ -17,6 +18,26 @@ elif [[ -f "$HOST_ENV" ]]; then
   # shellcheck disable=SC1090
   set -a && source "$HOST_ENV" && set +a
 fi
+if [[ -f "$SIM_ENV" ]]; then
+  # shellcheck disable=SC1090
+  set -a && source "$SIM_ENV" && set +a
+fi
+
+fleet_push_once() {
+  fleet_bg_env bash "$ROOT/scripts/fleet_telemetry_push.sh" || true
+}
+
+fleet_push_simulated() {
+  local agents="${FLEET_SIMULATED_AGENTS:-}"
+  [[ -n "$agents" ]] || return 1
+  local id
+  IFS=',' read -ra _ids <<< "$agents"
+  for id in "${_ids[@]}"; do
+    id="${id// /}"
+    [[ -z "$id" ]] && continue
+    AGENT_ID="$id" fleet_push_once
+  done
+}
 
 fleet_bg_env() {
   env \
@@ -24,6 +45,7 @@ fleet_bg_env() {
     TELEMETRY_URL="${TELEMETRY_URL:-}" \
     FLEET_API_KEY="${FLEET_API_KEY:-}" \
     AGENT_ID="${AGENT_ID:-}" \
+    FLEET_SIMULATED_AGENTS="${FLEET_SIMULATED_AGENTS:-}" \
     FLEET_TELEMETRY_HOST="${FLEET_TELEMETRY_HOST:-}" \
     FLEET_CURL_RESOLVE="${FLEET_CURL_RESOLVE:-}" \
     METRICS_URL="${METRICS_URL:-}" \
@@ -53,6 +75,10 @@ fi
 
 echo "[keepalive] basladi interval=${INTERVAL}s (Ctrl+C veya --stop)"
 while true; do
-  fleet_bg_env bash "$ROOT/scripts/fleet_telemetry_push.sh" || true
+  if [[ -n "${FLEET_SIMULATED_AGENTS:-}" ]]; then
+    fleet_push_simulated
+  else
+    fleet_push_once
+  fi
   sleep "$INTERVAL"
 done

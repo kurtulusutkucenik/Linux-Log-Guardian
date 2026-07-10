@@ -25,23 +25,29 @@ async function readJson(name: string): Promise<unknown | null> {
   return null;
 }
 
-async function readBestSoak(): Promise<unknown | null> {
-  const files = ["soak-report.json", "soak-report.short.json"];
-  let best: { duration_sec?: number } | null = null;
-  for (const f of files) {
-    const data = (await readJson(f)) as { duration_sec?: number } | null;
+async function readBestSoak(): Promise<{ data: unknown; source: string } | null> {
+  const files = [
+    { name: "vps-soak-report.json", source: "vps-remote" },
+    { name: "soak-report.json", source: "laptop" },
+    { name: "soak-report.short.json", source: "short" },
+  ];
+  let best: { data: unknown; source: string; duration_sec?: number } | null = null;
+  for (const { name, source } of files) {
+    const data = (await readJson(name)) as { duration_sec?: number } | null;
     if (!data) continue;
     const sec = data.duration_sec ?? 0;
-    if (!best || sec > (best.duration_sec ?? 0)) best = data;
+    if (!best || sec > (best.duration_sec ?? 0)) {
+      best = { data, source, duration_sec: sec };
+    }
   }
-  return best;
+  return best ? { data: best.data, source: best.source } : null;
 }
 
 export async function GET(req: NextRequest) {
   const localeParam = req.nextUrl.searchParams.get("locale");
   const locale = localeParam === "en" ? "en" : "tr";
 
-  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, apiMutationTokenE2e, apiMutationAuditE2e, dashboardLoginRlE2e, hardeningRollbackGate, dashboardJwtIdleGate, mtlsCertExpiry, banApiMtls, caddyMtlsStatus, enterpriseSoarGate, owaspCorpus, trHostingCorpus, customerCorpus, threatIntelSync, soak, soakShort, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, intelBanDb, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, fleetOfflineGate, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
+  const [opsGates, crs, fp, realAttack, realAttack10k, liveAttack, ja3Cluster, ja3ClusterBanLive, fpClusterTrust, lineageLive, nginxConsult, nginxHybrid, banProfileE2e, ipv6BanE2e, apiMutationTokenE2e, apiMutationAuditE2e, dashboardLoginRlE2e, hardeningRollbackGate, dashboardJwtIdleGate, mtlsCertExpiry, banApiMtls, caddyMtlsStatus, enterpriseSoarGate, owaspCorpus, trHostingCorpus, customerCorpus, threatIntelSync, bestSoak, soakShort, vpsRemote, isolation, bench, ban, live, dashboardBanApi, dashboardLiveDemo, attackMap, webhookRoute, webhookTelegramLive, webhookTelegramAckLive, telegramOperatorUndoE2e, telegramSocGate, bansTelegramOps, edgeProtectionGate, intelBanDb, grafanaParityGate, websitePreviewGate, enterpriseEscalationGate, vmHostPrepGate, docsConsistencyGate, vmFleetGate, laptopExcellenceGate, websiteLiveGate, releaseReadyGate, demoRehearsalGate, presentationShipGate, demoVideoGate, githubShipGate, laptopCoreGate, morningOperatorGate, authLog, siemExport, honeypotFeed, l7ProbeProd, crowdsecBouncer, taxiiFeed, parserFuzz, banPolicyAudit, distRiskProof, lineageIncident, wasm, fleetMultiNode, fleetOfflineGate, grafanaProvision, copilotOllama, marketplaceSignedApi, complianceExport, vpsXdp, arm64Build, prodStack, phase100Fast, k8sAdmission, k8sKind, meshEtcdDocker, meshEtcdLive] =
     await Promise.all([
       readJson("ops-gate-report.json"),
       readJson("crs-parity-report.json"),
@@ -72,6 +78,7 @@ export async function GET(req: NextRequest) {
       readJson("threat-intel-sync-report.json"),
       readBestSoak(),
       readJson("soak-report.short.json"),
+      readJson("vps-remote-status-report.json"),
       readJson("tenant-isolation-report.json"),
       readJson("bench-vs-modsec.json"),
       readJson("bench-ban-latency.json"),
@@ -157,8 +164,10 @@ export async function GET(req: NextRequest) {
     trHostingCorpus: trHostingCorpus as TestReports["trHostingCorpus"],
     customerCorpus: customerCorpus as TestReports["customerCorpus"],
     threatIntelSync: threatIntelSync as TestReports["threatIntelSync"],
-    soak: soak as TestReports["soak"],
+    soak: (bestSoak as { data?: unknown } | null)?.data as TestReports["soak"],
+    soakSource: (bestSoak as { source?: string } | null)?.source ?? null,
     soakShort: soakShort as TestReports["soakShort"],
+    vpsRemote: vpsRemote as TestReports["vpsRemote"],
     isolation: isolation as TestReports["isolation"],
     bench: bench as TestReports["bench"],
     ban: ban as TestReports["ban"],
@@ -240,6 +249,19 @@ export async function GET(req: NextRequest) {
   const warned = tests.filter((t) => t.status === "warn").length;
   const pending = tests.filter((t) => t.status === "pending").length;
 
+  const vpsSoakRemote =
+    reports.soakSource === "vps-remote" && reports.soak?.pass === true
+      ? {
+          pass: true,
+          hours: reports.soak.duration_hours ?? 72,
+          samples: reports.soak.samples ?? 0,
+          failures: reports.soak.failures ?? 0,
+          host: (reports.vpsRemote as { host?: string } | null)?.host ?? null,
+          hostname: (reports.vpsRemote as { hostname?: string } | null)?.hostname ?? null,
+          xdp_mode: (reports.vpsRemote as { xdp_mode?: string } | null)?.xdp_mode ?? null,
+        }
+      : null;
+
   return NextResponse.json({
     available: tests.length > 0,
     tests,
@@ -247,6 +269,7 @@ export async function GET(req: NextRequest) {
     proof_expected: proofExpected,
     proof_test_ids: proofTestIds,
     parity_ok: proofExpected == null || tests.length === proofExpected,
+    vps_soak_remote: vpsSoakRemote,
     hint:
       tests.length === 0
         ? "Run: STABILITY=1 bash scripts/full_proof_pack.sh"

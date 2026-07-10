@@ -3,12 +3,17 @@
 #   bash scripts/fleet_prune_pending_commands.sh
 #   DRY_RUN=1 bash scripts/fleet_prune_pending_commands.sh
 #   STALE_HOURS=48 bash scripts/fleet_prune_pending_commands.sh   # varsayilan 48h
+#   STALE_MINUTES=30 bash scripts/fleet_prune_pending_commands.sh  # STALE_HOURS yerine
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$ROOT"
 
 DRY_RUN="${DRY_RUN:-0}"
-STALE_HOURS="${STALE_HOURS:-48}"
+if [[ -n "${STALE_MINUTES:-}" ]]; then
+  STALE_HOURS="$(python3 -c "print(float('${STALE_MINUTES}')/60.0)")"
+else
+  STALE_HOURS="${STALE_HOURS:-48}"
+fi
 REPORT="${FLEET_PRUNE_CMDS_REPORT:-fleet-prune-cmds-report.json}"
 
 if ! docker ps --format '{{.Names}}' 2>/dev/null | grep -qx 'log-guardian-dashboard'; then
@@ -63,12 +68,14 @@ const p = new PrismaClient();
       ' (' + item.status + ', ' + item.age_h + 'h) ' + item.payload
     );
   }
+  const remaining = dry ? allStuck.length : young.length;
   const out = {
     closed: n,
     dry_run: dry,
     stale_hours: hours,
     pending_young: young.length,
-    pending_total: allStuck.length,
+    pending_total: remaining,
+    pending_before: allStuck.length,
     pending_young_items: youngItems,
     groups: Object.fromEntries(groups),
   };
@@ -96,6 +103,7 @@ out = {
     "stale_hours": stale_h,
     "pending_young": int(summary.get("pending_young") or 0),
     "pending_total": int(summary.get("pending_total") or 0),
+    "pending_before": int(summary.get("pending_before") or summary.get("pending_total") or 0),
     "pending_young_items": summary.get("pending_young_items") or [],
     "groups": summary.get("groups") or {},
     "script": "scripts/fleet_prune_pending_commands.sh",
@@ -105,8 +113,13 @@ print(json.dumps(out, indent=2, ensure_ascii=False))
 PY
 
 closed=$(python3 -c "import json,sys; print(json.loads(sys.argv[1]).get('closed',0))" "$SUMMARY")
-if [[ "$DRY_RUN" == "1" ]]; then
-  echo "[fleet_prune_cmds] ${closed} komut (dry-run) >${STALE_HOURS}h — rapor: $REPORT"
+if [[ -n "${STALE_MINUTES:-}" ]]; then
+  stale_label="${STALE_MINUTES}m"
 else
-  echo "[fleet_prune_cmds] ${closed} komut >${STALE_HOURS}h kapatildi — rapor: $REPORT"
+  stale_label="${STALE_HOURS}h"
+fi
+if [[ "$DRY_RUN" == "1" ]]; then
+  echo "[fleet_prune_cmds] ${closed} komut (dry-run) >${stale_label} — rapor: $REPORT"
+else
+  echo "[fleet_prune_cmds] ${closed} komut >${stale_label} kapatildi — rapor: $REPORT"
 fi

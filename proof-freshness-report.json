@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-08T22:11:36.290956+00:00",
+  "date": "2026-07-10T07:01:34.013436+00:00",
   "pass": true,
   "max_age_h_default": 24.0,
   "stale_ids": [],
@@ -10,7 +10,7 @@
       "file": "morning-operator-gate-report.json",
       "max_age_h": 12,
       "ok": true,
-      "age_h": 0.06,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -18,7 +18,7 @@
       "file": "laptop-core-gate-report.json",
       "max_age_h": 24,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -26,7 +26,7 @@
       "file": "attack-map-report.json",
       "max_age_h": 12,
       "ok": true,
-      "age_h": 0.6,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -34,7 +34,7 @@
       "file": "telegram-soc-gate-report.json",
       "max_age_h": 12,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -42,7 +42,23 @@
       "file": "edge-protection-checklist-report.json",
       "max_age_h": 48,
       "ok": true,
-      "age_h": 0.22,
+      "age_h": 0.05,
+      "status": "fresh"
+    },
+    {
+      "id": "relay-lan",
+      "file": "relay-lan-exposure-report.json",
+      "max_age_h": 48,
+      "ok": true,
+      "age_h": 0.02,
+      "status": "fresh"
+    },
+    {
+      "id": "vps-remote",
+      "file": "vps-remote-status-report.json",
+      "max_age_h": 72,
+      "ok": true,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -50,7 +66,7 @@
       "file": "enterprise-e9-verify-report.json",
       "max_age_h": 48,
       "ok": true,
-      "age_h": 0.28,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -58,7 +74,7 @@
       "file": "competitive-proof.json",
       "max_age_h": 72,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 0.04,
       "status": "fresh"
     },
     {
@@ -66,7 +82,7 @@
       "file": "fp-report.json",
       "max_age_h": 168,
       "ok": true,
-      "age_h": 103.1,
+      "age_h": 135.94,
       "status": "fresh"
     },
     {
@@ -74,7 +90,7 @@
       "file": "fleet-multi-node-report.json",
       "max_age_h": 24,
       "ok": true,
-      "age_h": 0.33,
+      "age_h": 0.22,
       "status": "fresh"
     },
     {
@@ -82,7 +98,7 @@
       "file": "website-live-gate-report.json",
       "max_age_h": 48,
       "ok": true,
-      "age_h": 1.03,
+      "age_h": 33.87,
       "status": "fresh"
     },
     {
@@ -90,7 +106,7 @@
       "file": "dashboard-login-rl-e2e-report.json",
       "max_age_h": 24,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 7.07,
       "status": "fresh"
     },
     {
@@ -98,7 +114,7 @@
       "file": "hardening-rollback-gate-report.json",
       "max_age_h": 48,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 7.07,
       "status": "fresh"
     },
     {
@@ -106,7 +122,7 @@
       "file": "dashboard-jwt-idle-gate-report.json",
       "max_age_h": 48,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 7.07,
       "status": "fresh"
     },
     {
@@ -114,7 +130,7 @@
       "file": "mtls-cert-expiry-report.json",
       "max_age_h": 168,
       "ok": true,
-      "age_h": 0.0,
+      "age_h": 7.07,
       "status": "fresh"
     }
   ],

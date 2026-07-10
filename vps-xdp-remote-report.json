@@ -1,0 +1,9 @@
+{
+  "date": "2026-07-08T17:32:19.879712+00:00",
+  "pass": true,
+  "mode": "kernel-xdp",
+  "xdp_mode": "kernel-xdp",
+  "iface": "eth0",
+  "fail_count": 0,
+  "script": "scripts/vps_xdp_proof.sh"
+}

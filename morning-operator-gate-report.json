@@ -1,8 +1,8 @@
 {
-  "date": "2026-07-08T22:11:40.816120+00:00",
+  "date": "2026-07-10T06:58:58.356397+00:00",
   "pass": true,
   "laptop_core_ok": true,
-  "laptop_core_refreshed": true,
+  "laptop_core_refreshed": false,
   "presentation_ship_ok": true,
   "dashboard_ok": true,
   "attack_map_parity_ok": true,

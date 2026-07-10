@@ -20,7 +20,7 @@ async function readJson<T>(name: string): Promise<T | null> {
 }
 
 export async function GET() {
-  const [caddy, dashBan, banMtls, soarGate, mtlsExpiry] = await Promise.all([
+  const [caddy, dashBan, banMtls, soarGate, mtlsExpiry, relayLan] = await Promise.all([
     readJson<{
       enabled?: boolean;
       enabled_at?: string | null;
@@ -79,6 +79,13 @@ export async function GET() {
       certs?: Array<{ id?: string; days_left?: number; ok?: boolean }>;
       date?: string;
     }>("mtls-cert-expiry-report.json"),
+    readJson<{
+      pass?: boolean;
+      fail_count?: number;
+      host_api_bridge_up?: boolean;
+      docker0_ip?: string;
+      date?: string;
+    }>("relay-lan-exposure-report.json"),
   ]);
 
   const relayOk = dashBan?.relay_api?.ok ?? caddy?.relay_ok ?? false;
@@ -158,5 +165,15 @@ export async function GET() {
           date: mtlsExpiry?.date ?? null,
           check_cmd: "bash scripts/mtls_cert_expiry_check.sh",
         },
+    relay_lan: relayLan
+      ? {
+          pass: relayLan.pass === true,
+          fail_count: relayLan.fail_count ?? 0,
+          bridge_up: relayLan.host_api_bridge_up === true,
+          docker0_ip: relayLan.docker0_ip ?? null,
+          at: relayLan.date ?? null,
+          check_cmd: "bash scripts/relay_lan_exposure_check.sh",
+        }
+      : null,
   });
 }

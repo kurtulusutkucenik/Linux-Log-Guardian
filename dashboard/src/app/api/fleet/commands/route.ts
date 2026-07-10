@@ -7,6 +7,7 @@ import {
   createSignedFleetCommand,
   verifyFleetCommandSignature,
 } from '@/lib/fleetCommandSign';
+import { isVpsFleetShadowAgent, VPS_FLEET_AGENT_ID } from '@/lib/vpsFleetShadow';
 
 export const dynamic = 'force-dynamic';
 
@@ -33,6 +34,10 @@ export async function GET(request: Request) {
 
     if (!agentId) {
       return NextResponse.json({ error: 'Missing agent_id' }, { status: 400 });
+    }
+
+    if (isVpsFleetShadowAgent(agentId)) {
+      return NextResponse.json({ commands: [] });
     }
 
     // Ajan için olan komutları bul (henüz çalıştırılmamış)
@@ -86,6 +91,13 @@ export async function POST(request: Request) {
     const validationErr = validateFleetCommand(body);
     if (validationErr) {
       return NextResponse.json({ error: validationErr }, { status: 400 });
+    }
+
+    if (isVpsFleetShadowAgent(targetAgentId)) {
+      return NextResponse.json(
+        { error: `${VPS_FLEET_AGENT_ID} is SSH watch-only; fleet commands are disabled` },
+        { status: 403 },
+      );
     }
 
     if (!commandType || !payload) {

@@ -1,28 +1,28 @@
 {
-  "date": "2026-07-08T21:58:33.024230+00:00",
+  "date": "2026-07-10T07:01:34.362557+00:00",
   "pass": true,
   "skipped": false,
   "warn_days": 14,
-  "min_days_left": 823,
+  "min_days_left": 822,
   "certs": [
     {
       "id": "client",
       "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/client.crt",
-      "days_left": 823,
+      "days_left": 822,
       "ok": true,
       "warn_days": 14
     },
     {
       "id": "server",
       "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/server.crt",
-      "days_left": 823,
+      "days_left": 822,
       "ok": true,
       "warn_days": 14
     },
     {
       "id": "ca",
       "path": "/home/kurtulus/Masa\u00fcst\u00fc/Linux Log Guardian/deploy/mtls/ca.crt",
-      "days_left": 823,
+      "days_left": 822,
       "ok": true,
       "warn_days": 14
     }

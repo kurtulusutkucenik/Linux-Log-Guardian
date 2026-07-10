@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { buildVpsFleetShadow, readVpsRemoteStatus } from '@/lib/vpsFleetShadow';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,6 +57,13 @@ export async function GET(request: Request) {
       })
       .map(({ _lastMs: _a, _isOnline: _b, ...rest }) => rest);
 
+    const vpsRemote = await readVpsRemoteStatus();
+    const shadow = buildVpsFleetShadow(vpsRemote);
+    let fleetOut = enrichedFleet;
+    if (shadow && !enrichedFleet.some((a) => a.agent_id === shadow.agent_id)) {
+      fleetOut = [...enrichedFleet, shadow];
+    }
+
     // Tenants için group by (Aktif tenantlar)
     const activeTenants = await prisma.telemetry.groupBy({
       by: ['tenantId'],
@@ -69,11 +77,25 @@ export async function GET(request: Request) {
       agent_count: t._count.agentId,
     }));
 
+    const pendingCommands = await prisma.agentCommand.count({
+      where: { executed: false, status: { in: ['delivered', 'pending'] } },
+    });
+
     return NextResponse.json({
-      fleet:        enrichedFleet,
+      fleet:        fleetOut,
+      remote_shadow: shadow
+        ? {
+            agent_id: shadow.agent_id,
+            host: shadow.host,
+            hostname: shadow.hostname,
+            xdp_mode: shadow.xdp_mode,
+            soak_proof_72h: shadow.soak_proof_72h,
+          }
+        : null,
       tenant_id:    tenantId || '*',
       tenant_count: tenants.length,
       tenants,
+      pending_commands: pendingCommands,
     });
   } catch (error) {
     console.error('Fleet query error:', error);

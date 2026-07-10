@@ -29,6 +29,8 @@ checks = [
     ("attack-map", "attack-map-report.json", 12),
     ("telegram-soc", "telegram-soc-gate-report.json", 12),
     ("edge-checklist", "edge-protection-checklist-report.json", 48),
+    ("relay-lan", "relay-lan-exposure-report.json", 48),
+    ("vps-remote", "vps-remote-status-report.json", 72),
     ("enterprise-e9", "enterprise-e9-verify-report.json", 48),
     ("competitive-proof", "competitive-proof.json", 72),
     ("fp-report", "fp-report.json", 168),

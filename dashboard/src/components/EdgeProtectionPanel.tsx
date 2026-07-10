@@ -57,6 +57,14 @@ type EdgeStatus = {
     morning_operator?: boolean;
     docs_consistency?: boolean;
   } | null;
+  relay_lan?: {
+    pass?: boolean;
+    fail_count?: number;
+    bridge_up?: boolean;
+    docker0_ip?: string | null;
+    at?: string | null;
+    check_cmd?: string;
+  } | null;
 };
 
 function statClass(ok: boolean | undefined): string {
@@ -180,7 +188,7 @@ export function EdgeProtectionPanel() {
         ))}
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
         <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
           <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatIpc")}</p>
           <p className={`text-sm font-semibold ${statClass(data?.ipc === "ok")}`}>
@@ -205,6 +213,12 @@ export function EdgeProtectionPanel() {
             <span className="text-white/35 text-xs ml-1">
               WL {data?.whitelist_count ?? 0}
             </span>
+          </p>
+        </div>
+        <div className="rounded-lg border border-white/10 bg-black/20 px-3 py-2">
+          <p className="text-[10px] uppercase tracking-wide text-white/40">{t("edgeStatRelayLan")}</p>
+          <p className={`text-sm font-semibold ${statClass(data?.relay_lan?.pass)}`}>
+            {data?.relay_lan?.pass ? "OK" : data?.relay_lan?.pass === false ? "FAIL" : "—"}
           </p>
         </div>
       </div>

@@ -49,6 +49,9 @@ for f in \
   enterprise-soar-gate-report.json \
   lineage-incident-report.json \
   fleet-multi-node-report.json \
+  relay-lan-exposure-report.json \
+  vps-remote-status-report.json \
+  vps-soak-report.json \
   vm-fleet-gate-report.json \
   vm-sprint-proof.json \
   geoip-mmdb-report.json \

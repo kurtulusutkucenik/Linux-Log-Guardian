@@ -27,6 +27,15 @@ type Payload = {
   proof_test_ids?: string[];
   parity_ok?: boolean;
   hint?: string | null;
+  vps_soak_remote?: {
+    pass?: boolean;
+    hours?: number;
+    samples?: number;
+    failures?: number;
+    host?: string | null;
+    hostname?: string | null;
+    xdp_mode?: string | null;
+  } | null;
 };
 
 function proofAlignedTests(
@@ -383,6 +392,18 @@ export function ValidationTestsPanel({
 
       {!compact && allPassed && (
         <SummaryHero passed={displayStats.passed} total={displayStats.total} />
+      )}
+
+      {!compact && data?.vps_soak_remote?.pass && (
+        <div className="rounded-lg border border-sky-500/25 bg-sky-500/5 px-4 py-3 text-sm text-sky-200/90">
+          <p className="font-medium text-sky-200">{t("testsVpsSoakBannerTitle")}</p>
+          <p className="text-xs text-white/50 mt-1 font-mono">
+            {data.vps_soak_remote.hours ?? 72}h · {data.vps_soak_remote.samples ?? 0}{" "}
+            {t("testsVpsSoakSamples")} · fail={data.vps_soak_remote.failures ?? 0}
+            {data.vps_soak_remote.xdp_mode ? ` · xdp=${data.vps_soak_remote.xdp_mode}` : ""}
+            {data.vps_soak_remote.host ? ` · ${data.vps_soak_remote.host}` : ""}
+          </p>
+        </div>
       )}
 
       {!compact && tests.length > 0 && (

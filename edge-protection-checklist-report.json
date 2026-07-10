@@ -1,5 +1,5 @@
 {
-  "date": "2026-07-08T22:17:29.915109+00:00",
+  "date": "2026-07-10T07:07:20.502881+00:00",
   "pass": false,
   "laptop_profile": true,
   "items": [
@@ -112,8 +112,8 @@
       "id": "enterprise-e9",
       "scope": "both",
       "label": "E9 runbook zinciri",
-      "status": "warn",
-      "note": "bash scripts/enterprise_e9_verify.sh"
+      "status": "pass",
+      "note": "proof=89/89"
     },
     {
       "id": "fleet-command-sign",
@@ -123,27 +123,33 @@
       "note": ""
     },
     {
+      "id": "relay-lan-exposure",
+      "scope": "both",
+      "label": "relay LAN sizintisi (docker0 hop)",
+      "status": "pass",
+      "note": "bridge=False"
+    },
+    {
       "id": "vps-prep",
       "scope": "laptop",
       "label": "VPS kurulum hazirligi (sunucu yok)",
       "status": "pass",
-      "note": "proof=86/89"
+      "note": "proof=89/89"
     }
   ],
   "summary": {
-    "pass": 14,
-    "warn": 3,
+    "pass": 16,
+    "warn": 2,
     "fail": 1,
     "skip": 0,
-    "total": 18
+    "total": 19
   },
   "laptop_fail_ids": [
     "edge-protection-gate"
   ],
   "laptop_warn_ids": [
     "nginx-t",
-    "intel-ban-prune-sudo",
-    "enterprise-e9"
+    "intel-ban-prune-sudo"
   ],
   "script": "scripts/edge_protection_checklist.sh",
   "doc": "docs/EDGE_PROTECTION.md"

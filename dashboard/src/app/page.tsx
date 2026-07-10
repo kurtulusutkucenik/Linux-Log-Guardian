@@ -13,6 +13,7 @@ import { useVisibleInterval } from "@/hooks/useVisibleInterval";
 import { formatTimeAgo } from "@/lib/formatTimeAgo";
 import { FleetOpsPanel } from "@/components/FleetOpsPanel";
 import { VpsPrepPanel } from "@/components/VpsPrepPanel";
+import { E9RunbookPanel } from "@/components/E9RunbookPanel";
 
 const FleetCharts = dynamic(
   () => import("@/components/FleetCharts").then((m) => m.FleetCharts),
@@ -74,6 +75,11 @@ export interface AgentTelemetry {
   etcd_peers?: number;
   last_seen: Date;
   status: "Online" | "Offline";
+  remote_shadow?: boolean;
+  xdp_mode?: string | null;
+  soak_proof_72h?: number | null;
+  hostname?: string | null;
+  host?: string | null;
 }
 
 interface TenantInfo {
@@ -119,6 +125,7 @@ export default function FleetDashboard() {
   const [banToast, setBanToast] = useState<{ ok: boolean; msg: string } | null>(null);
   const [epsFromLive, setEpsFromLive] = useState(false);
   const [kpiFromSnapshot, setKpiFromSnapshot] = useState(false);
+  const [fleetPendingCommands, setFleetPendingCommands] = useState(0);
   const [globalStats, setGlobalStats] = useState({
     activeAgents: 0,
     totalEps: 0,
@@ -157,10 +164,12 @@ export default function FleetDashboard() {
       if (fleetRes.status === "fulfilled") {
         const agents: AgentTelemetry[] = fleetRes.value.data.fleet;
         setFleet(agents);
+        setFleetPendingCommands(Number(fleetRes.value.data.pending_commands) || 0);
 
         let active = 0, eps = 0, rce = 0, tarpit = 0, tls = 0;
         agents.forEach(a => {
-          if (a.status === "Online") { active++; eps += a.eps; }
+          if (a.status === "Online" && !a.remote_shadow) { active++; eps += a.eps; }
+          else if (a.status === "Online" && a.remote_shadow) { /* SSH monitor — EPS laptop KPI dışı */ }
           rce    += a.rce_detections;
           tarpit += a.tarpit_active;
           tls    += a.tls_decrypted || 0;
@@ -275,13 +284,18 @@ export default function FleetDashboard() {
   const sortedFleet = useMemo(
     () =>
       [...fleet].sort((a, b) => {
+        if (a.remote_shadow && !b.remote_shadow) return 1;
+        if (!a.remote_shadow && b.remote_shadow) return -1;
         if (a.status !== b.status) return a.status === "Online" ? -1 : 1;
         return new Date(b.last_seen).getTime() - new Date(a.last_seen).getTime();
       }),
     [fleet],
   );
 
-  const offlineCount = fleet.length - globalStats.activeAgents;
+  const laptopFleet = useMemo(() => fleet.filter((a) => !a.remote_shadow), [fleet]);
+  const remoteFleet = useMemo(() => fleet.filter((a) => a.remote_shadow), [fleet]);
+  const offlineCount =
+    laptopFleet.length - laptopFleet.filter((a) => a.status === "Online").length;
 
   return (
     <div className="min-h-screen p-8 max-w-7xl mx-auto flex flex-col gap-8">
@@ -376,22 +390,30 @@ export default function FleetDashboard() {
                 ${globalStats.activeAgents > 0 ? "bg-primary" : "bg-danger"}`} />
             </span>
             <span className="text-sm font-medium">
-              {fleet.length > 0
-                ? `${globalStats.activeAgents}/${fleet.length} ${t("nodesOnline")}`
+              {laptopFleet.length > 0
+                ? `${globalStats.activeAgents}/${laptopFleet.length} ${t("nodesOnline")}${
+                    remoteFleet.length > 0
+                      ? ` · +${remoteFleet.length} ${t("fleetRemoteMonitor")}`
+                      : ""
+                  }`
                 : `${globalStats.activeAgents} ${t("nodesOnline")}`}
             </span>
           </div>
         </div>
       </header>
 
-      {offlineCount > 0 && fleet.length > 0 && (
+      {offlineCount > 0 && laptopFleet.length > 0 && (
         <p className="text-xs text-amber-300/90 bg-amber-500/10 border border-amber-500/25 rounded-lg px-4 py-2.5">
-          {offlineCount} {t("fleetOfflineBanner")}
+          {offlineCount}{" "}
+          {fleetPendingCommands > 0
+            ? t("fleetOfflineBannerWithPending").replace("{n}", String(fleetPendingCommands))
+            : t("fleetOfflineBannerStale")}
         </p>
       )}
 
       <FleetOpsPanel />
       <VpsPrepPanel />
+      <E9RunbookPanel />
 
       {/* ── Tenant Segmentation Bar ─────────────────────────────────── */}
       {selectedTenant === "*" && tenants.length > 0 && (
@@ -623,14 +645,18 @@ export default function FleetDashboard() {
             sortedFleet.map(agent => {
               const tIdx = tenantIndexMap.get(agent.tenant_id) ?? 0;
               const col  = tenantColor(agent.tenant_id, tIdx);
-              const onlineBorder = agent.status === "Online"
-                ? col.border
-                : "border-l-danger/50 opacity-60";
+              const onlineBorder = agent.remote_shadow
+                ? "border-l-sky-500/60"
+                : agent.status === "Online"
+                  ? col.border
+                  : "border-l-danger/50 opacity-60";
 
               return (
                 <div
                   key={agent.agent_id}
-                  className={`glass-panel p-5 border-l-4 ${onlineBorder}`}
+                  className={`glass-panel p-5 border-l-4 ${onlineBorder} ${
+                    agent.remote_shadow ? "border border-sky-500/15" : ""
+                  }`}
                 >
                   {/* Card Header */}
                   <div className="flex justify-between items-start mb-3">
@@ -638,19 +664,26 @@ export default function FleetDashboard() {
                       <h3 className="font-mono text-lg font-bold text-white">
                         {agent.agent_id}
                       </h3>
+                      {agent.remote_shadow && agent.hostname && (
+                        <p className="text-[10px] text-sky-300/70 font-mono">{agent.hostname}</p>
+                      )}
                       <p className="text-xs text-white/50 font-mono">
-                        {t("lastSeenAgo")}: {formatTimeAgo(agent.last_seen, locale)}
+                        {agent.remote_shadow
+                          ? t("fleetRemoteLastPull")
+                          : `${t("lastSeenAgo")}: ${formatTimeAgo(agent.last_seen, locale)}`}
                       </p>
-                      {agent.status === "Offline" && (
+                      {agent.status === "Offline" && !agent.remote_shadow && (
                         <p className="text-[10px] text-amber-400/80 mt-1">{t("agentOfflineQueue")}</p>
                       )}
                     </div>
                     <div className="flex flex-col items-end gap-1.5">
                       <span className={`px-2 py-1 text-xs font-bold uppercase rounded
-                        ${agent.status === "Online"
-                          ? "bg-primary/20 text-primary"
-                          : "bg-danger/20 text-danger"}`}>
-                        {agent.status}
+                        ${agent.remote_shadow
+                          ? "bg-sky-500/15 text-sky-300"
+                          : agent.status === "Online"
+                            ? "bg-primary/20 text-primary"
+                            : "bg-danger/20 text-danger"}`}>
+                        {agent.remote_shadow ? t("fleetRemoteMonitor") : agent.status}
                       </span>
                       {/* Phase 5: Tenant Badge */}
                       <span className={`px-2 py-0.5 text-[10px] font-mono rounded-full

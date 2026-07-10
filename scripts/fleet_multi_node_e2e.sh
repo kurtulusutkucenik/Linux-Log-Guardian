@@ -66,15 +66,24 @@ seed_fleet_key() {
 
 push_agent() {
   local id="$1" eps="$2"
+  _push_agent_impl "$id" "$eps" || fail "telemetry $id"
+}
+
+push_agent_optional() {
+  local id="$1" eps="$2"
+  _push_agent_impl "$id" "$eps" || return 1
+}
+
+_push_agent_impl() {
+  local id="$1" eps="$2"
   AGENT_ID="$id" FLEET_API_KEY="$API_KEY" TELEMETRY_URL="${DASH_URL}/api/telemetry" \
     METRICS_URL="${METRICS_URL:-http://127.0.0.1:9091/metrics}" \
-    bash "$ROOT/scripts/fleet_telemetry_push.sh" >/dev/null || {
-    dash_curl -sf -X POST "${DASH_URL}/api/telemetry" \
-      -H "Authorization: Bearer ${API_KEY}" \
-      -H "Content-Type: application/json" \
-      -d "{\"agent_id\":\"${id}\",\"eps\":${eps},\"total_lines\":500,\"alerts_total\":1,\"attack_tree\":[]}" \
-      | grep -q '"success":true' || fail "telemetry $id"
-  }
+    bash "$ROOT/scripts/fleet_telemetry_push.sh" >/dev/null 2>&1 && return 0
+  dash_curl -sf -X POST "${DASH_URL}/api/telemetry" \
+    -H "Authorization: Bearer ${API_KEY}" \
+    -H "Content-Type: application/json" \
+    -d "{\"agent_id\":\"${id}\",\"eps\":${eps},\"total_lines\":500,\"alerts_total\":1,\"attack_tree\":[]}" \
+    | grep -q '"success":true'
 }
 
 # VM gercek 2. host: B push host'tan degil VM keepalive'den gelir
@@ -138,13 +147,42 @@ echo "[2] /api/fleet dogrulama"
 fleet_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/fleet") \
   || fail "/api/fleet erisilemedi"
 
-read -r agent_count online_count <<<"$(python3 -c "
+read_fleet_counts() {
+  read -r agent_count online_count <<<"$(python3 -c "
 import json,sys
 d=json.load(sys.stdin)
 fleet=d.get('fleet',[])
 online=sum(1 for a in fleet if a.get('status')=='Online')
 print(len(fleet), online)
 " <<<"$fleet_json")"
+}
+
+list_offline_agents() {
+  python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+for a in d.get('fleet',[]):
+    if a.get('status')!='Online':
+        aid=a.get('agent_id') or a.get('id') or ''
+        if aid:
+            print(aid)
+" <<<"$fleet_json"
+}
+
+push_offline_agents() {
+  local oid pushed=0
+  while IFS= read -r oid; do
+    [[ -z "$oid" ]] && continue
+    if push_agent_optional "$oid" 1.0; then
+      pushed=$((pushed + 1))
+    else
+      echo "[WARN] telemetry $oid atlandi (offline parity)" >&2
+    fi
+  done < <(list_offline_agents)
+  [[ "$pushed" -gt 0 ]] && sleep 1
+}
+
+read_fleet_counts
 [[ "$agent_count" -ge 2 ]] || fail "fleet agent sayisi $agent_count < 2"
 [[ "$online_count" -ge 2 ]] || fail "online agent $online_count < 2 (telemetry?)"
 
@@ -217,16 +255,31 @@ if echo "$dispatch" | grep -q '"executed":false'; then
   fi
 fi
 
-python3 -c "
-import json, datetime
+echo "[4b] filo parity — offline agent telemetry (laptop-simulated)"
+if [[ "$FLEET_MODE" != "multi-host" ]]; then
+  push_offline_agents || true
+  fleet_json=$(dash_curl -sf -b "$COOKIE_JAR" "${DASH_URL}/api/fleet") \
+    || fail "/api/fleet (parity)"
+  read_fleet_counts
+fi
+
+fleet_agents_json=$(python3 -c "
+import json,sys
+d=json.load(sys.stdin)
+print(json.dumps([a.get('agent_id') or a.get('id') for a in d.get('fleet',[]) if a.get('agent_id') or a.get('id')]))
+" <<<"$fleet_json")
+
+FLEET_AGENTS_JSON="$fleet_agents_json" python3 -c "
+import json, datetime, os
 from pathlib import Path
+agents=json.loads(os.environ['FLEET_AGENTS_JSON'])
 report={
   'date': datetime.datetime.now(datetime.timezone.utc).isoformat(),
   'pass': True,
   'mode': '${FLEET_MODE:-laptop-simulated}',
   'vm_fallback': ${FALLBACK_PY},
   'dash_url': '$DASH_URL',
-  'agents': ['$AGENT_A', '$AGENT_B'],
+  'agents': agents,
   'agent_count': int('$agent_count'),
   'online_count': int('$online_count'),
   'dispatch_target': '$AGENT_B',
@@ -236,6 +289,32 @@ report={
 }
 Path('$REPORT').write_text(json.dumps(report, indent=2)+'\n', encoding='utf-8')
 "
+
+if [[ "$FLEET_MODE" != "multi-host" && ${#fleet_agents_json} -gt 2 ]]; then
+  SIM_ENV="$ROOT/.cache/fleet-simulated.env"
+  mkdir -p "$(dirname "$SIM_ENV")"
+  agents_csv="$(python3 -c "import json,sys; print(','.join(json.loads(sys.argv[1])))" "$fleet_agents_json")"
+  cat >"$SIM_ENV" <<EOF
+# laptop-simulated filo — fleet_multi_node_e2e tarafindan yazilir
+FLEET_SIMULATED_AGENTS=${agents_csv}
+TELEMETRY_URL=${DASH_URL}/api/telemetry
+FLEET_API_KEY=${API_KEY}
+INTERVAL=8
+METRICS_URL=${METRICS_URL:-http://127.0.0.1:9091/metrics}
+EOF
+  echo "[OK] fleet-simulated.env — keepalive 3/3 (${agents_csv})"
+  if systemctl --user is-active log-guardian-fleet-keepalive.service &>/dev/null 2>&1; then
+    systemctl --user restart log-guardian-fleet-keepalive.service 2>/dev/null \
+      && echo "[OK] fleet keepalive restart (user systemd)" || true
+  elif [[ -f "$ROOT/.cache/fleet-keepalive.pid" ]] && kill -0 "$(cat "$ROOT/.cache/fleet-keepalive.pid")" 2>/dev/null; then
+    bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --stop 2>/dev/null || true
+    bash "$ROOT/scripts/fleet_telemetry_keepalive.sh" --bg 2>/dev/null \
+      && echo "[OK] fleet keepalive restart (nohup)" || true
+  fi
+fi
+
+AUTO_REFRESH=0 bash "$ROOT/scripts/fleet_offline_gate.sh" >/dev/null 2>&1 || true
+DRY_RUN=1 bash "$ROOT/scripts/fleet_prune_pending_commands.sh" >/dev/null 2>&1 || true
 
 echo "[OK] fleet_multi_node_e2e — $agent_count agent, $online_count online → /fleet/dispatch"
 echo "  Rapor: $REPORT"

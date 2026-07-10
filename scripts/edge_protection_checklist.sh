@@ -194,6 +194,18 @@ else
   _add "fleet-command-sign" "both" "fleet komut HMAC imzasi" "warn" "bash scripts/fleet_command_sign_e2e.sh"
 fi
 
+if [[ -f "$ROOT/relay-lan-exposure-report.json" ]] \
+    && python3 -c "import json,sys; sys.exit(0 if json.load(open('$ROOT/relay-lan-exposure-report.json')).get('pass') else 1)"; then
+  bridge=$(python3 -c "import json; print(json.load(open('$ROOT/relay-lan-exposure-report.json')).get('host_api_bridge_up','?'))" 2>/dev/null || echo "?")
+  _add "relay-lan-exposure" "both" "relay LAN sizintisi (docker0 hop)" "pass" "bridge=${bridge}"
+else
+  if bash "$ROOT/scripts/relay_lan_exposure_check.sh" >/dev/null 2>&1; then
+    _add "relay-lan-exposure" "both" "relay LAN sizintisi (docker0 hop)" "pass" "canli kosum"
+  else
+    _add "relay-lan-exposure" "both" "relay LAN sizintisi (docker0 hop)" "fail" "bash scripts/relay_lan_exposure_check.sh"
+  fi
+fi
+
 if [[ -f "$ROOT/vps-prep-gate-report.json" ]] \
     && python3 -c "import json,sys; sys.exit(0 if json.load(open('$ROOT/vps-prep-gate-report.json')).get('pass') else 1)"; then
   proof_note=$(python3 -c "import json; print(json.load(open('$ROOT/vps-prep-gate-report.json')).get('competitive_proof','?'))" 2>/dev/null || echo "?")

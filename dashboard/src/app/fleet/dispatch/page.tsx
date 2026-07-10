@@ -16,6 +16,8 @@ interface FleetAgent {
   attack_trees: number;
   status: string;
   last_seen: string;
+  remote_shadow?: boolean;
+  hostname?: string | null;
 }
 
 interface FleetCommand {
@@ -103,7 +105,9 @@ export default function FleetDispatchPage() {
     }
   };
 
-  const online = agents.filter((a) => a.status === 'Online').length;
+  const online = agents.filter((a) => a.status === 'Online' && !a.remote_shadow).length;
+  const dispatchableAgents = agents.filter((a) => !a.remote_shadow);
+  const shadowAgents = agents.filter((a) => a.remote_shadow);
 
   return (
     <div className="p-8 space-y-8 max-w-7xl mx-auto">
@@ -118,6 +122,7 @@ export default function FleetDispatchPage() {
             </h1>
             <p className="text-slate-400">
               {agents.length} agent · {online} online
+              {shadowAgents.length > 0 && ` · ${shadowAgents.length} SSH watch`}
             </p>
           </div>
         </div>
@@ -153,18 +158,24 @@ export default function FleetDispatchPage() {
           agents.map((a) => (
             <div
               key={`${a.tenant_id}-${a.agent_id}`}
-              className="bg-slate-900 border border-slate-800 rounded-xl p-4 hover:border-indigo-500/40 transition-colors"
+              className={`bg-slate-900 border rounded-xl p-4 transition-colors ${
+                a.remote_shadow
+                  ? 'border-sky-500/30 opacity-90'
+                  : 'border-slate-800 hover:border-indigo-500/40'
+              }`}
             >
               <div className="flex justify-between items-start mb-2">
                 <span className="font-mono text-sm text-white">{a.agent_id}</span>
                 <span
                   className={`text-xs px-2 py-0.5 rounded ${
-                    a.status === 'Online'
+                    a.remote_shadow
+                      ? 'bg-sky-500/20 text-sky-300'
+                      : a.status === 'Online'
                       ? 'bg-green-500/20 text-green-400'
                       : 'bg-slate-700 text-slate-400'
                   }`}
                 >
-                  {a.status}
+                  {a.remote_shadow ? t('fleetRemoteMonitor') : a.status}
                 </span>
               </div>
               <p className="text-xs text-slate-500 mb-3">{a.tenant_name || a.tenant_id}</p>
@@ -198,12 +209,15 @@ export default function FleetDispatchPage() {
                 className="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-indigo-500 outline-none"
               >
                 <option value="ALL">Global (All Agents)</option>
-                {agents.map((a) => (
+                {dispatchableAgents.map((a) => (
                   <option key={a.agent_id} value={a.agent_id}>
                     {a.agent_id} ({a.status})
                   </option>
                 ))}
               </select>
+              {shadowAgents.length > 0 && (
+                <p className="text-[10px] text-sky-300/70 mt-1">{t('fleetDispatchShadowHint')}</p>
+              )}
             </div>
 
             <div>
@@ -234,7 +248,7 @@ export default function FleetDispatchPage() {
 
             <button
               type="submit"
-              disabled={submitting || !cmdPayload || agents.length === 0}
+              disabled={submitting || !cmdPayload || dispatchableAgents.length === 0}
               className="w-full py-3 bg-gradient-to-r from-indigo-600 to-blue-600 hover:from-indigo-500 hover:to-blue-500 text-white font-semibold rounded-xl transition-all disabled:opacity-50 flex items-center justify-center"
             >
               <Send className="w-5 h-5 mr-2" />

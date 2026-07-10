@@ -74,6 +74,7 @@ Wants=network-online.target
 Type=simple
 WorkingDirectory=${ROOT}
 EnvironmentFile=${ENV_FILE}
+EnvironmentFile=-${ROOT}/.cache/fleet-simulated.env
 ExecStart=/bin/bash "${ROOT}/scripts/fleet_telemetry_keepalive.sh"
 Restart=always
 RestartSec=15
